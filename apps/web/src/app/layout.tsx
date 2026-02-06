@@ -33,19 +33,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AuthProvider
-      signInUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL ?? "/sign-in"}
-      signUpUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL ?? "/sign-up"}
-      signInFallbackRedirectUrl={
-        process.env.NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL ?? "/feeds"
-      }
-      signUpFallbackRedirectUrl={
-        process.env.NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL ?? "/feeds"
-      }
-    >
-      <html lang="en">
-        <body>{children}</body>
-      </html>
-    </AuthProvider>
+    <html lang="en">
+      <body>
+        <AuthProvider
+          signInUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL ?? "/sign-in"}
+          signUpUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL ?? "/sign-up"}
+          signInFallbackRedirectUrl={
+            process.env.NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL ??
+            "/feeds"
+          }
+          signUpFallbackRedirectUrl={
+            process.env.NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL ??
+            "/feeds"
+          }
+        >
+          {children}
+        </AuthProvider>
+      </body>
+    </html>
   );
 }
