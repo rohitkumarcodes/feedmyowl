@@ -6,15 +6,15 @@
  */
 
 export default {
-  title: "FeedMyOwl",
-  description: "A calm, minimalist RSS reader that preserves your attention.",
+  title: "feedmyowl",
+  description: "A distraction-free RSS and Atom reading experience.",
   url: "https://feedmyowl.com",
   appUrl: "https://app.feedmyowl.com",
   author: {
-    name: "FeedMyOwl",
+    name: "feedmyowl",
   },
   feed: {
-    subtitle: "Updates from the FeedMyOwl blog.",
+    subtitle: "Notes on building a distraction-free RSS and Atom reader.",
     filename: "feed.xml",
     path: "/feed/feed.xml",
     id: "https://feedmyowl.com/",

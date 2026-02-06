@@ -1,26 +1,26 @@
 ---
-title: Welcome to FeedMyOwl
+title: welcome to feedmyowl
 date: 2026-02-06
-description: Introducing FeedMyOwl — a calm, minimalist RSS reader that respects your attention.
+description: Why feedmyowl exists and what it does.
 ---
 
-We're building FeedMyOwl because we think reading deserves better tools.
+feedmyowl is built for focused reading.
 
-Most feed readers today are designed to maximize engagement — unread counts, push notifications, algorithmic sorting. They treat your attention as a resource to be extracted rather than a gift to be respected.
+Most feed readers optimize for engagement. feedmyowl does not.
 
-FeedMyOwl is different. It's a minimalist RSS and Atom feed reader built around a simple idea: **you decide when to read**.
+## what feedmyowl does
 
-## What makes FeedMyOwl different
+- Fetches RSS and Atom feeds when you ask it to.
+- Shows articles in a clean interface designed for reading.
+- Keeps controls and visual noise to a minimum.
 
-- **No background fetching.** Your feeds are only refreshed when you press the button. No anxiety-inducing notifications pulling you back.
-- **No unread counts.** We don't track what you've read or haven't read. Open the app when you feel like reading, close it when you're done.
-- **No algorithms.** Your feeds are shown in chronological order. No AI deciding what you should see first.
-- **No social features.** Reading is a focused, personal activity. We keep it that way.
+## what feedmyowl avoids
 
-## Getting started
+- No push notifications.
+- No unread badges or counts.
+- No recommendation engine.
+- No social features.
 
-FeedMyOwl is free for up to 10 RSS or Atom feeds. Sign up, add your favorite feeds, and start reading in a calmer way.
+The goal is simple: help you read without distraction.
 
-[Get started at app.feedmyowl.com](https://app.feedmyowl.com)
-
-We're just getting started, and we'd love to hear what you think. Stay tuned for more updates on this blog.
+[open app ↗](https://app.feedmyowl.com)

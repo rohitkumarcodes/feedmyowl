@@ -1,51 +1,21 @@
 ---
 layout: layouts/base.njk
-title: "FeedMyOwl — A Calm RSS Reader"
+title: "feedmyowl — distraction-free reading"
 permalink: /
 ---
 {# Landing Page — the homepage of feedmyowl.com #}
 
-<section class="hero">
-  <h1>Read without distraction.</h1>
-  <p class="hero-subtitle">
-    FeedMyOwl is a minimalist RSS reader that respects your attention.
-    No algorithms, no unread counts, no noise. Just your feeds, when you want them.
-  </p>
-  <a href="{{ metadata.appUrl }}" class="cta-button">
-    Get started — it's free
-  </a>
-</section>
-
-<section class="features">
-  <div class="feature">
-    <h2>You control when you read</h2>
-    <p>
-      No push notifications. No background refreshing. No unread badges
-      nagging you to come back. Press refresh when you're ready to read.
-    </p>
-  </div>
-
-  <div class="feature">
-    <h2>Simple and focused</h2>
-    <p>
-      Subscribe to RSS and Atom feeds. Read articles in a clean interface.
-      That's it. No social features, no recommendations, no clutter.
-    </p>
-  </div>
-
-  <div class="feature">
-    <h2>Free for up to 10 feeds</h2>
-    <p>
-      Start with up to 10 feeds completely free. Need more? Upgrade to
-      our paid plan for unlimited feeds.
-    </p>
-  </div>
-
-  <div class="feature">
-    <h2>Your data, your choice</h2>
-    <p>
-      Import and export your feeds via OPML. Export your data anytime.
-      Delete your account whenever you want. No lock-in.
+<section class="landing">
+  <div class="landing-panel">
+    <h1 class="landing-title">A distraction-free reading experience</h1>
+    <p class="landing-lead">feedmyowl reliably does only two jobs:</p>
+    <ul class="landing-points">
+      <li>Fetches your RSS/Atom feeds</li>
+      <li>Ensures there are no distractions in your reading experience</li>
+    </ul>
+    <p class="landing-outro">That's it. Happy Reading.</p>
+    <p class="landing-cta">
+      <a href="{{ metadata.appUrl }}">open app ↗</a>
     </p>
   </div>
 </section>

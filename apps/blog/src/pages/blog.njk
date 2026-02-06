@@ -1,23 +1,28 @@
 ---
 layout: layouts/base.njk
-title: Blog
+title: blog — feedmyowl
 permalink: /blog/
 ---
 {# Blog Index Page — lists all blog posts in reverse chronological order #}
 
-<h1>Blog</h1>
+<article class="blog-index">
+  <header class="blog-index-header">
+    <h1 class="blog-index-title">blog</h1>
+    <p class="blog-index-intro">Short updates from feedmyowl.</p>
+  </header>
 
-{% set postslist = collections.posts | reverse %}
-{% if postslist.length %}
-  <ul class="post-list" style="list-style: none; padding: 0; margin-top: 2rem;">
-    {%- for post in postslist %}
-    <li style="margin-bottom: 1.5rem;">
-      <a href="{{ post.url }}" style="font-size: 1.1rem; font-weight: 600;">{{ post.data.title }}</a>
-      <time datetime="{{ post.date | htmlDateString }}" style="display: block; color: #888; font-size: 0.9rem;">{{ post.date | readableDate }}</time>
-      {% if post.data.description %}<p style="color: #555; margin-top: 0.25rem;">{{ post.data.description }}</p>{% endif %}
-    </li>
-    {%- endfor %}
-  </ul>
-{% else %}
-  <p style="margin-top: 1rem; color: #666;">No posts yet. Check back soon!</p>
-{% endif %}
+  {% set postslist = collections.posts | reverse %}
+  {% if postslist.length %}
+    <ul class="blog-index-list">
+      {%- for post in postslist %}
+      <li class="blog-index-item">
+        <a href="{{ post.url }}" class="blog-index-link">{{ post.data.title }}</a>
+        <time class="blog-index-meta" datetime="{{ post.date | htmlDateString }}">{{ post.date | readableDate }}</time>
+        {% if post.data.description %}<p class="blog-index-description">{{ post.data.description }}</p>{% endif %}
+      </li>
+      {%- endfor %}
+    </ul>
+  {% else %}
+    <p class="blog-index-empty">No posts yet.</p>
+  {% endif %}
+</article>

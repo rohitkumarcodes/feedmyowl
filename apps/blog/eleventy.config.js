@@ -26,6 +26,12 @@ export default function (eleventyConfig) {
   // --- Passthrough copy ---
   // Copy the public/ folder to the output as-is (for images, fonts, etc.)
   eleventyConfig.addPassthroughCopy("public");
+  // Copy source CSS into /css so the layout link (/css/style.css) resolves.
+  eleventyConfig.addPassthroughCopy({
+    "src/css": "css",
+  });
+  // Watch CSS files in dev mode for immediate reloads.
+  eleventyConfig.addWatchTarget("src/css/**/*.css");
 
   // --- Date filter ---
   // Format dates for display in templates
