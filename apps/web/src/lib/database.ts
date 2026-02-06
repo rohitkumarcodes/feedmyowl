@@ -35,15 +35,14 @@ export { eq, and, or, not, desc, asc } from "drizzle-orm";
 export { users, feeds, feedItems } from "@/db/schema";
 
 /**
- * Create a Neon serverless SQL connection.
- * This uses HTTP-based queries (no persistent connection),
- * which is ideal for serverless environments like Vercel.
- */
-const sql = neon(process.env.DATABASE_URL!);
-
-/**
  * The Drizzle ORM database instance.
  * Use this for all database operations throughout the app.
+ *
+ * Why lazy initialization?
+ * Next.js imports modules at build time to collect page data.
+ * During the build, runtime env vars like DATABASE_URL aren't available yet.
+ * By creating the connection lazily (on first use), we avoid crashing the build.
+ * The connection is cached after the first call, so subsequent queries reuse it.
  *
  * Examples:
  *   // Simple query
@@ -58,4 +57,24 @@ const sql = neon(process.env.DATABASE_URL!);
  *   // Insert
  *   await db.insert(schema.users).values({ clerkId, email });
  */
-export const db = drizzle(sql, { schema });
+let _db: ReturnType<typeof drizzle<typeof schema>> | null = null;
+
+function getDb() {
+  if (!_db) {
+    const sql = neon(process.env.DATABASE_URL!);
+    _db = drizzle(sql, { schema });
+  }
+  return _db;
+}
+
+/**
+ * Proxy that forwards all property access to the lazily-initialized Drizzle instance.
+ * Code throughout the app uses `db` exactly like before — no API change.
+ */
+export const db = new Proxy({} as ReturnType<typeof drizzle<typeof schema>>, {
+  get(_target, prop, receiver) {
+    const instance = getDb();
+    const value = Reflect.get(instance, prop, receiver);
+    return typeof value === "function" ? value.bind(instance) : value;
+  },
+});
