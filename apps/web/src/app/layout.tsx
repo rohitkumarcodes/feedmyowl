@@ -32,20 +32,28 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const signInUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL ?? "/sign-in";
+  const signUpUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL ?? "/sign-up";
+
+  const configuredSignInFallback =
+    process.env.NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL ?? "/feeds";
+  const configuredSignUpFallback =
+    process.env.NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL ?? "/feeds";
+
+  // Prevent redirect loops if env vars are accidentally set to auth entry routes.
+  const signInFallbackRedirectUrl =
+    configuredSignInFallback === signInUrl ? "/feeds" : configuredSignInFallback;
+  const signUpFallbackRedirectUrl =
+    configuredSignUpFallback === signUpUrl ? "/feeds" : configuredSignUpFallback;
+
   return (
     <html lang="en">
       <body>
         <AuthProvider
-          signInUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL ?? "/sign-in"}
-          signUpUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL ?? "/sign-up"}
-          signInFallbackRedirectUrl={
-            process.env.NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL ??
-            "/feeds"
-          }
-          signUpFallbackRedirectUrl={
-            process.env.NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL ??
-            "/feeds"
-          }
+          signInUrl={signInUrl}
+          signUpUrl={signUpUrl}
+          signInFallbackRedirectUrl={signInFallbackRedirectUrl}
+          signUpFallbackRedirectUrl={signUpFallbackRedirectUrl}
         >
           {children}
         </AuthProvider>
