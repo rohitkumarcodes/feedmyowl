@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { db, eq, feeds, users } from "@/lib/database";
+import { ensureUserRecord } from "@/lib/app-user";
 
 /**
  * GET /api/feeds
@@ -21,9 +22,14 @@ export async function GET() {
   try {
     const { clerkId } = await requireAuth();
 
+    const ensuredUser = await ensureUserRecord(clerkId);
+    if (!ensuredUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     // Find the user in our database by their Clerk ID
     const user = await db.query.users.findFirst({
-      where: eq(users.clerkId, clerkId),
+      where: eq(users.id, ensuredUser.id),
       with: { feeds: true },
     });
 
@@ -54,9 +60,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const ensuredUser = await ensureUserRecord(clerkId);
+    if (!ensuredUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     // Find the user in our database
     const user = await db.query.users.findFirst({
-      where: eq(users.clerkId, clerkId),
+      where: eq(users.id, ensuredUser.id),
       with: { feeds: true },
     });
 

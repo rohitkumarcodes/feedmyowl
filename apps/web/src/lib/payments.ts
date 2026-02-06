@@ -71,6 +71,21 @@ export async function createCheckoutSession(
 }
 
 /**
+ * Create a Stripe customer record for a user when they first start checkout.
+ */
+export async function createStripeCustomer(
+  email: string,
+  clerkId: string
+): Promise<string> {
+  const customer = await getStripe().customers.create({
+    email,
+    metadata: { clerkId },
+  });
+
+  return customer.id;
+}
+
+/**
  * Create a Stripe Billing Portal session for managing an existing subscription.
  * This lets users update payment methods, cancel, etc. — all handled by Stripe's UI.
  *
@@ -110,5 +125,16 @@ export function verifyStripeWebhook(
     body,
     signature,
     requireEnv("STRIPE_WEBHOOK_SECRET")
+  );
+}
+
+/**
+ * Indicates if the server has enough Stripe config to support billing actions.
+ */
+export function isBillingConfigured(): boolean {
+  return Boolean(
+    process.env.STRIPE_SECRET_KEY &&
+      process.env.NEXT_PUBLIC_APP_URL &&
+      process.env.STRIPE_PRICE_ID
   );
 }

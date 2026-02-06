@@ -17,6 +17,8 @@
  */
 
 import { UserMenu } from "@/lib/auth";
+import { AuthNavigation } from "@/components/auth-navigation";
+import styles from "./layout.module.css";
 
 export default function AuthLayout({
   children,
@@ -24,30 +26,15 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      {/* Header with navigation and user menu */}
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "1rem 2rem",
-          borderBottom: "1px solid #eee",
-        }}
-      >
-        <nav style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
-          <a href="/feeds" style={{ fontWeight: "bold", fontSize: "1.1rem" }}>
-            FeedMyOwl
-          </a>
-          <a href="/feeds">Feeds</a>
-          <a href="/settings">Settings</a>
-        </nav>
-        {/* Clerk's UserButton — shows avatar, lets user manage account / sign out */}
-        <UserMenu />
+    <div className={styles.shell}>
+      <header className={styles.header}>
+        <AuthNavigation />
+        <div className={styles.userMenu}>
+          <UserMenu />
+        </div>
       </header>
 
-      {/* Page content */}
-      <main style={{ padding: "2rem" }}>{children}</main>
+      <main className={styles.main}>{children}</main>
     </div>
   );
 }

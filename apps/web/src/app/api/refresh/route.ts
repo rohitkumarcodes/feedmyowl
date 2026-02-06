@@ -20,6 +20,7 @@ import { requireAuth } from "@/lib/auth";
 import { db, eq, feeds, feedItems, users } from "@/lib/database";
 import { parseFeed } from "@/lib/feed-parser";
 import { captureError } from "@/lib/error-tracking";
+import { ensureUserRecord } from "@/lib/app-user";
 
 /**
  * POST /api/refresh
@@ -28,10 +29,15 @@ import { captureError } from "@/lib/error-tracking";
 export async function POST() {
   try {
     const { clerkId } = await requireAuth();
+    const ensuredUser = await ensureUserRecord(clerkId);
+
+    if (!ensuredUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
 
     // Find the user and their feeds
     const user = await db.query.users.findFirst({
-      where: eq(users.clerkId, clerkId),
+      where: eq(users.id, ensuredUser.id),
       with: { feeds: true },
     });
 

@@ -11,7 +11,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { db, and, eq, feeds, users } from "@/lib/database";
+import { db, and, eq, feeds } from "@/lib/database";
+import { ensureUserRecord } from "@/lib/app-user";
 
 /**
  * DELETE /api/feeds/[id]
@@ -25,10 +26,7 @@ export async function DELETE(
     const { clerkId } = await requireAuth();
     const { id } = await params;
 
-    // Find the user in our database
-    const user = await db.query.users.findFirst({
-      where: eq(users.clerkId, clerkId),
-    });
+    const user = await ensureUserRecord(clerkId);
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
