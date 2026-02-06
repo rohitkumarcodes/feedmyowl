@@ -1,5 +1,12 @@
 import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
 
-export default function HomePage() {
-  redirect("/feeds");
+export default async function HomePage() {
+  const user = await getCurrentUser();
+
+  if (user) {
+    redirect("/feeds");
+  }
+
+  redirect("/sign-in");
 }
