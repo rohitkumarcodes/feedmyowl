@@ -10,13 +10,17 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { AddFeedForm } from "./AddFeedForm";
 import { ArticleList } from "./ArticleList";
 import { ArticleReader } from "./ArticleReader";
 import { Layout } from "./Layout";
 import { Sidebar, SidebarScope } from "./Sidebar";
 import { Toolbar } from "./Toolbar";
-import type { ArticleViewModel, FeedViewModel, FolderViewModel } from "./feeds-types";
+import type {
+  ArticleViewModel,
+  FeedViewModel,
+  FolderViewModel,
+  PendingAction,
+} from "./feeds-types";
 import { extractArticleSnippet } from "@/utils/articleText";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import styles from "./feeds-workspace.module.css";
@@ -54,33 +58,6 @@ type ContextMenuState =
       id: string;
       x: number;
       y: number;
-    };
-
-type PendingAction =
-  | {
-      kind: "feed-rename";
-      feedId: string;
-      draftTitle: string;
-    }
-  | {
-      kind: "folder-rename";
-      folderId: string;
-      draftName: string;
-    }
-  | {
-      kind: "feed-move";
-      feedId: string;
-      draftFolderId: string;
-    }
-  | {
-      kind: "feed-delete";
-      feedId: string;
-      feedLabel: string;
-    }
-  | {
-      kind: "folder-delete";
-      folderId: string;
-      folderLabel: string;
     };
 
 /**
@@ -712,147 +689,11 @@ export function FeedsWorkspace({
     return map;
   }, [folders]);
 
-  const statusPanel = useMemo(() => {
-    const hasPanel =
-      Boolean(infoMessage) ||
-      Boolean(errorMessage) ||
-      isAddFolderFormVisible ||
-      Boolean(pendingAction);
-
-    if (!hasPanel) {
-      return null;
-    }
-
-    return (
-      <div className={styles.statusPanel}>
-        {infoMessage ? <p className={styles.infoMessage}>{infoMessage}</p> : null}
-        {errorMessage ? <p className={styles.errorMessage}>Error: {errorMessage}</p> : null}
-
-        {isAddFolderFormVisible ? (
-          <form className={styles.inlineForm} onSubmit={handleCreateFolder}>
-            <label htmlFor="new-folder-name">Folder name</label>
-            <input
-              id="new-folder-name"
-              value={folderNameInput}
-              onChange={(event) => setFolderNameInput(event.currentTarget.value)}
-              placeholder="New folder"
-            />
-            <button type="submit" disabled={isAddingFolder}>
-              {isAddingFolder ? "Creating..." : "Create Folder"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsAddFolderFormVisible(false)}
-              disabled={isAddingFolder}
-            >
-              Cancel
-            </button>
-          </form>
-        ) : null}
-
-        {pendingAction ? (
-          <div className={styles.pendingAction}>
-            {pendingAction.kind === "feed-delete" ? (
-              <p>
-                Delete feed &quot;{pendingAction.feedLabel}&quot; and all its stored
-                articles?
-              </p>
-            ) : null}
-
-            {pendingAction.kind === "folder-delete" ? (
-              <p>
-                Delete folder &quot;{pendingAction.folderLabel}&quot; and every
-                feed/article inside it?
-              </p>
-            ) : null}
-
-            {pendingAction.kind === "feed-rename" ? (
-              <label className={styles.actionField}>
-                Feed name
-                <input
-                  value={pendingAction.draftTitle}
-                  onChange={(event) =>
-                    setPendingAction((previous) =>
-                      previous?.kind === "feed-rename"
-                        ? { ...previous, draftTitle: event.currentTarget.value }
-                        : previous
-                    )
-                  }
-                />
-              </label>
-            ) : null}
-
-            {pendingAction.kind === "folder-rename" ? (
-              <label className={styles.actionField}>
-                Folder name
-                <input
-                  value={pendingAction.draftName}
-                  onChange={(event) =>
-                    setPendingAction((previous) =>
-                      previous?.kind === "folder-rename"
-                        ? { ...previous, draftName: event.currentTarget.value }
-                        : previous
-                    )
-                  }
-                />
-              </label>
-            ) : null}
-
-            {pendingAction.kind === "feed-move" ? (
-              <label className={styles.actionField}>
-                Move feed to folder
-                <select
-                  value={pendingAction.draftFolderId}
-                  onChange={(event) =>
-                    setPendingAction((previous) =>
-                      previous?.kind === "feed-move"
-                        ? { ...previous, draftFolderId: event.currentTarget.value }
-                        : previous
-                    )
-                  }
-                >
-                  <option value="">Uncategorized</option>
-                  {folders
-                    .slice()
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((folder) => (
-                      <option key={folder.id} value={folder.id}>
-                        {folder.name}
-                      </option>
-                    ))}
-                </select>
-              </label>
-            ) : null}
-
-            <div className={styles.pendingActionButtons}>
-              <button type="button" onClick={applyPendingAction} disabled={isApplyingAction}>
-                {isApplyingAction ? "Saving..." : "Confirm"}
-              </button>
-              <button
-                type="button"
-                onClick={cancelPendingAction}
-                disabled={isApplyingAction}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : null}
-      </div>
-    );
-  }, [
-    applyPendingAction,
-    cancelPendingAction,
-    errorMessage,
-    folderNameInput,
-    folders,
-    handleCreateFolder,
-    infoMessage,
-    isAddFolderFormVisible,
-    isAddingFolder,
-    isApplyingAction,
-    pendingAction,
-  ]);
+  /** Clears both info and error messages from the sidebar. */
+  const handleDismissMessage = useCallback(() => {
+    setInfoMessage(null);
+    setErrorMessage(null);
+  }, []);
 
   useKeyboardShortcuts({
     onNextArticle: () => moveSelectionBy(1),
@@ -893,22 +734,6 @@ export function FeedsWorkspace({
             onToggleSidebar={() => setIsSidebarCollapsed((previous) => !previous)}
           />
         }
-        addFeedForm={
-          isAddFeedFormVisible ? (
-            <AddFeedForm
-              folders={folders}
-              url={feedUrlInput}
-              folderId={feedFolderIdInput}
-              isSubmitting={isAddingFeed}
-              onUrlChange={setFeedUrlInput}
-              onFolderIdChange={setFeedFolderIdInput}
-              onSubmit={(event) => {
-                void handleAddFeed(event);
-              }}
-            />
-          ) : null
-        }
-        statusPanel={statusPanel}
         sidebar={
           <Sidebar
             folders={folders}
@@ -931,8 +756,44 @@ export function FeedsWorkspace({
             }}
             onOpenFolderContextMenu={openFolderContextMenu}
             onOpenFeedContextMenu={openFeedContextMenu}
-            onShowAddFeedForm={() => setIsAddFeedFormVisible(true)}
-            onShowAddFolderForm={() => setIsAddFolderFormVisible(true)}
+            /* ── Add Feed form ── */
+            isAddFeedFormVisible={isAddFeedFormVisible}
+            feedUrlInput={feedUrlInput}
+            feedFolderIdInput={feedFolderIdInput}
+            isAddingFeed={isAddingFeed}
+            onShowAddFeedForm={() => {
+              setIsAddFeedFormVisible(true);
+              setIsAddFolderFormVisible(false);
+            }}
+            onCancelAddFeed={() => setIsAddFeedFormVisible(false)}
+            onFeedUrlChange={setFeedUrlInput}
+            onFeedFolderIdChange={setFeedFolderIdInput}
+            onSubmitFeed={(event) => {
+              void handleAddFeed(event);
+            }}
+            /* ── Add Folder form ── */
+            isAddFolderFormVisible={isAddFolderFormVisible}
+            folderNameInput={folderNameInput}
+            isAddingFolder={isAddingFolder}
+            onShowAddFolderForm={() => {
+              setIsAddFolderFormVisible(true);
+              setIsAddFeedFormVisible(false);
+            }}
+            onCancelAddFolder={() => setIsAddFolderFormVisible(false)}
+            onFolderNameChange={setFolderNameInput}
+            onSubmitFolder={(event) => {
+              void handleCreateFolder(event);
+            }}
+            /* ── Inline messages ── */
+            infoMessage={infoMessage}
+            errorMessage={errorMessage}
+            onDismissMessage={handleDismissMessage}
+            /* ── Pending actions ── */
+            pendingAction={pendingAction}
+            isApplyingAction={isApplyingAction}
+            onApplyPendingAction={applyPendingAction}
+            onCancelPendingAction={cancelPendingAction}
+            onPendingActionChange={setPendingAction}
           />
         }
         articleList={

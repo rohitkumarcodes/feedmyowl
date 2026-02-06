@@ -1,6 +1,6 @@
 /**
- * Three-pane application shell with toolbar, optional inline form area, and
- * independent pane containers for sidebar, article list, and reader.
+ * Two-row application shell with toolbar and independent pane containers
+ * for sidebar, article list, and reader.
  * The article list pane width is adjustable via a drag handle.
  */
 
@@ -9,8 +9,6 @@ import styles from "./Layout.module.css";
 
 interface LayoutProps {
   toolbar: ReactNode;
-  addFeedForm: ReactNode;
-  statusPanel: ReactNode;
   sidebar: ReactNode;
   articleList: ReactNode;
   articleReader: ReactNode;
@@ -22,12 +20,11 @@ interface LayoutProps {
 }
 
 /**
- * Renders the feed-reader layout matching the required three-pane structure.
+ * Renders the feed-reader layout: a toolbar row on top and a three-pane
+ * grid below (sidebar, article list, resize handle, reader).
  */
 export function Layout({
   toolbar,
-  addFeedForm,
-  statusPanel,
   sidebar,
   articleList,
   articleReader,
@@ -38,8 +35,6 @@ export function Layout({
   return (
     <div className={styles.root}>
       <div className={styles.toolbarRow}>{toolbar}</div>
-      {addFeedForm ? <div className={styles.formRow}>{addFeedForm}</div> : null}
-      {statusPanel ? <div className={styles.statusRow}>{statusPanel}</div> : null}
       <div className={styles.panes}>
         <aside
           className={`${styles.sidebarPane} ${

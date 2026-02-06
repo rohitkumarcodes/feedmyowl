@@ -56,3 +56,34 @@ export interface ArticleViewModel {
   feedTitle: string;
   snippet: string;
 }
+
+/**
+ * Describes a pending context-menu action awaiting user confirmation.
+ * Used by the sidebar to render inline rename/move/delete forms.
+ */
+export type PendingAction =
+  | {
+      kind: "feed-rename";
+      feedId: string;
+      draftTitle: string;
+    }
+  | {
+      kind: "folder-rename";
+      folderId: string;
+      draftName: string;
+    }
+  | {
+      kind: "feed-move";
+      feedId: string;
+      draftFolderId: string;
+    }
+  | {
+      kind: "feed-delete";
+      feedId: string;
+      feedLabel: string;
+    }
+  | {
+      kind: "folder-delete";
+      folderId: string;
+      folderLabel: string;
+    };

@@ -3,98 +3,7 @@
   position: relative;
 }
 
-.statusPanel {
-  display: grid;
-  gap: 8px;
-  padding: 8px 12px;
-}
-
-.infoMessage,
-.errorMessage {
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-  font-size: var(--text-sm);
-  padding: 6px 8px;
-}
-
-.errorMessage {
-  color: var(--accent);
-}
-
-.inlineForm,
-.pendingAction {
-  align-items: end;
-  border: 1px solid var(--border);
-  display: grid;
-  gap: 8px;
-  padding: 8px;
-}
-
-.inlineForm {
-  grid-template-columns: auto minmax(180px, 1fr) auto auto;
-}
-
-.inlineForm label,
-.actionField {
-  color: var(--text-muted);
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-}
-
-.inlineForm input,
-.actionField input,
-.actionField select,
-.inlineForm button,
-.pendingAction button {
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  color: var(--text-primary);
-  font-size: var(--text-base);
-  min-height: 32px;
-  padding: 6px 10px;
-}
-
-.inlineForm button,
-.pendingAction button {
-  cursor: pointer;
-}
-
-.inlineForm button:hover:enabled,
-.pendingAction button:hover:enabled {
-  background: var(--bg-tertiary);
-  transition: background-color 80ms ease;
-}
-
-.inlineForm input:focus-visible,
-.actionField input:focus-visible,
-.actionField select:focus-visible,
-.inlineForm button:focus-visible,
-.pendingAction button:focus-visible,
-.contextMenu button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.pendingAction {
-  grid-template-columns: 1fr;
-}
-
-.pendingAction p {
-  color: var(--text-primary);
-  font-size: var(--text-sm);
-}
-
-.actionField {
-  display: grid;
-  gap: 4px;
-}
-
-.pendingActionButtons {
-  display: flex;
-  gap: 8px;
-}
-
+/* Right-click context menu positioned absolutely over the workspace. */
 .contextMenu {
   background: var(--bg-primary);
   border: 1px solid var(--border);
@@ -120,8 +29,7 @@
   transition: background-color 80ms ease;
 }
 
-@media (max-width: 900px) {
-  .inlineForm {
-    grid-template-columns: 1fr;
-  }
+.contextMenu button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }

@@ -2,13 +2,11 @@
   background: var(--bg-primary);
   color: var(--text-primary);
   display: grid;
-  grid-template-rows: auto auto auto 1fr;
+  grid-template-rows: auto 1fr;
   height: 100vh;
 }
 
-.toolbarRow,
-.formRow,
-.statusRow {
+.toolbarRow {
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
 }
