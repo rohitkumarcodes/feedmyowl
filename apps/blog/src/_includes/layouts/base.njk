@@ -1,0 +1,43 @@
+{#
+  Base Layout
+
+  The root HTML template that all other layouts extend.
+  Provides the HTML boilerplate, <head> metadata, and a minimal
+  site header and footer.
+
+  Variables available:
+    - title: Page title (from front matter or child layout)
+    - metadata: Global site data (from _data/metadata.js)
+    - content: The page content (injected by Eleventy)
+#}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ title or metadata.title }}</title>
+    <meta name="description" content="{{ description or metadata.description }}" />
+    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="alternate" href="{{ metadata.feed.path }}" type="application/atom+xml" title="{{ metadata.title }}" />
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="site-nav">
+        <a href="/" class="site-name">{{ metadata.title }}</a>
+        <div class="nav-links">
+          <a href="/about/">About</a>
+          <a href="/blog/">Blog</a>
+          <a href="{{ metadata.appUrl }}" class="cta-link">Open App</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="site-main">
+      {{ content | safe }}
+    </main>
+
+    <footer class="site-footer">
+      <p>&copy; {{ metadata.title }} {{ currentYear }}</p>
+    </footer>
+  </body>
+</html>

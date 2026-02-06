@@ -1,0 +1,36 @@
+{
+  "name": "web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^6.12",
+    "@neondatabase/serverless": "^0.10",
+    "@sentry/nextjs": "^9",
+    "@stripe/stripe-js": "^5",
+    "drizzle-orm": "^0.38",
+    "next": "^15.2",
+    "react": "^19",
+    "react-dom": "^19",
+    "resend": "^4",
+    "rss-parser": "^3.13",
+    "stripe": "^17"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "drizzle-kit": "^0.30",
+    "eslint": "^9",
+    "eslint-config-next": "^15.2",
+    "typescript": "^5.7"
+  }
+}
