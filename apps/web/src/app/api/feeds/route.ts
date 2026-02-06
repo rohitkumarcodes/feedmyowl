@@ -6,7 +6,6 @@
  *   POST /api/feeds — Subscribe to a new feed
  *
  * Authentication is required (enforced by middleware).
- * Free users are limited to 10 feeds (enforced here).
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -46,7 +45,6 @@ export async function GET() {
 /**
  * POST /api/feeds
  * Subscribe to a new feed. Expects JSON body: { url: string }
- * Enforces the free tier limit of 10 feeds.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -73,20 +71,6 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    // Enforce free tier limit: max 10 feeds
-    const FREE_FEED_LIMIT = 10;
-    if (
-      user.subscriptionTier === "free" &&
-      user.feeds.length >= FREE_FEED_LIMIT
-    ) {
-      return NextResponse.json(
-        {
-          error: `Free tier is limited to ${FREE_FEED_LIMIT} feeds. Upgrade to add more.`,
-        },
-        { status: 403 }
-      );
     }
 
     // Create the feed subscription

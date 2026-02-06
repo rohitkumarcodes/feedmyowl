@@ -121,7 +121,9 @@
 
 .primaryButton,
 .secondaryButton,
-.dangerButton {
+.dangerButton,
+.readButton,
+.clearReaderButton {
   border-radius: 999px;
   border: none;
   cursor: pointer;
@@ -136,7 +138,8 @@
   color: #fff;
 }
 
-.secondaryButton {
+.secondaryButton,
+.readButton {
   background: #eaf0ff;
   color: #17336a;
 }
@@ -147,42 +150,28 @@
   padding: 0.52rem 0.8rem;
 }
 
+.clearReaderButton {
+  background: #e7ebf4;
+  color: #38455f;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.7rem;
+}
+
 .primaryButton:disabled,
 .secondaryButton:disabled,
-.dangerButton:disabled {
+.dangerButton:disabled,
+.readButton:disabled,
+.clearReaderButton:disabled {
   cursor: not-allowed;
   opacity: 0.65;
 }
 
 .primaryButton:not(:disabled):hover,
 .secondaryButton:not(:disabled):hover,
-.dangerButton:not(:disabled):hover {
+.dangerButton:not(:disabled):hover,
+.readButton:not(:disabled):hover,
+.clearReaderButton:not(:disabled):hover {
   transform: translateY(-1px);
-}
-
-.usageWrap {
-  margin-top: 0.8rem;
-}
-
-.usageMeta {
-  color: var(--ink-muted);
-  display: flex;
-  font-size: 0.9rem;
-  justify-content: space-between;
-}
-
-.usageBar {
-  background: #e8ecf5;
-  border-radius: 999px;
-  height: 0.45rem;
-  margin-top: 0.4rem;
-  overflow: hidden;
-}
-
-.usageFill {
-  background: linear-gradient(90deg, #1b58ff, #6ca7ff);
-  display: block;
-  height: 100%;
 }
 
 .infoMessage,
@@ -276,7 +265,8 @@
 }
 
 .feedCard,
-.articleCard {
+.articleCard,
+.readerPanel {
   background: var(--surface-1);
   border: 1px solid var(--surface-stroke);
   border-radius: 14px;
@@ -360,20 +350,75 @@
   margin-top: 0.45rem;
 }
 
+.articleActions {
+  align-items: center;
+  display: flex;
+  gap: 0.55rem;
+  justify-content: space-between;
+  margin-top: 0.65rem;
+}
+
+.readButton {
+  font-size: 0.83rem;
+  padding: 0.5rem 0.8rem;
+}
+
 .articleLink,
-.noLink {
+.noLink,
+.readerSourceLink {
   display: inline-block;
   font-size: 0.86rem;
   font-weight: 700;
-  margin-top: 0.55rem;
 }
 
-.articleLink {
+.articleLink,
+.readerSourceLink {
   color: #1e4ebe;
 }
 
 .noLink {
   color: var(--ink-muted);
+}
+
+.readerPanel {
+  margin-top: 0.85rem;
+}
+
+.readerHeader {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.readerHeader h3 {
+  font-size: 1.03rem;
+}
+
+.readerFeedLabel,
+.readerMeta {
+  color: var(--ink-muted);
+  font-size: 0.85rem;
+  margin-top: 0.45rem;
+}
+
+.readerTitle {
+  font-size: 1.2rem;
+  line-height: 1.2;
+  margin-top: 0.55rem;
+}
+
+.readerBody {
+  color: #1f2b3e;
+  font-size: 0.95rem;
+  margin-top: 0.7rem;
+  max-height: 24rem;
+  overflow: auto;
+  padding-right: 0.2rem;
+  white-space: pre-wrap;
+}
+
+.readerSourceLink {
+  margin-top: 0.8rem;
 }
 
 .emptyState {
@@ -402,6 +447,11 @@
   }
 
   .panelHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .articleActions {
     align-items: flex-start;
     flex-direction: column;
   }

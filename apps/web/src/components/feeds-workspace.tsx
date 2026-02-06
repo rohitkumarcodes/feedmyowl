@@ -26,8 +26,6 @@ export interface FeedViewModel {
 
 interface FeedsWorkspaceProps {
   initialFeeds: FeedViewModel[];
-  subscriptionTier: string;
-  freeFeedLimit: number;
 }
 
 interface ApiErrorResponse {
@@ -72,22 +70,45 @@ function extractHost(url: string): string {
   }
 }
 
-function stripHtml(text: string): string {
-  return text
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
+function decodeCommonEntities(value: string): string {
+  return value
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'");
+}
+
+function toSafePlainText(content: string | null): string {
+  if (!content) {
+    return "No readable content available for this article.";
+  }
+
+  const plainText = decodeCommonEntities(
+    content
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<\/?(p|div|section|article|h[1-6]|blockquote|pre)\b[^>]*>/gi, "\n")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<li\b[^>]*>/gi, "\n- ")
+      .replace(/<\/li>/gi, "")
+      .replace(/<[^>]+>/g, "")
+  )
+    .replace(/\r\n?/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
+
+  return plainText || "No readable content available for this article.";
 }
 
 function getExcerpt(content: string | null): string {
-  if (!content) {
-    return "No preview available yet.";
+  const plainText = toSafePlainText(content);
+  if (plainText.length <= 180) {
+    return plainText;
   }
-  const cleanText = stripHtml(content);
-  if (cleanText.length <= 180) {
-    return cleanText;
-  }
-  return `${cleanText.slice(0, 177)}...`;
+  return `${plainText.slice(0, 177)}...`;
 }
 
 function toTimeValue(iso: string | null): number {
@@ -120,16 +141,15 @@ async function parseResponseJson<T>(response: Response): Promise<T | null> {
   }
 }
 
-export function FeedsWorkspace({
-  initialFeeds,
-  subscriptionTier,
-  freeFeedLimit,
-}: FeedsWorkspaceProps) {
+export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
   const router = useRouter();
   const [feeds, setFeeds] = useState<FeedViewModel[]>(initialFeeds);
   const [feedUrlInput, setFeedUrlInput] = useState("");
   const [query, setQuery] = useState("");
   const [activeFeedId, setActiveFeedId] = useState<string>("all");
+  const [selectedArticleId, setSelectedArticleId] = useState<string | null>(
+    initialFeeds[0]?.items[0]?.id ?? null
+  );
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isAddingFeed, setIsAddingFeed] = useState(false);
@@ -149,12 +169,6 @@ export function FeedsWorkspace({
       setActiveFeedId("all");
     }
   }, [activeFeedId, feeds]);
-
-  const usageCount = feeds.length;
-  const usagePercent =
-    subscriptionTier === "free"
-      ? Math.min(100, Math.round((usageCount / freeFeedLimit) * 100))
-      : 0;
 
   const totalArticleCount = useMemo(
     () => feeds.reduce((count, feed) => count + feed.items.length, 0),
@@ -216,6 +230,24 @@ export function FeedsWorkspace({
       .slice(0, MAX_VISIBLE_ARTICLES);
   }, [activeFeedId, articles, query]);
 
+  useEffect(() => {
+    if (!selectedArticleId) {
+      return;
+    }
+    const stillAvailable = articles.some((article) => article.id === selectedArticleId);
+    if (!stillAvailable) {
+      setSelectedArticleId(null);
+    }
+  }, [articles, selectedArticleId]);
+
+  const selectedArticle = useMemo(
+    () =>
+      selectedArticleId
+        ? articles.find((article) => article.id === selectedArticleId) || null
+        : null,
+    [articles, selectedArticleId]
+  );
+
   async function handleAddFeed(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isAddingFeed) {
@@ -274,7 +306,8 @@ export function FeedsWorkspace({
 
     const addedCount =
       body?.results?.reduce(
-        (total, result) => total + (result.status === "success" ? result.newItemCount : 0),
+        (total, result) =>
+          total + (result.status === "success" ? result.newItemCount : 0),
         0
       ) || 0;
     setInfoMessage(
@@ -322,13 +355,12 @@ export function FeedsWorkspace({
         <p className={styles.eyebrow}>Your Reading Desk</p>
         <h1 className={styles.heroTitle}>Track what matters, ignore the noise.</h1>
         <p className={styles.heroText}>
-          Add feeds, refresh on demand, and browse a clean stream of the latest
-          articles from your subscriptions.
+          Add feeds, refresh on demand, and read everything directly inside the app.
         </p>
         <div className={styles.statGrid}>
           <article className={styles.statCard}>
-            <p className={styles.statLabel}>Subscribed feeds</p>
-            <p className={styles.statValue}>{usageCount}</p>
+            <p className={styles.statLabel}>Connected feeds</p>
+            <p className={styles.statValue}>{feeds.length}</p>
           </article>
           <article className={styles.statCard}>
             <p className={styles.statLabel}>Saved articles</p>
@@ -343,7 +375,7 @@ export function FeedsWorkspace({
 
       <section className={styles.panel}>
         <div className={styles.panelHeader}>
-          <h2 className={styles.panelTitle}>Manage subscriptions</h2>
+          <h2 className={styles.panelTitle}>Manage feeds</h2>
           <button
             type="button"
             onClick={handleRefresh}
@@ -372,19 +404,6 @@ export function FeedsWorkspace({
             {isAddingFeed ? "Adding..." : "Add feed"}
           </button>
         </form>
-        {subscriptionTier === "free" ? (
-          <div className={styles.usageWrap} aria-live="polite">
-            <div className={styles.usageMeta}>
-              <span>
-                Free plan usage: {usageCount}/{freeFeedLimit} feeds
-              </span>
-              <span>{usagePercent}%</span>
-            </div>
-            <div className={styles.usageBar}>
-              <span className={styles.usageFill} style={{ width: `${usagePercent}%` }} />
-            </div>
-          </div>
-        ) : null}
         {infoMessage ? <p className={styles.infoMessage}>{infoMessage}</p> : null}
         {errorMessage ? <p className={styles.errorMessage}>{errorMessage}</p> : null}
       </section>
@@ -488,22 +507,75 @@ export function FeedsWorkspace({
                     {article.author || "Unknown author"}
                   </p>
                   <p className={styles.articleExcerpt}>{getExcerpt(article.content)}</p>
-                  {article.link ? (
-                    <a
-                      href={article.link}
-                      target="_blank"
-                      rel="noreferrer"
-                      className={styles.articleLink}
+                  <div className={styles.articleActions}>
+                    <button
+                      type="button"
+                      className={styles.readButton}
+                      onClick={() => setSelectedArticleId(article.id)}
                     >
-                      Open source article
-                    </a>
-                  ) : (
-                    <span className={styles.noLink}>No external link available</span>
-                  )}
+                      {selectedArticleId === article.id ? "Reading" : "Read in app"}
+                    </button>
+                    {article.link ? (
+                      <a
+                        href={article.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={styles.articleLink}
+                      >
+                        Open source
+                      </a>
+                    ) : (
+                      <span className={styles.noLink}>No source link</span>
+                    )}
+                  </div>
                 </article>
               ))
             )}
           </div>
+
+          <section className={styles.readerPanel}>
+            <div className={styles.readerHeader}>
+              <h3>Reader</h3>
+              {selectedArticle ? (
+                <button
+                  type="button"
+                  onClick={() => setSelectedArticleId(null)}
+                  className={styles.clearReaderButton}
+                >
+                  Close
+                </button>
+              ) : null}
+            </div>
+
+            {selectedArticle ? (
+              <>
+                <p className={styles.readerFeedLabel}>
+                  {selectedArticle.feedTitle} • {formatDateTime(selectedArticle.publishedAt || selectedArticle.createdAt)}
+                </p>
+                <h4 className={styles.readerTitle}>{selectedArticle.title}</h4>
+                <p className={styles.readerMeta}>
+                  {selectedArticle.author || "Unknown author"}
+                </p>
+                <div className={styles.readerBody}>
+                  {toSafePlainText(selectedArticle.content)}
+                </div>
+                {selectedArticle.link ? (
+                  <a
+                    href={selectedArticle.link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={styles.readerSourceLink}
+                  >
+                    Open original source
+                  </a>
+                ) : null}
+              </>
+            ) : (
+              <p className={styles.emptyState}>
+                Select "Read in app" on any article to view full plain-text content here.
+              </p>
+            )}
+          </section>
         </div>
       </section>
     </div>

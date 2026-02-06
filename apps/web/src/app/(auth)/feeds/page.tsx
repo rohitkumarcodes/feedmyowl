@@ -7,8 +7,6 @@ import {
   FeedViewModel,
 } from "@/components/feeds-workspace";
 
-const FREE_FEED_LIMIT = 10;
-
 function toIsoString(value: Date | null): string | null {
   return value ? value.toISOString() : null;
 }
@@ -18,13 +16,7 @@ export default async function FeedsPage() {
   const ensuredUser = await ensureUserRecord(clerkId);
 
   if (!ensuredUser) {
-    return (
-      <FeedsWorkspace
-        initialFeeds={[]}
-        subscriptionTier="free"
-        freeFeedLimit={FREE_FEED_LIMIT}
-      />
-    );
+    return <FeedsWorkspace initialFeeds={[]} />;
   }
 
   const user = await db.query.users.findFirst({
@@ -77,11 +69,5 @@ export default async function FeedsPage() {
         return bDate - aDate;
       }) ?? [];
 
-  return (
-    <FeedsWorkspace
-      initialFeeds={feeds}
-      subscriptionTier={user?.subscriptionTier ?? ensuredUser.subscriptionTier}
-      freeFeedLimit={FREE_FEED_LIMIT}
-    />
-  );
+  return <FeedsWorkspace initialFeeds={feeds} />;
 }
