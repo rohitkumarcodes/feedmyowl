@@ -39,13 +39,11 @@ export { users, feeds, feedItems } from "@/db/schema";
  * This uses HTTP-based queries (no persistent connection),
  * which is ideal for serverless environments like Vercel.
  *
- * Build-time safety: Next.js imports modules at build time to collect page data,
- * but runtime env vars like DATABASE_URL aren't available during the build.
- * neon() only validates that a non-empty string is passed — it doesn't actually
- * connect until a query is executed. So we pass a placeholder during build.
- * No queries run at build time, so this is safe.
+ * Build-time safety: @neondatabase/serverless is listed in serverExternalPackages
+ * in next.config.ts, so webpack doesn't bundle it. This means neon() only runs
+ * at request time (when DATABASE_URL is available), never during the build.
  */
-const sql = neon(process.env.DATABASE_URL ?? "postgresql://build");
+const sql = neon(process.env.DATABASE_URL!);
 
 /**
  * The Drizzle ORM database instance.

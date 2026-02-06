@@ -11,7 +11,16 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* Add Next.js config options here as needed */
+  /**
+   * Packages that should NOT be bundled by webpack.
+   * Instead, they're loaded at runtime from node_modules.
+   *
+   * Why: During the build, Next.js evaluates route modules to collect page data.
+   * This causes neon() to be called before DATABASE_URL is available (it's a
+   * runtime env var, not a build-time one). By keeping the neon driver external,
+   * it's only loaded when an actual request triggers the route handler.
+   */
+  serverExternalPackages: ["@neondatabase/serverless"],
 };
 
 /**
