@@ -3,6 +3,11 @@ import { db, eq, users } from "@/lib/database";
 import { ensureUserRecord } from "@/lib/app-user";
 import { SettingsOverview } from "@/components/settings-overview";
 
+/**
+ * This page reads per-user data at request time — never statically prerender.
+ */
+export const dynamic = "force-dynamic";
+
 function toIsoString(value: Date | null): string | null {
   return value ? value.toISOString() : null;
 }

@@ -7,6 +7,11 @@ import {
   FeedViewModel,
 } from "@/components/feeds-workspace";
 
+/**
+ * This page reads per-user data at request time — never statically prerender.
+ */
+export const dynamic = "force-dynamic";
+
 function toIsoString(value: Date | null): string | null {
   return value ? value.toISOString() : null;
 }

@@ -28,7 +28,25 @@ import { Webhook } from "svix";
  * Pages and layouts import these from "@/lib/auth" — never from "@clerk/nextjs" directly.
  * If we switch auth providers, we replace these exports with equivalents.
  */
-export { ClerkProvider as AuthProvider } from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
+
+/**
+ * Auth-safe wrapper around ClerkProvider.
+ *
+ * During `next build`, Next.js prerenders static pages (like /_not-found)
+ * through the root layout. If NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is not set at
+ * build time, ClerkProvider throws. This wrapper renders children without the
+ * provider in that case, which is fine because static pages don't need auth.
+ * At runtime the key is always present, so ClerkProvider works normally.
+ */
+import { createElement, Fragment } from "react";
+
+export function AuthProvider(props: React.ComponentProps<typeof ClerkProvider>) {
+  if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+    return createElement(Fragment, null, props.children);
+  }
+  return createElement(ClerkProvider, props);
+}
 export { SignIn as SignInForm } from "@clerk/nextjs";
 export { SignUp as SignUpForm } from "@clerk/nextjs";
 export { UserButton as UserMenu } from "@clerk/nextjs";
