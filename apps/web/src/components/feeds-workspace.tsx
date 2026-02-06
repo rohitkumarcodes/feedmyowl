@@ -148,6 +148,11 @@ export function FeedsWorkspace({
   const [isAddFeedFormVisible, setIsAddFeedFormVisible] = useState(false);
   const [isAddFolderFormVisible, setIsAddFolderFormVisible] = useState(false);
 
+  /** Width of the article list pane in pixels (adjustable via drag handle). */
+  const [listPaneWidth, setListPaneWidth] = useState(320);
+  /** Ref to track whether a resize drag is in progress (avoids re-renders). */
+  const isResizingRef = useRef(false);
+
   const [feedUrlInput, setFeedUrlInput] = useState("");
   const [feedFolderIdInput, setFeedFolderIdInput] = useState("");
   const [folderNameInput, setFolderNameInput] = useState("");
@@ -418,6 +423,47 @@ export function FeedsWorkspace({
       setSelectedArticleId(visibleArticles[nextIndex].id);
     },
     [selectedArticleId, visibleArticles]
+  );
+
+  /**
+   * Starts a drag-to-resize interaction for the article list pane.
+   * Uses delta-based calculation: tracks mouse offset from drag start position
+   * and applies it to the starting width, clamped between 280px and 600px.
+   */
+  const handleListPaneResizeStart = useCallback(
+    (event: MouseEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      isResizingRef.current = true;
+
+      const startX = event.clientX;
+      const startWidth = listPaneWidth;
+
+      /* Prevent text selection and show resize cursor during drag. */
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+
+      function onMouseMove(moveEvent: globalThis.MouseEvent) {
+        if (!isResizingRef.current) {
+          return;
+        }
+
+        const delta = moveEvent.clientX - startX;
+        const newWidth = Math.max(280, Math.min(600, startWidth + delta));
+        setListPaneWidth(newWidth);
+      }
+
+      function onMouseUp() {
+        isResizingRef.current = false;
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+      }
+
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
+    },
+    [listPaneWidth]
   );
 
   const handleRefresh = useCallback(async () => {
@@ -844,7 +890,6 @@ export function FeedsWorkspace({
             onRefresh={() => {
               void handleRefresh();
             }}
-            onToggleAddFeedForm={() => setIsAddFeedFormVisible((previous) => !previous)}
             onToggleSidebar={() => setIsSidebarCollapsed((previous) => !previous)}
           />
         }
@@ -902,6 +947,8 @@ export function FeedsWorkspace({
         }
         articleReader={<ArticleReader article={openArticle} />}
         isSidebarCollapsed={isSidebarCollapsed}
+        listPaneWidth={listPaneWidth}
+        onListPaneResizeStart={handleListPaneResizeStart}
       />
 
       {contextMenu ? (

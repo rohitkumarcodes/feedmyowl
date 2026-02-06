@@ -13,25 +13,27 @@
   border-bottom: 1px solid var(--border);
 }
 
+/*
+ * Four-column grid: sidebar | article list | resize handle | reader.
+ * Sidebar and list pane widths are set via inline styles or class rules.
+ * The resize handle is a fixed 4px column. Reader takes remaining space.
+ */
 .panes {
   display: grid;
-  grid-template-columns: 240px minmax(280px, 360px) minmax(0, 1fr);
+  grid-template-columns: auto auto 4px minmax(0, 1fr);
   min-height: 0;
 }
 
 .sidebarPane,
 .listPane,
+.resizeHandle,
 .readerPane {
   min-height: 0;
 }
 
-.sidebarPane,
-.listPane {
-  border-right: 1px solid var(--border);
-}
-
 .sidebarPane {
   background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
   overflow: hidden;
   width: 240px;
 }
@@ -46,16 +48,25 @@
   overflow: hidden;
 }
 
+/* Draggable divider between article list and reader panes. */
+.resizeHandle {
+  background: transparent;
+  border-left: 1px solid var(--border);
+  cursor: col-resize;
+  width: 4px;
+}
+
+.resizeHandle:hover {
+  background: var(--bg-tertiary);
+  transition: background-color 80ms ease;
+}
+
 .readerPane {
   background: var(--bg-primary);
   overflow: hidden;
 }
 
 @media (max-width: 1120px) {
-  .panes {
-    grid-template-columns: 220px minmax(280px, 1fr) minmax(0, 1fr);
-  }
-
   .sidebarPane {
     width: 220px;
   }
@@ -67,14 +78,19 @@
     grid-template-rows: auto auto auto;
   }
 
-  .sidebarPane,
-  .listPane {
-    border-right: 0;
-    border-bottom: 1px solid var(--border);
+  .resizeHandle {
+    display: none;
   }
 
   .sidebarPane {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
     width: 100%;
+  }
+
+  .listPane {
+    border-bottom: 1px solid var(--border);
+    width: 100% !important; /* override inline style on mobile */
   }
 
   .sidebarPaneCollapsed {

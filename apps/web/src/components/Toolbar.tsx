@@ -1,8 +1,10 @@
 /**
- * Top toolbar with refresh, search, add-feed, and sidebar toggle controls.
+ * Top toolbar with sidebar toggle, refresh, search, and settings controls.
+ * Order left-to-right: Hide/Show Sidebar | ⟳ Refresh | Search | Settings
  */
 
 import type { RefObject } from "react";
+import Link from "next/link";
 import styles from "./Toolbar.module.css";
 
 interface ToolbarProps {
@@ -12,7 +14,6 @@ interface ToolbarProps {
   isSidebarCollapsed: boolean;
   onQueryChange: (query: string) => void;
   onRefresh: () => void;
-  onToggleAddFeedForm: () => void;
   onToggleSidebar: () => void;
 }
 
@@ -26,20 +27,31 @@ export function Toolbar({
   isSidebarCollapsed,
   onQueryChange,
   onRefresh,
-  onToggleAddFeedForm,
   onToggleSidebar,
 }: ToolbarProps) {
   return (
     <div className={styles.root}>
+      {/* Sidebar visibility toggle — leftmost control */}
+      <button
+        type="button"
+        className={styles.controlButton}
+        onClick={onToggleSidebar}
+        aria-label={isSidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
+      >
+        {isSidebarCollapsed ? "Show Sidebar" : "Hide Sidebar"}
+      </button>
+
+      {/* Feed refresh trigger with unicode glyph */}
       <button
         type="button"
         className={styles.controlButton}
         onClick={onRefresh}
         disabled={isRefreshing}
       >
-        {isRefreshing ? "Refreshing..." : "Refresh"}
+        {isRefreshing ? "⟳ Refreshing..." : "⟳ Refresh"}
       </button>
 
+      {/* Client-side search filter for the current article list */}
       <input
         ref={searchInputRef}
         type="search"
@@ -50,22 +62,10 @@ export function Toolbar({
         aria-label="Search current article list"
       />
 
-      <button
-        type="button"
-        className={styles.controlButton}
-        onClick={onToggleAddFeedForm}
-      >
-        + Add Feed
-      </button>
-
-      <button
-        type="button"
-        className={styles.controlButton}
-        onClick={onToggleSidebar}
-        aria-label={isSidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
-      >
-        {isSidebarCollapsed ? "☰" : "✕"}
-      </button>
+      {/* Navigation link to settings page — rightmost control */}
+      <Link href="/settings" className={styles.settingsLink}>
+        Settings
+      </Link>
     </div>
   );
 }

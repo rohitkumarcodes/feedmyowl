@@ -3,7 +3,6 @@
  */
 
 import type { MouseEvent } from "react";
-import Link from "next/link";
 import { FeedItem } from "./FeedItem";
 import { FolderGroup } from "./FolderGroup";
 import type { FeedViewModel, FolderViewModel } from "./feeds-types";
@@ -82,6 +81,22 @@ export function Sidebar({
           onSelect={onSelectAll}
           onContextMenu={(event) => event.preventDefault()}
         />
+        <div className={styles.topActions}>
+          <button
+            type="button"
+            className={styles.addFeedAffordance}
+            onClick={onShowAddFeedForm}
+          >
+            + Add Feed
+          </button>
+          <button
+            type="button"
+            className={styles.addFeedAffordance}
+            onClick={onShowAddFolderForm}
+          >
+            + Add Folder
+          </button>
+        </div>
       </div>
 
       <div className={styles.sections}>
@@ -143,25 +158,6 @@ export function Sidebar({
         </section>
       </div>
 
-      <div className={styles.bottom}>
-        <button
-          type="button"
-          className={styles.addFeedAffordance}
-          onClick={onShowAddFeedForm}
-        >
-          + Add Feed
-        </button>
-        <button
-          type="button"
-          className={styles.addFeedAffordance}
-          onClick={onShowAddFolderForm}
-        >
-          + Add Folder
-        </button>
-        <Link href="/settings" className={styles.settingsLink}>
-          Settings
-        </Link>
-      </div>
     </div>
   );
 }

@@ -1,9 +1,10 @@
 /**
  * Three-pane application shell with toolbar, optional inline form area, and
  * independent pane containers for sidebar, article list, and reader.
+ * The article list pane width is adjustable via a drag handle.
  */
 
-import { ReactNode } from "react";
+import type { ReactNode, MouseEvent as ReactMouseEvent } from "react";
 import styles from "./Layout.module.css";
 
 interface LayoutProps {
@@ -14,6 +15,10 @@ interface LayoutProps {
   articleList: ReactNode;
   articleReader: ReactNode;
   isSidebarCollapsed: boolean;
+  /** Current width of the article list pane in pixels. */
+  listPaneWidth: number;
+  /** Called when the user starts dragging the resize handle between list and reader. */
+  onListPaneResizeStart: (event: ReactMouseEvent<HTMLDivElement>) => void;
 }
 
 /**
@@ -27,6 +32,8 @@ export function Layout({
   articleList,
   articleReader,
   isSidebarCollapsed,
+  listPaneWidth,
+  onListPaneResizeStart,
 }: LayoutProps) {
   return (
     <div className={styles.root}>
@@ -42,9 +49,21 @@ export function Layout({
         >
           {sidebar}
         </aside>
-        <section className={styles.listPane} aria-label="Article list pane">
+        <section
+          className={styles.listPane}
+          aria-label="Article list pane"
+          style={{ width: `${listPaneWidth}px` }}
+        >
           {articleList}
         </section>
+        {/* Draggable resize handle between article list and reader panes */}
+        <div
+          className={styles.resizeHandle}
+          onMouseDown={onListPaneResizeStart}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize article list"
+        />
         <section className={styles.readerPane} aria-label="Reader pane">
           {articleReader}
         </section>
