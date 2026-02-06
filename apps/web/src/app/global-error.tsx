@@ -32,20 +32,27 @@ export default function GlobalError({
   return (
     <html lang="en">
       <body>
-        <div style={{ padding: "2rem", textAlign: "center" }}>
+        <div
+          style={{
+            padding: "24px",
+            textAlign: "center",
+            color: "var(--text-primary)",
+            backgroundColor: "var(--bg-primary)",
+          }}
+        >
           <h1>Something went wrong</h1>
-          <p style={{ marginTop: "1rem", color: "#666" }}>
+          <p style={{ marginTop: "8px", color: "var(--text-secondary)" }}>
             We&apos;ve been notified and are looking into it.
           </p>
           <button
             onClick={() => reset()}
             style={{
-              marginTop: "1.5rem",
-              padding: "0.5rem 1rem",
+              marginTop: "12px",
+              padding: "6px 10px",
               cursor: "pointer",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              backgroundColor: "#fff",
+              border: "1px solid var(--border)",
+              borderRadius: "2px",
+              backgroundColor: "transparent",
             }}
           >
             Try again

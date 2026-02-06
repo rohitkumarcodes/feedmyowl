@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import styles from "./settings-overview.module.css";
 
 interface SettingsOverviewProps {
@@ -14,16 +15,21 @@ function formatDateTime(iso: string | null): string {
   if (!iso) {
     return "Never";
   }
+
   const parsed = new Date(iso);
   if (Number.isNaN(parsed.valueOf())) {
     return "Unknown";
   }
+
   return new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(parsed);
 }
 
+/**
+ * Renders the authenticated account/settings view with MVP-safe controls.
+ */
 export function SettingsOverview({
   email,
   clerkId,
@@ -33,19 +39,18 @@ export function SettingsOverview({
 }: SettingsOverviewProps) {
   return (
     <div className={styles.root}>
-      <section className={styles.hero}>
-        <p className={styles.eyebrow}>Account Center</p>
-        <h1 className={styles.title}>MVP settings focused on reading essentials.</h1>
-        <p className={styles.description}>
-          Review account details, monitor feed activity, and export your feed list.
-          Billing is intentionally hidden in this phase and will return in phase 2.
-        </p>
-      </section>
+      <header className={styles.header}>
+        <h1>Settings</h1>
+        <p>Account details and exports for your reading workspace.</p>
+        <a href="/feeds" className={styles.linkButton}>
+          Return to feeds
+        </a>
+      </header>
 
-      <section className={styles.grid}>
-        <article className={styles.card}>
+      <div className={styles.grid}>
+        <section className={styles.panel}>
           <h2>Account</h2>
-          <dl className={styles.metaList}>
+          <dl>
             <div>
               <dt>Email</dt>
               <dd>{email}</dd>
@@ -59,11 +64,11 @@ export function SettingsOverview({
               <dd className={styles.mono}>{clerkId}</dd>
             </div>
           </dl>
-        </article>
+        </section>
 
-        <article className={styles.card}>
+        <section className={styles.panel}>
           <h2>Feed activity</h2>
-          <dl className={styles.metaList}>
+          <dl>
             <div>
               <dt>Connected feeds</dt>
               <dd>{feedCount}</dd>
@@ -73,32 +78,24 @@ export function SettingsOverview({
               <dd>{formatDateTime(lastFetchedAt)}</dd>
             </div>
           </dl>
-        </article>
-      </section>
+        </section>
+      </div>
 
-      <section className={styles.grid}>
-        <article className={styles.card}>
+      <div className={styles.grid}>
+        <section className={styles.panel}>
           <h2>Data export</h2>
-          <p className={styles.paragraph}>
-            Download your feed list as an OPML file and import it into any compatible
-            reader.
-          </p>
-          <a href="/api/feeds/export" className={styles.secondaryLink}>
+          <p>Download your feed subscriptions as OPML.</p>
+          <Link href="/api/feeds/export" className={styles.linkButton} prefetch={false}>
             Download OPML export
-          </a>
-        </article>
+          </Link>
+        </section>
 
-        <article className={styles.card}>
-          <h2>Danger zone</h2>
-          <p className={styles.paragraph}>
-            Account deletion remains disabled while we complete a full deletion flow
-            across every connected system.
-          </p>
-          <button type="button" className={styles.dangerButton} disabled>
-            Delete account (coming soon)
-          </button>
-        </article>
-      </section>
+        <section className={styles.panel}>
+          <h2>Billing</h2>
+          <p>Billing controls are intentionally hidden in the current MVP phase.</p>
+          <p className={styles.muted}>Billing and feed caps return in phase 2.</p>
+        </section>
+      </div>
     </div>
   );
 }

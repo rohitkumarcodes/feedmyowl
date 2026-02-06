@@ -11,7 +11,7 @@
  * What this file exports:
  *   - db: The Drizzle database instance (for queries)
  *   - eq, and, or, not, desc, asc: Query comparison operators
- *   - users, feeds, feedItems: Schema table references
+ *   - users, folders, feeds, feedItems: Schema table references
  *
  * Usage in other files:
  *   import { db, eq, users } from "@/lib/database";
@@ -33,7 +33,7 @@ export { eq, and, or, not, desc, asc } from "drizzle-orm";
  * Re-export schema table references through this module boundary.
  * API routes import these from "@/lib/database" — never from "@/db/schema" directly.
  */
-export { users, feeds, feedItems } from "@/db/schema";
+export { users, folders, feeds, feedItems } from "@/db/schema";
 
 /**
  * Lazy-initialized Drizzle database instance.
@@ -78,9 +78,8 @@ export function getDb(): Database {
  * The Proxy defers the neon() call until db is first accessed at runtime,
  * so the build never tries to connect to the database.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const db: Database = new Proxy({} as Database, {
   get(_target, prop) {
-    return (getDb() as any)[prop];
+    return getDb()[prop as keyof Database];
   },
 });

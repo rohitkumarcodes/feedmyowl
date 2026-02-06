@@ -1,31 +1,29 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  FormEvent,
+  MouseEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
+import { AddFeedForm } from "./AddFeedForm";
+import { ArticleList } from "./ArticleList";
+import { ArticleReader } from "./ArticleReader";
+import { Layout } from "./Layout";
+import { Sidebar, SidebarScope } from "./Sidebar";
+import { Toolbar } from "./Toolbar";
+import type { ArticleViewModel, FeedViewModel, FolderViewModel } from "./feeds-types";
+import { extractArticleSnippet } from "@/utils/articleText";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import styles from "./feeds-workspace.module.css";
-
-export interface FeedItemViewModel {
-  id: string;
-  title: string | null;
-  link: string | null;
-  content: string | null;
-  author: string | null;
-  publishedAt: string | null;
-  createdAt: string;
-}
-
-export interface FeedViewModel {
-  id: string;
-  title: string | null;
-  description: string | null;
-  url: string;
-  lastFetchedAt: string | null;
-  createdAt: string;
-  items: FeedItemViewModel[];
-}
 
 interface FeedsWorkspaceProps {
   initialFeeds: FeedViewModel[];
+  initialFolders: FolderViewModel[];
 }
 
 interface ApiErrorResponse {
@@ -44,95 +42,50 @@ interface RefreshResponse {
   results?: RefreshResult[];
 }
 
-interface FlattenedArticle {
-  id: string;
-  title: string;
-  link: string | null;
-  content: string | null;
-  author: string | null;
-  publishedAt: string | null;
-  createdAt: string;
-  feedId: string;
-  feedTitle: string;
-}
+type ContextMenuState =
+  | {
+      kind: "feed";
+      id: string;
+      x: number;
+      y: number;
+    }
+  | {
+      kind: "folder";
+      id: string;
+      x: number;
+      y: number;
+    };
 
-const MAX_VISIBLE_ARTICLES = 80;
+type PendingAction =
+  | {
+      kind: "feed-rename";
+      feedId: string;
+      draftTitle: string;
+    }
+  | {
+      kind: "folder-rename";
+      folderId: string;
+      draftName: string;
+    }
+  | {
+      kind: "feed-move";
+      feedId: string;
+      draftFolderId: string;
+    }
+  | {
+      kind: "feed-delete";
+      feedId: string;
+      feedLabel: string;
+    }
+  | {
+      kind: "folder-delete";
+      folderId: string;
+      folderLabel: string;
+    };
 
-function getFeedLabel(feed: FeedViewModel): string {
-  return feed.title || extractHost(feed.url);
-}
-
-function extractHost(url: string): string {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return url;
-  }
-}
-
-function decodeCommonEntities(value: string): string {
-  return value
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">")
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;|&apos;/gi, "'");
-}
-
-function toSafePlainText(content: string | null): string {
-  if (!content) {
-    return "No readable content available for this article.";
-  }
-
-  const plainText = decodeCommonEntities(
-    content
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<\/?(p|div|section|article|h[1-6]|blockquote|pre)\b[^>]*>/gi, "\n")
-      .replace(/<br\s*\/?>/gi, "\n")
-      .replace(/<li\b[^>]*>/gi, "\n- ")
-      .replace(/<\/li>/gi, "")
-      .replace(/<[^>]+>/g, "")
-  )
-    .replace(/\r\n?/g, "\n")
-    .replace(/[ \t]+\n/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-
-  return plainText || "No readable content available for this article.";
-}
-
-function getExcerpt(content: string | null): string {
-  const plainText = toSafePlainText(content);
-  if (plainText.length <= 180) {
-    return plainText;
-  }
-  return `${plainText.slice(0, 177)}...`;
-}
-
-function toTimeValue(iso: string | null): number {
-  if (!iso) {
-    return 0;
-  }
-  const parsed = Date.parse(iso);
-  return Number.isNaN(parsed) ? 0 : parsed;
-}
-
-function formatDateTime(iso: string | null): string {
-  if (!iso) {
-    return "Never";
-  }
-  const date = new Date(iso);
-  if (Number.isNaN(date.valueOf())) {
-    return "Unknown";
-  }
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
-
+/**
+ * Safely parse a JSON response body.
+ */
 async function parseResponseJson<T>(response: Response): Promise<T | null> {
   try {
     return (await response.json()) as T;
@@ -141,64 +94,135 @@ async function parseResponseJson<T>(response: Response): Promise<T | null> {
   }
 }
 
-export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
+/**
+ * Builds a readable feed label from title or URL fallback.
+ */
+function getFeedLabel(feed: FeedViewModel): string {
+  if (feed.title?.trim()) {
+    return feed.title.trim();
+  }
+
+  try {
+    return new URL(feed.url).hostname.replace(/^www\./, "");
+  } catch {
+    return feed.url;
+  }
+}
+
+/**
+ * Converts ISO values into comparable numeric timestamps.
+ */
+function toTimeValue(iso: string | null): number {
+  if (!iso) {
+    return 0;
+  }
+
+  const parsed = Date.parse(iso);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+/**
+ * Client orchestrator for feed subscriptions, article list state, and reader state.
+ */
+export function FeedsWorkspace({
+  initialFeeds,
+  initialFolders,
+}: FeedsWorkspaceProps) {
   const router = useRouter();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
   const [feeds, setFeeds] = useState<FeedViewModel[]>(initialFeeds);
-  const [feedUrlInput, setFeedUrlInput] = useState("");
-  const [query, setQuery] = useState("");
-  const [activeFeedId, setActiveFeedId] = useState<string>("all");
-  const [selectedArticleId, setSelectedArticleId] = useState<string | null>(
-    initialFeeds[0]?.items[0]?.id ?? null
+  const [folders, setFolders] = useState<FolderViewModel[]>(initialFolders);
+
+  const [selectedScope, setSelectedScope] = useState<SidebarScope>({ type: "all" });
+  const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(
+    () => new Set(initialFolders.map((folder) => folder.id))
   );
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
+  const [openArticleId, setOpenArticleId] = useState<string | null>(null);
+
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isAddFeedFormVisible, setIsAddFeedFormVisible] = useState(false);
+  const [isAddFolderFormVisible, setIsAddFolderFormVisible] = useState(false);
+
+  const [feedUrlInput, setFeedUrlInput] = useState("");
+  const [feedFolderIdInput, setFeedFolderIdInput] = useState("");
+  const [folderNameInput, setFolderNameInput] = useState("");
+
+  const [isAddingFeed, setIsAddingFeed] = useState(false);
+  const [isAddingFolder, setIsAddingFolder] = useState(false);
+  const [isRefreshingFeeds, setIsRefreshingFeeds] = useState(false);
+  const [isApplyingAction, setIsApplyingAction] = useState(false);
+
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isAddingFeed, setIsAddingFeed] = useState(false);
-  const [isRefreshingFeeds, setIsRefreshingFeeds] = useState(false);
-  const [removingFeedId, setRemovingFeedId] = useState<string | null>(null);
+
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
 
   useEffect(() => {
     setFeeds(initialFeeds);
   }, [initialFeeds]);
 
   useEffect(() => {
-    if (activeFeedId === "all") {
+    setFolders(initialFolders);
+    const currentFolderIds = new Set(initialFolders.map((folder) => folder.id));
+    setExpandedFolderIds((previous) => {
+      const next = new Set<string>();
+      for (const id of previous) {
+        if (currentFolderIds.has(id)) {
+          next.add(id);
+        }
+      }
+      return next;
+    });
+  }, [initialFolders]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 150);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (selectedScope.type === "feed") {
+      const stillExists = feeds.some((feed) => feed.id === selectedScope.feedId);
+      if (!stillExists) {
+        setSelectedScope({ type: "all" });
+      }
       return;
     }
-    const selectedFeedStillExists = feeds.some((feed) => feed.id === activeFeedId);
-    if (!selectedFeedStillExists) {
-      setActiveFeedId("all");
-    }
-  }, [activeFeedId, feeds]);
 
-  const totalArticleCount = useMemo(
-    () => feeds.reduce((count, feed) => count + feed.items.length, 0),
-    [feeds]
-  );
-
-  const lastFetchedAt = useMemo(() => {
-    let latest = 0;
-    for (const feed of feeds) {
-      const value = toTimeValue(feed.lastFetchedAt);
-      if (value > latest) {
-        latest = value;
+    if (selectedScope.type === "folder") {
+      const stillExists = folders.some((folder) => folder.id === selectedScope.folderId);
+      if (!stillExists) {
+        setSelectedScope({ type: "all" });
       }
     }
-    return latest > 0 ? new Date(latest).toISOString() : null;
-  }, [feeds]);
+  }, [feeds, folders, selectedScope]);
 
-  const articles = useMemo(() => {
+  const allArticles = useMemo<ArticleViewModel[]>(() => {
     const flattened = feeds.flatMap((feed) =>
       feed.items.map(
-        (item): FlattenedArticle => ({
+        (item): ArticleViewModel => ({
           id: item.id,
           title: item.title || "Untitled article",
           link: item.link,
           content: item.content,
           author: item.author,
           publishedAt: item.publishedAt,
+          readAt: item.readAt,
           createdAt: item.createdAt,
           feedId: feed.id,
           feedTitle: getFeedLabel(feed),
+          snippet: extractArticleSnippet(item.content),
         })
       )
     );
@@ -212,91 +236,186 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
     return flattened;
   }, [feeds]);
 
-  const filteredArticles = useMemo(() => {
-    const loweredQuery = query.trim().toLowerCase();
-    return articles
-      .filter((article) =>
-        activeFeedId === "all" ? true : article.feedId === activeFeedId
-      )
-      .filter((article) => {
-        if (!loweredQuery) {
-          return true;
-        }
-        const haystack = `${article.title} ${article.feedTitle} ${article.content || ""}`
-          .toLowerCase()
-          .trim();
-        return haystack.includes(loweredQuery);
-      })
-      .slice(0, MAX_VISIBLE_ARTICLES);
-  }, [activeFeedId, articles, query]);
+  const feedToFolderMap = useMemo(() => {
+    const map = new Map<string, string | null>();
+
+    for (const feed of feeds) {
+      map.set(feed.id, feed.folderId);
+    }
+
+    return map;
+  }, [feeds]);
+
+  const scopedArticles = useMemo(() => {
+    if (selectedScope.type === "all") {
+      return allArticles;
+    }
+
+    if (selectedScope.type === "feed") {
+      return allArticles.filter((article) => article.feedId === selectedScope.feedId);
+    }
+
+    return allArticles.filter(
+      (article) => feedToFolderMap.get(article.feedId) === selectedScope.folderId
+    );
+  }, [allArticles, feedToFolderMap, selectedScope]);
+
+  const visibleArticles = useMemo(() => {
+    const normalizedQuery = debouncedQuery.trim().toLowerCase();
+    if (!normalizedQuery) {
+      return scopedArticles;
+    }
+
+    return scopedArticles.filter((article) => {
+      const haystack = `${article.title} ${article.snippet}`.toLowerCase();
+      return haystack.includes(normalizedQuery);
+    });
+  }, [debouncedQuery, scopedArticles]);
+
+  const openArticle = useMemo(
+    () => allArticles.find((article) => article.id === openArticleId) || null,
+    [allArticles, openArticleId]
+  );
 
   useEffect(() => {
     if (!selectedArticleId) {
+      if (visibleArticles.length > 0) {
+        setSelectedArticleId(visibleArticles[0].id);
+      }
       return;
     }
-    const stillAvailable = articles.some((article) => article.id === selectedArticleId);
-    if (!stillAvailable) {
-      setSelectedArticleId(null);
-    }
-  }, [articles, selectedArticleId]);
 
-  const selectedArticle = useMemo(
-    () =>
-      selectedArticleId
-        ? articles.find((article) => article.id === selectedArticleId) || null
-        : null,
-    [articles, selectedArticleId]
+    const stillVisible = visibleArticles.some(
+      (article) => article.id === selectedArticleId
+    );
+
+    if (!stillVisible) {
+      setSelectedArticleId(visibleArticles[0]?.id ?? null);
+    }
+  }, [selectedArticleId, visibleArticles]);
+
+  useEffect(() => {
+    if (!openArticleId) {
+      return;
+    }
+
+    const exists = allArticles.some((article) => article.id === openArticleId);
+    if (!exists) {
+      setOpenArticleId(null);
+    }
+  }, [allArticles, openArticleId]);
+
+  useEffect(() => {
+    if (selectedScope.type === "folder") {
+      setFeedFolderIdInput(selectedScope.folderId);
+      return;
+    }
+
+    if (selectedScope.type === "feed") {
+      const folderId = feedToFolderMap.get(selectedScope.feedId);
+      setFeedFolderIdInput(folderId || "");
+      return;
+    }
+
+    setFeedFolderIdInput("");
+  }, [feedToFolderMap, selectedScope]);
+
+  useEffect(() => {
+    function closeContextMenu() {
+      setContextMenu(null);
+    }
+
+    window.addEventListener("click", closeContextMenu);
+    window.addEventListener("scroll", closeContextMenu, true);
+
+    return () => {
+      window.removeEventListener("click", closeContextMenu);
+      window.removeEventListener("scroll", closeContextMenu, true);
+    };
+  }, []);
+
+  const markArticleAsRead = useCallback(
+    async (articleId: string) => {
+      const article = allArticles.find((candidate) => candidate.id === articleId);
+
+      if (!article || article.readAt) {
+        return;
+      }
+
+      const optimisticReadAt = new Date().toISOString();
+      setFeeds((previousFeeds) =>
+        previousFeeds.map((feed) => {
+          if (feed.id !== article.feedId) {
+            return feed;
+          }
+
+          return {
+            ...feed,
+            items: feed.items.map((item) =>
+              item.id === articleId ? { ...item, readAt: optimisticReadAt } : item
+            ),
+          };
+        })
+      );
+
+      const response = await fetch("/api/feeds", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "item.markRead", itemId: articleId }),
+      });
+
+      if (!response.ok) {
+        const body = await parseResponseJson<ApiErrorResponse>(response);
+        setErrorMessage(body?.error || "Unable to persist read state.");
+      }
+    },
+    [allArticles]
   );
 
-  async function handleAddFeed(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (isAddingFeed) {
-      return;
-    }
-
-    const nextUrl = feedUrlInput.trim();
-    if (!nextUrl) {
-      setErrorMessage("Feed URL is required.");
+  const openSelectedArticle = useCallback(
+    async (articleId: string) => {
+      setSelectedArticleId(articleId);
+      setOpenArticleId(articleId);
       setInfoMessage(null);
-      return;
-    }
+      setErrorMessage(null);
+      await markArticleAsRead(articleId);
+    },
+    [markArticleAsRead]
+  );
 
-    setIsAddingFeed(true);
-    setErrorMessage(null);
-    setInfoMessage(null);
+  const moveSelectionBy = useCallback(
+    (step: number) => {
+      if (visibleArticles.length === 0) {
+        setSelectedArticleId(null);
+        return;
+      }
 
-    const response = await fetch("/api/feeds", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: nextUrl }),
-    });
-    const body = await parseResponseJson<ApiErrorResponse>(response);
+      const index = visibleArticles.findIndex(
+        (article) => article.id === selectedArticleId
+      );
 
-    if (!response.ok) {
-      setErrorMessage(body?.error || "Could not add feed.");
-      setIsAddingFeed(false);
-      return;
-    }
+      if (index < 0) {
+        setSelectedArticleId(visibleArticles[0].id);
+        return;
+      }
 
-    setFeedUrlInput("");
-    setInfoMessage("Feed added. Fetching latest data...");
-    setIsAddingFeed(false);
-    router.refresh();
-  }
+      const nextIndex = Math.max(0, Math.min(visibleArticles.length - 1, index + step));
+      setSelectedArticleId(visibleArticles[nextIndex].id);
+    },
+    [selectedArticleId, visibleArticles]
+  );
 
-  async function handleRefresh() {
+  const handleRefresh = useCallback(async () => {
     if (isRefreshingFeeds) {
       return;
     }
 
     setIsRefreshingFeeds(true);
-    setErrorMessage(null);
     setInfoMessage(null);
+    setErrorMessage(null);
 
     const response = await fetch("/api/refresh", { method: "POST" });
-    const body = await parseResponseJson<RefreshResponse & ApiErrorResponse>(
-      response
-    );
+    const body = await parseResponseJson<RefreshResponse & ApiErrorResponse>(response);
 
     if (!response.ok) {
       setErrorMessage(body?.error || "Could not refresh feeds.");
@@ -310,274 +429,543 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
           total + (result.status === "success" ? result.newItemCount : 0),
         0
       ) || 0;
+
     setInfoMessage(
       addedCount > 0
         ? `Refresh complete. ${addedCount} new article${addedCount === 1 ? "" : "s"} added.`
         : "Refresh complete. No new articles this time."
     );
+
     setIsRefreshingFeeds(false);
     router.refresh();
-  }
+  }, [isRefreshingFeeds, router]);
 
-  async function handleRemoveFeed(feedId: string, feedLabel: string) {
-    if (removingFeedId) {
+  const handleAddFeed = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+
+      if (isAddingFeed) {
+        return;
+      }
+
+      const nextUrl = feedUrlInput.trim();
+      if (!nextUrl) {
+        setErrorMessage("Feed URL is required.");
+        setInfoMessage(null);
+        return;
+      }
+
+      setIsAddingFeed(true);
+      setInfoMessage(null);
+      setErrorMessage(null);
+
+      const response = await fetch("/api/feeds", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "feed.create",
+          url: nextUrl,
+          folderId: feedFolderIdInput || null,
+        }),
+      });
+      const body = await parseResponseJson<ApiErrorResponse>(response);
+
+      if (!response.ok) {
+        setErrorMessage(body?.error || "Could not add feed.");
+        setIsAddingFeed(false);
+        return;
+      }
+
+      setFeedUrlInput("");
+      setInfoMessage("Feed added.");
+      setIsAddingFeed(false);
+      router.refresh();
+    },
+    [feedFolderIdInput, feedUrlInput, isAddingFeed, router]
+  );
+
+  const handleCreateFolder = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+
+      if (isAddingFolder) {
+        return;
+      }
+
+      const nextName = folderNameInput.trim();
+      if (!nextName) {
+        setErrorMessage("Folder name is required.");
+        return;
+      }
+
+      setIsAddingFolder(true);
+      setErrorMessage(null);
+      setInfoMessage(null);
+
+      const response = await fetch("/api/feeds", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "folder.create", name: nextName }),
+      });
+      const body = await parseResponseJson<
+        ApiErrorResponse & { folder?: FolderViewModel }
+      >(response);
+
+      if (!response.ok) {
+        setErrorMessage(body?.error || "Could not create folder.");
+        setIsAddingFolder(false);
+        return;
+      }
+
+      if (body?.folder?.id) {
+        setExpandedFolderIds((previous) => {
+          const next = new Set(previous);
+          next.add(body.folder!.id);
+          return next;
+        });
+      }
+
+      setFolderNameInput("");
+      setIsAddingFolder(false);
+      setIsAddFolderFormVisible(false);
+      setInfoMessage("Folder created.");
+      router.refresh();
+    },
+    [folderNameInput, isAddingFolder, router]
+  );
+
+  const openFeedContextMenu = useCallback(
+    (feedId: string, event: MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      setContextMenu({ kind: "feed", id: feedId, x: event.clientX, y: event.clientY });
+    },
+    []
+  );
+
+  const openFolderContextMenu = useCallback(
+    (folderId: string, event: MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      setContextMenu({ kind: "folder", id: folderId, x: event.clientX, y: event.clientY });
+    },
+    []
+  );
+
+  const applyPendingAction = useCallback(async () => {
+    if (!pendingAction || isApplyingAction) {
       return;
     }
 
-    const shouldDelete = window.confirm(
-      `Remove "${feedLabel}" and all stored articles from this feed?`
-    );
-    if (!shouldDelete) {
-      return;
-    }
-
-    setRemovingFeedId(feedId);
+    setIsApplyingAction(true);
     setErrorMessage(null);
     setInfoMessage(null);
 
-    const response = await fetch(`/api/feeds/${feedId}`, { method: "DELETE" });
-    const body = await parseResponseJson<ApiErrorResponse>(response);
+    let response: Response | null = null;
 
-    if (!response.ok) {
-      setErrorMessage(body?.error || "Could not remove feed.");
-      setRemovingFeedId(null);
+    if (pendingAction.kind === "feed-rename") {
+      response = await fetch(`/api/feeds/${pendingAction.feedId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "feed.rename",
+          title: pendingAction.draftTitle,
+        }),
+      });
+    }
+
+    if (pendingAction.kind === "folder-rename") {
+      response = await fetch("/api/feeds", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "folder.rename",
+          folderId: pendingAction.folderId,
+          name: pendingAction.draftName,
+        }),
+      });
+    }
+
+    if (pendingAction.kind === "feed-move") {
+      response = await fetch(`/api/feeds/${pendingAction.feedId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "feed.move",
+          folderId: pendingAction.draftFolderId || null,
+        }),
+      });
+    }
+
+    if (pendingAction.kind === "feed-delete") {
+      response = await fetch(`/api/feeds/${pendingAction.feedId}`, {
+        method: "DELETE",
+      });
+    }
+
+    if (pendingAction.kind === "folder-delete") {
+      response = await fetch("/api/feeds", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "folder.delete",
+          folderId: pendingAction.folderId,
+        }),
+      });
+    }
+
+    if (!response) {
+      setIsApplyingAction(false);
       return;
     }
 
-    setInfoMessage("Feed removed.");
-    setRemovingFeedId(null);
+    const body = await parseResponseJson<ApiErrorResponse>(response);
+
+    if (!response.ok) {
+      setErrorMessage(body?.error || "Action failed.");
+      setIsApplyingAction(false);
+      return;
+    }
+
+    setPendingAction(null);
+    setIsApplyingAction(false);
+    setInfoMessage("Action completed.");
     router.refresh();
-  }
+  }, [isApplyingAction, pendingAction, router]);
 
-  return (
-    <div className={styles.root}>
-      <section className={styles.hero}>
-        <p className={styles.eyebrow}>Your Reading Desk</p>
-        <h1 className={styles.heroTitle}>Track what matters, ignore the noise.</h1>
-        <p className={styles.heroText}>
-          Add feeds, refresh on demand, and read everything directly inside the app.
-        </p>
-        <div className={styles.statGrid}>
-          <article className={styles.statCard}>
-            <p className={styles.statLabel}>Connected feeds</p>
-            <p className={styles.statValue}>{feeds.length}</p>
-          </article>
-          <article className={styles.statCard}>
-            <p className={styles.statLabel}>Saved articles</p>
-            <p className={styles.statValue}>{totalArticleCount}</p>
-          </article>
-          <article className={styles.statCard}>
-            <p className={styles.statLabel}>Last refresh</p>
-            <p className={styles.statValueSmall}>{formatDateTime(lastFetchedAt)}</p>
-          </article>
-        </div>
-      </section>
+  const cancelPendingAction = useCallback(() => {
+    setPendingAction(null);
+  }, []);
 
-      <section className={styles.panel}>
-        <div className={styles.panelHeader}>
-          <h2 className={styles.panelTitle}>Manage feeds</h2>
-          <button
-            type="button"
-            onClick={handleRefresh}
-            className={styles.secondaryButton}
-            disabled={isRefreshingFeeds}
-          >
-            {isRefreshingFeeds ? "Refreshing..." : "Refresh all feeds"}
-          </button>
-        </div>
-        <form onSubmit={handleAddFeed} className={styles.formRow}>
-          <input
-            name="feed-url"
-            type="url"
-            required
-            placeholder="https://example.com/rss.xml"
-            value={feedUrlInput}
-            onChange={(event) => setFeedUrlInput(event.currentTarget.value)}
-            className={styles.urlInput}
-            aria-label="Feed URL"
-          />
-          <button
-            type="submit"
-            className={styles.primaryButton}
-            disabled={isAddingFeed}
-          >
-            {isAddingFeed ? "Adding..." : "Add feed"}
-          </button>
-        </form>
+  const feedLabelById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const feed of feeds) {
+      map.set(feed.id, getFeedLabel(feed));
+    }
+    return map;
+  }, [feeds]);
+
+  const folderLabelById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const folder of folders) {
+      map.set(folder.id, folder.name);
+    }
+    return map;
+  }, [folders]);
+
+  const statusPanel = useMemo(() => {
+    const hasPanel =
+      Boolean(infoMessage) ||
+      Boolean(errorMessage) ||
+      isAddFolderFormVisible ||
+      Boolean(pendingAction);
+
+    if (!hasPanel) {
+      return null;
+    }
+
+    return (
+      <div className={styles.statusPanel}>
         {infoMessage ? <p className={styles.infoMessage}>{infoMessage}</p> : null}
         {errorMessage ? <p className={styles.errorMessage}>{errorMessage}</p> : null}
-      </section>
 
-      <section className={styles.contentGrid}>
-        <div className={styles.column}>
-          <header className={styles.columnHeader}>
-            <h2>Feed list</h2>
-            <p>{feeds.length} connected</p>
-          </header>
-          <div className={styles.filterRow}>
+        {isAddFolderFormVisible ? (
+          <form className={styles.inlineForm} onSubmit={handleCreateFolder}>
+            <label htmlFor="new-folder-name">Folder name</label>
+            <input
+              id="new-folder-name"
+              value={folderNameInput}
+              onChange={(event) => setFolderNameInput(event.currentTarget.value)}
+              placeholder="New folder"
+            />
+            <button type="submit" disabled={isAddingFolder}>
+              {isAddingFolder ? "Creating..." : "Create Folder"}
+            </button>
             <button
               type="button"
-              onClick={() => setActiveFeedId("all")}
-              className={`${styles.filterButton} ${
-                activeFeedId === "all" ? styles.filterButtonActive : ""
-              }`}
+              onClick={() => setIsAddFolderFormVisible(false)}
+              disabled={isAddingFolder}
             >
-              All feeds
+              Cancel
             </button>
-            {feeds.map((feed) => (
-              <button
-                key={feed.id}
-                type="button"
-                onClick={() => setActiveFeedId(feed.id)}
-                className={`${styles.filterButton} ${
-                  activeFeedId === feed.id ? styles.filterButtonActive : ""
-                }`}
-              >
-                {getFeedLabel(feed)}
-              </button>
-            ))}
-          </div>
-          <div className={styles.feedList}>
-            {feeds.length === 0 ? (
-              <p className={styles.emptyState}>
-                No feeds yet. Add your first RSS/Atom URL to start building your reading
-                stream.
-              </p>
-            ) : (
-              feeds.map((feed) => {
-                const feedLabel = getFeedLabel(feed);
-                return (
-                  <article key={feed.id} className={styles.feedCard}>
-                    <div className={styles.feedCardTop}>
-                      <h3>{feedLabel}</h3>
-                      <button
-                        type="button"
-                        className={styles.dangerButton}
-                        onClick={() => handleRemoveFeed(feed.id, feedLabel)}
-                        disabled={removingFeedId === feed.id}
-                      >
-                        {removingFeedId === feed.id ? "Removing..." : "Remove"}
-                      </button>
-                    </div>
-                    <p className={styles.feedUrl}>{feed.url}</p>
-                    <p className={styles.feedMeta}>
-                      {feed.items.length} article{feed.items.length === 1 ? "" : "s"} stored
-                      <span>•</span>
-                      Updated {formatDateTime(feed.lastFetchedAt)}
-                    </p>
-                    {feed.description ? (
-                      <p className={styles.feedDescription}>{feed.description}</p>
-                    ) : null}
-                  </article>
-                );
-              })
-            )}
-          </div>
-        </div>
+          </form>
+        ) : null}
 
-        <div className={styles.column}>
-          <header className={styles.columnHeader}>
-            <h2>Article stream</h2>
-            <p>{filteredArticles.length} shown</p>
-          </header>
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.currentTarget.value)}
-            placeholder="Search by title or keyword"
-            className={styles.searchInput}
-            aria-label="Search articles"
-          />
-          <div className={styles.articleList}>
-            {filteredArticles.length === 0 ? (
-              <p className={styles.emptyState}>
-                No matching articles yet. Refresh your feeds or widen your search.
+        {pendingAction ? (
+          <div className={styles.pendingAction}>
+            {pendingAction.kind === "feed-delete" ? (
+              <p>
+                Delete feed &quot;{pendingAction.feedLabel}&quot; and all its stored
+                articles?
               </p>
-            ) : (
-              filteredArticles.map((article) => (
-                <article key={article.id} className={styles.articleCard}>
-                  <div className={styles.articleTop}>
-                    <span className={styles.articleFeed}>{article.feedTitle}</span>
-                    <span className={styles.articleTime}>
-                      {formatDateTime(article.publishedAt || article.createdAt)}
-                    </span>
-                  </div>
-                  <h3 className={styles.articleTitle}>{article.title}</h3>
-                  <p className={styles.articleMeta}>
-                    {article.author || "Unknown author"}
-                  </p>
-                  <p className={styles.articleExcerpt}>{getExcerpt(article.content)}</p>
-                  <div className={styles.articleActions}>
-                    <button
-                      type="button"
-                      className={styles.readButton}
-                      onClick={() => setSelectedArticleId(article.id)}
-                    >
-                      {selectedArticleId === article.id ? "Reading" : "Read in app"}
-                    </button>
-                    {article.link ? (
-                      <a
-                        href={article.link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className={styles.articleLink}
-                      >
-                        Open source
-                      </a>
-                    ) : (
-                      <span className={styles.noLink}>No source link</span>
-                    )}
-                  </div>
-                </article>
-              ))
-            )}
-          </div>
+            ) : null}
 
-          <section className={styles.readerPanel}>
-            <div className={styles.readerHeader}>
-              <h3>Reader</h3>
-              {selectedArticle ? (
-                <button
-                  type="button"
-                  onClick={() => setSelectedArticleId(null)}
-                  className={styles.clearReaderButton}
+            {pendingAction.kind === "folder-delete" ? (
+              <p>
+                Delete folder &quot;{pendingAction.folderLabel}&quot; and every
+                feed/article inside it?
+              </p>
+            ) : null}
+
+            {pendingAction.kind === "feed-rename" ? (
+              <label className={styles.actionField}>
+                Feed name
+                <input
+                  value={pendingAction.draftTitle}
+                  onChange={(event) =>
+                    setPendingAction((previous) =>
+                      previous?.kind === "feed-rename"
+                        ? { ...previous, draftTitle: event.currentTarget.value }
+                        : previous
+                    )
+                  }
+                />
+              </label>
+            ) : null}
+
+            {pendingAction.kind === "folder-rename" ? (
+              <label className={styles.actionField}>
+                Folder name
+                <input
+                  value={pendingAction.draftName}
+                  onChange={(event) =>
+                    setPendingAction((previous) =>
+                      previous?.kind === "folder-rename"
+                        ? { ...previous, draftName: event.currentTarget.value }
+                        : previous
+                    )
+                  }
+                />
+              </label>
+            ) : null}
+
+            {pendingAction.kind === "feed-move" ? (
+              <label className={styles.actionField}>
+                Move feed to folder
+                <select
+                  value={pendingAction.draftFolderId}
+                  onChange={(event) =>
+                    setPendingAction((previous) =>
+                      previous?.kind === "feed-move"
+                        ? { ...previous, draftFolderId: event.currentTarget.value }
+                        : previous
+                    )
+                  }
                 >
-                  Close
-                </button>
-              ) : null}
-            </div>
+                  <option value="">Uncategorized</option>
+                  {folders
+                    .slice()
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((folder) => (
+                      <option key={folder.id} value={folder.id}>
+                        {folder.name}
+                      </option>
+                    ))}
+                </select>
+              </label>
+            ) : null}
 
-            {selectedArticle ? (
-              <>
-                <p className={styles.readerFeedLabel}>
-                  {selectedArticle.feedTitle} • {formatDateTime(selectedArticle.publishedAt || selectedArticle.createdAt)}
-                </p>
-                <h4 className={styles.readerTitle}>{selectedArticle.title}</h4>
-                <p className={styles.readerMeta}>
-                  {selectedArticle.author || "Unknown author"}
-                </p>
-                <div className={styles.readerBody}>
-                  {toSafePlainText(selectedArticle.content)}
-                </div>
-                {selectedArticle.link ? (
-                  <a
-                    href={selectedArticle.link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={styles.readerSourceLink}
-                  >
-                    Open original source
-                  </a>
-                ) : null}
-              </>
-            ) : (
-              <p className={styles.emptyState}>
-                Select "Read in app" on any article to view full plain-text content here.
-              </p>
-            )}
-          </section>
+            <div className={styles.pendingActionButtons}>
+              <button type="button" onClick={applyPendingAction} disabled={isApplyingAction}>
+                {isApplyingAction ? "Saving..." : "Confirm"}
+              </button>
+              <button
+                type="button"
+                onClick={cancelPendingAction}
+                disabled={isApplyingAction}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
+  }, [
+    applyPendingAction,
+    cancelPendingAction,
+    errorMessage,
+    folderNameInput,
+    folders,
+    handleCreateFolder,
+    infoMessage,
+    isAddFolderFormVisible,
+    isAddingFolder,
+    isApplyingAction,
+    pendingAction,
+  ]);
+
+  useKeyboardShortcuts({
+    onNextArticle: () => moveSelectionBy(1),
+    onPreviousArticle: () => moveSelectionBy(-1),
+    onOpenArticle: () => {
+      if (selectedArticleId) {
+        void openSelectedArticle(selectedArticleId);
+      }
+    },
+    onRefreshFeeds: () => {
+      void handleRefresh();
+    },
+    onFocusSearch: () => {
+      searchInputRef.current?.focus();
+    },
+    onClearSearch: () => {
+      setSearchQuery("");
+      setDebouncedQuery("");
+    },
+    onToggleSidebar: () => {
+      setIsSidebarCollapsed((previous) => !previous);
+    },
+  });
+
+  return (
+    <div className={styles.workspace}>
+      <Layout
+        toolbar={
+          <Toolbar
+            query={searchQuery}
+            searchInputRef={searchInputRef}
+            isRefreshing={isRefreshingFeeds}
+            isSidebarCollapsed={isSidebarCollapsed}
+            onQueryChange={setSearchQuery}
+            onRefresh={() => {
+              void handleRefresh();
+            }}
+            onToggleAddFeedForm={() => setIsAddFeedFormVisible((previous) => !previous)}
+            onToggleSidebar={() => setIsSidebarCollapsed((previous) => !previous)}
+          />
+        }
+        addFeedForm={
+          isAddFeedFormVisible ? (
+            <AddFeedForm
+              folders={folders}
+              url={feedUrlInput}
+              folderId={feedFolderIdInput}
+              isSubmitting={isAddingFeed}
+              onUrlChange={setFeedUrlInput}
+              onFolderIdChange={setFeedFolderIdInput}
+              onSubmit={(event) => {
+                void handleAddFeed(event);
+              }}
+            />
+          ) : null
+        }
+        statusPanel={statusPanel}
+        sidebar={
+          <Sidebar
+            folders={folders}
+            feeds={feeds}
+            expandedFolderIds={expandedFolderIds}
+            selectedScope={selectedScope}
+            onSelectAll={() => setSelectedScope({ type: "all" })}
+            onSelectFolder={(folderId) => setSelectedScope({ type: "folder", folderId })}
+            onSelectFeed={(feedId) => setSelectedScope({ type: "feed", feedId })}
+            onToggleFolder={(folderId) => {
+              setExpandedFolderIds((previous) => {
+                const next = new Set(previous);
+                if (next.has(folderId)) {
+                  next.delete(folderId);
+                } else {
+                  next.add(folderId);
+                }
+                return next;
+              });
+            }}
+            onOpenFolderContextMenu={openFolderContextMenu}
+            onOpenFeedContextMenu={openFeedContextMenu}
+            onShowAddFeedForm={() => setIsAddFeedFormVisible(true)}
+            onShowAddFolderForm={() => setIsAddFolderFormVisible(true)}
+          />
+        }
+        articleList={
+          <ArticleList
+            articles={visibleArticles}
+            selectedArticleId={selectedArticleId}
+            openArticleId={openArticleId}
+            onSelectArticle={(articleId) => {
+              void openSelectedArticle(articleId);
+            }}
+          />
+        }
+        articleReader={<ArticleReader article={openArticle} />}
+        isSidebarCollapsed={isSidebarCollapsed}
+      />
+
+      {contextMenu ? (
+        <div
+          className={styles.contextMenu}
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          role="menu"
+        >
+          {contextMenu.kind === "feed" ? (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  const label = feedLabelById.get(contextMenu.id) || "";
+                  setPendingAction({
+                    kind: "feed-rename",
+                    feedId: contextMenu.id,
+                    draftTitle: label,
+                  });
+                }}
+              >
+                Rename
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const feed = feeds.find((candidate) => candidate.id === contextMenu.id);
+                  setPendingAction({
+                    kind: "feed-move",
+                    feedId: contextMenu.id,
+                    draftFolderId: feed?.folderId || "",
+                  });
+                }}
+              >
+                Move to Folder
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPendingAction({
+                    kind: "feed-delete",
+                    feedId: contextMenu.id,
+                    feedLabel: feedLabelById.get(contextMenu.id) || "this feed",
+                  });
+                }}
+              >
+                Delete
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setPendingAction({
+                    kind: "folder-rename",
+                    folderId: contextMenu.id,
+                    draftName: folderLabelById.get(contextMenu.id) || "",
+                  });
+                }}
+              >
+                Rename
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPendingAction({
+                    kind: "folder-delete",
+                    folderId: contextMenu.id,
+                    folderLabel: folderLabelById.get(contextMenu.id) || "this folder",
+                  });
+                }}
+              >
+                Delete
+              </button>
+            </>
+          )}
         </div>
-      </section>
+      ) : null}
     </div>
   );
 }

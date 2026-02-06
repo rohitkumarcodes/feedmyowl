@@ -8,6 +8,13 @@
       "when": 1770376851023,
       "tag": "0000_chubby_retro_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1770399502811,
+      "tag": "0001_careful_genesis",
+      "breakpoints": true
     }
   ]
 }

@@ -8,25 +8,22 @@
  *
  * Tables:
  *   - users: One row per registered user (synced from Clerk via webhook)
+ *   - folders: Optional feed groups in the sidebar
  *   - feeds: RSS/Atom feeds that users have subscribed to
  *   - feed_items: Individual articles/entries fetched from feeds
  *
  * Key design decisions:
  *   - UUID primary keys: No enumeration risk, safe for distributed systems
- *   - Cascade deletes: Deleting a user removes their feeds; deleting a feed removes its items
- *   - We store our own users table (not just rely on Clerk) so we own our data (Principle 4)
+ *   - Cascade deletes: Deleting a user removes folders and feeds; deleting a
+ *     folder removes feeds; deleting a feed removes items
+ *   - We store our own users table (not just rely on Clerk) so we own our data
+ *     and keep service boundaries modular (Principle 4)
  *
  * Docs: https://orm.drizzle.team/docs/sql-schema-declaration
  */
 
 import { relations } from "drizzle-orm";
-import {
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-  varchar,
-} from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 
 // =============================================================================
 // USERS TABLE
@@ -69,11 +66,38 @@ export const users = pgTable("users", {
 });
 
 // =============================================================================
+// FOLDERS TABLE
+// =============================================================================
+/**
+ * Stores user-created feed folders shown in the sidebar.
+ *
+ * Folder deletion cascades to its feeds by design for this MVP phase.
+ */
+export const folders = pgTable("folders", {
+  /** Unique identifier (UUID v4, auto-generated) */
+  id: uuid("id").defaultRandom().primaryKey(),
+
+  /** Which user owns this folder */
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+
+  /** Human-readable folder name shown in the sidebar */
+  name: varchar("name", { length: 255 }).notNull(),
+
+  /** When this folder was created */
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+
+  /** When this folder was last updated */
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// =============================================================================
 // FEEDS TABLE
 // =============================================================================
 /**
- * Stores RSS/Atom feed subscriptions. Each feed belongs to one user.
- * Free users can have up to 10 feeds; paid users can have more.
+ * Stores RSS/Atom feed subscriptions. Each feed belongs to one user and can
+ * optionally belong to a folder.
  *
  * The title and description are populated after the first successful fetch.
  */
@@ -85,6 +109,11 @@ export const feeds = pgTable("feeds", {
   userId: uuid("user_id")
     .references(() => users.id, { onDelete: "cascade" })
     .notNull(),
+
+  /** Optional folder grouping in the sidebar */
+  folderId: uuid("folder_id").references(() => folders.id, {
+    onDelete: "cascade",
+  }),
 
   /** The RSS/Atom feed URL */
   url: text("url").notNull(),
@@ -142,6 +171,9 @@ export const feedItems = pgTable("feed_items", {
   /** When the article was published (from the feed, not when we fetched it) */
   publishedAt: timestamp("published_at"),
 
+  /** When the user opened this article in FeedMyOwl */
+  readAt: timestamp("read_at"),
+
   /** When we first stored this item */
   createdAt: timestamp("created_at").defaultNow().notNull(),
 
@@ -162,11 +194,18 @@ export const feedItems = pgTable("feed_items", {
  */
 
 export const usersRelations = relations(users, ({ many }) => ({
+  folders: many(folders),
+  feeds: many(feeds),
+}));
+
+export const foldersRelations = relations(folders, ({ one, many }) => ({
+  user: one(users, { fields: [folders.userId], references: [users.id] }),
   feeds: many(feeds),
 }));
 
 export const feedsRelations = relations(feeds, ({ one, many }) => ({
   user: one(users, { fields: [feeds.userId], references: [users.id] }),
+  folder: one(folders, { fields: [feeds.folderId], references: [folders.id] }),
   items: many(feedItems),
 }));
 

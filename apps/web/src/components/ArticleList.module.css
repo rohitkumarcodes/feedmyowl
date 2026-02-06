@@ -1,0 +1,10 @@
+.root {
+  height: 100%;
+  overflow: auto;
+}
+
+.empty {
+  color: var(--text-muted);
+  font-size: var(--text-base);
+  padding: 20px 12px;
+}

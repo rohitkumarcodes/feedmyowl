@@ -1,0 +1,83 @@
+.root {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  display: grid;
+  grid-template-rows: auto auto auto 1fr;
+  height: 100vh;
+}
+
+.toolbarRow,
+.formRow,
+.statusRow {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.panes {
+  display: grid;
+  grid-template-columns: 240px minmax(280px, 360px) minmax(0, 1fr);
+  min-height: 0;
+}
+
+.sidebarPane,
+.listPane,
+.readerPane {
+  min-height: 0;
+}
+
+.sidebarPane,
+.listPane {
+  border-right: 1px solid var(--border);
+}
+
+.sidebarPane {
+  background: var(--bg-secondary);
+  overflow: hidden;
+  width: 240px;
+}
+
+.sidebarPaneCollapsed {
+  border-right: 0;
+  width: 0;
+}
+
+.listPane {
+  background: var(--bg-primary);
+  overflow: hidden;
+}
+
+.readerPane {
+  background: var(--bg-primary);
+  overflow: hidden;
+}
+
+@media (max-width: 1120px) {
+  .panes {
+    grid-template-columns: 220px minmax(280px, 1fr) minmax(0, 1fr);
+  }
+
+  .sidebarPane {
+    width: 220px;
+  }
+}
+
+@media (max-width: 900px) {
+  .panes {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+  }
+
+  .sidebarPane,
+  .listPane {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebarPane {
+    width: 100%;
+  }
+
+  .sidebarPaneCollapsed {
+    display: none;
+  }
+}

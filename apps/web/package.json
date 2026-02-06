@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint src --ext .ts,.tsx",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio"
@@ -16,6 +16,7 @@
     "@neondatabase/serverless": "^0.10",
     "@sentry/nextjs": "^9",
     "@stripe/stripe-js": "^5",
+    "dompurify": "^3.3.1",
     "drizzle-orm": "^0.38",
     "next": "^15.2",
     "react": "^19",
@@ -26,6 +27,7 @@
     "svix": "^1.84.1"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.3",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",

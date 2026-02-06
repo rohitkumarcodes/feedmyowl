@@ -35,7 +35,7 @@ export async function sendWelcomeEmail(to: string, name?: string) {
     from: "FeedMyOwl <hello@feedmyowl.com>",
     to,
     subject: "Welcome to FeedMyOwl",
-    text: `Hi${name ? ` ${name}` : ""},\n\nWelcome to FeedMyOwl! You can now add up to 10 RSS feeds for free.\n\nHappy reading,\nThe FeedMyOwl Team`,
+    text: `Hi${name ? ` ${name}` : ""},\n\nWelcome to FeedMyOwl! Add your feeds, refresh when you want, and enjoy calm reading.\n\nHappy reading,\nThe FeedMyOwl Team`,
   });
 }
 
