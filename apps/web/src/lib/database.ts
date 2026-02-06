@@ -20,6 +20,7 @@
 
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
+import type { NeonHttpDatabase } from "drizzle-orm/neon-http";
 import * as schema from "@/db/schema";
 
 /**
@@ -35,19 +36,16 @@ export { eq, and, or, not, desc, asc } from "drizzle-orm";
 export { users, feeds, feedItems } from "@/db/schema";
 
 /**
- * Create a Neon serverless SQL connection.
- * This uses HTTP-based queries (no persistent connection),
- * which is ideal for serverless environments like Vercel.
+ * Lazy-initialized Drizzle database instance.
  *
- * Build-time safety: @neondatabase/serverless is listed in serverExternalPackages
- * in next.config.ts, so webpack doesn't bundle it. This means neon() only runs
- * at request time (when DATABASE_URL is available), never during the build.
- */
-const sql = neon(process.env.DATABASE_URL!);
-
-/**
- * The Drizzle ORM database instance.
- * Use this for all database operations throughout the app.
+ * Why lazy? Next.js collects page data for API routes at BUILD time, which
+ * triggers module imports. If we call neon() at the top level, it crashes
+ * because DATABASE_URL isn't available during the build. By using a getter,
+ * the connection is only created when `db` is first accessed at RUNTIME
+ * (i.e., when an actual request comes in and DATABASE_URL is set).
+ *
+ * Uses HTTP-based queries via Neon's serverless driver (no persistent
+ * connection), which is ideal for serverless environments like Vercel.
  *
  * Examples:
  *   // Simple query
@@ -62,4 +60,27 @@ const sql = neon(process.env.DATABASE_URL!);
  *   // Insert
  *   await db.insert(schema.users).values({ clerkId, email });
  */
-export const db = drizzle(sql, { schema });
+/** Full type of our Drizzle instance, including schema-aware .query property */
+type Database = NeonHttpDatabase<typeof schema>;
+
+let _db: Database | null = null;
+
+export function getDb(): Database {
+  if (!_db) {
+    const sql = neon(process.env.DATABASE_URL!);
+    _db = drizzle(sql, { schema });
+  }
+  return _db;
+}
+
+/**
+ * Convenience alias — import { db } and use it just like before.
+ * The Proxy defers the neon() call until db is first accessed at runtime,
+ * so the build never tries to connect to the database.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const db: Database = new Proxy({} as Database, {
+  get(_target, prop) {
+    return (getDb() as any)[prop];
+  },
+});
