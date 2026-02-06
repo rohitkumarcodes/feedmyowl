@@ -67,10 +67,11 @@ The guiding question for every product decision is: **"Does this help the user r
 | Payments UI (MVP) | **Deferred / hidden** | MVP is focused on core reading loop only (add, fetch, read). |
 | Feed subscription cap (MVP) | **No cap for now** | Feed-only MVP removes paywall logic until billing phase ships. |
 | Feed item storage in database | **Yes** | Previously fetched articles remain available even if a feed is temporarily down. Better reliability. |
-| Social features | **No** | Out of scope. Reading is a solitary, focused activity. |
-| Search within feeds | **To be decided** | Document decision here when made. |
-| Tagging / folders / organization | **To be decided** | Document decision here when made. |
-| Dark mode | **To be decided** | Document decision here when made. |
+| Search within feeds | Yes (client-side filtering in MVP) | Filters article list by title and snippet. No full-text search of bodies yet. Helps users find articles without frustration (Principle 7). |
+| Folders | Yes (MVP) | Expandable/collapsible folder groups in sidebar. Standard feed reader pattern. Tags rejected as more complex. |
+| Dark mode | Yes (automatic via prefers-color-scheme) | Respects system setting. No manual toggle in MVP. Reduces eye strain for reading (Principle 7). |
+Also add this row to the table:
+| Unread tracking | Minimal visual only | Opened articles shown in muted text/normal weight. No counts, no badges, no numbers. Wayfinding aid, not a productivity metric. |
 
 ---
 

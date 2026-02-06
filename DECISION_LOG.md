@@ -6,6 +6,68 @@
 
 ---
 
+### 2026-02-06 — Read/Unread State: Minimal Visual Tracking Only
+
+**Decision:** Articles track whether they have been opened by the user. Opened articles are displayed with muted text color and normal font weight. Unopened articles use primary text color and semibold weight. There are no unread counts, no badges, no numbers next to feeds, and no "All Unread" smart feed.
+
+**Context:** The project mission forbids unread counts and badges because they create compulsive checking behavior (see Product Definition: "no unread counts badgering the user to come back"). However, some visual orientation is needed so users can find their place in a list of articles. The compromise is a subtle typographic difference — enough for wayfinding, not enough to create anxiety.
+
+**Alternatives considered:**
+- No tracking at all (every article looks identical) — rejected because users would lose their place in long article lists, harming the reading experience
+- Full unread tracking with counts and badges (NetNewsWire-style) — rejected because it directly violates the project's attention-preservation mission
+
+**Principles referenced:** 7 (reading experience is sacred), 6 (minimal surface area)
+
+**Risks / tradeoffs:** Users accustomed to traditional feed readers may initially feel the interface is "missing" unread counts. This is intentional and aligned with the product's differentiation.
+
+---
+
+### 2026-02-06 — Folders: Included in MVP
+
+**Decision:** The sidebar will support folders (expandable/collapsible groups of feeds) in the MVP. Users can create folders, move feeds into them, and rename or delete folders. Feeds not assigned to a folder appear in an "uncategorized" section at the bottom of the sidebar.
+
+**Context:** Previously marked as "To be decided" in the project context document. Folders are a lightweight organizational tool that helps users manage feeds without adding complexity. They are a standard feature of every major feed reader and are expected by users.
+
+**Alternatives considered:**
+- Flat list only (no folders) — rejected because even a modest number of feeds (~15+) becomes hard to scan without grouping
+- Tags instead of folders — rejected as more complex to implement and less familiar to users; violates Principle 6 (minimal surface area)
+
+**Principles referenced:** 6 (minimal surface area — folders are simple enough to justify), 7 (reading experience — organization aids focused reading), 3 (battle-tested pattern from every feed reader)
+
+**Risks / tradeoffs:** Adds complexity to the sidebar UI and data model (feeds have an optional folder_id). Acceptable for MVP.
+
+---
+
+### 2026-02-06 — Search: Client-Side Filtering in MVP
+
+**Decision:** A search input in the toolbar allows users to filter the currently visible article list by matching against article title and snippet text. Filtering happens client-side, on keystroke (debounced ~150ms). No full-text search of article bodies in the MVP. Pressing Escape clears the search.
+
+**Context:** Previously marked as "To be decided" in the project context document. Searching is essential once a user has more than a handful of feeds. Client-side filtering of already-loaded articles is the simplest possible implementation.
+
+**Alternatives considered:**
+- No search in MVP — rejected because finding a specific article in a long list without search is frustrating, which harms the reading experience
+- Full-text server-side search (PostgreSQL full-text search) — deferred to a future phase; unnecessary complexity for MVP where article lists are already loaded client-side
+
+**Principles referenced:** 7 (reading experience), 6 (minimal surface area — client-side only, no new API routes)
+
+**Risks / tradeoffs:** Client-side filtering won't scale if a user has thousands of articles loaded. Acceptable for MVP; can upgrade to server-side search later.
+
+---
+
+### 2026-02-06 — Dark Mode: Automatic via prefers-color-scheme
+
+**Decision:** The app supports dark mode, activated automatically based on the user's system preference (`prefers-color-scheme: dark`). There is no manual toggle in the UI for the MVP. All colors are defined as CSS custom properties, overridden inside a `@media (prefers-color-scheme: dark)` block.
+
+**Context:** Previously marked as "To be decided" in the project context document. Dark mode is nearly universal in modern applications and important for comfortable reading in low-light environments, which directly serves the reading mission.
+
+**Alternatives considered:**
+- No dark mode — rejected because reading in dark environments without dark mode causes eye strain, which harms the reading experience
+- Manual toggle (user picks light/dark/auto) — deferred; adds UI complexity and requires persisting the preference. The automatic behavior covers the majority of users. Can add a toggle later.
+
+**Principles referenced:** 7 (reading experience is sacred — eye comfort), 6 (minimal surface area — automatic, no UI control needed)
+
+**Risks / tradeoffs:** Users who want dark mode in a light-OS environment (or vice versa) cannot override. Acceptable for MVP.
+
 ## 2026-02-06 — MVP Scope: Feed-Only Mode (Payments Deferred)
 
 **Decision:** Current implementation phase is explicitly feed-only MVP: users can add feeds, refresh feeds, and read feeds in-app. Payment UI and feed-count gating are deferred until phase 2. Payment backend modules/routes remain in the codebase but are intentionally dormant.
