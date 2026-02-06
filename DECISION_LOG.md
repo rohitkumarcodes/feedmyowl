@@ -6,6 +6,26 @@
 
 ---
 
+## 2026-02-06 — MVP Scope: Feed-Only Mode (Payments Deferred)
+
+**Decision:** Current implementation phase is explicitly feed-only MVP: users can add feeds, refresh feeds, and read feeds in-app. Payment UI and feed-count gating are deferred until phase 2. Payment backend modules/routes remain in the codebase but are intentionally dormant.
+
+**Context:** The app had visible billing/subscription UI and free-tier gating logic before first-user validation. To reduce launch surface area and get a usable product in front of users faster, scope was narrowed to the core reading loop.
+
+**Alternatives considered:**
+- Keep payment UI visible but disabled — rejected because it adds UX noise and non-essential complexity during MVP validation.
+- Fully remove payment backend modules — rejected because we already have modular payment boundaries and want fast reactivation in phase 2.
+- Keep free-tier cap (10 feeds) without billing — rejected because it creates a paywall path that currently cannot be completed.
+
+**Principles referenced:** 6 (minimal surface area), 7 (reading experience is sacred), 4 (modularity), 5 (retractability).
+
+**Risks / tradeoffs:**
+- No monetization path during MVP period.
+- Potentially higher infrastructure usage from uncapped feeds in the short term.
+- Requires disciplined follow-up to reintroduce billing and feed caps in phase 2.
+
+---
+
 ## 2026-02-06 — Domain Name: feedmyowl.com
 
 **Decision:** Registered `feedmyowl.com` as the project domain.

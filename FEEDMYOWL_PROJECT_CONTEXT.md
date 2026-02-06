@@ -2,7 +2,7 @@
 
 > **Purpose of this document:** This document is the single source of truth for the FeedMyOwl project. It contains the mission, product definition, architecture constraints, and decision-making principles. It is written to be readable by both humans and LLMs. When working with any AI assistant on any part of this project, paste this document into the conversation first so the AI has full context. Update this document as decisions are made.
 
-> **Last updated:** 2026-02-06
+> **Last updated:** 2026-02-06 (MVP scope updated)
 
 ---
 
@@ -22,7 +22,7 @@ The guiding question for every product decision is: **"Does this help the user r
 
 - A web application where users can subscribe to RSS and Atom feeds and read them in a clean, focused interface.
 - A tool that fetches feeds **only when the user explicitly requests it** (on login or by pressing a refresh button). There is no background polling, no push notifications, no unread counts badgering the user to come back.
-- A freemium product: free for up to 10 feeds, paid subscription for more.
+- Long-term target model is freemium: free for up to 10 feeds, paid subscription for more.
 
 ### What FeedMyOwl Is Not
 
@@ -39,18 +39,22 @@ The guiding question for every product decision is: **"Does this help the user r
 
 ### Business Model
 
-- **Free tier:** Up to 10 RSS/Atom feed subscriptions. Full reading experience. No feature gating on the reading UI itself.
-- **Paid tier:** More than 10 feeds. Pricing to be determined, but must cover infrastructure costs for both free and paid users with margin. See Principle 12.
-- Payment processing via Stripe (or equivalent modular payment provider).
+- **Long-term model:** Freemium remains the target model (free tier + paid tier for expanded feed capacity).
+- **Current MVP mode (as of February 6, 2026):** Payments are intentionally hidden in UI and feed count is not capped.
+- Payment processing provider remains Stripe (or equivalent modular provider), but billing is deferred to phase 2.
 
 ### Core User Flow
 
 1. User signs up / logs in.
-2. User adds RSS/Atom feed URLs (up to 10 free, more if paid).
+2. User adds RSS/Atom feed URLs.
 3. User presses "Refresh" to fetch latest items from all subscribed feeds.
 4. User reads articles in a clean, distraction-free interface.
 5. User can import/export feeds via OPML.
 6. User can export their data and delete their account at any time.
+
+**Current MVP implementation note (February 6, 2026):**
+- Active scope is add feeds, fetch feeds, and read feeds in-app.
+- Payment controls and feed-count gating are deferred until phase 2.
 
 ### Key Feature Decisions
 
@@ -60,6 +64,8 @@ The guiding question for every product decision is: **"Does this help the user r
 | Unread counts / badges | **No** | Creates anxiety and compulsive checking. Antithetical to mission. |
 | Push notifications | **No** | Distraction. Defeats the purpose. |
 | OPML import/export | **Yes** | Industry standard. Builds trust. Lets users arrive and leave freely. |
+| Payments UI (MVP) | **Deferred / hidden** | MVP is focused on core reading loop only (add, fetch, read). |
+| Feed subscription cap (MVP) | **No cap for now** | Feed-only MVP removes paywall logic until billing phase ships. |
 | Feed item storage in database | **Yes** | Previously fetched articles remain available even if a feed is temporarily down. Better reliability. |
 | Social features | **No** | Out of scope. Reading is a solitary, focused activity. |
 | Search within feeds | **To be decided** | Document decision here when made. |
@@ -163,7 +169,7 @@ AI writes code, debugs errors, and explains concepts. The founder makes all deci
 | Hosting (app) | Vercel | Railway, Fly.io, Render | Made by Next.js creators; one-click rollbacks (Principle 5); automatic GitHub deploys; generous free tier; best non-programmer deployment experience | 2026-02-06 |
 | Hosting (blog/landing) | Vercel | Cloudflare Pages, Netlify | Same platform as the app, fewer accounts to manage; free tier covers static sites easily | 2026-02-06 |
 | Authentication | Clerk | Auth.js (NextAuth), Supabase Auth | Pre-built UI components, zero security code to write (Principle 11); free up to 10k MAU; excellent Next.js integration | 2026-02-06 |
-| Payment processor | Stripe | Paddle, LemonSqueezy | Industry standard, best documentation, best AI support (Principle 3); handles subscriptions, failed payments, tax | 2026-02-06 |
+| Payment processor | Stripe | Paddle, LemonSqueezy | Industry standard, best documentation, best AI support (Principle 3); selected now, but intentionally dormant during feed-only MVP | 2026-02-06 |
 | Email service | Resend | Postmark, SendGrid | Simple API, generous free tier (100/day), excellent Next.js/TypeScript support, minimal surface area (Principle 6) | 2026-02-06 |
 | Feed parsing library | rss-parser | feedparser, fast-xml-parser | Most popular Node.js RSS/Atom parser; handles RSS 1.0, 2.0, Atom, and common malformations (Principle 3) | 2026-02-06 |
 | Uptime monitoring | UptimeRobot | BetterStack, Pingdom | Free tier with 50 monitors at 5-min intervals; set and forget (Principle 9) | 2026-02-06 |
@@ -218,6 +224,8 @@ AI writes code, debugs errors, and explains concepts. The founder makes all deci
 External monitoring:
    UptimeRobot ──► pings app.feedmyowl.com every 5 min
 ```
+
+MVP phase note (February 6, 2026): payment routes/modules remain in code but are intentionally dormant and hidden from UI.
 
 **Module Boundaries (Principle 4):**
 Each external service is accessed through a single dedicated file in the codebase. If any service needs to be replaced, only that one file changes:
@@ -325,8 +333,8 @@ Each external service is accessed through a single dedicated file in the codebas
 - [ ] Authentication is working (sign up, log in, log out, password reset)
 - [ ] Feed adding, refreshing, and reading flow is working
 - [ ] OPML import and export is working
-- [ ] Payment flow is working (subscribe, cancel, handle failures)
-- [ ] Free tier limit (10 feeds) is enforced
+- [ ] Payment flow is working (subscribe, cancel, handle failures) **[Phase 2 / post-MVP]**
+- [ ] Free tier limit (10 feeds) is enforced **[Phase 2 / post-MVP]**
 - [ ] Uptime monitoring is configured and alerting
 - [ ] Error tracking is configured and alerting
 - [ ] Database backups are automated and tested (restore tested at least once)
