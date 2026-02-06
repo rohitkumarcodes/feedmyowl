@@ -8,15 +8,30 @@
  * Current implementation: Clerk (@clerk/nextjs)
  *
  * What this file provides:
+ *   - AuthProvider: React context provider for auth (wraps ClerkProvider)
+ *   - SignInForm, SignUpForm, UserMenu: Pre-built auth UI components
  *   - getCurrentUser(): Get the authenticated user's Clerk ID and email
  *   - requireAuth(): Same as getCurrentUser but throws if not authenticated
+ *   - verifyClerkWebhook(): Verify Clerk webhook signatures (via svix)
  *
- * Note: ClerkProvider (in layout.tsx) and clerkMiddleware (in middleware.ts)
- * are also Clerk-specific, but they are boilerplate wrappers that would
- * be replaced by equivalent wrappers from any new auth provider.
+ * Exception: middleware.ts also imports from @clerk/nextjs/server directly,
+ * because Next.js middleware runs in a special edge context and needs
+ * the clerkMiddleware wrapper. This is architectural boilerplate that would
+ * be replaced by equivalent boilerplate from any new auth provider.
  */
 
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { Webhook } from "svix";
+
+/**
+ * Re-export Clerk UI components through this module boundary.
+ * Pages and layouts import these from "@/lib/auth" — never from "@clerk/nextjs" directly.
+ * If we switch auth providers, we replace these exports with equivalents.
+ */
+export { ClerkProvider as AuthProvider } from "@clerk/nextjs";
+export { SignIn as SignInForm } from "@clerk/nextjs";
+export { SignUp as SignUpForm } from "@clerk/nextjs";
+export { UserButton as UserMenu } from "@clerk/nextjs";
 
 /**
  * Get the current authenticated user's info from Clerk.
@@ -52,4 +67,32 @@ export async function requireAuth() {
   }
 
   return { clerkId: userId };
+}
+
+/**
+ * Verify a Clerk webhook signature.
+ *
+ * Clerk uses Svix to sign webhooks. This function verifies that the request
+ * actually came from Clerk and hasn't been tampered with. Without this,
+ * anyone who knows the webhook URL could spoof user events.
+ * (Principle 11: Security by Delegation)
+ *
+ * @param body - The raw request body as a string
+ * @param headers - Object with svix-id, svix-timestamp, and svix-signature headers
+ * @returns The verified webhook payload
+ * @throws Error if the signature is invalid
+ */
+export function verifyClerkWebhook(
+  body: string,
+  headers: {
+    "svix-id": string;
+    "svix-timestamp": string;
+    "svix-signature": string;
+  }
+) {
+  const wh = new Webhook(process.env.CLERK_WEBHOOK_SECRET!);
+  return wh.verify(body, headers) as {
+    type: string;
+    data: Record<string, unknown>;
+  };
 }

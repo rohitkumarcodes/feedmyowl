@@ -22,7 +22,8 @@
     "react-dom": "^19",
     "resend": "^4",
     "rss-parser": "^3.13",
-    "stripe": "^17"
+    "stripe": "^17",
+    "svix": "^1.84.1"
   },
   "devDependencies": {
     "@types/node": "^22",

@@ -17,9 +17,7 @@
 
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { db } from "@/lib/database";
-import { feeds, feedItems, users } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { db, eq, feeds, feedItems, users } from "@/lib/database";
 import { parseFeed } from "@/lib/feed-parser";
 import { captureError } from "@/lib/error-tracking";
 

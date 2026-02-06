@@ -13,7 +13,7 @@
  * Docs: https://clerk.com/docs/components/clerk-provider
  */
 
-import { ClerkProvider } from "@clerk/nextjs";
+import { AuthProvider } from "@/lib/auth";
 import type { Metadata } from "next";
 import "@/styles/globals.css";
 
@@ -33,10 +33,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
+    <AuthProvider>
       <html lang="en">
         <body>{children}</body>
       </html>
-    </ClerkProvider>
+    </AuthProvider>
   );
 }

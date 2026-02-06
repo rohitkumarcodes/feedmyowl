@@ -1,21 +1,38 @@
 /**
  * Module Boundary: Database
  *
- * This file is the ONLY place in the codebase that talks to the database.
- * All database queries go through this file. If we ever switch from Neon
- * to another PostgreSQL host (or even a different database entirely),
- * only this file needs to change. (Principle 4: Modularity)
+ * This file is the ONLY place in the codebase that imports from "drizzle-orm",
+ * "@neondatabase/serverless", or "@/db/schema". All database access goes through
+ * this file. If we ever switch databases, ORMs, or hosting providers, only this
+ * file (and db/schema.ts) needs to change. (Principle 4: Modularity)
  *
  * Current implementation: Drizzle ORM + Neon serverless driver
  *
+ * What this file exports:
+ *   - db: The Drizzle database instance (for queries)
+ *   - eq, and, or, not, desc, asc: Query comparison operators
+ *   - users, feeds, feedItems: Schema table references
+ *
  * Usage in other files:
- *   import { db } from "@/lib/database";
- *   const user = await db.query.users.findFirst({ where: ... });
+ *   import { db, eq, users } from "@/lib/database";
+ *   const user = await db.query.users.findFirst({ where: eq(users.clerkId, id) });
  */
 
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "@/db/schema";
+
+/**
+ * Re-export Drizzle query operators through this module boundary.
+ * API routes import these from "@/lib/database" — never from "drizzle-orm" directly.
+ */
+export { eq, and, or, not, desc, asc } from "drizzle-orm";
+
+/**
+ * Re-export schema table references through this module boundary.
+ * API routes import these from "@/lib/database" — never from "@/db/schema" directly.
+ */
+export { users, feeds, feedItems } from "@/db/schema";
 
 /**
  * Create a Neon serverless SQL connection.

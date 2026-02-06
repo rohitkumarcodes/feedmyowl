@@ -11,9 +11,7 @@
  *   - stripe: The initialized Stripe SDK instance (server-side)
  *   - createCheckoutSession(): Create a Stripe Checkout session for upgrading to paid
  *   - createPortalSession(): Create a Stripe Billing Portal session for managing subscription
- *
- * Stripe webhook handling is in /api/webhooks/stripe/route.ts but uses
- * the stripe instance exported from this file.
+ *   - verifyStripeWebhook(): Verify Stripe webhook signatures
  */
 
 import Stripe from "stripe";
@@ -64,4 +62,28 @@ export async function createPortalSession(
   });
 
   return session.url;
+}
+
+/**
+ * Verify a Stripe webhook signature.
+ *
+ * Stripe signs every webhook request. This function verifies the signature
+ * to ensure the request actually came from Stripe and hasn't been tampered with.
+ * Without this, anyone who knows the webhook URL could spoof payment events.
+ * (Principle 11: Security by Delegation)
+ *
+ * @param body - The raw request body as a string (NOT parsed JSON)
+ * @param signature - The Stripe-Signature header value
+ * @returns The verified Stripe event object
+ * @throws Error if the signature is invalid
+ */
+export function verifyStripeWebhook(
+  body: string,
+  signature: string
+): Stripe.Event {
+  return stripe.webhooks.constructEvent(
+    body,
+    signature,
+    process.env.STRIPE_WEBHOOK_SECRET!
+  );
 }

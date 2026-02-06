@@ -8,7 +8,7 @@
  * Docs: https://clerk.com/docs/components/authentication/sign-up
  */
 
-import { SignUp } from "@clerk/nextjs";
+import { SignUpForm } from "@/lib/auth";
 
 export default function SignUpPage() {
   return (
@@ -20,7 +20,7 @@ export default function SignUpPage() {
         minHeight: "100vh",
       }}
     >
-      <SignUp />
+      <SignUpForm />
     </div>
   );
 }

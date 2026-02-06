@@ -11,9 +11,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { db } from "@/lib/database";
-import { feeds, users } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
+import { db, and, eq, feeds, users } from "@/lib/database";
 
 /**
  * DELETE /api/feeds/[id]

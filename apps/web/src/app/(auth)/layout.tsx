@@ -16,7 +16,7 @@
  * (header, navigation) for authenticated pages.
  */
 
-import { UserButton } from "@clerk/nextjs";
+import { UserMenu } from "@/lib/auth";
 
 export default function AuthLayout({
   children,
@@ -43,7 +43,7 @@ export default function AuthLayout({
           <a href="/settings">Settings</a>
         </nav>
         {/* Clerk's UserButton — shows avatar, lets user manage account / sign out */}
-        <UserButton />
+        <UserMenu />
       </header>
 
       {/* Page content */}

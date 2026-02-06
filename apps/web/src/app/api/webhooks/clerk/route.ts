@@ -16,28 +16,57 @@
  *   - user.updated: Update the email in our users table
  *   - user.deleted: Delete the user (cascades to feeds and items)
  *
- * Security: In production, you should verify the webhook signature
- * using the Clerk webhook secret (CLERK_WEBHOOK_SECRET).
- * See: https://clerk.com/docs/integrations/webhooks
- *
- * TODO: Add webhook signature verification with svix
+ * Security: Every request is verified using the Clerk webhook secret
+ * via svix signature verification. Unverified requests are rejected.
+ * (Principle 11: Security by Delegation)
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/database";
-import { users } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { verifyClerkWebhook } from "@/lib/auth";
+import { db, eq, users } from "@/lib/database";
 import { captureError } from "@/lib/error-tracking";
 
 export async function POST(request: NextRequest) {
   try {
-    const payload = await request.json();
+    // --- Step 1: Verify the webhook signature ---
+    // Read the raw body and svix headers needed for verification.
+    // If the signature is invalid, verifyClerkWebhook() will throw.
+    const body = await request.text();
+    const svixId = request.headers.get("svix-id");
+    const svixTimestamp = request.headers.get("svix-timestamp");
+    const svixSignature = request.headers.get("svix-signature");
+
+    if (!svixId || !svixTimestamp || !svixSignature) {
+      return NextResponse.json(
+        { error: "Missing svix headers" },
+        { status: 400 }
+      );
+    }
+
+    let payload: { type: string; data: Record<string, unknown> };
+    try {
+      payload = verifyClerkWebhook(body, {
+        "svix-id": svixId,
+        "svix-timestamp": svixTimestamp,
+        "svix-signature": svixSignature,
+      });
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid webhook signature" },
+        { status: 401 }
+      );
+    }
+
+    // --- Step 2: Handle the verified event ---
     const { type, data } = payload;
 
     switch (type) {
       case "user.created": {
         // A new user signed up — create a row in our database
-        const email = data.email_addresses?.[0]?.email_address;
+        const emailAddresses = data.email_addresses as
+          | Array<{ email_address: string }>
+          | undefined;
+        const email = emailAddresses?.[0]?.email_address;
         if (!email) {
           return NextResponse.json(
             { error: "No email in webhook payload" },
@@ -46,7 +75,7 @@ export async function POST(request: NextRequest) {
         }
 
         await db.insert(users).values({
-          clerkId: data.id,
+          clerkId: data.id as string,
           email,
         });
         break;
@@ -54,12 +83,15 @@ export async function POST(request: NextRequest) {
 
       case "user.updated": {
         // User updated their profile — sync email
-        const updatedEmail = data.email_addresses?.[0]?.email_address;
+        const updatedAddresses = data.email_addresses as
+          | Array<{ email_address: string }>
+          | undefined;
+        const updatedEmail = updatedAddresses?.[0]?.email_address;
         if (updatedEmail) {
           await db
             .update(users)
             .set({ email: updatedEmail, updatedAt: new Date() })
-            .where(eq(users.clerkId, data.id));
+            .where(eq(users.clerkId, data.id as string));
         }
         break;
       }
@@ -67,7 +99,7 @@ export async function POST(request: NextRequest) {
       case "user.deleted": {
         // User deleted their account — remove from our database
         // Cascade delete will also remove their feeds and feed items
-        await db.delete(users).where(eq(users.clerkId, data.id));
+        await db.delete(users).where(eq(users.clerkId, data.id as string));
         break;
       }
 

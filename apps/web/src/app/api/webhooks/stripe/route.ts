@@ -11,30 +11,50 @@
  *   - checkout.session.completed: User completed a checkout → mark as paid
  *   - customer.subscription.deleted: Subscription canceled → mark as free
  *
- * Security: In production, verify the webhook signature using
- * STRIPE_WEBHOOK_SECRET to ensure requests are genuinely from Stripe.
- *
- * TODO: Add webhook signature verification
+ * Security: Every request is verified using the Stripe webhook secret
+ * via Stripe's built-in signature verification. Unverified requests are rejected.
+ * (Principle 11: Security by Delegation)
  *
  * Docs: https://stripe.com/docs/webhooks
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/database";
-import { users } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { verifyStripeWebhook } from "@/lib/payments";
+import { db, eq, users } from "@/lib/database";
 import { captureError } from "@/lib/error-tracking";
 
 export async function POST(request: NextRequest) {
   try {
-    const payload = await request.json();
-    const { type, data } = payload;
+    // --- Step 1: Verify the webhook signature ---
+    // Read the raw body and Stripe-Signature header needed for verification.
+    // If the signature is invalid, verifyStripeWebhook() will throw.
+    const body = await request.text();
+    const signature = request.headers.get("stripe-signature");
 
-    switch (type) {
+    if (!signature) {
+      return NextResponse.json(
+        { error: "Missing Stripe-Signature header" },
+        { status: 400 }
+      );
+    }
+
+    let event;
+    try {
+      event = verifyStripeWebhook(body, signature);
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid webhook signature" },
+        { status: 401 }
+      );
+    }
+
+    // --- Step 2: Handle the verified event ---
+    switch (event.type) {
       case "checkout.session.completed": {
         // User completed Stripe Checkout → upgrade to paid tier
-        const customerId = data.object.customer as string;
-        const subscriptionId = data.object.subscription as string;
+        const session = event.data.object;
+        const customerId = session.customer as string;
+        const subscriptionId = session.subscription as string;
 
         await db
           .update(users)
@@ -49,7 +69,8 @@ export async function POST(request: NextRequest) {
 
       case "customer.subscription.deleted": {
         // Subscription was canceled → downgrade to free tier
-        const canceledSubscriptionId = data.object.id as string;
+        const subscription = event.data.object;
+        const canceledSubscriptionId = subscription.id;
 
         await db
           .update(users)
