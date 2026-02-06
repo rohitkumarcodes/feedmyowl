@@ -38,20 +38,124 @@
   margin-top: 16px;
 }
 
+/* --- Article body element styles (scoped to reader pane) --- */
+
+.body p {
+  margin-top: 12px;
+}
+
+.body p:first-child {
+  margin-top: 0;
+}
+
+.body h2 {
+  font-size: 1.125rem;
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  margin-top: 20px;
+}
+
+.body h3 {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  margin-top: 16px;
+}
+
+.body h4,
+.body h5,
+.body h6 {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  margin-top: 12px;
+}
+
+.body a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.body blockquote {
+  border-left: 2px solid var(--border);
+  color: var(--text-secondary);
+  margin: 12px 0 0;
+  padding-left: 12px;
+}
+
+.body ul,
+.body ol {
+  margin-top: 12px;
+  padding-left: 20px;
+}
+
+.body li {
+  margin-top: 4px;
+}
+
 .body img {
+  height: auto;
   max-width: 100%;
+}
+
+.body figure {
+  margin: 12px 0;
+}
+
+.body figcaption {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  margin-top: 4px;
+}
+
+.body hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 16px 0;
 }
 
 .body pre {
   background: var(--bg-secondary);
+  border-radius: 2px;
   font-family: var(--font-mono);
   font-size: var(--text-sm);
+  margin-top: 12px;
   overflow-x: auto;
   padding: 12px;
 }
 
+/* Inline code (not inside pre blocks) */
 .body code {
+  background: var(--bg-secondary);
+  border-radius: 2px;
   font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  padding: 1px 4px;
+}
+
+/* Reset inline code styles when inside a pre block */
+.body pre code {
+  background: transparent;
+  border-radius: 0;
+  font-size: inherit;
+  padding: 0;
+}
+
+.body table {
+  border-collapse: collapse;
+  margin-top: 12px;
+  width: 100%;
+}
+
+.body th,
+.body td {
+  border: 1px solid var(--border);
+  font-size: var(--text-base);
+  padding: 6px 8px;
+  text-align: left;
+}
+
+.body th {
+  font-weight: var(--weight-semibold);
 }
 
 .link {

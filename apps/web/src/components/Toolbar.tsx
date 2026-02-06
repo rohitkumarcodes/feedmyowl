@@ -62,8 +62,9 @@ export function Toolbar({
         type="button"
         className={styles.controlButton}
         onClick={onToggleSidebar}
+        aria-label={isSidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
       >
-        {isSidebarCollapsed ? "Show Sidebar" : "Hide Sidebar"}
+        {isSidebarCollapsed ? "☰" : "✕"}
       </button>
     </div>
   );

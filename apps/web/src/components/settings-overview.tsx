@@ -42,9 +42,9 @@ export function SettingsOverview({
       <header className={styles.header}>
         <h1>Settings</h1>
         <p>Account details and exports for your reading workspace.</p>
-        <a href="/feeds" className={styles.linkButton}>
+        <Link href="/feeds" className={styles.linkButton}>
           Return to feeds
-        </a>
+        </Link>
       </header>
 
       <div className={styles.grid}>

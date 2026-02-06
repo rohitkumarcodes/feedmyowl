@@ -294,6 +294,21 @@ export function FeedsWorkspace({
     }
   }, [selectedArticleId, visibleArticles]);
 
+  /* Scroll the selected article row into view when navigating with j/k keys. */
+  useEffect(() => {
+    if (!selectedArticleId) {
+      return;
+    }
+
+    const element = document.querySelector(
+      `[data-article-id="${selectedArticleId}"]`
+    );
+
+    if (element) {
+      element.scrollIntoView({ block: "nearest" });
+    }
+  }, [selectedArticleId]);
+
   useEffect(() => {
     if (!openArticleId) {
       return;
@@ -665,7 +680,7 @@ export function FeedsWorkspace({
     return (
       <div className={styles.statusPanel}>
         {infoMessage ? <p className={styles.infoMessage}>{infoMessage}</p> : null}
-        {errorMessage ? <p className={styles.errorMessage}>{errorMessage}</p> : null}
+        {errorMessage ? <p className={styles.errorMessage}>Error: {errorMessage}</p> : null}
 
         {isAddFolderFormVisible ? (
           <form className={styles.inlineForm} onSubmit={handleCreateFolder}>

@@ -28,6 +28,7 @@ export function ArticleRow({
     <button
       type="button"
       className={`${styles.row} ${isSelected ? styles.rowSelected : ""}`}
+      data-article-id={article.id}
       onClick={onSelect}
       aria-pressed={isOpen}
     >
