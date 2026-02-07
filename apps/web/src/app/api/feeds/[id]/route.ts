@@ -5,9 +5,9 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { and, db, eq, feeds } from "@/lib/database";
 import { requireAuth } from "@/lib/auth";
 import { ensureUserRecord } from "@/lib/app-user";
+import { deleteFeedForUser } from "@/lib/feed-service";
 
 /**
  * DELETE /api/feeds/[id]
@@ -27,12 +27,9 @@ export async function DELETE(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const deleted = await db
-      .delete(feeds)
-      .where(and(eq(feeds.id, id), eq(feeds.userId, user.id)))
-      .returning();
+    const deleted = await deleteFeedForUser(user.id, id);
 
-    if (deleted.length === 0) {
+    if (!deleted) {
       return NextResponse.json({ error: "Feed not found" }, { status: 404 });
     }
 

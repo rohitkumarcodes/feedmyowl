@@ -6,12 +6,19 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { and, db, eq, feedItems, feeds, users } from "@/lib/database";
+import { db, eq, users } from "@/lib/database";
 import { deleteAuthUser, requireAuth } from "@/lib/auth";
 import { ensureUserRecord } from "@/lib/app-user";
-import { parseFeed, type ParsedFeed } from "@/lib/feed-parser";
-import { extractArticleFromUrl } from "@/lib/article-extractor";
+import { parseFeed } from "@/lib/feed-parser";
 import { purgeOldFeedItemsForUser } from "@/lib/retention";
+import { normalizeFeedError } from "@/lib/feed-errors";
+import { normalizeFeedUrl } from "@/lib/feed-url";
+import {
+  createFeedWithInitialItems,
+  extractFeedItemForUser,
+  findExistingFeedForUserByUrl,
+  markFeedItemReadForUser,
+} from "@/lib/feed-service";
 
 interface ApiError {
   error: string;
@@ -37,127 +44,6 @@ async function parseRequestJson(
 async function getAppUser() {
   const { clerkId } = await requireAuth();
   return await ensureUserRecord(clerkId);
-}
-
-/**
- * Normalize and validate URL input before feed processing.
- */
-function normalizeFeedUrl(rawUrl: unknown): string | null {
-  if (typeof rawUrl !== "string") {
-    return null;
-  }
-
-  const trimmed = rawUrl.trim();
-  if (!trimmed) {
-    return null;
-  }
-
-  try {
-    const parsed = new URL(trimmed);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-      return null;
-    }
-
-    return parsed.toString();
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Derive calm feed-validation messages for user-facing inline errors.
- */
-function toFeedValidationError(error: unknown): {
-  code: string;
-  message: string;
-} {
-  const rawMessage =
-    error instanceof Error ? error.message.toLowerCase() : "unknown error";
-
-  if (rawMessage.includes("404")) {
-    return {
-      code: "http_404",
-      message:
-        "This feed could not be reached. The server returned a 404, which usually means the feed URL changed.",
-    };
-  }
-
-  if (rawMessage.includes("timed out") || rawMessage.includes("timeout")) {
-    return {
-      code: "timeout",
-      message:
-        "This feed could not be updated. The server did not respond in time. This is often temporary.",
-    };
-  }
-
-  if (
-    rawMessage.includes("xml") ||
-    rawMessage.includes("rss") ||
-    rawMessage.includes("atom") ||
-    rawMessage.includes("not valid")
-  ) {
-    return {
-      code: "invalid_xml",
-      message: "This URL does not appear to be a valid RSS or Atom feed.",
-    };
-  }
-
-  if (rawMessage.includes("fetch") || rawMessage.includes("network")) {
-    return {
-      code: "network",
-      message: "Could not reach this URL. Check the address and try again.",
-    };
-  }
-
-  return {
-    code: "unreachable",
-    message: "Could not reach this URL. Check the address and try again.",
-  };
-}
-
-/**
- * Create a new feed row and insert parsed feed items from the first successful fetch.
- */
-async function createFeedWithInitialItems(
-  userId: string,
-  url: string,
-  parsedFeed: ParsedFeed
-) {
-  const now = new Date();
-
-  const [newFeed] = await db
-    .insert(feeds)
-    .values({
-      userId,
-      url,
-      title: parsedFeed.title || null,
-      description: parsedFeed.description || null,
-      lastFetchedAt: now,
-      lastFetchStatus: "success",
-      lastFetchErrorCode: null,
-      lastFetchErrorMessage: null,
-      lastFetchErrorAt: null,
-      updatedAt: now,
-    })
-    .returning();
-
-  const insertableItems = parsedFeed.items.filter((item) => item.guid);
-
-  if (insertableItems.length > 0) {
-    await db.insert(feedItems).values(
-      insertableItems.map((item) => ({
-        feedId: newFeed.id,
-        guid: item.guid,
-        title: item.title,
-        link: item.link,
-        content: item.content,
-        author: item.author,
-        publishedAt: item.publishedAt,
-      }))
-    );
-  }
-
-  return { feed: newFeed, insertedItems: insertableItems.length };
 }
 
 /**
@@ -242,9 +128,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const existingFeed = await db.query.feeds.findFirst({
-      where: and(eq(feeds.userId, appUser.id), eq(feeds.url, nextUrl)),
-    });
+    const existingFeed = await findExistingFeedForUserByUrl(appUser.id, nextUrl);
 
     if (existingFeed) {
       return NextResponse.json({
@@ -254,11 +138,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    let parsedFeed: ParsedFeed;
+    let parsedFeed;
     try {
       parsedFeed = await parseFeed(nextUrl);
     } catch (error) {
-      const normalizedError = toFeedValidationError(error);
+      const normalizedError = normalizeFeedError(error, "create");
       return NextResponse.json(
         {
           error: normalizedError.message,
@@ -272,9 +156,7 @@ export async function POST(request: NextRequest) {
     try {
       created = await createFeedWithInitialItems(appUser.id, nextUrl, parsedFeed);
     } catch {
-      const raceExistingFeed = await db.query.feeds.findFirst({
-        where: and(eq(feeds.userId, appUser.id), eq(feeds.url, nextUrl)),
-      });
+      const raceExistingFeed = await findExistingFeedForUserByUrl(appUser.id, nextUrl);
 
       if (raceExistingFeed) {
         return NextResponse.json({
@@ -338,37 +220,21 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: "Item ID is required" }, { status: 400 });
       }
 
-      const item = await db.query.feedItems.findFirst({
-        where: eq(feedItems.id, itemId),
-        with: {
-          feed: {
-            columns: {
-              id: true,
-              userId: true,
-            },
-          },
-        },
-      });
+      const result = await markFeedItemReadForUser(appUser.id, itemId);
 
-      if (!item || item.feed.userId !== appUser.id) {
+      if (result.status === "not_found") {
         return NextResponse.json({ error: "Article not found" }, { status: 404 });
       }
 
-      if (item.readAt) {
+      if (result.status === "already_read") {
         return NextResponse.json({
-          itemId: item.id,
-          readAt: item.readAt.toISOString(),
+          itemId: result.itemId,
+          readAt: result.readAt,
           alreadyRead: true,
         });
       }
 
-      const now = new Date();
-      await db
-        .update(feedItems)
-        .set({ readAt: now, updatedAt: now })
-        .where(eq(feedItems.id, item.id));
-
-      return NextResponse.json({ itemId: item.id, readAt: now.toISOString() });
+      return NextResponse.json({ itemId: result.itemId, readAt: result.readAt });
     }
 
     if (payload.action === "item.extractFull") {
@@ -378,94 +244,13 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: "Item ID is required" }, { status: 400 });
       }
 
-      const item = await db.query.feedItems.findFirst({
-        where: eq(feedItems.id, itemId),
-        with: {
-          feed: {
-            columns: {
-              id: true,
-              userId: true,
-            },
-          },
-        },
-      });
+      const result = await extractFeedItemForUser(appUser.id, itemId);
 
-      if (!item || item.feed.userId !== appUser.id) {
+      if (result.status === "not_found") {
         return NextResponse.json({ error: "Article not found" }, { status: 404 });
       }
 
-      if (item.extractedHtml && item.extractionStatus === "success") {
-        return NextResponse.json({
-          itemId: item.id,
-          status: "success",
-          source: item.extractionSource || "postlight",
-          extractedHtml: item.extractedHtml,
-          cached: true,
-        });
-      }
-
-      const now = new Date();
-
-      if (!item.link) {
-        await db
-          .update(feedItems)
-          .set({
-            extractionStatus: "fallback",
-            extractionSource: "feed_summary",
-            extractedAt: now,
-            updatedAt: now,
-          })
-          .where(eq(feedItems.id, item.id));
-
-        return NextResponse.json({
-          itemId: item.id,
-          status: "fallback",
-          source: "feed_summary",
-          extractedHtml: null,
-          cached: false,
-        });
-      }
-
-      const extracted = await extractArticleFromUrl(item.link);
-
-      if (extracted.status === "success" && extracted.html) {
-        await db
-          .update(feedItems)
-          .set({
-            extractedHtml: extracted.html,
-            extractedAt: now,
-            extractionStatus: "success",
-            extractionSource: extracted.source,
-            updatedAt: now,
-          })
-          .where(eq(feedItems.id, item.id));
-
-        return NextResponse.json({
-          itemId: item.id,
-          status: "success",
-          source: extracted.source,
-          extractedHtml: extracted.html,
-          cached: false,
-        });
-      }
-
-      await db
-        .update(feedItems)
-        .set({
-          extractedAt: now,
-          extractionStatus: "fallback",
-          extractionSource: "feed_summary",
-          updatedAt: now,
-        })
-        .where(eq(feedItems.id, item.id));
-
-      return NextResponse.json({
-        itemId: item.id,
-        status: "fallback",
-        source: "feed_summary",
-        extractedHtml: null,
-        cached: false,
-      });
+      return NextResponse.json(result.payload);
     }
 
     if (payload.action === "account.delete") {
