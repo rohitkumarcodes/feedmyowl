@@ -43,6 +43,9 @@ export const metadata: Metadata = {
   title: "FeedMyOwl — Calm RSS Reader",
   description:
     "A minimalist RSS/Atom feed reader that preserves your attention.",
+  icons: {
+    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦉</text></svg>",
+  },
 };
 
 /**

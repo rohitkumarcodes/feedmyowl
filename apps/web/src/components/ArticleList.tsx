@@ -43,7 +43,9 @@ export function ArticleList({
       ) : null}
 
       {articles.length === 0 ? (
-        <p className={styles.empty}>{emptyStateMessage}</p>
+        <div className={styles.emptyWrap}>
+          <p className={styles.empty}>{emptyStateMessage}</p>
+        </div>
       ) : (
         articles.map((article) => (
           <ArticleRow

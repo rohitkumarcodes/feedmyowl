@@ -34,7 +34,7 @@ export function ArticleRow({
       aria-pressed={isOpen}
       aria-current={isOpen ? "true" : undefined}
     >
-      <p className={`${styles.title} ${isRead ? styles.titleRead : ""}`}>▸ {article.title}</p>
+      <p className={`${styles.title} ${isRead ? styles.titleRead : ""}`}>● {article.title}</p>
       {showFeedTitle ? (
         <p className={styles.meta}>{article.feedTitle}</p>
       ) : null}
