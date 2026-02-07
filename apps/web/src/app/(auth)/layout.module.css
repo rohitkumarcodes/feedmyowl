@@ -8,11 +8,11 @@
   display: inline-flex;
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
-  left: 14px;
+  left: 16px;
   letter-spacing: 0.02em;
   position: fixed;
   text-decoration: none;
-  top: 14px;
+  top: 16px;
   z-index: 40;
 }
 

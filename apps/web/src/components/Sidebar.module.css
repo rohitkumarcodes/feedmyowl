@@ -7,18 +7,19 @@
 
 .top {
   border-bottom: 1px solid var(--border);
-  padding: 48px 0 8px;
+  padding: 52px 0 8px;
 }
 
 .controls {
   display: grid;
-  gap: 6px;
+  gap: 2px;
   padding: 0 12px;
 }
 
 .controlButton {
   background: transparent;
   border: 0;
+  border-bottom: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
@@ -28,6 +29,10 @@
   padding: 4px 10px;
   text-align: left;
   white-space: nowrap;
+}
+
+.controlButton:last-child {
+  border-bottom: 0;
 }
 
 .controlButton:hover:enabled {

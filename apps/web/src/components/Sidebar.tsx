@@ -8,7 +8,7 @@ import { FeedItem } from "./FeedItem";
 import type { FeedViewModel } from "./feeds-types";
 import styles from "./Sidebar.module.css";
 
-export type SidebarScope = { type: "all" } | { type: "feed"; feedId: string };
+export type SidebarScope = { type: "none" } | { type: "all" } | { type: "feed"; feedId: string };
 
 interface SidebarProps {
   feeds: FeedViewModel[];

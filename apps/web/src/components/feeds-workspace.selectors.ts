@@ -67,6 +67,10 @@ export function selectVisibleArticles(
   allArticles: ArticleViewModel[],
   selectedScope: SidebarScope
 ): ArticleViewModel[] {
+  if (selectedScope.type === "none") {
+    return [];
+  }
+
   if (selectedScope.type === "feed") {
     return allArticles.filter((article) => article.feedId === selectedScope.feedId);
   }
@@ -91,6 +95,10 @@ export function selectScopeLabel(
   feeds: FeedViewModel[],
   selectedScope: SidebarScope
 ): string {
+  if (selectedScope.type === "none") {
+    return "Feeds";
+  }
+
   if (selectedScope.type === "all") {
     return "Read all feeds";
   }
@@ -106,6 +114,10 @@ export function selectListStatusMessage(
   feeds: FeedViewModel[],
   selectedScope: SidebarScope
 ): string | null {
+  if (selectedScope.type === "none") {
+    return null;
+  }
+
   if (selectedScope.type === "feed") {
     const feed = feeds.find((candidate) => candidate.id === selectedScope.feedId);
     return feed?.lastFetchErrorMessage || null;
@@ -124,6 +136,10 @@ export function selectEmptyStateMessage(
   feedCount: number,
   selectedScope: SidebarScope
 ): string {
+  if (selectedScope.type === "none") {
+    return "Select a feed from the left panel.";
+  }
+
   if (feedCount === 0) {
     return "Add a feed to get started.";
   }

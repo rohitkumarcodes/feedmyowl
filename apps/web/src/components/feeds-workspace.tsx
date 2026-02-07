@@ -32,7 +32,7 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
   const router = useRouter();
 
   const [feeds, setFeeds] = useState<FeedViewModel[]>(initialFeeds);
-  const [selectedScope, setSelectedScope] = useState<SidebarScope>({ type: "all" });
+  const [selectedScope, setSelectedScope] = useState<SidebarScope>({ type: "none" });
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
   const [openArticleId, setOpenArticleId] = useState<string | null>(null);
   const [liveMessage, setLiveMessage] = useState("");

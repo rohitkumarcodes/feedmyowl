@@ -28,9 +28,9 @@
 }
 
 .title {
-  color: var(--text-primary);
+  color: var(--text-secondary);
   font-size: var(--text-lg);
-  font-weight: 700;
+  font-weight: var(--weight-semibold);
   line-height: var(--leading-tight);
 }
 
