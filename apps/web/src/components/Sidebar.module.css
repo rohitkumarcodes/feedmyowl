@@ -7,7 +7,7 @@
 
 .top {
   border-bottom: 1px solid var(--border);
-  padding: 42px 0 8px;
+  padding: 48px 0 8px;
 }
 
 .controls {
@@ -17,15 +17,15 @@
 }
 
 .controlButton {
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
+  background: transparent;
+  border: 0;
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
-  font-size: var(--text-base);
-  font-weight: var(--weight-semibold);
-  min-height: 40px;
-  padding: 6px 10px;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-normal);
+  min-height: 32px;
+  padding: 4px 10px;
   text-align: left;
   white-space: nowrap;
 }
