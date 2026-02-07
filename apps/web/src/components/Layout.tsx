@@ -1,12 +1,11 @@
 /**
- * Application shell with toolbar plus desktop panes / mobile view stack.
+ * Application shell with desktop panes / mobile view stack.
  */
 
 import type { ReactNode } from "react";
 import styles from "./Layout.module.css";
 
 interface LayoutProps {
-  toolbar: ReactNode;
   sidebar: ReactNode;
   articleList: ReactNode;
   articleReader: ReactNode;
@@ -21,7 +20,6 @@ interface LayoutProps {
  * Renders the feed-reader layout with desktop panes and mobile view navigation.
  */
 export function Layout({
-  toolbar,
   sidebar,
   articleList,
   articleReader,
@@ -34,8 +32,6 @@ export function Layout({
   if (isMobile) {
     return (
       <div className={styles.root}>
-        <div className={styles.toolbarRow}>{toolbar}</div>
-
         <div className={styles.mobileViews}>
           {mobileView === "feeds" ? (
             <nav className={styles.mobilePane} aria-label="Feed list" role="navigation">
@@ -72,7 +68,6 @@ export function Layout({
 
   return (
     <div className={styles.root}>
-      <div className={styles.toolbarRow}>{toolbar}</div>
       <div className={styles.panes}>
         <aside className={styles.sidebarPane} aria-label="Feed list" role="navigation">
           {sidebar}

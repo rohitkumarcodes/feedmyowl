@@ -2,10 +2,3 @@
   height: 100vh;
   position: relative;
 }
-
-.toolbarMessage {
-  color: var(--text-muted);
-  font-size: var(--text-sm);
-  margin: 0;
-  padding: 0 12px 8px;
-}

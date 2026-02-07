@@ -1,19 +1,13 @@
 .root {
   background: var(--bg-primary);
   color: var(--text-primary);
-  display: grid;
-  grid-template-rows: auto 1fr;
   height: 100vh;
-}
-
-.toolbarRow {
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
 }
 
 .panes {
   display: grid;
   grid-template-columns: 240px clamp(280px, 30vw, 420px) minmax(0, 1fr);
+  height: 100%;
   min-height: 0;
 }
 
@@ -42,6 +36,7 @@
 }
 
 .mobileViews {
+  height: 100%;
   min-height: 0;
 }
 

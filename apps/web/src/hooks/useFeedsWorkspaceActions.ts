@@ -276,13 +276,8 @@ export function useFeedsWorkspaceActions({
   );
 
   const handleDeleteFeed = useCallback(
-    async (feedId: string, feedLabel: string) => {
+    async (feedId: string) => {
       if (deletingFeedId) {
-        return;
-      }
-
-      const confirmed = window.confirm(`Delete feed "${feedLabel}"?`);
-      if (!confirmed) {
         return;
       }
 

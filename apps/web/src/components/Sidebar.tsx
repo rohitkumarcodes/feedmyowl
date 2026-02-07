@@ -19,7 +19,9 @@ interface SidebarProps {
   isAddFeedFormVisible: boolean;
   feedUrlInput: string;
   isAddingFeed: boolean;
+  isRefreshingFeeds: boolean;
   onShowAddFeedForm: () => void;
+  onRefresh: () => void;
   onCancelAddFeed: () => void;
   onFeedUrlChange: (value: string) => void;
   onSubmitFeed: (event: FormEvent<HTMLFormElement>) => void;
@@ -29,7 +31,7 @@ interface SidebarProps {
   onDismissMessage: () => void;
 
   deletingFeedId: string | null;
-  onRequestFeedDelete: (feedId: string, feedLabel: string) => void;
+  onRequestFeedDelete: (feedId: string) => void;
 }
 
 /**
@@ -43,7 +45,9 @@ export function Sidebar({
   isAddFeedFormVisible,
   feedUrlInput,
   isAddingFeed,
+  isRefreshingFeeds,
   onShowAddFeedForm,
+  onRefresh,
   onCancelAddFeed,
   onFeedUrlChange,
   onSubmitFeed,
@@ -62,9 +66,37 @@ export function Sidebar({
   return (
     <nav className={styles.root} aria-label="Feed list" role="navigation">
       <div className={styles.top}>
-        <div className={styles.brandRow}>
-          <p className={styles.brand}>FEEDMYOWL</p>
+        <div className={styles.controls}>
+          <button
+            type="button"
+            className={styles.controlButton}
+            onClick={onRefresh}
+            disabled={isRefreshingFeeds}
+          >
+            {isRefreshingFeeds ? "⟳ Refreshing..." : "⟳ Refresh feeds"}
+          </button>
+
+          <button
+            type="button"
+            className={styles.controlButton}
+            onClick={onShowAddFeedForm}
+            disabled={isAddingFeed}
+          >
+            + Add Feed
+          </button>
         </div>
+
+        {isAddFeedFormVisible ? (
+          <div className={styles.formWrap}>
+            <AddFeedForm
+              feedUrlInput={feedUrlInput}
+              isAddingFeed={isAddingFeed}
+              onFeedUrlChange={onFeedUrlChange}
+              onSubmitFeed={onSubmitFeed}
+              onCancelAddFeed={onCancelAddFeed}
+            />
+          </div>
+        ) : null}
 
         {infoMessage ? (
           <div className={styles.sidebarMessage}>
@@ -123,31 +155,11 @@ export function Sidebar({
                 isActive={isActive}
                 isDeleting={deletingFeedId === feed.id}
                 onSelect={() => onSelectFeed(feed.id)}
-                onDelete={() => onRequestFeedDelete(feed.id, label)}
+                onDelete={() => onRequestFeedDelete(feed.id)}
               />
             );
           })
         )}
-      </div>
-
-      <div className={styles.bottomActions}>
-        <button
-          type="button"
-          className={styles.addFeedAffordance}
-          onClick={onShowAddFeedForm}
-        >
-          + Add Feed
-        </button>
-
-        {isAddFeedFormVisible ? (
-          <AddFeedForm
-            feedUrlInput={feedUrlInput}
-            isAddingFeed={isAddingFeed}
-            onFeedUrlChange={onFeedUrlChange}
-            onSubmitFeed={onSubmitFeed}
-            onCancelAddFeed={onCancelAddFeed}
-          />
-        ) : null}
       </div>
     </nav>
   );

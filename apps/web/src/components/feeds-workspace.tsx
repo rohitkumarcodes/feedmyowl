@@ -6,7 +6,6 @@ import { ArticleList } from "./ArticleList";
 import { ArticleReader } from "./ArticleReader";
 import { Layout } from "./Layout";
 import { Sidebar, SidebarScope } from "./Sidebar";
-import { Toolbar } from "./Toolbar";
 import type { FeedViewModel } from "./feeds-types";
 import {
   selectAllArticles,
@@ -50,7 +49,7 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
     onMobileBackToArticles,
   } = useFeedsWorkspaceMobile();
 
-  const { networkMessage, setNetworkMessage } = useFeedsWorkspaceNetwork({
+  const { setNetworkMessage } = useFeedsWorkspaceNetwork({
     feeds,
     setFeeds,
   });
@@ -256,17 +255,6 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
       </p>
 
       <Layout
-        toolbar={
-          <div>
-            <Toolbar
-              isRefreshing={isRefreshingFeeds}
-              onRefresh={() => {
-                void handleRefresh();
-              }}
-            />
-            {networkMessage ? <p className={styles.toolbarMessage}>{networkMessage}</p> : null}
-          </div>
-        }
         sidebar={
           <Sidebar
             feeds={feeds}
@@ -276,7 +264,11 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
             isAddFeedFormVisible={isAddFeedFormVisible}
             feedUrlInput={feedUrlInput}
             isAddingFeed={isAddingFeed}
+            isRefreshingFeeds={isRefreshingFeeds}
             onShowAddFeedForm={showAddFeedForm}
+            onRefresh={() => {
+              void handleRefresh();
+            }}
             onCancelAddFeed={cancelAddFeedForm}
             onFeedUrlChange={setFeedUrlInput}
             onSubmitFeed={(event) => {
@@ -286,8 +278,8 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
             errorMessage={errorMessage}
             onDismissMessage={clearStatusMessages}
             deletingFeedId={deletingFeedId}
-            onRequestFeedDelete={(feedId, feedLabel) => {
-              void handleDeleteFeed(feedId, feedLabel);
+            onRequestFeedDelete={(feedId) => {
+              void handleDeleteFeed(feedId);
             }}
           />
         }

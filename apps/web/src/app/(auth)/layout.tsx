@@ -16,12 +16,14 @@ export default function AuthLayout({
 }) {
   return (
     <div className={styles.shell}>
+      <Link href="/feeds" className={styles.brand}>
+        Feedmyowl
+      </Link>
+
       <div className={styles.accountControls}>
-        <Link href="/feeds" className={styles.navLink}>
-          feeds
-        </Link>
         <UserMenu afterSignOutUrl="/sign-in" />
       </div>
+
       {children}
     </div>
   );
