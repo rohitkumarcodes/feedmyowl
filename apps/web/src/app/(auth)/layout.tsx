@@ -4,6 +4,9 @@
  * This layout intentionally stays minimal so each page can control its own
  * structure without inheriting a decorative shell.
  */
+import Link from "next/link";
+import { UserMenu } from "@/lib/auth";
+import styles from "./layout.module.css";
 
 /**
  * Returns route-group children without extra wrapper UI.
@@ -13,5 +16,15 @@ export default function AuthLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <div className={styles.shell}>
+      <div className={styles.accountControls}>
+        <Link href="/settings" className={styles.settingsLink}>
+          Account settings
+        </Link>
+        <UserMenu afterSignOutUrl="/sign-in" />
+      </div>
+      {children}
+    </div>
+  );
 }

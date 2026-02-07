@@ -68,6 +68,72 @@
 
 **Risks / tradeoffs:** Users who want dark mode in a light-OS environment (or vice versa) cannot override. Acceptable for MVP.
 
+---
+
+### 2026-02-06 — Read State Persistence in Database (`read_at`)
+
+**Decision:** Keep minimal read/unread visuals, but persist read state in the database using `feed_items.read_at`. Opening an article sets `read_at` and the list renders opened items in muted/normal-weight typography.
+
+**Context:** Minimal visual tracking had already been chosen, but persistence behavior needed to be explicit. Persisting read state keeps orientation consistent across refreshes and sessions.
+
+**Alternatives considered:**
+- Client-only storage (localStorage/sessionStorage) — rejected because state would be device/browser-specific and reset-prone.
+- Session-only in-memory state — rejected because it disappears on reload and breaks continuity.
+
+**Principles referenced:** 7 (reading experience), 6 (minimal surface area).
+
+**Risks / tradeoffs:** Adds a write on article-open and requires ownership checks in API handlers.
+
+---
+
+### 2026-02-06 — Folder Deletion Behavior: Destructive Cascade
+
+**Decision:** Deleting a folder deletes every feed inside that folder and all associated feed items via cascade foreign keys.
+
+**Context:** Folder support was selected for MVP, but deletion semantics were unresolved. A destructive cascade keeps the backend and UI logic simpler for MVP.
+
+**Alternatives considered:**
+- Move all feeds to uncategorized on folder delete — rejected because it adds extra migration logic and edge cases.
+- Block folder deletion until empty — rejected because it adds friction and additional state handling.
+
+**Principles referenced:** 6 (minimal surface area), 5 (retractability through backups/rollbacks).
+
+**Risks / tradeoffs:** Accidental folder deletion is high impact. Mitigated by explicit confirmation in UI and backup discipline.
+
+---
+
+### 2026-02-06 — Feed API Surface: Action Payloads on Existing Routes
+
+**Decision:** Keep route surface area unchanged and extend existing feed routes with action payloads:
+- `POST/PATCH /api/feeds` for folder/create/read actions
+- `PATCH/DELETE /api/feeds/[id]` for feed-specific actions
+
+**Context:** We needed folder and read-state mutations without adding new route files, consistent with MVP constraints.
+
+**Alternatives considered:**
+- Add dedicated routes (`/api/folders`, `/api/items/:id/read`) — rejected to avoid route sprawl.
+- Keep only legacy feed create/delete endpoints — rejected because new functionality required additional mutations.
+
+**Principles referenced:** 6 (minimal surface area), 4 (modularity through stable boundaries).
+
+**Risks / tradeoffs:** Action-dispatch handlers can become harder to maintain if too many actions accumulate.
+
+---
+
+### 2026-02-06 — ESLint Setup: Non-Interactive Lint Command
+
+**Decision:** Replace prompt-based `next lint` setup flow with explicit ESLint configuration (`eslint.config.mjs`) and a direct lint script (`eslint src --ext .ts,.tsx`).
+
+**Context:** `next lint` prompted for first-time setup and could block CI or automation.
+
+**Alternatives considered:**
+- Keep `next lint` with interactive setup — rejected because it is unreliable in automated environments.
+- Keep legacy `.eslintrc` path with compatibility env flags — rejected as a temporary workaround and not the long-term default.
+
+**Principles referenced:** 13 (assume you will be unavailable), 6 (minimal operational friction), 8 (maintainable project operations).
+
+**Risks / tradeoffs:** ESLint config may need periodic updates as Next.js/ESLint versions evolve.
+
 ## 2026-02-06 — MVP Scope: Feed-Only Mode (Payments Deferred)
 
 **Decision:** Current implementation phase is explicitly feed-only MVP: users can add feeds, refresh feeds, and read feeds in-app. Payment UI and feed-count gating are deferred until phase 2. Payment backend modules/routes remain in the codebase but are intentionally dormant.

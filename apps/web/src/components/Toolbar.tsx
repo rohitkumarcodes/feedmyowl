@@ -1,10 +1,9 @@
 /**
- * Top toolbar with sidebar toggle, refresh, search, and settings controls.
- * Order left-to-right: Hide/Show Sidebar | ⟳ Refresh | Search | Settings
+ * Top toolbar with sidebar toggle, refresh, and search controls.
+ * Order left-to-right: Hide/Show Sidebar | ⟳ Refresh | Search
  */
 
 import type { RefObject } from "react";
-import Link from "next/link";
 import styles from "./Toolbar.module.css";
 
 interface ToolbarProps {
@@ -62,10 +61,6 @@ export function Toolbar({
         aria-label="Search current article list"
       />
 
-      {/* Navigation link to settings page — rightmost control */}
-      <Link href="/settings" className={styles.settingsLink}>
-        Settings
-      </Link>
     </div>
   );
 }

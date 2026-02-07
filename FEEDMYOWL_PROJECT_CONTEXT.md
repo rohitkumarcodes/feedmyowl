@@ -2,7 +2,7 @@
 
 > **Purpose of this document:** This document is the single source of truth for the FeedMyOwl project. It contains the mission, product definition, architecture constraints, and decision-making principles. It is written to be readable by both humans and LLMs. When working with any AI assistant on any part of this project, paste this document into the conversation first so the AI has full context. Update this document as decisions are made.
 
-> **Last updated:** 2026-02-06 (MVP scope updated)
+> **Last updated:** 2026-02-06 (three-pane reader + folders/read-state shipped)
 
 ---
 
@@ -55,6 +55,8 @@ The guiding question for every product decision is: **"Does this help the user r
 **Current MVP implementation note (February 6, 2026):**
 - Active scope is add feeds, fetch feeds, and read feeds in-app.
 - Payment controls and feed-count gating are deferred until phase 2.
+- Deleting a folder deletes all feeds and feed items inside that folder (cascade behavior).
+- Read state is persisted in the database (`feed_items.read_at`) and reflected visually in the list.
 
 ### Key Feature Decisions
 
@@ -69,9 +71,9 @@ The guiding question for every product decision is: **"Does this help the user r
 | Feed item storage in database | **Yes** | Previously fetched articles remain available even if a feed is temporarily down. Better reliability. |
 | Search within feeds | Yes (client-side filtering in MVP) | Filters article list by title and snippet. No full-text search of bodies yet. Helps users find articles without frustration (Principle 7). |
 | Folders | Yes (MVP) | Expandable/collapsible folder groups in sidebar. Standard feed reader pattern. Tags rejected as more complex. |
+| Folder deletion behavior | Destructive cascade | Deleting a folder also deletes feeds and feed items inside it. Simpler implementation for MVP; protected by explicit confirmation UI and backups. |
+| Unread tracking | Minimal visual + persisted timestamp | Opened articles are shown in muted text/normal weight, with no counts/badges; read state persists via `read_at`. |
 | Dark mode | Yes (automatic via prefers-color-scheme) | Respects system setting. No manual toggle in MVP. Reduces eye strain for reading (Principle 7). |
-Also add this row to the table:
-| Unread tracking | Minimal visual only | Opened articles shown in muted text/normal weight. No counts, no badges, no numbers. Wayfinding aid, not a productivity metric. |
 
 ---
 
@@ -204,13 +206,13 @@ AI writes code, debugs errors, and explains concepts. The founder makes all deci
 │        │              │              │              │        │
 │   ┌────┴──────────────┴──────────────┴──────────────┴─────┐ │
 │   │              Next.js API Routes                       │ │
-│   │   /api/feeds    /api/refresh    /api/subscribe        │ │
+│   │   /api/feeds    /api/feeds/[id]    /api/refresh       │ │
 │   │                                                       │ │
 │   │   ┌─────────────┐    ┌──────────────────┐            │ │
 │   │   │ rss-parser  │    │   PostgreSQL     │            │ │
 │   │   │ (feed fetch │◄──►│   on Neon        │            │ │
-│   │   │  & parse)   │    │   (users, feeds, │            │ │
-│   │   └─────────────┘    │    articles)     │            │ │
+│   │   │  & parse)   │    │ (users, folders, │            │ │
+│   │   └─────────────┘    │  feeds, articles)│            │ │
 │   │                      └──────────────────┘            │ │
 │   └───────────────────────────────────────────────────────┘ │
 │                                                              │
@@ -226,7 +228,7 @@ External monitoring:
    UptimeRobot ──► pings app.feedmyowl.com every 5 min
 ```
 
-MVP phase note (February 6, 2026): payment routes/modules remain in code but are intentionally dormant and hidden from UI.
+MVP phase note (February 6, 2026): payment routes/modules remain in code but are intentionally dormant and hidden from UI. Feed/folder/read-state actions are handled on existing feed routes to keep route surface area small.
 
 **Module Boundaries (Principle 4):**
 Each external service is accessed through a single dedicated file in the codebase. If any service needs to be replaced, only that one file changes:
