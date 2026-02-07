@@ -41,24 +41,26 @@
 
 .sidebarPaneCollapsed {
   border-right: 0;
-  display: none;
 }
 
-.expandBar {
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  padding: 8px 12px;
+.expandToggle {
+  left: 0;
+  position: absolute;
+  top: 14px;
+  z-index: 41;
 }
 
 .expandButton {
   align-items: center;
-  background: transparent;
-  border: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-left: 0;
+  border-radius: 0 4px 4px 0;
   color: var(--text-muted);
   cursor: pointer;
   display: flex;
   justify-content: center;
-  padding: 4px;
+  padding: 6px 6px 6px 4px;
 }
 
 .expandButton:hover {
