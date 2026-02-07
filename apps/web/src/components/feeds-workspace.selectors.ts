@@ -92,7 +92,7 @@ export function selectScopeLabel(
   selectedScope: SidebarScope
 ): string {
   if (selectedScope.type === "all") {
-    return "All articles";
+    return "Read all feeds";
   }
 
   const feed = feeds.find((candidate) => candidate.id === selectedScope.feedId);

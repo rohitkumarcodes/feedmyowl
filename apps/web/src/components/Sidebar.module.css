@@ -1,28 +1,30 @@
 .root {
+  background: var(--bg-secondary);
   display: grid;
   grid-template-rows: auto 1fr;
   height: 100%;
 }
 
 .top {
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--text-primary);
   padding: 42px 0 8px;
 }
 
 .controls {
   display: grid;
-  gap: 4px;
+  gap: 8px;
   padding: 0 12px;
 }
 
 .controlButton {
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 2px;
+  background: var(--bg-primary);
+  border: 2px solid var(--text-primary);
+  box-shadow: 2px 2px 0 var(--text-primary);
   color: var(--text-primary);
   cursor: pointer;
   font-size: var(--text-base);
-  font-weight: var(--weight-normal);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.02em;
   min-height: 44px;
   padding: 6px 10px;
   text-align: left;
@@ -30,8 +32,9 @@
 }
 
 .controlButton:hover:enabled {
-  background: var(--bg-tertiary);
-  transition: background-color 80ms ease;
+  background: var(--bg-selected);
+  transform: translate(-1px, -1px);
+  transition: background-color 80ms ease, transform 80ms ease;
 }
 
 .controlButton:disabled {
@@ -45,30 +48,32 @@
 
 .sections {
   overflow: auto;
-  padding: 8px 0;
+  padding: 10px 8px 12px;
 }
 
 .allArticlesButton {
-  background: transparent;
-  border: 0;
-  border-left: 2px solid transparent;
+  background: var(--bg-primary);
+  border: 2px solid var(--text-primary);
+  box-shadow: 2px 2px 0 var(--text-primary);
   color: var(--text-primary);
   cursor: pointer;
   font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  margin: 0 4px 8px;
   min-height: 44px;
-  padding: 12px 16px;
+  padding: 10px 12px;
   text-align: left;
   width: 100%;
 }
 
 .allArticlesButton:hover {
-  background: var(--bg-tertiary);
-  transition: background-color 80ms ease;
+  background: var(--bg-selected);
+  transform: translate(-1px, -1px);
+  transition: background-color 80ms ease, transform 80ms ease;
 }
 
 .allArticlesButtonActive {
   background: var(--bg-selected);
-  border-left-color: var(--accent);
 }
 
 .allArticlesButton:focus-visible,
@@ -86,7 +91,7 @@
 
 .sidebarMessage {
   align-items: flex-start;
-  border-top: 1px solid var(--border);
+  border-top: 2px solid var(--text-primary);
   display: flex;
   gap: 4px;
   margin-top: 8px;

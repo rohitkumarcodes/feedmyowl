@@ -82,7 +82,7 @@ export function Sidebar({
             onClick={onShowAddFeedForm}
             disabled={isAddingFeed}
           >
-            + Add Feed
+            Add a feed
           </button>
         </div>
 
@@ -138,7 +138,7 @@ export function Sidebar({
           onClick={onSelectAll}
           aria-current={selectedScope.type === "all" ? "true" : undefined}
         >
-          All articles
+          Read all feeds
         </button>
 
         {sortedFeeds.length === 0 ? (
