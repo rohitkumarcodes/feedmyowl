@@ -51,7 +51,6 @@
 
 .sections {
   overflow: auto;
-  padding: 8px 0;
 }
 
 .controlButton:focus-visible,
