@@ -17,7 +17,7 @@ export default function AuthLayout({
   return (
     <div className={styles.shell}>
       <Link href="/feeds" className={styles.brand}>
-        Feedmyowl 🦉
+        FeedMyOwl
       </Link>
 
       <div className={styles.accountControls}>

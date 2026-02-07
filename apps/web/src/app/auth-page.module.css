@@ -1,0 +1,25 @@
+.root {
+  align-items: center;
+  background: var(--bg-primary);
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px 16px;
+}
+
+.frame {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 8px;
+}
+
+@media (max-width: 640px) {
+  .root {
+    align-items: flex-start;
+    padding-top: 72px;
+  }
+
+  .frame {
+    width: 100%;
+  }
+}

@@ -16,6 +16,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
+import styles from "./global-error.module.css";
 
 export default function GlobalError({
   error,
@@ -32,31 +33,16 @@ export default function GlobalError({
   return (
     <html lang="en">
       <body>
-        <div
-          style={{
-            padding: "24px",
-            textAlign: "center",
-            color: "var(--text-primary)",
-            backgroundColor: "var(--bg-primary)",
-          }}
-        >
-          <h1>Something went wrong</h1>
-          <p style={{ marginTop: "8px", color: "var(--text-secondary)" }}>
-            We&apos;ve been notified and are looking into it.
-          </p>
-          <button
-            onClick={() => reset()}
-            style={{
-              marginTop: "12px",
-              padding: "6px 10px",
-              cursor: "pointer",
-              border: "1px solid var(--border)",
-              borderRadius: "2px",
-              backgroundColor: "transparent",
-            }}
-          >
-            Try again
-          </button>
+        <div className={styles.root}>
+          <div className={styles.panel}>
+            <h1 className={styles.title}>Something went wrong</h1>
+            <p className={styles.message}>
+              We&apos;ve been notified and are looking into it.
+            </p>
+            <button className={styles.button} onClick={() => reset()}>
+              Try again
+            </button>
+          </div>
         </div>
       </body>
     </html>

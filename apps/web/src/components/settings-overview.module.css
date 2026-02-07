@@ -19,6 +19,7 @@
 }
 
 .panel {
+  background: var(--bg-secondary);
   border: 1px solid var(--border);
   display: grid;
   gap: 8px;
@@ -41,9 +42,9 @@
 }
 
 .linkButton {
-  background: transparent;
+  background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: 2px;
+  border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
   display: inline-block;

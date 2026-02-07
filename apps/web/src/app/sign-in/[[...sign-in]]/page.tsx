@@ -9,18 +9,14 @@
  */
 
 import { SignInForm } from "@/lib/auth";
+import styles from "@/app/auth-page.module.css";
 
 export default function SignInPage() {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "100vh",
-      }}
-    >
-      <SignInForm />
+    <div className={styles.root}>
+      <div className={styles.frame}>
+        <SignInForm />
+      </div>
     </div>
   );
 }

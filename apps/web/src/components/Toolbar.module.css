@@ -6,15 +6,16 @@
 }
 
 .controlButton {
-  background: transparent;
+  background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: 2px;
+  border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
   font-size: var(--text-base);
-  font-weight: var(--weight-normal);
-  min-height: 44px;
-  padding: 6px 10px;
+  font-weight: var(--weight-semibold);
+  min-height: 36px;
+  padding: 4px 10px;
+  text-decoration: none;
   white-space: nowrap;
 }
 

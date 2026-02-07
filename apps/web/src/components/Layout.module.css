@@ -47,6 +47,7 @@
 
 .mobileBackRow {
   align-items: center;
+  background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
   display: flex;
   gap: 12px;
@@ -55,17 +56,19 @@
 }
 
 .mobileBackRow button {
-  background: transparent;
-  border: 0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
   font-size: var(--text-base);
-  min-height: 44px;
-  padding: 0;
+  min-height: 32px;
+  padding: 2px 10px;
+  text-decoration: none;
 }
 
 .mobileBackRow button:hover {
-  color: var(--accent);
+  background: var(--bg-tertiary);
 }
 
 .mobileBackRow button:focus-visible {
@@ -74,7 +77,7 @@
 }
 
 .mobileBackRow p {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: var(--text-sm);
   overflow: hidden;
   text-overflow: ellipsis;

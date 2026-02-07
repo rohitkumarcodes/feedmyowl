@@ -1,7 +1,8 @@
 .form {
+  background: var(--bg-secondary);
   border: 1px solid var(--border);
   display: grid;
-  gap: 4px;
+  gap: 6px;
   margin-top: 4px;
   padding: 8px;
 }
@@ -9,18 +10,18 @@
 .label {
   color: var(--text-muted);
   font-size: var(--text-xs);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
 .input,
 .select {
-  background: transparent;
+  background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: 2px;
+  border-radius: 0;
   color: var(--text-primary);
   font-size: var(--text-sm);
-  min-height: 44px;
+  min-height: 40px;
   padding: 6px 10px;
   width: 100%;
 }
@@ -33,19 +34,19 @@
 
 .actions {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   margin-top: 4px;
 }
 
 .button {
-  background: transparent;
+  background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: 2px;
+  border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
   font-size: var(--text-sm);
-  min-height: 44px;
-  padding: 6px 10px;
+  min-height: 36px;
+  padding: 4px 10px;
 }
 
 .button:hover:enabled {

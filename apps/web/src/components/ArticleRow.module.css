@@ -2,6 +2,7 @@
   background: transparent;
   border: 0;
   border-bottom: 1px solid var(--border);
+  border-left: 2px solid transparent;
   color: inherit;
   cursor: pointer;
   display: grid;
@@ -19,11 +20,12 @@
 
 .row:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: -2px;
+  outline-offset: 2px;
 }
 
 .rowSelected {
   background: var(--bg-selected);
+  border-left-color: var(--accent);
 }
 
 .title {

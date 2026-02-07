@@ -6,35 +6,33 @@
 }
 
 .top {
-  border-bottom: 2px solid var(--text-primary);
+  border-bottom: 1px solid var(--border);
   padding: 42px 0 8px;
 }
 
 .controls {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   padding: 0 12px;
 }
 
 .controlButton {
   background: var(--bg-primary);
-  border: 2px solid var(--text-primary);
-  box-shadow: 2px 2px 0 var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.02em;
-  min-height: 44px;
+  min-height: 40px;
   padding: 6px 10px;
   text-align: left;
   white-space: nowrap;
 }
 
 .controlButton:hover:enabled {
-  background: var(--bg-selected);
-  transform: translate(-1px, -1px);
-  transition: background-color 80ms ease, transform 80ms ease;
+  background: var(--bg-tertiary);
+  transition: background-color 80ms ease;
 }
 
 .controlButton:disabled {
@@ -48,32 +46,31 @@
 
 .sections {
   overflow: auto;
-  padding: 10px 8px 12px;
+  padding: 8px 0;
 }
 
 .allArticlesButton {
-  background: var(--bg-primary);
-  border: 2px solid var(--text-primary);
-  box-shadow: 2px 2px 0 var(--text-primary);
+  background: transparent;
+  border: 0;
+  border-left: 2px solid transparent;
   color: var(--text-primary);
   cursor: pointer;
   font-size: var(--text-base);
-  font-weight: var(--weight-semibold);
-  margin: 0 4px 8px;
-  min-height: 44px;
+  min-height: 40px;
   padding: 10px 12px;
   text-align: left;
   width: 100%;
 }
 
 .allArticlesButton:hover {
-  background: var(--bg-selected);
-  transform: translate(-1px, -1px);
-  transition: background-color 80ms ease, transform 80ms ease;
+  background: var(--bg-tertiary);
+  transition: background-color 80ms ease;
 }
 
 .allArticlesButtonActive {
   background: var(--bg-selected);
+  border-left-color: var(--accent);
+  font-weight: var(--weight-semibold);
 }
 
 .allArticlesButton:focus-visible,
@@ -91,7 +88,7 @@
 
 .sidebarMessage {
   align-items: flex-start;
-  border-top: 2px solid var(--text-primary);
+  border-top: 1px solid var(--border);
   display: flex;
   gap: 4px;
   margin-top: 8px;

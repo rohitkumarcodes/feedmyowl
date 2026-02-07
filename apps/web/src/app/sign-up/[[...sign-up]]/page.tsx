@@ -9,18 +9,14 @@
  */
 
 import { SignUpForm } from "@/lib/auth";
+import styles from "@/app/auth-page.module.css";
 
 export default function SignUpPage() {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "100vh",
-      }}
-    >
-      <SignUpForm />
+    <div className={styles.root}>
+      <div className={styles.frame}>
+        <SignUpForm />
+      </div>
     </div>
   );
 }

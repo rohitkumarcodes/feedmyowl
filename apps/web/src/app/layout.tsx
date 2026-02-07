@@ -17,6 +17,27 @@ import { AuthProvider } from "@/lib/auth";
 import type { Metadata } from "next";
 import "@/styles/globals.css";
 
+const clerkAppearance = {
+  variables: {
+    colorPrimary: "#005fd7",
+    colorBackground: "#f7f7f8",
+    colorForeground: "#1f2328",
+    colorMutedForeground: "#5f6670",
+    colorInput: "#f7f7f8",
+    colorInputForeground: "#1f2328",
+    colorBorder: "#c7cdd4",
+    fontFamily: '"Noto Sans", "Liberation Sans", "Segoe UI", Arial, sans-serif',
+    fontSize: "0.9375rem",
+    borderRadius: "0px",
+  },
+  layout: {
+    animations: false,
+  },
+  captcha: {
+    theme: "light" as const,
+  },
+};
+
 /** Page metadata — shown in browser tab and search results */
 export const metadata: Metadata = {
   title: "FeedMyOwl — Calm RSS Reader",
@@ -54,6 +75,7 @@ export default function RootLayout({
           signUpUrl={signUpUrl}
           signInFallbackRedirectUrl={signInFallbackRedirectUrl}
           signUpFallbackRedirectUrl={signUpFallbackRedirectUrl}
+          appearance={clerkAppearance}
         >
           {children}
         </AuthProvider>

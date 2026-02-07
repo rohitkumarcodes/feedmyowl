@@ -4,19 +4,31 @@
 }
 
 .brand {
-  color: var(--text-muted);
+  align-items: center;
+  color: var(--text-primary);
+  display: inline-flex;
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
+  gap: 8px;
   left: 12px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   position: fixed;
   text-decoration: none;
   top: 10px;
   z-index: 40;
 }
 
+.brand::before {
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  content: "";
+  display: inline-block;
+  height: 12px;
+  width: 12px;
+}
+
 .brand:hover {
-  color: var(--text-primary);
+  color: var(--accent);
   transition: color 80ms ease;
 }
 
@@ -27,8 +39,11 @@
 
 .accountControls {
   align-items: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  padding: 4px 6px;
   position: fixed;
   right: 12px;
   top: 10px;

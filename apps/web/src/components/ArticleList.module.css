@@ -1,12 +1,14 @@
 .root {
+  background: var(--bg-primary);
   height: 100%;
   overflow: auto;
 }
 
 .statusMessage {
-  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
   font-size: var(--text-sm);
-  padding: 10px 12px 6px;
+  padding: 10px 12px;
 }
 
 .empty {
