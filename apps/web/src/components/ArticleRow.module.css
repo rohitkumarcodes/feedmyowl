@@ -7,7 +7,6 @@
   cursor: pointer;
   display: grid;
   gap: 4px;
-  min-height: 80px;
   padding: 10px 12px;
   text-align: left;
   width: 100%;
@@ -31,7 +30,7 @@
 .title {
   color: var(--text-primary);
   font-size: var(--text-base);
-  font-weight: var(--weight-semibold);
+  font-weight: 700;
   line-height: var(--leading-tight);
 }
 
@@ -45,14 +44,4 @@
   font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
   line-height: var(--leading-tight);
-}
-
-.snippet {
-  color: var(--text-secondary);
-  display: -webkit-box;
-  font-size: var(--text-sm);
-  line-height: var(--leading-tight);
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
 }

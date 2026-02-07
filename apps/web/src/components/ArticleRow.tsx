@@ -2,7 +2,6 @@
  * One row in the middle-pane article list.
  */
 
-import { timeAgo } from "@/utils/timeAgo";
 import type { ArticleViewModel } from "./feeds-types";
 import styles from "./ArticleRow.module.css";
 
@@ -10,16 +9,18 @@ interface ArticleRowProps {
   article: ArticleViewModel;
   isSelected: boolean;
   isOpen: boolean;
+  showFeedTitle: boolean;
   onSelect: () => void;
 }
 
 /**
- * Renders title, source/time metadata, and snippet for a single article.
+ * Renders a single article row — title only, with optional feed name.
  */
 export function ArticleRow({
   article,
   isSelected,
   isOpen,
+  showFeedTitle,
   onSelect,
 }: ArticleRowProps) {
   const isRead = Boolean(article.readAt);
@@ -34,10 +35,9 @@ export function ArticleRow({
       aria-current={isOpen ? "true" : undefined}
     >
       <p className={`${styles.title} ${isRead ? styles.titleRead : ""}`}>{article.title}</p>
-      <p className={styles.meta}>
-        {article.feedTitle} · {timeAgo(article.publishedAt || article.createdAt)}
-      </p>
-      <p className={styles.snippet}>{article.snippet}</p>
+      {showFeedTitle ? (
+        <p className={styles.meta}>{article.feedTitle}</p>
+      ) : null}
     </button>
   );
 }

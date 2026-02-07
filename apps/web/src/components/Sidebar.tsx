@@ -69,6 +69,17 @@ export function Sidebar({
         <div className={styles.controls}>
           <button
             type="button"
+            className={`${styles.controlButton} ${
+              selectedScope.type === "all" ? styles.controlButtonActive : ""
+            }`}
+            onClick={onSelectAll}
+            aria-current={selectedScope.type === "all" ? "true" : undefined}
+          >
+            Read all feeds
+          </button>
+
+          <button
+            type="button"
             className={styles.controlButton}
             onClick={onRefresh}
             disabled={isRefreshingFeeds}
@@ -82,7 +93,7 @@ export function Sidebar({
             onClick={onShowAddFeedForm}
             disabled={isAddingFeed}
           >
-            Add a feed
+            + Add a feed
           </button>
         </div>
 
@@ -130,17 +141,6 @@ export function Sidebar({
       </div>
 
       <div className={styles.sections}>
-        <button
-          type="button"
-          className={`${styles.allArticlesButton} ${
-            selectedScope.type === "all" ? styles.allArticlesButtonActive : ""
-          }`}
-          onClick={onSelectAll}
-          aria-current={selectedScope.type === "all" ? "true" : undefined}
-        >
-          Read all feeds
-        </button>
-
         {sortedFeeds.length === 0 ? (
           <p className={styles.emptyLabel}>No feeds yet.</p>
         ) : (

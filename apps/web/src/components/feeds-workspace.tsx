@@ -290,6 +290,7 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
             openArticleId={openArticleId}
             statusMessage={listStatusMessage}
             emptyStateMessage={emptyStateMessage}
+            showFeedTitle={selectedScope.type === "all"}
             onSelectArticle={(articleId) => {
               void openSelectedArticle(articleId);
             }}

@@ -12,6 +12,7 @@ interface ArticleListProps {
   openArticleId: string | null;
   statusMessage: string | null;
   emptyStateMessage: string;
+  showFeedTitle: boolean;
   onSelectArticle: (articleId: string) => void;
 }
 
@@ -24,6 +25,7 @@ export function ArticleList({
   openArticleId,
   statusMessage,
   emptyStateMessage,
+  showFeedTitle,
   onSelectArticle,
 }: ArticleListProps) {
   return (
@@ -49,6 +51,7 @@ export function ArticleList({
             article={article}
             isSelected={selectedArticleId === article.id}
             isOpen={openArticleId === article.id}
+            showFeedTitle={showFeedTitle}
             onSelect={() => onSelectArticle(article.id)}
           />
         ))

@@ -4,27 +4,16 @@
 }
 
 .brand {
-  align-items: center;
   color: var(--text-primary);
   display: inline-flex;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: var(--weight-semibold);
-  gap: 8px;
   left: 12px;
   letter-spacing: 0.02em;
   position: fixed;
   text-decoration: none;
   top: 10px;
   z-index: 40;
-}
-
-.brand::before {
-  border: 2px solid currentColor;
-  border-radius: 999px;
-  content: "";
-  display: inline-block;
-  height: 12px;
-  width: 12px;
 }
 
 .brand:hover {
