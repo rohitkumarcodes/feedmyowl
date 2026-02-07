@@ -134,9 +134,22 @@ export function ArticleReader({ article }: ArticleReaderProps) {
     <div className={styles.root} role="main" aria-label="Article reader">
       <article className={styles.content}>
         <p className={styles.feedName}>{article.feedTitle}</p>
-        <h1 className={styles.title} id="reader-article-title" tabIndex={-1}>
-          {article.title}
-        </h1>
+        {article.link ? (
+          <a
+            href={article.link}
+            target="_blank"
+            rel="noreferrer"
+            className={styles.titleLink}
+          >
+            <h1 className={styles.title} id="reader-article-title" tabIndex={-1}>
+              {article.title}
+            </h1>
+          </a>
+        ) : (
+          <h1 className={styles.title} id="reader-article-title" tabIndex={-1}>
+            {article.title}
+          </h1>
+        )}
         <p className={styles.meta}>
           {article.author || "Unknown author"} · {formatPublicationDate(article.publishedAt || article.createdAt)}
         </p>
@@ -145,17 +158,6 @@ export function ArticleReader({ article }: ArticleReaderProps) {
           className={styles.body}
           dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
         />
-        {article.link ? (
-          <a
-            href={article.link}
-            target="_blank"
-            rel="noreferrer"
-            className={styles.link}
-            aria-label={`Open original article on ${article.feedTitle}`}
-          >
-            Open original ↗
-          </a>
-        ) : null}
       </article>
     </div>
   );
