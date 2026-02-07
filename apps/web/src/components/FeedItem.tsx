@@ -64,7 +64,7 @@ export function FeedItem({
   };
 
   return (
-    <div className={styles.rowWrap}>
+    <div className={`${styles.rowWrap} ${isActive ? styles.rowWrapActive : ""}`}>
       <button
         type="button"
         className={`${styles.row} ${isActive ? styles.rowActive : ""}`}

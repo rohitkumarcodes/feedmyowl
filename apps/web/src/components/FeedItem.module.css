@@ -4,6 +4,10 @@
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
+.rowWrapActive {
+  background: var(--bg-selected);
+}
+
 .row {
   align-items: center;
   background: transparent;
@@ -32,7 +36,6 @@
 }
 
 .rowActive {
-  background: var(--bg-selected);
   border-left-color: var(--accent);
 }
 
