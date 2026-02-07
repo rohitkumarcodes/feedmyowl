@@ -1,10 +1,8 @@
 /**
- * Two-row application shell with toolbar and independent pane containers
- * for sidebar, article list, and reader.
- * The article list pane width is adjustable via a drag handle.
+ * Two-row application shell with a toolbar and three reader panes.
  */
 
-import type { ReactNode, MouseEvent as ReactMouseEvent } from "react";
+import type { ReactNode } from "react";
 import styles from "./Layout.module.css";
 
 interface LayoutProps {
@@ -13,15 +11,11 @@ interface LayoutProps {
   articleList: ReactNode;
   articleReader: ReactNode;
   isSidebarCollapsed: boolean;
-  /** Current width of the article list pane in pixels. */
-  listPaneWidth: number;
-  /** Called when the user starts dragging the resize handle between list and reader. */
-  onListPaneResizeStart: (event: ReactMouseEvent<HTMLDivElement>) => void;
+  onToggleSidebar: () => void;
 }
 
 /**
- * Renders the feed-reader layout: a toolbar row on top and a three-pane
- * grid below (sidebar, article list, resize handle, reader).
+ * Renders the feed-reader layout with optional collapsed sidebar state.
  */
 export function Layout({
   toolbar,
@@ -29,8 +23,7 @@ export function Layout({
   articleList,
   articleReader,
   isSidebarCollapsed,
-  listPaneWidth,
-  onListPaneResizeStart,
+  onToggleSidebar,
 }: LayoutProps) {
   return (
     <div className={styles.root}>
@@ -44,21 +37,21 @@ export function Layout({
         >
           {sidebar}
         </aside>
-        <section
-          className={styles.listPane}
-          aria-label="Article list pane"
-          style={{ width: `${listPaneWidth}px` }}
-        >
+
+        {isSidebarCollapsed ? (
+          <button
+            type="button"
+            className={styles.showSidebarButton}
+            onClick={onToggleSidebar}
+          >
+            Show Sidebar
+          </button>
+        ) : null}
+
+        <section className={styles.listPane} aria-label="Article list pane">
           {articleList}
         </section>
-        {/* Draggable resize handle between article list and reader panes */}
-        <div
-          className={styles.resizeHandle}
-          onMouseDown={onListPaneResizeStart}
-          role="separator"
-          aria-orientation="vertical"
-          aria-label="Resize article list"
-        />
+
         <section className={styles.readerPane} aria-label="Reader pane">
           {articleReader}
         </section>

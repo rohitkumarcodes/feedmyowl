@@ -3,26 +3,21 @@ layout: layouts/base.njk
 title: blog — feedmyowl
 permalink: /blog/
 ---
-{# Blog Index Page — lists all blog posts in reverse chronological order #}
+{# Blog index with title-only stream rows (intentional project override). #}
 
-<article class="blog-index">
-  <header class="blog-index-header">
-    <h1 class="blog-index-title">blog</h1>
-    <p class="blog-index-intro">Short updates from feedmyowl.</p>
-  </header>
+<section class="stream-index">
+  <h1>Blog</h1>
 
   {% set postslist = collections.posts | reverse %}
   {% if postslist.length %}
-    <ul class="blog-index-list">
-      {%- for post in postslist %}
-      <li class="blog-index-item">
-        <a href="{{ post.url }}" class="blog-index-link">{{ post.data.title }}</a>
-        <time class="blog-index-meta" datetime="{{ post.date | htmlDateString }}">{{ post.date | readableDate }}</time>
-        {% if post.data.description %}<p class="blog-index-description">{{ post.data.description }}</p>{% endif %}
-      </li>
-      {%- endfor %}
+    <ul class="stream-list">
+      {% for post in postslist %}
+        <li class="stream-item">
+          <a href="{{ post.url }}" class="stream-link">{{ post.data.title }}</a>
+        </li>
+      {% endfor %}
     </ul>
   {% else %}
-    <p class="blog-index-empty">No posts yet.</p>
+    <p>No posts yet.</p>
   {% endif %}
-</article>
+</section>

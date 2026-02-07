@@ -1,15 +1,13 @@
 /**
- * Authenticated route-group layout.
- *
- * This layout intentionally stays minimal so each page can control its own
- * structure without inheriting a decorative shell.
+ * Authenticated route-group layout with quiet account controls.
  */
+
 import Link from "next/link";
 import { UserMenu } from "@/lib/auth";
 import styles from "./layout.module.css";
 
 /**
- * Returns route-group children without extra wrapper UI.
+ * Wraps authenticated pages and keeps account actions minimally visible.
  */
 export default function AuthLayout({
   children,
@@ -19,8 +17,11 @@ export default function AuthLayout({
   return (
     <div className={styles.shell}>
       <div className={styles.accountControls}>
+        <Link href="/feeds" className={styles.settingsLink}>
+          feeds
+        </Link>
         <Link href="/settings" className={styles.settingsLink}>
-          Account settings
+          settings
         </Link>
         <UserMenu afterSignOutUrl="/sign-in" />
       </div>

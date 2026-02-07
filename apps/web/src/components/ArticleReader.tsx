@@ -24,7 +24,6 @@ function formatPublicationDate(iso: string | null): string {
 
   return new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
-    timeStyle: "short",
   }).format(parsed);
 }
 

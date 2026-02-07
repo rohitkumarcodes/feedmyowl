@@ -5,12 +5,13 @@
 
 .content {
   margin: 0 auto;
-  max-width: 65ch;
-  padding: 24px 32px;
+  max-width: 38em;
+  padding: 32px 40px;
 }
 
 .feedName {
   color: var(--text-muted);
+  font-family: var(--font-sans);
   font-size: var(--text-xs);
   font-weight: var(--weight-normal);
   letter-spacing: 0.05em;
@@ -19,6 +20,7 @@
 
 .title {
   color: var(--text-primary);
+  font-family: var(--font-sans);
   font-size: var(--text-xl);
   font-weight: var(--weight-semibold);
   line-height: var(--leading-tight);
@@ -27,69 +29,71 @@
 
 .meta {
   color: var(--text-muted);
+  font-family: var(--font-sans);
   font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
   margin-top: 8px;
 }
 
 .body {
   color: var(--text-primary);
+  font-family: var(--font-serif);
   font-size: var(--text-lg);
   line-height: var(--leading-relaxed);
-  margin-top: 16px;
-}
-
-/* --- Article body element styles (scoped to reader pane) --- */
-
-.body p {
-  margin-top: 12px;
-}
-
-.body p:first-child {
-  margin-top: 0;
-}
-
-.body h2 {
-  font-size: 1.125rem;
-  font-weight: var(--weight-semibold);
-  line-height: var(--leading-tight);
   margin-top: 20px;
 }
 
+.body p {
+  margin-bottom: 1em;
+}
+
+.body h2 {
+  font-family: var(--font-sans);
+  font-size: 1.125rem;
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  margin: 1.25em 0 0.5em;
+}
+
 .body h3 {
+  font-family: var(--font-sans);
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
   line-height: var(--leading-tight);
-  margin-top: 16px;
+  margin: 1em 0 0.5em;
 }
 
 .body h4,
 .body h5,
 .body h6 {
+  font-family: var(--font-sans);
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
-  margin-top: 12px;
+  margin: 1em 0 0.5em;
 }
 
-.body a {
+.body a,
+.link {
   color: var(--accent);
   text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .body blockquote {
   border-left: 2px solid var(--border);
   color: var(--text-secondary);
-  margin: 12px 0 0;
+  margin: 0 0 1em;
   padding-left: 12px;
 }
 
 .body ul,
 .body ol {
-  margin-top: 12px;
+  margin: 0 0 1em;
   padding-left: 20px;
 }
 
 .body li {
-  margin-top: 4px;
+  margin-bottom: 0.5em;
 }
 
 .body img {
@@ -98,7 +102,7 @@
 }
 
 .body figure {
-  margin: 12px 0;
+  margin: 0 0 1em;
 }
 
 .body figcaption {
@@ -110,7 +114,7 @@
 .body hr {
   border: none;
   border-top: 1px solid var(--border);
-  margin: 16px 0;
+  margin: 1em 0;
 }
 
 .body pre {
@@ -118,12 +122,11 @@
   border-radius: 2px;
   font-family: var(--font-mono);
   font-size: var(--text-sm);
-  margin-top: 12px;
+  margin-bottom: 1em;
   overflow-x: auto;
   padding: 12px;
 }
 
-/* Inline code (not inside pre blocks) */
 .body code {
   background: var(--bg-secondary);
   border-radius: 2px;
@@ -132,7 +135,6 @@
   padding: 1px 4px;
 }
 
-/* Reset inline code styles when inside a pre block */
 .body pre code {
   background: transparent;
   border-radius: 0;
@@ -142,7 +144,7 @@
 
 .body table {
   border-collapse: collapse;
-  margin-top: 12px;
+  margin-bottom: 1em;
   width: 100%;
 }
 
@@ -159,11 +161,10 @@
 }
 
 .link {
-  color: var(--accent);
   display: inline-block;
+  font-family: var(--font-sans);
   font-size: var(--text-base);
-  margin-top: 20px;
-  text-decoration: underline;
+  margin-top: 12px;
 }
 
 .emptyWrap {
@@ -176,11 +177,12 @@
 
 .emptyText {
   color: var(--text-muted);
+  font-family: var(--font-sans);
   font-size: var(--text-base);
 }
 
 @media (max-width: 900px) {
   .content {
-    padding: 20px 16px;
+    padding: 24px 16px;
   }
 }

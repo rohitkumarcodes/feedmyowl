@@ -1,0 +1,23 @@
+---
+layout: layouts/base.njk
+title: changelog — feedmyowl
+permalink: /changelog/
+---
+{# Changelog index with title-only stream rows (intentional project override). #}
+
+<section class="stream-index">
+  <h1>Changelog</h1>
+
+  {% set changelogEntries = collections.changelog | reverse %}
+  {% if changelogEntries.length %}
+    <ul class="stream-list">
+      {% for entry in changelogEntries %}
+        <li class="stream-item">
+          <a href="{{ entry.url }}" class="stream-link">{{ entry.data.title }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No changelog entries yet.</p>
+  {% endif %}
+</section>

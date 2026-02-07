@@ -1,14 +1,6 @@
 {#
-  Base Layout
-
-  The root HTML template that all other layouts extend.
-  Provides the HTML boilerplate, <head> metadata, and a minimal
-  site header and footer.
-
-  Variables available:
-    - title: Page title (from front matter or child layout)
-    - metadata: Global site data (from _data/metadata.js)
-    - content: The page content (injected by Eleventy)
+  Base layout for all public website pages.
+  Keeps navigation minimal and content typography-forward.
 #}
 <!DOCTYPE html>
 <html lang="en">
@@ -22,12 +14,13 @@
   </head>
   <body>
     <header class="site-header">
-      <nav class="site-nav">
+      <nav class="site-nav" aria-label="Main navigation">
         <a href="/" class="site-name">{{ metadata.title }}</a>
         <div class="nav-links">
-          <a href="/about/">about</a>
-          <a href="/blog/">blog</a>
-          <a href="{{ metadata.appUrl }}" class="cta-link">open app</a>
+          <a href="/" {% if page.url == "/" %}aria-current="page"{% endif %}>Home</a>
+          <a href="/blog/" {% if page.url == "/blog/" %}aria-current="page"{% endif %}>Blog</a>
+          <a href="/docs/" {% if page.url == "/docs/" %}aria-current="page"{% endif %}>Docs</a>
+          <a href="/changelog/" {% if page.url == "/changelog/" %}aria-current="page"{% endif %}>Changelog</a>
         </div>
       </nav>
     </header>

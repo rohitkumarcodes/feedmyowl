@@ -1,6 +1,5 @@
 /**
- * Top toolbar with sidebar toggle, refresh, and search controls.
- * Order left-to-right: Hide/Show Sidebar | ⟳ Refresh | Search
+ * Top toolbar with refresh, search, and add-feed controls.
  */
 
 import type { RefObject } from "react";
@@ -10,37 +9,24 @@ interface ToolbarProps {
   query: string;
   searchInputRef: RefObject<HTMLInputElement | null>;
   isRefreshing: boolean;
-  isSidebarCollapsed: boolean;
   onQueryChange: (query: string) => void;
   onRefresh: () => void;
-  onToggleSidebar: () => void;
+  onShowAddFeedForm: () => void;
 }
 
 /**
- * Renders the top control row used by keyboard and pointer interactions.
+ * Renders the thin control bar above the three-pane reader layout.
  */
 export function Toolbar({
   query,
   searchInputRef,
   isRefreshing,
-  isSidebarCollapsed,
   onQueryChange,
   onRefresh,
-  onToggleSidebar,
+  onShowAddFeedForm,
 }: ToolbarProps) {
   return (
     <div className={styles.root}>
-      {/* Sidebar visibility toggle — leftmost control */}
-      <button
-        type="button"
-        className={styles.controlButton}
-        onClick={onToggleSidebar}
-        aria-label={isSidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
-      >
-        {isSidebarCollapsed ? "Show Sidebar" : "Hide Sidebar"}
-      </button>
-
-      {/* Feed refresh trigger with unicode glyph */}
       <button
         type="button"
         className={styles.controlButton}
@@ -50,7 +36,6 @@ export function Toolbar({
         {isRefreshing ? "⟳ Refreshing..." : "⟳ Refresh"}
       </button>
 
-      {/* Client-side search filter for the current article list */}
       <input
         ref={searchInputRef}
         type="search"
@@ -61,6 +46,13 @@ export function Toolbar({
         aria-label="Search current article list"
       />
 
+      <button
+        type="button"
+        className={styles.addFeedButton}
+        onClick={onShowAddFeedForm}
+      >
+        + Add Feed
+      </button>
     </div>
   );
 }

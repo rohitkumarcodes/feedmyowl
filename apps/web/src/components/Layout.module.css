@@ -11,20 +11,15 @@
   border-bottom: 1px solid var(--border);
 }
 
-/*
- * Four-column grid: sidebar | article list | resize handle | reader.
- * Sidebar and list pane widths are set via inline styles or class rules.
- * The resize handle is a fixed 4px column. Reader takes remaining space.
- */
 .panes {
   display: grid;
-  grid-template-columns: auto auto 4px minmax(0, 1fr);
+  grid-template-columns: auto clamp(280px, 30vw, 420px) minmax(0, 1fr);
   min-height: 0;
+  position: relative;
 }
 
 .sidebarPane,
 .listPane,
-.resizeHandle,
 .readerPane {
   min-height: 0;
 }
@@ -41,22 +36,36 @@
   width: 0;
 }
 
-.listPane {
-  background: var(--bg-primary);
-  overflow: hidden;
+.showSidebarButton {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  left: 8px;
+  min-height: 28px;
+  padding: 4px 8px;
+  position: absolute;
+  top: 8px;
+  z-index: 5;
 }
 
-/* Draggable divider between article list and reader panes. */
-.resizeHandle {
-  background: transparent;
-  border-left: 1px solid var(--border);
-  cursor: col-resize;
-  width: 4px;
-}
-
-.resizeHandle:hover {
+.showSidebarButton:hover {
   background: var(--bg-tertiary);
   transition: background-color 80ms ease;
+}
+
+.showSidebarButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.listPane {
+  background: var(--bg-primary);
+  border-right: 1px solid var(--border);
+  min-width: 280px;
+  overflow: hidden;
 }
 
 .readerPane {
@@ -68,6 +77,10 @@
   .sidebarPane {
     width: 220px;
   }
+
+  .panes {
+    grid-template-columns: auto clamp(280px, 34vw, 400px) minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 900px) {
@@ -76,22 +89,25 @@
     grid-template-rows: auto auto auto;
   }
 
-  .resizeHandle {
-    display: none;
-  }
-
   .sidebarPane {
-    border-right: 0;
     border-bottom: 1px solid var(--border);
+    border-right: 0;
     width: 100%;
   }
 
   .listPane {
     border-bottom: 1px solid var(--border);
-    width: 100% !important; /* override inline style on mobile */
+    border-right: 0;
+    min-width: 0;
+    width: 100%;
   }
 
   .sidebarPaneCollapsed {
     display: none;
+  }
+
+  .showSidebarButton {
+    left: 12px;
+    top: 12px;
   }
 }
