@@ -9,9 +9,6 @@ interface UseKeyboardShortcutsOptions {
   onPreviousArticle: () => void;
   onOpenArticle: () => void;
   onRefreshFeeds: () => void;
-  onFocusSearch: () => void;
-  onClearSearch: () => void;
-  onToggleSidebar: () => void;
 }
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -28,46 +25,21 @@ function isTypingTarget(target: EventTarget | null): boolean {
 }
 
 /**
- * Attaches document-level key handlers for navigation, search, and refresh.
+ * Attaches document-level key handlers for navigation and refresh.
  */
 export function useKeyboardShortcuts({
   onNextArticle,
   onPreviousArticle,
   onOpenArticle,
   onRefreshFeeds,
-  onFocusSearch,
-  onClearSearch,
-  onToggleSidebar,
 }: UseKeyboardShortcutsOptions) {
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      const typing = isTypingTarget(event.target);
+      if (isTypingTarget(event.target)) {
+        return;
+      }
+
       const key = event.key;
-
-      if (key === "Escape") {
-        onClearSearch();
-
-        if (event.target instanceof HTMLElement) {
-          event.target.blur();
-        }
-        return;
-      }
-
-      if (typing) {
-        return;
-      }
-
-      if (key === "/" && !event.metaKey && !event.ctrlKey && !event.altKey) {
-        event.preventDefault();
-        onFocusSearch();
-        return;
-      }
-
-      if ((event.metaKey || event.ctrlKey) && event.shiftKey && key.toLowerCase() === "s") {
-        event.preventDefault();
-        onToggleSidebar();
-        return;
-      }
 
       if ((key === "j" || key === "ArrowDown") && !event.metaKey && !event.ctrlKey) {
         event.preventDefault();
@@ -98,13 +70,5 @@ export function useKeyboardShortcuts({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [
-    onClearSearch,
-    onFocusSearch,
-    onNextArticle,
-    onOpenArticle,
-    onPreviousArticle,
-    onRefreshFeeds,
-    onToggleSidebar,
-  ]);
+  }, [onNextArticle, onOpenArticle, onPreviousArticle, onRefreshFeeds]);
 }

@@ -28,7 +28,6 @@ export interface FeedViewModel {
   title: string | null;
   description: string | null;
   url: string;
-  folderId: string | null;
   lastFetchedAt: string | null;
   lastFetchStatus?: string | null;
   lastFetchErrorCode?: string | null;
@@ -36,16 +35,6 @@ export interface FeedViewModel {
   lastFetchErrorAt?: string | null;
   createdAt: string;
   items: FeedItemViewModel[];
-}
-
-/**
- * Represents one user-created folder used for sidebar grouping.
- */
-export interface FolderViewModel {
-  id: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 /**
@@ -68,34 +57,3 @@ export interface ArticleViewModel {
   feedTitle: string;
   snippet: string;
 }
-
-/**
- * Describes a pending context-menu action awaiting user confirmation.
- * Used by the sidebar to render inline rename/move/delete forms.
- */
-export type PendingAction =
-  | {
-      kind: "feed-rename";
-      feedId: string;
-      draftTitle: string;
-    }
-  | {
-      kind: "folder-rename";
-      folderId: string;
-      draftName: string;
-    }
-  | {
-      kind: "feed-move";
-      feedId: string;
-      draftFolderId: string;
-    }
-  | {
-      kind: "feed-delete";
-      feedId: string;
-      feedLabel: string;
-    }
-  | {
-      kind: "folder-delete";
-      folderId: string;
-      folderLabel: string;
-    };

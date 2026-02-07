@@ -17,11 +17,8 @@ export default function AuthLayout({
   return (
     <div className={styles.shell}>
       <div className={styles.accountControls}>
-        <Link href="/feeds" className={styles.settingsLink}>
+        <Link href="/feeds" className={styles.navLink}>
           feeds
-        </Link>
-        <Link href="/settings" className={styles.settingsLink}>
-          settings
         </Link>
         <UserMenu afterSignOutUrl="/sign-in" />
       </div>

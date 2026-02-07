@@ -1,20 +1,12 @@
 /**
  * API Route: /api/feeds
  *
- * Handles feed, folder, import, extraction, and account actions for the
- * authenticated user while keeping route surface area small.
+ * Handles feed creation, article read/extraction actions, and account deletion
+ * for the authenticated user while keeping the surface area minimal.
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import {
-  and,
-  db,
-  eq,
-  feedItems,
-  feeds,
-  folders,
-  users,
-} from "@/lib/database";
+import { and, db, eq, feedItems, feeds, users } from "@/lib/database";
 import { deleteAuthUser, requireAuth } from "@/lib/auth";
 import { ensureUserRecord } from "@/lib/app-user";
 import { parseFeed, type ParsedFeed } from "@/lib/feed-parser";
@@ -24,12 +16,6 @@ import { purgeOldFeedItemsForUser } from "@/lib/retention";
 interface ApiError {
   error: string;
   code?: string;
-}
-
-interface OpmlImportEntry {
-  url?: unknown;
-  title?: unknown;
-  folderName?: unknown;
 }
 
 /**
@@ -112,8 +98,7 @@ function toFeedValidationError(error: unknown): {
   ) {
     return {
       code: "invalid_xml",
-      message:
-        "This URL does not appear to be a valid RSS or Atom feed.",
+      message: "This URL does not appear to be a valid RSS or Atom feed.",
     };
   }
 
@@ -136,8 +121,7 @@ function toFeedValidationError(error: unknown): {
 async function createFeedWithInitialItems(
   userId: string,
   url: string,
-  parsedFeed: ParsedFeed,
-  folderId: string | null
+  parsedFeed: ParsedFeed
 ) {
   const now = new Date();
 
@@ -146,7 +130,6 @@ async function createFeedWithInitialItems(
     .values({
       userId,
       url,
-      folderId,
       title: parsedFeed.title || null,
       description: parsedFeed.description || null,
       lastFetchedAt: now,
@@ -178,28 +161,8 @@ async function createFeedWithInitialItems(
 }
 
 /**
- * Normalize folder names for OPML import grouping.
- */
-function normalizeFolderName(rawName: unknown): string | null {
-  if (typeof rawName !== "string") {
-    return null;
-  }
-
-  const trimmed = rawName.trim();
-  if (!trimmed) {
-    return null;
-  }
-
-  if (trimmed.toLowerCase() === "uncategorized") {
-    return null;
-  }
-
-  return trimmed;
-}
-
-/**
  * GET /api/feeds
- * Returns folders and feeds for the authenticated user.
+ * Returns feeds for the authenticated user.
  */
 export async function GET() {
   try {
@@ -215,7 +178,6 @@ export async function GET() {
     const user = await db.query.users.findFirst({
       where: eq(users.id, appUser.id),
       with: {
-        folders: true,
         feeds: {
           with: {
             items: true,
@@ -228,7 +190,7 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ folders: user.folders, feeds: user.feeds });
+    return NextResponse.json({ feeds: user.feeds });
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -239,8 +201,6 @@ export async function GET() {
  *
  * Supported actions:
  *   - feed.create (and legacy { url } payload)
- *   - folder.create
- *   - opml.import
  */
 export async function POST(request: NextRequest) {
   try {
@@ -266,234 +226,85 @@ export async function POST(request: NextRequest) {
           ? "feed.create"
           : null;
 
-    if (action === "folder.create") {
-      const name = payload.name;
-      const nextName = typeof name === "string" ? name.trim() : "";
-
-      if (!nextName) {
-        return NextResponse.json(
-          { error: "Folder name is required" },
-          { status: 400 }
-        );
-      }
-
-      const [newFolder] = await db
-        .insert(folders)
-        .values({
-          userId: appUser.id,
-          name: nextName,
-        })
-        .returning();
-
-      return NextResponse.json({ folder: newFolder }, { status: 201 });
+    if (action !== "feed.create") {
+      return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
     }
 
-    if (action === "feed.create") {
-      const nextUrl = normalizeFeedUrl(payload.url);
+    const nextUrl = normalizeFeedUrl(payload.url);
 
-      if (!nextUrl) {
-        return NextResponse.json(
-          {
-            error: "This URL does not appear to be valid.",
-            code: "invalid_url",
-          } satisfies ApiError,
-          { status: 400 }
-        );
-      }
+    if (!nextUrl) {
+      return NextResponse.json(
+        {
+          error: "This URL does not appear to be valid.",
+          code: "invalid_url",
+        } satisfies ApiError,
+        { status: 400 }
+      );
+    }
 
-      const folderId = payload.folderId;
-      let validatedFolderId: string | null = null;
-      if (folderId !== undefined && folderId !== null) {
-        if (typeof folderId !== "string" || !folderId.trim()) {
-          return NextResponse.json(
-            { error: "Invalid folder ID" },
-            { status: 400 }
-          );
-        }
+    const existingFeed = await db.query.feeds.findFirst({
+      where: and(eq(feeds.userId, appUser.id), eq(feeds.url, nextUrl)),
+    });
 
-        const folder = await db.query.folders.findFirst({
-          where: and(eq(folders.id, folderId), eq(folders.userId, appUser.id)),
-        });
+    if (existingFeed) {
+      return NextResponse.json({
+        feed: existingFeed,
+        duplicate: true,
+        message: "This feed is already in your library.",
+      });
+    }
 
-        if (!folder) {
-          return NextResponse.json({ error: "Folder not found" }, { status: 404 });
-        }
+    let parsedFeed: ParsedFeed;
+    try {
+      parsedFeed = await parseFeed(nextUrl);
+    } catch (error) {
+      const normalizedError = toFeedValidationError(error);
+      return NextResponse.json(
+        {
+          error: normalizedError.message,
+          code: normalizedError.code,
+        } satisfies ApiError,
+        { status: 400 }
+      );
+    }
 
-        validatedFolderId = folder.id;
-      }
-
-      const existingFeed = await db.query.feeds.findFirst({
+    let created: Awaited<ReturnType<typeof createFeedWithInitialItems>> | null = null;
+    try {
+      created = await createFeedWithInitialItems(appUser.id, nextUrl, parsedFeed);
+    } catch {
+      const raceExistingFeed = await db.query.feeds.findFirst({
         where: and(eq(feeds.userId, appUser.id), eq(feeds.url, nextUrl)),
       });
 
-      if (existingFeed) {
+      if (raceExistingFeed) {
         return NextResponse.json({
-          feed: existingFeed,
+          feed: raceExistingFeed,
           duplicate: true,
           message: "This feed is already in your library.",
         });
       }
 
-      let parsedFeed: ParsedFeed;
-      try {
-        parsedFeed = await parseFeed(nextUrl);
-      } catch (error) {
-        const normalizedError = toFeedValidationError(error);
-        return NextResponse.json(
-          {
-            error: normalizedError.message,
-            code: normalizedError.code,
-          } satisfies ApiError,
-          { status: 400 }
-        );
-      }
-
-      let created: Awaited<ReturnType<typeof createFeedWithInitialItems>> | null =
-        null;
-      try {
-        created = await createFeedWithInitialItems(
-          appUser.id,
-          nextUrl,
-          parsedFeed,
-          validatedFolderId
-        );
-      } catch {
-        const raceExistingFeed = await db.query.feeds.findFirst({
-          where: and(eq(feeds.userId, appUser.id), eq(feeds.url, nextUrl)),
-        });
-
-        if (raceExistingFeed) {
-          return NextResponse.json({
-            feed: raceExistingFeed,
-            duplicate: true,
-            message: "This feed is already in your library.",
-          });
-        }
-
-        return NextResponse.json(
-          { error: "Could not add this feed right now." },
-          { status: 500 }
-        );
-      }
-
-      if (!created) {
-        return NextResponse.json(
-          { error: "Could not add this feed right now." },
-          { status: 500 }
-        );
-      }
-
       return NextResponse.json(
-        {
-          feed: created.feed,
-          importedItemCount: created.insertedItems,
-          duplicate: false,
-        },
-        { status: 201 }
+        { error: "Could not add this feed right now." },
+        { status: 500 }
       );
     }
 
-    if (action === "opml.import") {
-      const entries = Array.isArray(payload.entries)
-        ? (payload.entries as OpmlImportEntry[])
-        : null;
-
-      if (!entries || entries.length === 0) {
-        return NextResponse.json(
-          { error: "Import entries are required" },
-          { status: 400 }
-        );
-      }
-
-      const existingFeeds = await db.query.feeds.findMany({
-        where: eq(feeds.userId, appUser.id),
-        columns: { id: true, url: true },
-      });
-
-      const existingUrlSet = new Set(existingFeeds.map((feed) => feed.url));
-
-      const existingFolders = await db.query.folders.findMany({
-        where: eq(folders.userId, appUser.id),
-      });
-
-      const folderMap = new Map<string, string>();
-      for (const folder of existingFolders) {
-        folderMap.set(folder.name.toLowerCase(), folder.id);
-      }
-
-      let importedCount = 0;
-      let skippedCount = 0;
-      let processedCount = 0;
-
-      for (const entry of entries) {
-        processedCount += 1;
-
-        const normalizedUrl = normalizeFeedUrl(entry.url);
-        if (!normalizedUrl) {
-          skippedCount += 1;
-          continue;
-        }
-
-        if (existingUrlSet.has(normalizedUrl)) {
-          skippedCount += 1;
-          continue;
-        }
-
-        const normalizedFolderName = normalizeFolderName(entry.folderName);
-        let resolvedFolderId: string | null = null;
-
-        if (normalizedFolderName) {
-          const folderLookupKey = normalizedFolderName.toLowerCase();
-          const existingFolderId = folderMap.get(folderLookupKey);
-
-          if (existingFolderId) {
-            resolvedFolderId = existingFolderId;
-          } else {
-            const [createdFolder] = await db
-              .insert(folders)
-              .values({
-                userId: appUser.id,
-                name: normalizedFolderName,
-              })
-              .returning();
-
-            folderMap.set(folderLookupKey, createdFolder.id);
-            resolvedFolderId = createdFolder.id;
-          }
-        }
-
-        let parsedFeed: ParsedFeed;
-        try {
-          parsedFeed = await parseFeed(normalizedUrl);
-        } catch {
-          skippedCount += 1;
-          continue;
-        }
-
-        try {
-          await createFeedWithInitialItems(
-            appUser.id,
-            normalizedUrl,
-            parsedFeed,
-            resolvedFolderId
-          );
-          existingUrlSet.add(normalizedUrl);
-          importedCount += 1;
-        } catch {
-          // If a race inserts the same URL first, treat it as skipped duplicate.
-          skippedCount += 1;
-        }
-      }
-
-      return NextResponse.json({
-        totalCount: entries.length,
-        processedCount,
-        importedCount,
-        skippedCount,
-      });
+    if (!created) {
+      return NextResponse.json(
+        { error: "Could not add this feed right now." },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
+    return NextResponse.json(
+      {
+        feed: created.feed,
+        importedItemCount: created.insertedItems,
+        duplicate: false,
+      },
+      { status: 201 }
+    );
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -503,8 +314,6 @@ export async function POST(request: NextRequest) {
  * PATCH /api/feeds
  *
  * Supported actions:
- *   - folder.rename
- *   - folder.delete
  *   - item.markRead
  *   - item.extractFull
  *   - account.delete
@@ -519,71 +328,7 @@ export async function PATCH(request: NextRequest) {
 
     const payload = await parseRequestJson(request);
     if (!payload || typeof payload.action !== "string") {
-      return NextResponse.json(
-        { error: "Action is required" },
-        { status: 400 }
-      );
-    }
-
-    if (payload.action === "folder.rename") {
-      const folderId = payload.folderId;
-      const name = payload.name;
-      const nextName = typeof name === "string" ? name.trim() : "";
-
-      if (typeof folderId !== "string" || !folderId.trim()) {
-        return NextResponse.json({ error: "Folder ID is required" }, { status: 400 });
-      }
-
-      if (!nextName) {
-        return NextResponse.json(
-          { error: "Folder name is required" },
-          { status: 400 }
-        );
-      }
-
-      const [renamedFolder] = await db
-        .update(folders)
-        .set({
-          name: nextName,
-          updatedAt: new Date(),
-        })
-        .where(and(eq(folders.id, folderId), eq(folders.userId, appUser.id)))
-        .returning();
-
-      if (!renamedFolder) {
-        return NextResponse.json({ error: "Folder not found" }, { status: 404 });
-      }
-
-      return NextResponse.json({ folder: renamedFolder });
-    }
-
-    if (payload.action === "folder.delete") {
-      const folderId = payload.folderId;
-
-      if (typeof folderId !== "string" || !folderId.trim()) {
-        return NextResponse.json({ error: "Folder ID is required" }, { status: 400 });
-      }
-
-      const folder = await db.query.folders.findFirst({
-        where: and(eq(folders.id, folderId), eq(folders.userId, appUser.id)),
-      });
-
-      if (!folder) {
-        return NextResponse.json({ error: "Folder not found" }, { status: 404 });
-      }
-
-      await db
-        .update(feeds)
-        .set({ folderId: null, updatedAt: new Date() })
-        .where(and(eq(feeds.folderId, folder.id), eq(feeds.userId, appUser.id)));
-
-      await db.delete(folders).where(eq(folders.id, folder.id));
-
-      return NextResponse.json({
-        success: true,
-        folderId: folder.id,
-        reassignedTo: "uncategorized",
-      });
+      return NextResponse.json({ error: "Action is required" }, { status: 400 });
     }
 
     if (payload.action === "item.markRead") {

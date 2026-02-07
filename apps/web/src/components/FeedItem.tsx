@@ -1,5 +1,5 @@
 /**
- * Sidebar row for a single feed entry with inline actions.
+ * Sidebar row for a single feed entry with a delete action.
  */
 
 import styles from "./FeedItem.module.css";
@@ -7,21 +7,19 @@ import styles from "./FeedItem.module.css";
 interface FeedItemProps {
   label: string;
   isActive: boolean;
+  isDeleting: boolean;
   onSelect: () => void;
-  onRename: () => void;
-  onMove: () => void;
   onDelete: () => void;
 }
 
 /**
- * Renders one feed row with subtle active styling and inline controls.
+ * Renders one feed row with active styling and a delete control.
  */
 export function FeedItem({
   label,
   isActive,
+  isDeleting,
   onSelect,
-  onRename,
-  onMove,
   onDelete,
 }: FeedItemProps) {
   return (
@@ -37,14 +35,8 @@ export function FeedItem({
       </button>
 
       <div className={styles.actions}>
-        <button type="button" onClick={onRename}>
-          Rename
-        </button>
-        <button type="button" onClick={onMove}>
-          Move
-        </button>
-        <button type="button" onClick={onDelete}>
-          Delete
+        <button type="button" onClick={onDelete} disabled={isDeleting}>
+          {isDeleting ? "Deleting..." : "Delete"}
         </button>
       </div>
     </div>

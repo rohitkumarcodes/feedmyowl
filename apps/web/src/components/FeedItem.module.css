@@ -58,7 +58,7 @@
   padding: 0 2px;
 }
 
-.actions button:hover {
+.actions button:hover:enabled {
   color: var(--text-primary);
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -67,4 +67,9 @@
 .actions button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+.actions button:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
 }

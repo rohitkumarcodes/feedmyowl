@@ -54,33 +54,18 @@
   text-decoration: none;
 }
 
-.linkButton:hover {
+.linkButton:hover:enabled {
   background: var(--bg-tertiary);
 }
 
-.linkButton:focus-visible,
-.fileInput:focus-visible,
-.fileLabel:focus-visible {
+.linkButton:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-.fileLabel {
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  cursor: pointer;
-  display: inline-block;
-  font-size: var(--text-sm);
-  min-height: 32px;
-  padding: 6px 10px;
-}
-
-.fileLabel:hover {
-  background: var(--bg-tertiary);
-}
-
-.fileInput {
-  font-size: var(--text-sm);
+.linkButton:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
 }
 
 .deleteConfirm {

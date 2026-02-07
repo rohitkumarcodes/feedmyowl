@@ -7,12 +7,7 @@ import { ArticleReader } from "./ArticleReader";
 import { Layout } from "./Layout";
 import { Sidebar, SidebarScope } from "./Sidebar";
 import { Toolbar } from "./Toolbar";
-import type {
-  ArticleViewModel,
-  FeedViewModel,
-  FolderViewModel,
-  PendingAction,
-} from "./feeds-types";
+import type { ArticleViewModel, FeedViewModel } from "./feeds-types";
 import { extractArticleSnippet } from "@/utils/articleText";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { loadWorkspaceSnapshot, saveWorkspaceSnapshot } from "@/lib/offline-cache";
@@ -20,7 +15,6 @@ import styles from "./feeds-workspace.module.css";
 
 interface FeedsWorkspaceProps {
   initialFeeds: FeedViewModel[];
-  initialFolders: FolderViewModel[];
 }
 
 interface ApiErrorResponse {
@@ -44,7 +38,18 @@ interface RefreshResponse {
 }
 
 interface FeedCreateResponse {
-  feed?: FeedViewModel;
+  feed?: {
+    id: string;
+    title?: string | null;
+    description?: string | null;
+    url: string;
+    lastFetchedAt?: string | null;
+    lastFetchStatus?: string | null;
+    lastFetchErrorCode?: string | null;
+    lastFetchErrorMessage?: string | null;
+    lastFetchErrorAt?: string | null;
+    createdAt?: string;
+  };
   duplicate?: boolean;
   message?: string;
 }
@@ -95,61 +100,29 @@ function toTimeValue(iso: string | null): number {
 }
 
 /**
- * Build the default bounded reading scope (no "All feeds" aggregate view).
- */
-function getDefaultScope(folders: FolderViewModel[]): SidebarScope {
-  if (folders.length > 0) {
-    const sorted = [...folders].sort((a, b) => a.name.localeCompare(b.name));
-    return { type: "folder", folderId: sorted[0].id };
-  }
-
-  return { type: "uncategorized" };
-}
-
-/**
  * Client orchestrator for feed subscriptions, article list state, and reader state.
  */
-export function FeedsWorkspace({
-  initialFeeds,
-  initialFolders,
-}: FeedsWorkspaceProps) {
+export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
   const router = useRouter();
-  const searchInputRef = useRef<HTMLInputElement>(null);
   const requestedExtractionIds = useRef<Set<string>>(new Set());
 
   const [feeds, setFeeds] = useState<FeedViewModel[]>(initialFeeds);
-  const [folders, setFolders] = useState<FolderViewModel[]>(initialFolders);
 
-  const [selectedScope, setSelectedScope] = useState<SidebarScope>(() =>
-    getDefaultScope(initialFolders)
-  );
-  const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(
-    () => new Set(initialFolders.map((folder) => folder.id))
-  );
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [selectedScope, setSelectedScope] = useState<SidebarScope>({ type: "all" });
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
   const [openArticleId, setOpenArticleId] = useState<string | null>(null);
 
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isAddFeedFormVisible, setIsAddFeedFormVisible] = useState(false);
-  const [isAddFolderFormVisible, setIsAddFolderFormVisible] = useState(false);
-
   const [feedUrlInput, setFeedUrlInput] = useState("");
-  const [folderNameInput, setFolderNameInput] = useState("");
 
   const [isAddingFeed, setIsAddingFeed] = useState(false);
-  const [isAddingFolder, setIsAddingFolder] = useState(false);
   const [isRefreshingFeeds, setIsRefreshingFeeds] = useState(false);
-  const [isApplyingAction, setIsApplyingAction] = useState(false);
+  const [deletingFeedId, setDeletingFeedId] = useState<string | null>(null);
 
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [networkMessage, setNetworkMessage] = useState<string | null>(null);
   const [liveMessage, setLiveMessage] = useState("");
-
-  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
 
   const [isMobile, setIsMobile] = useState(false);
   const [mobileView, setMobileView] = useState<"feeds" | "articles" | "reader">(
@@ -159,30 +132,6 @@ export function FeedsWorkspace({
   useEffect(() => {
     setFeeds(initialFeeds);
   }, [initialFeeds]);
-
-  useEffect(() => {
-    setFolders(initialFolders);
-    setExpandedFolderIds((previous) => {
-      const currentFolderIds = new Set(initialFolders.map((folder) => folder.id));
-      const next = new Set<string>();
-      for (const id of previous) {
-        if (currentFolderIds.has(id)) {
-          next.add(id);
-        }
-      }
-      return next;
-    });
-  }, [initialFolders]);
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setDebouncedQuery(searchQuery);
-    }, 150);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [searchQuery]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 767px)");
@@ -229,11 +178,10 @@ export function FeedsWorkspace({
     void saveWorkspaceSnapshot({
       savedAt: new Date().toISOString(),
       feeds,
-      folders,
     }).catch(() => {
       // Snapshot cache failures should not interrupt reading flow.
     });
-  }, [feeds, folders]);
+  }, [feeds]);
 
   useEffect(() => {
     if (navigator.onLine) {
@@ -247,7 +195,6 @@ export function FeedsWorkspace({
         }
 
         setFeeds(snapshot.feeds);
-        setFolders(snapshot.folders);
         setNetworkMessage(
           "Could not connect to the server. Previously loaded articles are available."
         );
@@ -260,7 +207,9 @@ export function FeedsWorkspace({
   useEffect(() => {
     const onOnline = () => setNetworkMessage(null);
     const onOffline = () =>
-      setNetworkMessage("Could not connect to the server. Previously loaded data remains available.");
+      setNetworkMessage(
+        "Could not connect to the server. Previously loaded data remains available."
+      );
 
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
@@ -272,22 +221,15 @@ export function FeedsWorkspace({
   }, []);
 
   useEffect(() => {
-    // Keep selected scope valid as data changes.
-    if (selectedScope.type === "feed") {
-      const stillExists = feeds.some((feed) => feed.id === selectedScope.feedId);
-      if (!stillExists) {
-        setSelectedScope(getDefaultScope(folders));
-      }
+    if (selectedScope.type !== "feed") {
       return;
     }
 
-    if (selectedScope.type === "folder") {
-      const stillExists = folders.some((folder) => folder.id === selectedScope.folderId);
-      if (!stillExists) {
-        setSelectedScope(getDefaultScope(folders));
-      }
+    const stillExists = feeds.some((feed) => feed.id === selectedScope.feedId);
+    if (!stillExists) {
+      setSelectedScope({ type: "all" });
     }
-  }, [feeds, folders, selectedScope]);
+  }, [feeds, selectedScope]);
 
   const allArticles = useMemo<ArticleViewModel[]>(() => {
     const flattened = feeds.flatMap((feed) =>
@@ -321,53 +263,13 @@ export function FeedsWorkspace({
     return flattened;
   }, [feeds]);
 
-  const feedToFolderMap = useMemo(() => {
-    const map = new Map<string, string | null>();
-
-    for (const feed of feeds) {
-      map.set(feed.id, feed.folderId);
-    }
-
-    return map;
-  }, [feeds]);
-
-  const scopedFeeds = useMemo(() => {
-    if (selectedScope.type === "feed") {
-      return feeds.filter((feed) => feed.id === selectedScope.feedId);
-    }
-
-    if (selectedScope.type === "folder") {
-      return feeds.filter((feed) => feed.folderId === selectedScope.folderId);
-    }
-
-    return feeds.filter((feed) => !feed.folderId);
-  }, [feeds, selectedScope]);
-
-  const scopedArticles = useMemo(() => {
+  const visibleArticles = useMemo(() => {
     if (selectedScope.type === "feed") {
       return allArticles.filter((article) => article.feedId === selectedScope.feedId);
     }
 
-    if (selectedScope.type === "folder") {
-      return allArticles.filter(
-        (article) => feedToFolderMap.get(article.feedId) === selectedScope.folderId
-      );
-    }
-
-    return allArticles.filter((article) => feedToFolderMap.get(article.feedId) === null);
-  }, [allArticles, feedToFolderMap, selectedScope]);
-
-  const visibleArticles = useMemo(() => {
-    const normalizedQuery = debouncedQuery.trim().toLowerCase();
-    if (!normalizedQuery) {
-      return scopedArticles;
-    }
-
-    return scopedArticles.filter((article) => {
-      const haystack = `${article.title} ${article.snippet}`.toLowerCase();
-      return haystack.includes(normalizedQuery);
-    });
-  }, [debouncedQuery, scopedArticles]);
+    return allArticles;
+  }, [allArticles, selectedScope]);
 
   const openArticle = useMemo(
     () => allArticles.find((article) => article.id === openArticleId) || null,
@@ -375,54 +277,37 @@ export function FeedsWorkspace({
   );
 
   const selectedScopeLabel = useMemo(() => {
-    if (selectedScope.type === "feed") {
-      const feed = feeds.find((candidate) => candidate.id === selectedScope.feedId);
-      return feed ? getFeedLabel(feed) : "Articles";
+    if (selectedScope.type === "all") {
+      return "All articles";
     }
 
-    if (selectedScope.type === "folder") {
-      const folder = folders.find((candidate) => candidate.id === selectedScope.folderId);
-      return folder?.name || "Articles";
-    }
-
-    return "Uncategorized";
-  }, [feeds, folders, selectedScope]);
+    const feed = feeds.find((candidate) => candidate.id === selectedScope.feedId);
+    return feed ? getFeedLabel(feed) : "Articles";
+  }, [feeds, selectedScope]);
 
   const listStatusMessage = useMemo(() => {
-    const erroredFeeds = scopedFeeds.filter(
+    if (selectedScope.type === "feed") {
+      const feed = feeds.find((candidate) => candidate.id === selectedScope.feedId);
+      return feed?.lastFetchErrorMessage || null;
+    }
+
+    const erroredFeed = feeds.find(
       (feed) => feed.lastFetchStatus === "error" && feed.lastFetchErrorMessage
     );
-
-    if (selectedScope.type === "feed") {
-      return erroredFeeds[0]?.lastFetchErrorMessage || null;
-    }
-
-    if (erroredFeeds.length > 0) {
-      return erroredFeeds[0].lastFetchErrorMessage || null;
-    }
-
-    return null;
-  }, [scopedFeeds, selectedScope.type]);
+    return erroredFeed?.lastFetchErrorMessage || null;
+  }, [feeds, selectedScope]);
 
   const emptyStateMessage = useMemo(() => {
     if (feeds.length === 0) {
       return "Add a feed to get started.";
     }
 
-    if (debouncedQuery.trim() && visibleArticles.length === 0) {
-      return "No articles match your search.";
-    }
-
     if (selectedScope.type === "feed") {
       return "No articles in this feed.";
     }
 
-    if (scopedFeeds.length === 0) {
-      return "No feeds in this folder.";
-    }
-
-    return "No articles in this folder.";
-  }, [debouncedQuery, feeds.length, scopedFeeds.length, selectedScope.type, visibleArticles.length]);
+    return "No articles yet. Refresh to load the latest posts.";
+  }, [feeds.length, selectedScope]);
 
   useEffect(() => {
     if (!selectedArticleId) {
@@ -432,9 +317,7 @@ export function FeedsWorkspace({
       return;
     }
 
-    const stillVisible = visibleArticles.some(
-      (article) => article.id === selectedArticleId
-    );
+    const stillVisible = visibleArticles.some((article) => article.id === selectedArticleId);
 
     if (!stillVisible) {
       setSelectedArticleId(visibleArticles[0]?.id ?? null);
@@ -447,9 +330,7 @@ export function FeedsWorkspace({
       return;
     }
 
-    const element = document.querySelector(
-      `[data-article-id="${selectedArticleId}"]`
-    );
+    const element = document.querySelector(`[data-article-id="${selectedArticleId}"]`);
 
     if (element) {
       element.scrollIntoView({ block: "nearest" });
@@ -610,9 +491,7 @@ export function FeedsWorkspace({
         return;
       }
 
-      const index = visibleArticles.findIndex(
-        (article) => article.id === selectedArticleId
-      );
+      const index = visibleArticles.findIndex((article) => article.id === selectedArticleId);
 
       if (index < 0) {
         setSelectedArticleId(visibleArticles[0].id);
@@ -651,8 +530,7 @@ export function FeedsWorkspace({
 
       const addedCount =
         body?.results?.reduce(
-          (total, result) =>
-            total + (result.status === "success" ? result.newItemCount : 0),
+          (total, result) => total + (result.status === "success" ? result.newItemCount : 0),
           0
         ) || 0;
 
@@ -666,7 +544,9 @@ export function FeedsWorkspace({
       setIsRefreshingFeeds(false);
       router.refresh();
     } catch {
-      setErrorMessage("Could not connect to the server. Previously loaded articles are still available.");
+      setErrorMessage(
+        "Could not connect to the server. Previously loaded articles are still available."
+      );
       setIsRefreshingFeeds(false);
     }
   }, [isRefreshingFeeds, router]);
@@ -713,6 +593,29 @@ export function FeedsWorkspace({
         }
 
         if (body?.feed?.id) {
+          const createdFeed = body.feed;
+          setFeeds((previousFeeds) => {
+            const exists = previousFeeds.some((feed) => feed.id === createdFeed.id);
+            if (exists) {
+              return previousFeeds;
+            }
+
+            const nextFeed: FeedViewModel = {
+              id: createdFeed.id,
+              title: createdFeed.title ?? null,
+              description: createdFeed.description ?? null,
+              url: createdFeed.url,
+              lastFetchedAt: createdFeed.lastFetchedAt ?? null,
+              lastFetchStatus: createdFeed.lastFetchStatus ?? null,
+              lastFetchErrorCode: createdFeed.lastFetchErrorCode ?? null,
+              lastFetchErrorMessage: createdFeed.lastFetchErrorMessage ?? null,
+              lastFetchErrorAt: createdFeed.lastFetchErrorAt ?? null,
+              createdAt: createdFeed.createdAt ?? new Date().toISOString(),
+              items: [],
+            };
+
+            return [nextFeed, ...previousFeeds];
+          });
           setSelectedScope({ type: "feed", feedId: body.feed.id });
           if (isMobile) {
             setMobileViewWithHistory("articles", true);
@@ -732,162 +635,61 @@ export function FeedsWorkspace({
     [feedUrlInput, isAddingFeed, isMobile, router, setMobileViewWithHistory]
   );
 
-  const handleCreateFolder = useCallback(
-    async (event: FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
-
-      if (isAddingFolder) {
+  const handleDeleteFeed = useCallback(
+    async (feedId: string, feedLabel: string) => {
+      if (deletingFeedId) {
         return;
       }
 
-      if (!navigator.onLine) {
-        setNetworkMessage("You appear to be offline. This action requires an internet connection.");
+      const confirmed = window.confirm(`Delete feed "${feedLabel}"?`);
+      if (!confirmed) {
         return;
       }
 
-      const nextName = folderNameInput.trim();
-      if (!nextName) {
-        setErrorMessage("Folder name is required.");
-        return;
-      }
-
-      setIsAddingFolder(true);
-      setErrorMessage(null);
+      setDeletingFeedId(feedId);
       setInfoMessage(null);
+      setErrorMessage(null);
 
       try {
-        const response = await fetch("/api/feeds", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "folder.create", name: nextName }),
+        const response = await fetch(`/api/feeds/${feedId}`, {
+          method: "DELETE",
         });
-        const body = await parseResponseJson<
-          ApiErrorResponse & { folder?: FolderViewModel }
-        >(response);
+
+        const body = await parseResponseJson<ApiErrorResponse>(response);
 
         if (!response.ok) {
-          setErrorMessage(body?.error || "Could not create folder.");
-          setIsAddingFolder(false);
+          setErrorMessage(body?.error || "Could not delete feed.");
+          setDeletingFeedId(null);
           return;
         }
 
-        if (body?.folder?.id) {
-          setExpandedFolderIds((previous) => {
-            const next = new Set(previous);
-            next.add(body.folder!.id);
-            return next;
-          });
-          setSelectedScope({ type: "folder", folderId: body.folder.id });
-        }
+        setFeeds((previousFeeds) => previousFeeds.filter((feed) => feed.id !== feedId));
 
-        setFolderNameInput("");
-        setIsAddingFolder(false);
-        setIsAddFolderFormVisible(false);
-        setInfoMessage("Folder created.");
+        setSelectedScope((previousScope) => {
+          if (previousScope.type === "feed" && previousScope.feedId === feedId) {
+            return { type: "all" };
+          }
+          return previousScope;
+        });
+
+        setInfoMessage("Feed deleted.");
+        setDeletingFeedId(null);
         router.refresh();
       } catch {
         setErrorMessage("Could not connect to the server.");
-        setIsAddingFolder(false);
+        setDeletingFeedId(null);
       }
     },
-    [folderNameInput, isAddingFolder, router]
+    [deletingFeedId, router]
   );
 
-  const applyPendingAction = useCallback(async () => {
-    if (!pendingAction || isApplyingAction) {
-      return;
-    }
-
-    setIsApplyingAction(true);
-    setErrorMessage(null);
-    setInfoMessage(null);
-
-    let response: Response | null = null;
-
-    if (pendingAction.kind === "feed-rename") {
-      response = await fetch(`/api/feeds/${pendingAction.feedId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "feed.rename",
-          title: pendingAction.draftTitle,
-        }),
-      });
-    }
-
-    if (pendingAction.kind === "folder-rename") {
-      response = await fetch("/api/feeds", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "folder.rename",
-          folderId: pendingAction.folderId,
-          name: pendingAction.draftName,
-        }),
-      });
-    }
-
-    if (pendingAction.kind === "feed-move") {
-      response = await fetch(`/api/feeds/${pendingAction.feedId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "feed.move",
-          folderId: pendingAction.draftFolderId || null,
-        }),
-      });
-    }
-
-    if (pendingAction.kind === "feed-delete") {
-      response = await fetch(`/api/feeds/${pendingAction.feedId}`, {
-        method: "DELETE",
-      });
-    }
-
-    if (pendingAction.kind === "folder-delete") {
-      response = await fetch("/api/feeds", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "folder.delete",
-          folderId: pendingAction.folderId,
-        }),
-      });
-    }
-
-    if (!response) {
-      setIsApplyingAction(false);
-      return;
-    }
-
-    const body = await parseResponseJson<ApiErrorResponse>(response);
-
-    if (!response.ok) {
-      setErrorMessage(body?.error || "Action failed.");
-      setIsApplyingAction(false);
-      return;
-    }
-
-    setPendingAction(null);
-    setIsApplyingAction(false);
-    setInfoMessage("Action completed.");
-    router.refresh();
-  }, [isApplyingAction, pendingAction, router]);
-
-  const cancelPendingAction = useCallback(() => {
-    setPendingAction(null);
-  }, []);
-
-  /** Clears both info and error messages from the sidebar. */
   const handleDismissMessage = useCallback(() => {
     setInfoMessage(null);
     setErrorMessage(null);
   }, []);
 
-  /** Opens add-feed UI and hides folder form to keep actions inline and focused. */
   const handleShowAddFeedForm = useCallback(() => {
     setIsAddFeedFormVisible(true);
-    setIsAddFolderFormVisible(false);
   }, []);
 
   const handleSelectScope = useCallback(
@@ -914,18 +716,6 @@ export function FeedsWorkspace({
     onRefreshFeeds: () => {
       void handleRefresh();
     },
-    onFocusSearch: () => {
-      searchInputRef.current?.focus();
-    },
-    onClearSearch: () => {
-      setSearchQuery("");
-      setDebouncedQuery("");
-    },
-    onToggleSidebar: () => {
-      if (!isMobile) {
-        setIsSidebarCollapsed((previous) => !previous);
-      }
-    },
   });
 
   useEffect(() => {
@@ -946,39 +736,20 @@ export function FeedsWorkspace({
         toolbar={
           <div>
             <Toolbar
-              query={searchQuery}
-              searchInputRef={searchInputRef}
               isRefreshing={isRefreshingFeeds}
-              onQueryChange={setSearchQuery}
               onRefresh={() => {
                 void handleRefresh();
               }}
-              onShowAddFeedForm={handleShowAddFeedForm}
             />
             {networkMessage ? <p className={styles.toolbarMessage}>{networkMessage}</p> : null}
           </div>
         }
         sidebar={
           <Sidebar
-            folders={folders}
             feeds={feeds}
-            expandedFolderIds={expandedFolderIds}
             selectedScope={selectedScope}
-            onSelectFolder={(folderId) => handleSelectScope({ type: "folder", folderId })}
-            onSelectUncategorized={() => handleSelectScope({ type: "uncategorized" })}
+            onSelectAll={() => handleSelectScope({ type: "all" })}
             onSelectFeed={(feedId) => handleSelectScope({ type: "feed", feedId })}
-            onToggleFolder={(folderId) => {
-              setExpandedFolderIds((previous) => {
-                const next = new Set(previous);
-                if (next.has(folderId)) {
-                  next.delete(folderId);
-                } else {
-                  next.add(folderId);
-                }
-                return next;
-              });
-            }}
-            onToggleSidebar={() => setIsSidebarCollapsed((previous) => !previous)}
             isAddFeedFormVisible={isAddFeedFormVisible}
             feedUrlInput={feedUrlInput}
             isAddingFeed={isAddingFeed}
@@ -988,60 +759,12 @@ export function FeedsWorkspace({
             onSubmitFeed={(event) => {
               void handleAddFeed(event);
             }}
-            isAddFolderFormVisible={isAddFolderFormVisible}
-            folderNameInput={folderNameInput}
-            isAddingFolder={isAddingFolder}
-            onShowAddFolderForm={() => {
-              setIsAddFolderFormVisible(true);
-              setIsAddFeedFormVisible(false);
-            }}
-            onCancelAddFolder={() => setIsAddFolderFormVisible(false)}
-            onFolderNameChange={setFolderNameInput}
-            onSubmitFolder={(event) => {
-              void handleCreateFolder(event);
-            }}
             infoMessage={infoMessage}
             errorMessage={errorMessage}
             onDismissMessage={handleDismissMessage}
-            pendingAction={pendingAction}
-            isApplyingAction={isApplyingAction}
-            onApplyPendingAction={applyPendingAction}
-            onCancelPendingAction={cancelPendingAction}
-            onPendingActionChange={setPendingAction}
-            onRequestFeedRename={(feedId, currentLabel) => {
-              setPendingAction({
-                kind: "feed-rename",
-                feedId,
-                draftTitle: currentLabel,
-              });
-            }}
-            onRequestFeedMove={(feedId, currentFolderId) => {
-              setPendingAction({
-                kind: "feed-move",
-                feedId,
-                draftFolderId: currentFolderId,
-              });
-            }}
-            onRequestFeedDelete={(feedId, currentLabel) => {
-              setPendingAction({
-                kind: "feed-delete",
-                feedId,
-                feedLabel: currentLabel,
-              });
-            }}
-            onRequestFolderRename={(folderId, currentName) => {
-              setPendingAction({
-                kind: "folder-rename",
-                folderId,
-                draftName: currentName,
-              });
-            }}
-            onRequestFolderDelete={(folderId, currentName) => {
-              setPendingAction({
-                kind: "folder-delete",
-                folderId,
-                folderLabel: currentName,
-              });
+            deletingFeedId={deletingFeedId}
+            onRequestFeedDelete={(feedId, feedLabel) => {
+              void handleDeleteFeed(feedId, feedLabel);
             }}
           />
         }
@@ -1065,8 +788,6 @@ export function FeedsWorkspace({
             }}
           />
         }
-        isSidebarCollapsed={isSidebarCollapsed}
-        onToggleSidebar={() => setIsSidebarCollapsed((previous) => !previous)}
         isMobile={isMobile}
         mobileView={mobileView}
         mobileListTitle={selectedScopeLabel}

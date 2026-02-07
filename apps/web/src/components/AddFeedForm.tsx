@@ -14,7 +14,7 @@ interface AddFeedFormProps {
 }
 
 /**
- * Renders a compact inline feed URL form that defaults new feeds to Uncategorized.
+ * Renders a compact inline feed URL form.
  */
 export function AddFeedForm({
   feedUrlInput,

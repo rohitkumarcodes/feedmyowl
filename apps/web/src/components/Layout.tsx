@@ -10,8 +10,6 @@ interface LayoutProps {
   sidebar: ReactNode;
   articleList: ReactNode;
   articleReader: ReactNode;
-  isSidebarCollapsed: boolean;
-  onToggleSidebar: () => void;
   isMobile: boolean;
   mobileView: "feeds" | "articles" | "reader";
   mobileListTitle: string;
@@ -27,8 +25,6 @@ export function Layout({
   sidebar,
   articleList,
   articleReader,
-  isSidebarCollapsed,
-  onToggleSidebar,
   isMobile,
   mobileView,
   mobileListTitle,
@@ -78,25 +74,9 @@ export function Layout({
     <div className={styles.root}>
       <div className={styles.toolbarRow}>{toolbar}</div>
       <div className={styles.panes}>
-        <aside
-          className={`${styles.sidebarPane} ${
-            isSidebarCollapsed ? styles.sidebarPaneCollapsed : ""
-          }`}
-          aria-label="Feed list"
-          role="navigation"
-        >
+        <aside className={styles.sidebarPane} aria-label="Feed list" role="navigation">
           {sidebar}
         </aside>
-
-        {isSidebarCollapsed ? (
-          <button
-            type="button"
-            className={styles.showSidebarButton}
-            onClick={onToggleSidebar}
-          >
-            Show Sidebar
-          </button>
-        ) : null}
 
         <section className={styles.listPane} aria-label="Article list" role="region">
           {articleList}
