@@ -23,7 +23,14 @@
  */
 
 import { relations } from "drizzle-orm";
-import { pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
 
 // =============================================================================
 // USERS TABLE
@@ -101,38 +108,66 @@ export const folders = pgTable("folders", {
  *
  * The title and description are populated after the first successful fetch.
  */
-export const feeds = pgTable("feeds", {
-  /** Unique identifier (UUID v4, auto-generated) */
-  id: uuid("id").defaultRandom().primaryKey(),
+export const feeds = pgTable(
+  "feeds",
+  {
+    /** Unique identifier (UUID v4, auto-generated) */
+    id: uuid("id").defaultRandom().primaryKey(),
 
-  /** Which user owns this feed — cascade delete removes feeds when user is deleted */
-  userId: uuid("user_id")
-    .references(() => users.id, { onDelete: "cascade" })
-    .notNull(),
+    /** Which user owns this feed — cascade delete removes feeds when user is deleted */
+    userId: uuid("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
 
-  /** Optional folder grouping in the sidebar */
-  folderId: uuid("folder_id").references(() => folders.id, {
-    onDelete: "cascade",
-  }),
+    /**
+     * Optional folder grouping in the sidebar.
+     * On folder delete we preserve feeds by moving them to Uncategorized (NULL).
+     */
+    folderId: uuid("folder_id").references(() => folders.id, {
+      onDelete: "set null",
+    }),
 
-  /** The RSS/Atom feed URL */
-  url: text("url").notNull(),
+    /** The RSS/Atom feed URL */
+    url: text("url").notNull(),
 
-  /** Feed title (populated from the feed's <title> after first fetch) */
-  title: varchar("title", { length: 500 }),
+    /** Feed title (populated from the feed's <title> after first fetch) */
+    title: varchar("title", { length: 500 }),
 
-  /** Feed description (populated from the feed's <description> after first fetch) */
-  description: text("description"),
+    /** Feed description (populated from the feed's <description> after first fetch) */
+    description: text("description"),
 
-  /** When this feed was last fetched/refreshed by the user */
-  lastFetchedAt: timestamp("last_fetched_at"),
+    /** When this feed was last fetched/refreshed by the user */
+    lastFetchedAt: timestamp("last_fetched_at"),
 
-  /** When this subscription was created */
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+    /** Last fetch status used for calm inline status messaging in the UI */
+    lastFetchStatus: varchar("last_fetch_status", { length: 50 }),
 
-  /** When this row was last updated */
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+    /** Short machine-like fetch error code (timeout, http_404, invalid_xml, etc.) */
+    lastFetchErrorCode: varchar("last_fetch_error_code", { length: 80 }),
+
+    /** Human-readable fetch error details shown as muted inline guidance */
+    lastFetchErrorMessage: text("last_fetch_error_message"),
+
+    /** When the last fetch error was recorded */
+    lastFetchErrorAt: timestamp("last_fetch_error_at"),
+
+    /** When this subscription was created */
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+
+    /** When this row was last updated */
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    /**
+     * A user should not be able to subscribe to the exact same URL twice.
+     * Duplicate URLs are skipped during imports and manual add-feed.
+     */
+    userUrlUniqueIdx: uniqueIndex("feeds_user_id_url_unique").on(
+      table.userId,
+      table.url
+    ),
+  })
+);
 
 // =============================================================================
 // FEED ITEMS TABLE
@@ -173,6 +208,18 @@ export const feedItems = pgTable("feed_items", {
 
   /** When the user opened this article in FeedMyOwl */
   readAt: timestamp("read_at"),
+
+  /** Cached full-article HTML extracted from the original page when available */
+  extractedHtml: text("extracted_html"),
+
+  /** When full-article extraction was last attempted */
+  extractedAt: timestamp("extracted_at"),
+
+  /** Extraction result status (success, fallback, failed) */
+  extractionStatus: varchar("extraction_status", { length: 50 }),
+
+  /** Source used for rendered content (postlight, feed_summary, etc.) */
+  extractionSource: varchar("extraction_source", { length: 80 }),
 
   /** When we first stored this item */
   createdAt: timestamp("created_at").defaultNow().notNull(),

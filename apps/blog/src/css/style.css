@@ -12,7 +12,7 @@
   --bg-selected: #e8f0fe;
   --text-primary: #1a1a1a;
   --text-secondary: #555555;
-  --text-muted: #888888;
+  --text-muted: #767676;
   --border: #e0e0e0;
   --accent: #0366d6;
 
@@ -247,7 +247,7 @@ a:focus-visible {
 }
 
 .stream-item + .stream-item {
-  margin-top: 12px;
+  margin-top: 28px;
 }
 
 .stream-link {
@@ -262,6 +262,18 @@ a:focus-visible {
 .stream-link:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+.stream-meta {
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  margin-top: 4px;
+}
+
+.stream-excerpt {
+  margin-top: 8px;
 }
 
 .docs-content {

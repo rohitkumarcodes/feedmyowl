@@ -7,6 +7,7 @@ import { db, eq, users } from "@/lib/database";
 import { ensureUserRecord } from "@/lib/app-user";
 import { FeedsWorkspace } from "@/components/feeds-workspace";
 import type { FeedViewModel, FeedItemViewModel, FolderViewModel } from "@/components/feeds-types";
+import { purgeOldFeedItemsForUser } from "@/lib/retention";
 
 /**
  * This page reads per-user data at request time — never statically prerender.
@@ -27,6 +28,9 @@ export default async function FeedsPage() {
   if (!ensuredUser) {
     return <FeedsWorkspace initialFeeds={[]} initialFolders={[]} />;
   }
+
+  // Enforce 90-day retention during normal feed workspace loads.
+  await purgeOldFeedItemsForUser(ensuredUser.id);
 
   const user = await db.query.users.findFirst({
     where: eq(users.id, ensuredUser.id),
@@ -68,6 +72,10 @@ export default async function FeedsPage() {
               author: item.author,
               publishedAt: toIsoString(item.publishedAt),
               readAt: toIsoString(item.readAt),
+              extractedHtml: item.extractedHtml,
+              extractedAt: toIsoString(item.extractedAt),
+              extractionStatus: item.extractionStatus,
+              extractionSource: item.extractionSource,
               createdAt: item.createdAt.toISOString(),
             })
           );
@@ -79,6 +87,10 @@ export default async function FeedsPage() {
           url: feed.url,
           folderId: feed.folderId,
           lastFetchedAt: toIsoString(feed.lastFetchedAt),
+          lastFetchStatus: feed.lastFetchStatus,
+          lastFetchErrorCode: feed.lastFetchErrorCode,
+          lastFetchErrorMessage: feed.lastFetchErrorMessage,
+          lastFetchErrorAt: toIsoString(feed.lastFetchErrorAt),
           createdAt: feed.createdAt.toISOString(),
           items,
         };

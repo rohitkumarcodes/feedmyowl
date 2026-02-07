@@ -31,6 +31,7 @@ export function ArticleRow({
       data-article-id={article.id}
       onClick={onSelect}
       aria-pressed={isOpen}
+      aria-current={isOpen ? "true" : undefined}
     >
       <p className={`${styles.title} ${isRead ? styles.titleRead : ""}`}>{article.title}</p>
       <p className={styles.meta}>

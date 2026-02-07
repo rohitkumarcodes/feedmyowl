@@ -6,6 +6,70 @@
 
 ---
 
+### 2026-02-07 — UX Companion Is Behavioral Source of Truth
+
+**Decision:** `UX.md` is the primary source for behavioral product decisions. When `UX.md` conflicts with older behavior in `DECISION_LOG.md` or implementation details in other docs, we update those older entries/docs to match `UX.md`.
+
+**Context:** The UX companion was added to prevent AI tools from defaulting to SaaS interaction patterns (modals, toasts, badges, overlays) that conflict with FeedMyOwl's reading-first mission.
+
+**Alternatives considered:**
+- Keep historical entries as-is and treat conflicts as unresolved — rejected because it leaves implementation ambiguous.
+- Keep previous decisions over UX companion — rejected because it freezes known behavior mistakes.
+
+**Principles referenced:** 7 (reading experience is sacred), 8 (documentation as first-class activity), 15 (AI as junior developer).
+
+**Risks / tradeoffs:** Updating old decisions creates churn, but it removes ambiguity and improves implementation consistency.
+
+---
+
+### 2026-02-07 — Folder Deletion Behavior Revised: Reassign to Uncategorized
+
+**Decision:** Deleting a folder now moves its feeds to Uncategorized (`folder_id = null`). Feed rows and feed items are preserved.
+
+**Context:** This supersedes the 2026-02-06 destructive cascade decision. UX companion defines folder deletion as non-destructive to prevent accidental data loss and keep the reading history intact.
+
+**Alternatives considered:**
+- Keep destructive cascade — rejected because folder management should not destroy reading data.
+- Block folder deletion until empty — rejected as unnecessary friction.
+
+**Principles referenced:** 7 (reading experience), 6 (minimal surface area), 14 (users must be able to leave with data intact).
+
+**Risks / tradeoffs:** Requires additional reassignment logic before deletion and FK behavior change in schema/migrations.
+
+---
+
+### 2026-02-07 — No "All Feeds" Aggregate Scope
+
+**Decision:** The sidebar does not include an `All feeds` aggregate selection. The only scopes are a selected folder or a selected feed.
+
+**Context:** UX companion explicitly forbids an unbounded aggregate scope because it recreates an attention-heavy "everything at once" experience.
+
+**Alternatives considered:**
+- Keep `All feeds` as convenience — rejected because it conflicts with bounded reading intent.
+- Add hidden keyboard-only aggregate scope — rejected for the same reason.
+
+**Principles referenced:** 7 (reading experience), 6 (minimal surface area).
+
+**Risks / tradeoffs:** Some users may need one extra click to switch contexts. This is accepted as intentional product behavior.
+
+---
+
+### 2026-02-07 — Full-Article Extraction via Dedicated Parser Dependency
+
+**Decision:** Add one extraction dependency (`@postlight/parser`) behind a module boundary (`lib/article-extractor.ts`) to support reliable full-article extraction with feed-summary fallback.
+
+**Context:** UX companion requires full-article rendering when possible and quiet fallback when extraction fails. Existing feed fields alone are not reliable enough across diverse publishers.
+
+**Alternatives considered:**
+- No dependency; heuristic extraction only — rejected due poor reliability.
+- Defer extraction entirely — rejected because it leaves a major UX requirement unimplemented.
+
+**Principles referenced:** 7 (reading experience), 4 (modularity), 3 (battle-tested over novel).
+
+**Risks / tradeoffs:** Adds one package to maintain. Mitigated by strict module boundary and fallback behavior.
+
+---
+
 ### 2026-02-06 — Read/Unread State: Minimal Visual Tracking Only
 
 **Decision:** Articles track whether they have been opened by the user. Opened articles are displayed with muted text color and normal font weight. Unopened articles use primary text color and semibold weight. There are no unread counts, no badges, no numbers next to feeds, and no "All Unread" smart feed.
@@ -89,6 +153,8 @@
 ### 2026-02-06 — Folder Deletion Behavior: Destructive Cascade
 
 **Decision:** Deleting a folder deletes every feed inside that folder and all associated feed items via cascade foreign keys.
+
+**Status:** Superseded on 2026-02-07 by "Folder Deletion Behavior Revised: Reassign to Uncategorized."
 
 **Context:** Folder support was selected for MVP, but deletion semantics were unresolved. A destructive cascade keeps the backend and UI logic simpler for MVP.
 

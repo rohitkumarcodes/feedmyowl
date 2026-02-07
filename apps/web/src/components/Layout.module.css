@@ -73,6 +73,51 @@
   overflow: hidden;
 }
 
+.mobileViews {
+  min-height: 0;
+}
+
+.mobilePane {
+  height: 100%;
+  overflow: hidden;
+}
+
+.mobileBackRow {
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 12px;
+  min-height: 44px;
+  padding: 8px 12px;
+}
+
+.mobileBackRow button {
+  background: transparent;
+  border: 0;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: var(--text-base);
+  min-height: 44px;
+  padding: 0;
+}
+
+.mobileBackRow button:hover {
+  color: var(--accent);
+}
+
+.mobileBackRow button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.mobileBackRow p {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 1120px) {
   .sidebarPane {
     width: 220px;
@@ -80,34 +125,5 @@
 
   .panes {
     grid-template-columns: auto clamp(280px, 34vw, 400px) minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 900px) {
-  .panes {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
-  }
-
-  .sidebarPane {
-    border-bottom: 1px solid var(--border);
-    border-right: 0;
-    width: 100%;
-  }
-
-  .listPane {
-    border-bottom: 1px solid var(--border);
-    border-right: 0;
-    min-width: 0;
-    width: 100%;
-  }
-
-  .sidebarPaneCollapsed {
-    display: none;
-  }
-
-  .showSidebarButton {
-    left: 12px;
-    top: 12px;
   }
 }

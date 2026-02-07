@@ -3,7 +3,7 @@ layout: layouts/base.njk
 title: changelog — feedmyowl
 permalink: /changelog/
 ---
-{# Changelog index with title-only stream rows (intentional project override). #}
+{# Changelog index as a quiet vertical stream: title, date, and excerpt. #}
 
 <section class="stream-index">
   <h1>Changelog</h1>
@@ -14,6 +14,10 @@ permalink: /changelog/
       {% for entry in changelogEntries %}
         <li class="stream-item">
           <a href="{{ entry.url }}" class="stream-link">{{ entry.data.title }}</a>
+          <p class="stream-meta">{{ entry.date | readableDate }}</p>
+          <p class="stream-excerpt">
+            {{ (entry.data.description or entry.templateContent | striptags) | truncate(280, true, "…") }}
+          </p>
         </li>
       {% endfor %}
     </ul>

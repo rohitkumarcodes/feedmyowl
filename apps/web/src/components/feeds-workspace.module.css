@@ -3,33 +3,9 @@
   position: relative;
 }
 
-/* Right-click context menu positioned absolutely over the workspace. */
-.contextMenu {
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  display: grid;
-  min-width: 180px;
-  position: fixed;
-  z-index: 30;
-}
-
-.contextMenu button {
-  background: transparent;
-  border: 0;
-  color: var(--text-primary);
-  cursor: pointer;
-  font-size: var(--text-base);
-  min-height: 32px;
-  padding: 6px 10px;
-  text-align: left;
-}
-
-.contextMenu button:hover {
-  background: var(--bg-tertiary);
-  transition: background-color 80ms ease;
-}
-
-.contextMenu button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+.toolbarMessage {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  margin: 0;
+  padding: 0 12px 8px;
 }

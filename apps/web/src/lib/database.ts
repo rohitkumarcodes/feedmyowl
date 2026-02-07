@@ -10,7 +10,7 @@
  *
  * What this file exports:
  *   - db: The Drizzle database instance (for queries)
- *   - eq, and, or, not, desc, asc: Query comparison operators
+ *   - eq, and, or, not, desc, asc, inArray, lt: Query comparison operators
  *   - users, folders, feeds, feedItems: Schema table references
  *
  * Usage in other files:
@@ -27,7 +27,7 @@ import * as schema from "@/db/schema";
  * Re-export Drizzle query operators through this module boundary.
  * API routes import these from "@/lib/database" — never from "drizzle-orm" directly.
  */
-export { eq, and, or, not, desc, asc } from "drizzle-orm";
+export { eq, and, or, not, desc, asc, inArray, lt } from "drizzle-orm";
 
 /**
  * Re-export schema table references through this module boundary.

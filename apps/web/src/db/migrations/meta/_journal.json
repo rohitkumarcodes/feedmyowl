@@ -15,6 +15,13 @@
       "when": 1770399502811,
       "tag": "0001_careful_genesis",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770461285254,
+      "tag": "0002_boring_typhoid_mary",
+      "breakpoints": true
     }
   ]
 }

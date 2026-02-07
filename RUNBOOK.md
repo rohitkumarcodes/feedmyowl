@@ -81,6 +81,51 @@ pnpm db:generate   # Generate migration files from schema changes
 pnpm db:migrate    # Apply pending migrations to the database
 ```
 
+### 90-day retention cleanup
+
+Feed items older than 90 days are purged automatically during refresh/data-load flows.
+
+If retention cleanup appears stuck:
+1. Check Sentry for errors in `/api/refresh` or feed-loading paths.
+2. Run a manual refresh in the app to trigger cleanup.
+3. Verify old rows are being deleted in Neon SQL editor (query `feed_items` by `created_at`).
+
+---
+
+## Feed Import/Export Issues
+
+### OPML import fails or hangs
+
+1. Reproduce from Settings with a small OPML file first.
+2. Check Sentry for errors in `/api/feeds` with `action: "opml.import"`.
+3. Confirm the OPML file is valid XML and contains `xmlUrl` attributes.
+4. If some entries fail, this is expected behavior: invalid/unreachable feeds are skipped.
+
+### OPML export fails
+
+1. Open `/api/feeds/export?format=opml` directly while authenticated.
+2. If it returns unauthorized, verify Clerk auth/session cookies.
+3. Check Sentry for route errors and confirm DB connectivity in Neon.
+
+### Full data export (JSON) fails
+
+1. Open `/api/feeds/export?format=json` while authenticated.
+2. Check Sentry for serialization/query errors.
+3. Confirm user/folder/feed/item relationships are intact in Neon.
+
+---
+
+## Account Deletion Issues
+
+### User confirms delete but account remains
+
+1. Check Sentry for errors in `/api/feeds` with `action: "account.delete"`.
+2. Verify Clerk API credentials/environment variables in Vercel.
+3. Confirm user row still exists in Neon (`users` table) and whether cascade deletes ran.
+4. If Clerk deletion failed but DB deletion succeeded (or vice versa), reconcile manually:
+   - Delete user in Clerk dashboard.
+   - Delete row in Neon only if needed and after validating ownership.
+
 ---
 
 ## Authentication Issues (Clerk)

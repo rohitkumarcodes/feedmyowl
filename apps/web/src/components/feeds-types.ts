@@ -13,6 +13,10 @@ export interface FeedItemViewModel {
   author: string | null;
   publishedAt: string | null;
   readAt: string | null;
+  extractedHtml?: string | null;
+  extractedAt?: string | null;
+  extractionStatus?: string | null;
+  extractionSource?: string | null;
   createdAt: string;
 }
 
@@ -26,6 +30,10 @@ export interface FeedViewModel {
   url: string;
   folderId: string | null;
   lastFetchedAt: string | null;
+  lastFetchStatus?: string | null;
+  lastFetchErrorCode?: string | null;
+  lastFetchErrorMessage?: string | null;
+  lastFetchErrorAt?: string | null;
   createdAt: string;
   items: FeedItemViewModel[];
 }
@@ -52,6 +60,10 @@ export interface ArticleViewModel {
   publishedAt: string | null;
   createdAt: string;
   readAt: string | null;
+  extractedHtml?: string | null;
+  extractedAt?: string | null;
+  extractionStatus?: string | null;
+  extractionSource?: string | null;
   feedId: string;
   feedTitle: string;
   snippet: string;

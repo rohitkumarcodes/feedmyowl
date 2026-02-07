@@ -15,7 +15,7 @@
   cursor: pointer;
   font-size: var(--text-base);
   font-weight: var(--weight-normal);
-  min-height: 32px;
+  min-height: 44px;
   padding: 6px 10px;
   white-space: nowrap;
 }
@@ -43,7 +43,7 @@
   border-radius: 2px;
   color: var(--text-primary);
   font-size: var(--text-base);
-  min-height: 32px;
+  min-height: 44px;
   padding: 6px 10px;
 }
 
@@ -54,7 +54,7 @@
   cursor: pointer;
   font-size: var(--text-base);
   font-weight: var(--weight-normal);
-  min-height: 32px;
+  min-height: 44px;
   padding: 0;
   text-align: right;
 }

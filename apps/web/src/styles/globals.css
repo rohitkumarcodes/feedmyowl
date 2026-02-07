@@ -5,7 +5,7 @@
   --bg-selected: #e8f0fe;
   --text-primary: #1a1a1a;
   --text-secondary: #555555;
-  --text-muted: #888888;
+  --text-muted: #767676;
   --border: #e0e0e0;
   --accent: #0366d6;
 
@@ -101,4 +101,10 @@ select {
   position: absolute;
   white-space: nowrap;
   width: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
 }

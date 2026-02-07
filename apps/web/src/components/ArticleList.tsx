@@ -10,6 +10,8 @@ interface ArticleListProps {
   articles: ArticleViewModel[];
   selectedArticleId: string | null;
   openArticleId: string | null;
+  statusMessage: string | null;
+  emptyStateMessage: string;
   onSelectArticle: (articleId: string) => void;
 }
 
@@ -20,12 +22,26 @@ export function ArticleList({
   articles,
   selectedArticleId,
   openArticleId,
+  statusMessage,
+  emptyStateMessage,
   onSelectArticle,
 }: ArticleListProps) {
   return (
-    <div className={styles.root}>
+    <section
+      className={styles.root}
+      data-article-list-root
+      role="region"
+      aria-label="Article list"
+      tabIndex={-1}
+    >
+      {statusMessage ? (
+        <p className={styles.statusMessage} role="status" aria-live="polite">
+          {statusMessage}
+        </p>
+      ) : null}
+
       {articles.length === 0 ? (
-        <p className={styles.empty}>No articles match this view.</p>
+        <p className={styles.empty}>{emptyStateMessage}</p>
       ) : (
         articles.map((article) => (
           <ArticleRow
@@ -37,6 +53,6 @@ export function ArticleList({
           />
         ))
       )}
-    </div>
+    </section>
   );
 }

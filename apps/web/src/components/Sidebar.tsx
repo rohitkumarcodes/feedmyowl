@@ -2,7 +2,7 @@
  * Left sidebar showing feed folders, uncategorized feeds, and inline actions.
  */
 
-import type { FormEvent, MouseEvent } from "react";
+import type { FormEvent } from "react";
 import { AddFeedForm } from "./AddFeedForm";
 import { FeedItem } from "./FeedItem";
 import { FolderGroup } from "./FolderGroup";
@@ -10,37 +10,27 @@ import type { FeedViewModel, FolderViewModel, PendingAction } from "./feeds-type
 import styles from "./Sidebar.module.css";
 
 export type SidebarScope =
-  | { type: "all" }
   | { type: "folder"; folderId: string }
+  | { type: "uncategorized" }
   | { type: "feed"; feedId: string };
 
 interface SidebarProps {
   folders: FolderViewModel[];
   feeds: FeedViewModel[];
   expandedFolderIds: Set<string>;
-  selectedScope: SidebarScope;
-  onSelectAll: () => void;
+  selectedScope: SidebarScope | null;
   onSelectFolder: (folderId: string) => void;
+  onSelectUncategorized: () => void;
   onSelectFeed: (feedId: string) => void;
   onToggleFolder: (folderId: string) => void;
-  onOpenFolderContextMenu: (
-    folderId: string,
-    event: MouseEvent<HTMLButtonElement>
-  ) => void;
-  onOpenFeedContextMenu: (
-    feedId: string,
-    event: MouseEvent<HTMLButtonElement>
-  ) => void;
   onToggleSidebar: () => void;
 
   isAddFeedFormVisible: boolean;
   feedUrlInput: string;
-  feedFolderIdInput: string;
   isAddingFeed: boolean;
   onShowAddFeedForm: () => void;
   onCancelAddFeed: () => void;
   onFeedUrlChange: (value: string) => void;
-  onFeedFolderIdChange: (value: string) => void;
   onSubmitFeed: (event: FormEvent<HTMLFormElement>) => void;
 
   isAddFolderFormVisible: boolean;
@@ -60,6 +50,12 @@ interface SidebarProps {
   onApplyPendingAction: () => void;
   onCancelPendingAction: () => void;
   onPendingActionChange: (action: PendingAction) => void;
+
+  onRequestFeedRename: (feedId: string, currentLabel: string) => void;
+  onRequestFeedMove: (feedId: string, currentFolderId: string) => void;
+  onRequestFeedDelete: (feedId: string, currentLabel: string) => void;
+  onRequestFolderRename: (folderId: string, currentName: string) => void;
+  onRequestFolderDelete: (folderId: string, currentName: string) => void;
 }
 
 /**
@@ -70,21 +66,17 @@ export function Sidebar({
   feeds,
   expandedFolderIds,
   selectedScope,
-  onSelectAll,
   onSelectFolder,
+  onSelectUncategorized,
   onSelectFeed,
   onToggleFolder,
-  onOpenFolderContextMenu,
-  onOpenFeedContextMenu,
   onToggleSidebar,
   isAddFeedFormVisible,
   feedUrlInput,
-  feedFolderIdInput,
   isAddingFeed,
   onShowAddFeedForm,
   onCancelAddFeed,
   onFeedUrlChange,
-  onFeedFolderIdChange,
   onSubmitFeed,
   isAddFolderFormVisible,
   folderNameInput,
@@ -101,6 +93,11 @@ export function Sidebar({
   onApplyPendingAction,
   onCancelPendingAction,
   onPendingActionChange,
+  onRequestFeedRename,
+  onRequestFeedMove,
+  onRequestFeedDelete,
+  onRequestFolderRename,
+  onRequestFolderDelete,
 }: SidebarProps) {
   const sortedFolders = [...folders].sort((a, b) => a.name.localeCompare(b.name));
   const sortedFeeds = [...feeds].sort((a, b) => {
@@ -123,7 +120,7 @@ export function Sidebar({
   }
 
   return (
-    <div className={styles.root}>
+    <nav className={styles.root} aria-label="Feed list" role="navigation">
       <div className={styles.top}>
         <div className={styles.brandRow}>
           <p className={styles.brand}>FEEDMYOWL</p>
@@ -135,13 +132,6 @@ export function Sidebar({
             Hide
           </button>
         </div>
-
-        <FeedItem
-          label="All feeds"
-          isActive={selectedScope.type === "all"}
-          onSelect={onSelectAll}
-          onContextMenu={(event) => event.preventDefault()}
-        />
 
         {infoMessage ? (
           <div className={styles.sidebarMessage}>
@@ -160,13 +150,13 @@ export function Sidebar({
         {errorMessage ? (
           <div className={styles.sidebarMessage}>
             <span className={`${styles.sidebarMessageText} ${styles.sidebarMessageError}`}>
-              Error: {errorMessage}
+              {errorMessage}
             </span>
             <button
               type="button"
               className={styles.sidebarMessageDismiss}
               onClick={onDismissMessage}
-              aria-label="Dismiss error"
+              aria-label="Dismiss message"
             >
               x
             </button>
@@ -178,16 +168,13 @@ export function Sidebar({
         {pendingAction ? (
           <div className={styles.sidebarPendingAction}>
             {pendingAction.kind === "feed-delete" ? (
-              <p>
-                Delete feed &quot;{pendingAction.feedLabel}&quot; and all stored
-                articles?
-              </p>
+              <p>Delete feed &quot;{pendingAction.feedLabel}&quot;?</p>
             ) : null}
 
             {pendingAction.kind === "folder-delete" ? (
               <p>
-                Delete folder &quot;{pendingAction.folderLabel}&quot; and every
-                feed/article inside it?
+                Delete folder &quot;{pendingAction.folderLabel}&quot; and move its
+                feeds to Uncategorized?
               </p>
             ) : null}
 
@@ -270,7 +257,7 @@ export function Sidebar({
         {sortedFolders.map((folder) => {
           const folderFeeds = feedsByFolder.get(folder.id) ?? [];
           const isSelected =
-            selectedScope.type === "folder" && selectedScope.folderId === folder.id;
+            selectedScope?.type === "folder" && selectedScope.folderId === folder.id;
 
           return (
             <FolderGroup
@@ -280,12 +267,13 @@ export function Sidebar({
               isSelected={isSelected}
               onToggle={() => onToggleFolder(folder.id)}
               onSelect={() => onSelectFolder(folder.id)}
-              onContextMenu={(event) => onOpenFolderContextMenu(folder.id, event)}
+              onRename={() => onRequestFolderRename(folder.id, folder.name)}
+              onDelete={() => onRequestFolderDelete(folder.id, folder.name)}
             >
               {folderFeeds.map((feed) => {
                 const label = feed.title || feed.url;
                 const isActive =
-                  selectedScope.type === "feed" && selectedScope.feedId === feed.id;
+                  selectedScope?.type === "feed" && selectedScope.feedId === feed.id;
 
                 return (
                   <FeedItem
@@ -293,7 +281,9 @@ export function Sidebar({
                     label={label}
                     isActive={isActive}
                     onSelect={() => onSelectFeed(feed.id)}
-                    onContextMenu={(event) => onOpenFeedContextMenu(feed.id, event)}
+                    onRename={() => onRequestFeedRename(feed.id, label)}
+                    onMove={() => onRequestFeedMove(feed.id, feed.folderId || "")}
+                    onDelete={() => onRequestFeedDelete(feed.id, label)}
                   />
                 );
               })}
@@ -302,26 +292,34 @@ export function Sidebar({
         })}
 
         <section className={styles.uncategorizedSection}>
-          <p className={styles.sectionHeader}>Uncategorized</p>
-          {uncategorizedFeeds.length === 0 ? (
-            <p className={styles.emptyLabel}>No uncategorized feeds</p>
-          ) : (
-            uncategorizedFeeds.map((feed) => {
-              const label = feed.title || feed.url;
-              const isActive =
-                selectedScope.type === "feed" && selectedScope.feedId === feed.id;
+          <FolderGroup
+            label="Uncategorized"
+            isExpanded={true}
+            isSelected={selectedScope?.type === "uncategorized"}
+            onSelect={onSelectUncategorized}
+          >
+            {uncategorizedFeeds.length === 0 ? (
+              <p className={styles.emptyLabel}>No feeds in this folder.</p>
+            ) : (
+              uncategorizedFeeds.map((feed) => {
+                const label = feed.title || feed.url;
+                const isActive =
+                  selectedScope?.type === "feed" && selectedScope.feedId === feed.id;
 
-              return (
-                <FeedItem
-                  key={feed.id}
-                  label={label}
-                  isActive={isActive}
-                  onSelect={() => onSelectFeed(feed.id)}
-                  onContextMenu={(event) => onOpenFeedContextMenu(feed.id, event)}
-                />
-              );
-            })
-          )}
+                return (
+                  <FeedItem
+                    key={feed.id}
+                    label={label}
+                    isActive={isActive}
+                    onSelect={() => onSelectFeed(feed.id)}
+                    onRename={() => onRequestFeedRename(feed.id, label)}
+                    onMove={() => onRequestFeedMove(feed.id, "")}
+                    onDelete={() => onRequestFeedDelete(feed.id, label)}
+                  />
+                );
+              })
+            )}
+          </FolderGroup>
         </section>
       </div>
 
@@ -336,12 +334,9 @@ export function Sidebar({
 
         {isAddFeedFormVisible ? (
           <AddFeedForm
-            folders={folders}
             feedUrlInput={feedUrlInput}
-            feedFolderIdInput={feedFolderIdInput}
             isAddingFeed={isAddingFeed}
             onFeedUrlChange={onFeedUrlChange}
-            onFeedFolderIdChange={onFeedFolderIdChange}
             onSubmitFeed={onSubmitFeed}
             onCancelAddFeed={onCancelAddFeed}
           />
@@ -388,6 +383,6 @@ export function Sidebar({
           </form>
         ) : null}
       </div>
-    </div>
+    </nav>
   );
 }

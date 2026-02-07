@@ -12,6 +12,7 @@
  *   - SignInForm, SignUpForm, UserMenu: Pre-built auth UI components
  *   - getCurrentUser(): Get the authenticated user's Clerk ID and email
  *   - requireAuth(): Same as getCurrentUser but throws if not authenticated
+ *   - deleteAuthUser(): Delete a Clerk user account
  *   - verifyClerkWebhook(): Verify Clerk webhook signatures (via svix)
  *
  * Exception: middleware.ts also imports from @clerk/nextjs/server directly,
@@ -20,7 +21,7 @@
  * be replaced by equivalent boilerplate from any new auth provider.
  */
 
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import { Webhook } from "svix";
 
 /**
@@ -85,6 +86,14 @@ export async function requireAuth() {
   }
 
   return { clerkId: userId };
+}
+
+/**
+ * Delete a user account from Clerk.
+ */
+export async function deleteAuthUser(clerkId: string): Promise<void> {
+  const client = await clerkClient();
+  await client.users.deleteUser(clerkId);
 }
 
 /**

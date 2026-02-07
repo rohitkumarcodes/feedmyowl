@@ -212,7 +212,7 @@ Near-monochrome. Dark text on a light ground, with one quiet accent color. The w
   --bg-selected: #e8f0fe;        /* selected article row */
   --text-primary: #1a1a1a;       /* body text, headings */
   --text-secondary: #555555;     /* read articles, secondary info */
-  --text-muted: #888888;         /* timestamps, dates, metadata */
+  --text-muted: #767676;         /* timestamps, dates, metadata (WCAG AA for small text) */
   --border: #e0e0e0;
   --accent: #0366d6;             /* links, selected feed indicator */
 }
@@ -231,6 +231,8 @@ Near-monochrome. Dark text on a light ground, with one quiet accent color. The w
   }
 }
 ```
+
+Accessibility note: muted text is used at small sizes (`--text-xs`, `--text-sm`), so it must maintain at least 4.5:1 contrast in light mode.
 
 These are the **only** colors in the application and website. Do not introduce others.
 

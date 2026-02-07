@@ -3,6 +3,12 @@
   overflow: auto;
 }
 
+.statusMessage {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  padding: 10px 12px 6px;
+}
+
 .empty {
   color: var(--text-muted);
   font-size: var(--text-base);

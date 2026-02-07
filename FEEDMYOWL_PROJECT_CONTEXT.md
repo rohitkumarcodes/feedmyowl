@@ -2,7 +2,7 @@
 
 > **Purpose of this document:** This document is the single source of truth for the FeedMyOwl project. It contains the mission, product definition, architecture constraints, and decision-making principles. It is written to be readable by both humans and LLMs. When working with any AI assistant on any part of this project, paste this document into the conversation first so the AI has full context. Update this document as decisions are made.
 
-> **Last updated:** 2026-02-06 (three-pane reader + folders/read-state shipped)
+> **Last updated:** 2026-02-07 (UX-first behavioral reconciliation)
 
 ---
 
@@ -52,10 +52,10 @@ The guiding question for every product decision is: **"Does this help the user r
 5. User can import/export feeds via OPML.
 6. User can export their data and delete their account at any time.
 
-**Current MVP implementation note (February 6, 2026):**
+**Current MVP implementation note (February 7, 2026):**
 - Active scope is add feeds, fetch feeds, and read feeds in-app.
 - Payment controls and feed-count gating are deferred until phase 2.
-- Deleting a folder deletes all feeds and feed items inside that folder (cascade behavior).
+- Deleting a folder moves its feeds to Uncategorized (non-destructive).
 - Read state is persisted in the database (`feed_items.read_at`) and reflected visually in the list.
 
 ### Key Feature Decisions
@@ -71,8 +71,10 @@ The guiding question for every product decision is: **"Does this help the user r
 | Feed item storage in database | **Yes** | Previously fetched articles remain available even if a feed is temporarily down. Better reliability. |
 | Search within feeds | Yes (client-side filtering in MVP) | Filters article list by title and snippet. No full-text search of bodies yet. Helps users find articles without frustration (Principle 7). |
 | Folders | Yes (MVP) | Expandable/collapsible folder groups in sidebar. Standard feed reader pattern. Tags rejected as more complex. |
-| Folder deletion behavior | Destructive cascade | Deleting a folder also deletes feeds and feed items inside it. Simpler implementation for MVP; protected by explicit confirmation UI and backups. |
+| Folder deletion behavior | Reassign to Uncategorized | Deleting a folder preserves feeds and articles by moving feeds to Uncategorized (`folder_id = null`). |
+| "All feeds" aggregate scope | **No** | The app uses only bounded scopes (folder or feed) to avoid attention-heavy everything-at-once views. |
 | Unread tracking | Minimal visual + persisted timestamp | Opened articles are shown in muted text/normal weight, with no counts/badges; read state persists via `read_at`. |
+| Full-article extraction | Yes, with quiet fallback | Attempt full extraction first; if extraction fails, render feed summary content and keep "Open original ↗" available. |
 | Dark mode | Yes (automatic via prefers-color-scheme) | Respects system setting. No manual toggle in MVP. Reduces eye strain for reading (Principle 7). |
 
 ---
