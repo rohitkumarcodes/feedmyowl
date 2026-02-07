@@ -7,7 +7,7 @@
   cursor: pointer;
   display: grid;
   gap: 4px;
-  padding: 10px 12px;
+  padding: 14px 12px;
   text-align: left;
   width: 100%;
 }
@@ -37,6 +37,10 @@
 .titleRead {
   color: var(--text-secondary);
   font-weight: var(--weight-normal);
+}
+
+.dot {
+  margin-right: 6px;
 }
 
 .meta {
