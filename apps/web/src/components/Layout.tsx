@@ -9,6 +9,8 @@ interface LayoutProps {
   sidebar: ReactNode;
   articleList: ReactNode;
   articleReader: ReactNode;
+  sidebarCollapsed: boolean;
+  onToggleSidebar: () => void;
   isMobile: boolean;
   mobileView: "feeds" | "articles" | "reader";
   mobileListTitle: string;
@@ -23,6 +25,8 @@ export function Layout({
   sidebar,
   articleList,
   articleReader,
+  sidebarCollapsed,
+  onToggleSidebar,
   isMobile,
   mobileView,
   mobileListTitle,
@@ -66,14 +70,39 @@ export function Layout({
     );
   }
 
+  const panesClassName = sidebarCollapsed
+    ? `${styles.panes} ${styles.panesCollapsed}`
+    : styles.panes;
+
+  const sidebarPaneClassName = sidebarCollapsed
+    ? `${styles.sidebarPane} ${styles.sidebarPaneCollapsed}`
+    : styles.sidebarPane;
+
   return (
     <div className={styles.root}>
-      <div className={styles.panes}>
-        <aside className={styles.sidebarPane} aria-label="Feed list" role="navigation">
+      <div className={panesClassName}>
+        <aside className={sidebarPaneClassName} aria-label="Feed list" role="navigation">
           {sidebar}
         </aside>
 
         <section className={styles.listPane} aria-label="Article list" role="region">
+          {sidebarCollapsed ? (
+            <div className={styles.expandBar}>
+              <button
+                type="button"
+                className={styles.expandButton}
+                onClick={onToggleSidebar}
+                aria-label="Expand sidebar"
+                title="Expand sidebar"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2.5"/>
+                  <line x1="9" y1="3" x2="9" y2="21" stroke="currentColor" strokeWidth="2.5"/>
+                  <rect x="3" y="3" width="6" height="18" rx="2" fill="currentColor" fillOpacity="0.2"/>
+                </svg>
+              </button>
+            </div>
+          ) : null}
           {articleList}
         </section>
 

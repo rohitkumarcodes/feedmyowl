@@ -31,6 +31,12 @@
   outline-offset: 2px;
 }
 
+/* Hide the brand logo when sidebar is collapsed.
+   The data attribute is set on <html> by FeedsWorkspace. */
+:global([data-sidebar-collapsed="true"]) .brand {
+  display: none;
+}
+
 .accountControls {
   align-items: center;
   background: var(--bg-secondary);

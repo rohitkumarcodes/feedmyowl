@@ -36,10 +36,21 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
   const [openArticleId, setOpenArticleId] = useState<string | null>(null);
   const [liveMessage, setLiveMessage] = useState("");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     setFeeds(initialFeeds);
   }, [initialFeeds]);
+
+  /* Sync sidebar collapsed state to a data attribute on <html> so the
+     fixed-position brand logo (rendered in the server-side auth layout)
+     can be hidden via a pure CSS selector. */
+  useEffect(() => {
+    document.documentElement.setAttribute(
+      "data-sidebar-collapsed",
+      String(sidebarCollapsed)
+    );
+  }, [sidebarCollapsed]);
 
   const {
     isMobile,
@@ -281,6 +292,7 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
             onRequestFeedDelete={(feedId) => {
               void handleDeleteFeed(feedId);
             }}
+            onCollapse={() => setSidebarCollapsed(true)}
           />
         }
         articleList={
@@ -297,6 +309,8 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
           />
         }
         articleReader={<ArticleReader article={openArticle} />}
+        sidebarCollapsed={sidebarCollapsed}
+        onToggleSidebar={() => setSidebarCollapsed((prev) => !prev)}
         isMobile={isMobile}
         mobileView={mobileView}
         mobileListTitle={selectedScopeLabel}

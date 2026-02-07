@@ -1,7 +1,7 @@
 .root {
   background: var(--bg-secondary);
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto 1fr auto;
   height: 100%;
 }
 
@@ -96,4 +96,32 @@
 .sidebarMessageDismiss:hover {
   color: var(--text-primary);
   transition: color 80ms ease;
+}
+
+.collapseBar {
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: center;
+  padding: 8px;
+}
+
+.collapseButton {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  padding: 4px;
+}
+
+.collapseButton:hover {
+  color: var(--text-primary);
+  transition: color 80ms ease;
+}
+
+.collapseButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
