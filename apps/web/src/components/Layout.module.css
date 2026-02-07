@@ -2,6 +2,7 @@
   background: var(--bg-primary);
   color: var(--text-primary);
   height: 100vh;
+  position: relative;
 }
 
 .panes {
@@ -26,7 +27,14 @@
 .listPane {
   background: var(--bg-primary);
   border-right: 1px solid var(--border);
-  min-width: 280px;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.listPaneContent {
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -35,7 +43,9 @@
   overflow: hidden;
 }
 
-.panesCollapsed {
+/* --- Sidebar collapsed --- */
+
+.panesSidebarCollapsed {
   grid-template-columns: 0px clamp(280px, 30vw, 420px) minmax(0, 1fr);
 }
 
@@ -43,11 +53,70 @@
   border-right: 0;
 }
 
-.expandToggle {
+/* --- List collapsed --- */
+
+.panesListCollapsed {
+  grid-template-columns: 240px 0px minmax(0, 1fr);
+}
+
+.listPaneCollapsed {
+  border-right: 0;
+}
+
+/* --- Both collapsed --- */
+
+.panesBothCollapsed {
+  grid-template-columns: 0px 0px minmax(0, 1fr);
+}
+
+/* --- Collapse bars (bottom of each panel) --- */
+
+.collapseBar {
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: center;
+  padding: 8px;
+}
+
+.collapseButton {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  padding: 4px;
+}
+
+.collapseButton:hover {
+  color: var(--text-primary);
+  transition: color 80ms ease;
+}
+
+.collapseButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* --- Expand tabs (appear when panel is collapsed) --- */
+
+.sidebarExpandToggle {
+  bottom: 8px;
   left: 0;
   position: absolute;
-  top: 14px;
   z-index: 41;
+}
+
+.listExpandToggle {
+  bottom: 8px;
+  left: 240px;
+  position: absolute;
+  z-index: 41;
+}
+
+.listExpandToggleSidebarCollapsed {
+  left: 0;
 }
 
 .expandButton {
@@ -72,6 +141,8 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+/* --- Mobile layout --- */
 
 .mobileViews {
   height: 100%;
@@ -127,7 +198,23 @@
     grid-template-columns: 220px clamp(260px, 34vw, 380px) minmax(0, 1fr);
   }
 
-  .panesCollapsed {
+  .panesSidebarCollapsed {
     grid-template-columns: 0px clamp(260px, 34vw, 380px) minmax(0, 1fr);
+  }
+
+  .panesListCollapsed {
+    grid-template-columns: 220px 0px minmax(0, 1fr);
+  }
+
+  .panesBothCollapsed {
+    grid-template-columns: 0px 0px minmax(0, 1fr);
+  }
+
+  .listExpandToggle {
+    left: 220px;
+  }
+
+  .listExpandToggleSidebarCollapsed {
+    left: 0;
   }
 }
