@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useRef, useState } from "react";
+import { FormEvent, useCallback, useState } from "react";
 import type { ArticleViewModel, FeedViewModel } from "@/components/feeds-types";
 import type { SidebarScope } from "@/components/Sidebar";
 import type { FeedsWorkspaceMobileView } from "@/hooks/useFeedsWorkspaceMobile";
@@ -40,13 +40,6 @@ interface FeedCreateResponse {
   };
   duplicate?: boolean;
   message?: string;
-}
-
-interface ExtractResponse {
-  itemId?: string;
-  status?: "success" | "fallback";
-  source?: string;
-  extractedHtml?: string | null;
 }
 
 interface UseFeedsWorkspaceActionsOptions {
@@ -89,8 +82,6 @@ export function useFeedsWorkspaceActions({
   setMobileViewWithHistory,
   setNetworkMessage,
 }: UseFeedsWorkspaceActionsOptions) {
-  const requestedExtractionIds = useRef<Set<string>>(new Set());
-
   const [isAddFeedFormVisible, setIsAddFeedFormVisible] = useState(false);
   const [feedUrlInput, setFeedUrlInput] = useState("");
 
@@ -141,55 +132,6 @@ export function useFeedsWorkspaceActions({
       }
     },
     [allArticles, setFeeds]
-  );
-
-  const requestArticleExtraction = useCallback(
-    async (articleId: string) => {
-      if (requestedExtractionIds.current.has(articleId)) {
-        return;
-      }
-
-      requestedExtractionIds.current.add(articleId);
-
-      try {
-        const response = await fetch("/api/feeds", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "item.extractFull", itemId: articleId }),
-        });
-
-        if (!response.ok) {
-          return;
-        }
-
-        const body = await parseResponseJson<ExtractResponse>(response);
-        if (!body?.itemId) {
-          return;
-        }
-
-        setFeeds((previousFeeds) =>
-          previousFeeds.map((feed) => ({
-            ...feed,
-            items: feed.items.map((item) => {
-              if (item.id !== body.itemId) {
-                return item;
-              }
-
-              return {
-                ...item,
-                extractedHtml: body.extractedHtml || item.extractedHtml || null,
-                extractionStatus: body.status || item.extractionStatus || null,
-                extractionSource: body.source || item.extractionSource || null,
-                extractedAt: new Date().toISOString(),
-              };
-            }),
-          }))
-        );
-      } catch {
-        // Extraction is best-effort and should fail quietly.
-      }
-    },
-    [setFeeds]
   );
 
   const handleRefresh = useCallback(async () => {
@@ -407,7 +349,6 @@ export function useFeedsWorkspaceActions({
     cancelAddFeedForm,
     clearStatusMessages,
     markArticleAsRead,
-    requestArticleExtraction,
     handleRefresh,
     handleAddFeed,
     handleDeleteFeed,

@@ -21,7 +21,7 @@ From repo root:
 
 ### API routes in active use
 - `POST /api/feeds` (feed create)
-- `PATCH /api/feeds` (`item.markRead`, `item.extractFull`, `account.delete`)
+- `PATCH /api/feeds` (`item.markRead`, `account.delete`)
 - `DELETE /api/feeds/[id]` (feed delete)
 - `POST /api/refresh` (manual refresh)
 
@@ -48,12 +48,12 @@ Checklist:
 3. Confirm feed URL still returns valid RSS/Atom.
 4. Treat partial failures as non-blocking unless all feeds fail.
 
-### Article reads but full extraction is missing
+### Article content looks incomplete or unexpected
 Checklist:
-1. Confirm item has `link`.
-2. Trigger article open to invoke `item.extractFull`.
-3. Check `extraction_status`, `extraction_source`, `extracted_at`.
-4. If extraction fails, fallback feed content is expected behavior.
+1. Confirm `feed_items.content` is populated for the item.
+2. Compare rendered body with the feed payload from the source URL.
+3. Confirm reader sanitization did not remove unsafe markup.
+4. Use "Open original" to verify source article remains reachable.
 
 ### Read-state does not persist
 Checklist:
@@ -67,7 +67,7 @@ Checklist:
 3. Refresh feeds.
 4. Open an article.
 5. Verify article is marked read.
-6. Verify reader still works if extraction fails.
+6. Verify reader renders feed-provided content.
 7. Delete a feed.
 
 ## 7. Data and retention notes

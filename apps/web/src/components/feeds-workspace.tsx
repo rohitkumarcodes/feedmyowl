@@ -95,7 +95,6 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
     cancelAddFeedForm,
     clearStatusMessages,
     markArticleAsRead,
-    requestArticleExtraction,
     handleRefresh,
     handleAddFeed,
     handleDeleteFeed,
@@ -304,14 +303,7 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
             }}
           />
         }
-        articleReader={
-          <ArticleReader
-            article={openArticle}
-            onRequestExtraction={(articleId) => {
-              void requestArticleExtraction(articleId);
-            }}
-          />
-        }
+        articleReader={<ArticleReader article={openArticle} />}
         isMobile={isMobile}
         mobileView={mobileView}
         mobileListTitle={selectedScopeLabel}

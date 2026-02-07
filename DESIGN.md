@@ -64,10 +64,9 @@ No search-specific shortcuts in MVP.
 - Manual refresh only.
 - UI should clearly indicate when refresh is running.
 
-### Article extraction
-- On article open, attempt full-article extraction in background.
-- If extraction succeeds, render extracted HTML.
-- If extraction fails, continue showing feed content.
+### Article rendering
+- Reader renders feed-provided content directly.
+- Rendering does not trigger full-article extraction.
 
 ## 5. Visual language
 - Quiet, high-legibility typography.

@@ -209,18 +209,6 @@ export const feedItems = pgTable("feed_items", {
   /** When the user opened this article in FeedMyOwl */
   readAt: timestamp("read_at"),
 
-  /** Cached full-article HTML extracted from the original page when available */
-  extractedHtml: text("extracted_html"),
-
-  /** When full-article extraction was last attempted */
-  extractedAt: timestamp("extracted_at"),
-
-  /** Extraction result status (success, fallback, failed) */
-  extractionStatus: varchar("extraction_status", { length: 50 }),
-
-  /** Source used for rendered content (postlight, feed_summary, etc.) */
-  extractionSource: varchar("extraction_source", { length: 80 }),
-
   /** When we first stored this item */
   createdAt: timestamp("created_at").defaultNow().notNull(),
 

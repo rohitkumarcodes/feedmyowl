@@ -1,7 +1,7 @@
 /**
  * API Route: /api/feeds
  *
- * Handles feed creation, article read/extraction actions, and account deletion
+ * Handles feed creation, article read actions, and account deletion
  * for the authenticated user while keeping the surface area minimal.
  */
 
@@ -15,7 +15,6 @@ import { normalizeFeedError } from "@/lib/feed-errors";
 import { normalizeFeedUrl } from "@/lib/feed-url";
 import {
   createFeedWithInitialItems,
-  extractFeedItemForUser,
   findExistingFeedForUserByUrl,
   markFeedItemReadForUser,
 } from "@/lib/feed-service";
@@ -197,7 +196,6 @@ export async function POST(request: NextRequest) {
  *
  * Supported actions:
  *   - item.markRead
- *   - item.extractFull
  *   - account.delete
  */
 export async function PATCH(request: NextRequest) {
@@ -235,22 +233,6 @@ export async function PATCH(request: NextRequest) {
       }
 
       return NextResponse.json({ itemId: result.itemId, readAt: result.readAt });
-    }
-
-    if (payload.action === "item.extractFull") {
-      const itemId = payload.itemId;
-
-      if (typeof itemId !== "string" || !itemId.trim()) {
-        return NextResponse.json({ error: "Item ID is required" }, { status: 400 });
-      }
-
-      const result = await extractFeedItemForUser(appUser.id, itemId);
-
-      if (result.status === "not_found") {
-        return NextResponse.json({ error: "Article not found" }, { status: 404 });
-      }
-
-      return NextResponse.json(result.payload);
     }
 
     if (payload.action === "account.delete") {

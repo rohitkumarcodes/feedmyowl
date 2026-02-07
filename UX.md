@@ -22,7 +22,7 @@ Three panes are visible at once:
 Expected behavior:
 - Selecting scope updates article list.
 - Selecting article opens reader and marks item read.
-- Reader attempts full-article extraction in background.
+- Reader renders feed-provided content directly.
 - Sidebar remains visible; no hide/show mode.
 
 ## 4. Mobile UX
@@ -47,9 +47,8 @@ No folders, no grouping, no tags, no search.
 
 ## 6. Reader behavior
 - Opened article renders immediately from available feed content.
-- Extraction runs automatically when applicable.
-- If extraction succeeds, richer content appears.
-- If extraction fails, reading continues on fallback content.
+- No extraction runs in the background.
+- Reader output is feed content after sanitization.
 - "Open original" remains available when article link exists.
 
 ## 7. Empty states

@@ -10,7 +10,6 @@ import styles from "./ArticleReader.module.css";
 
 interface ArticleReaderProps {
   article: ArticleViewModel | null;
-  onRequestExtraction?: (articleId: string) => void;
 }
 
 function formatPublicationDate(iso: string | null): string {
@@ -48,33 +47,15 @@ function isTrustedEmbedSource(url: string): boolean {
 /**
  * Renders either a placeholder or the selected article reader view.
  */
-export function ArticleReader({ article, onRequestExtraction }: ArticleReaderProps) {
+export function ArticleReader({ article }: ArticleReaderProps) {
   const bodyRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!article || !onRequestExtraction) {
-      return;
-    }
-
-    if (article.extractedHtml || article.extractionStatus === "fallback") {
-      return;
-    }
-
-    if (!article.link) {
-      return;
-    }
-
-    onRequestExtraction(article.id);
-  }, [article, onRequestExtraction]);
 
   const sanitizedHtml = useMemo(() => {
     if (!article) {
       return "";
     }
 
-    const preferredHtml = article.extractedHtml || toRenderableHtml(article.content);
-
-    return DOMPurify.sanitize(preferredHtml, {
+    return DOMPurify.sanitize(toRenderableHtml(article.content), {
       FORBID_TAGS: ["script", "style"],
       FORBID_ATTR: ["style", "onerror", "onload", "onclick", "onmouseover"],
     });

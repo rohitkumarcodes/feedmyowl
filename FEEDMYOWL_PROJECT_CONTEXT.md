@@ -20,7 +20,7 @@ The current phase is an intentionally narrow MVP. The product is optimized for t
 - Manual refresh.
 - Article list and reader.
 - Read-state tracking.
-- Full-article extraction on article open with fallback.
+- Feed-content rendering in reader (no full-article extraction).
 - Offline snapshot fallback for previously loaded feeds/items.
 - Account settings and account deletion.
 
@@ -54,10 +54,9 @@ The current phase is an intentionally narrow MVP. The product is optimized for t
 
 ### Backend
 - Feed parsing via `rss-parser`.
-- Full-article extraction via Postlight parser.
 - API routes:
   - `POST /api/feeds` -> create feed.
-  - `PATCH /api/feeds` -> `item.markRead`, `item.extractFull`, `account.delete`.
+  - `PATCH /api/feeds` -> `item.markRead`, `account.delete`.
   - `DELETE /api/feeds/[id]` -> delete feed.
   - `POST /api/refresh` -> manual refresh all user feeds.
 
@@ -70,7 +69,7 @@ The current phase is an intentionally narrow MVP. The product is optimized for t
 
 ## 7. Reliability and safety defaults
 - Refresh failures are stored per feed with calm, user-facing messages.
-- Reader never blocks on extraction; feed content remains fallback content.
+- Reader renders feed content directly with no extraction dependency.
 - Retention policy remains enabled.
 - Offline snapshot provides read-only continuity when disconnected.
 

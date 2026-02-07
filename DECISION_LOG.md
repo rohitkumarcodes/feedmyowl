@@ -60,13 +60,12 @@ This log records active product and technical decisions for the current MVP phas
 ### D-2026-02-07-07
 - Date: 2026-02-07
 - Status: active
-- Decision: Full-article HTML extraction runs automatically when an article is opened.
-- Why: Keep reading in-app while avoiding refresh-time extraction cost.
+- Decision: Reader renders feed-provided content only; full-article extraction is removed from MVP.
+- Why: Keep MVP deterministic and avoid extraction inconsistencies/noise.
 - Behavior:
   - Reader opens immediately with feed content.
-  - Extraction runs in background.
-  - On success, cached full HTML is rendered.
-  - On failure, feed content remains as fallback.
+  - No extraction runs in background.
+  - Content shown is the feed item content after sanitization.
 
 ### D-2026-02-07-08
 - Date: 2026-02-07

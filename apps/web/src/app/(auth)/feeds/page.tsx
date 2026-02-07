@@ -61,10 +61,6 @@ export default async function FeedsPage() {
               author: item.author,
               publishedAt: toIsoString(item.publishedAt),
               readAt: toIsoString(item.readAt),
-              extractedHtml: item.extractedHtml,
-              extractedAt: toIsoString(item.extractedAt),
-              extractionStatus: item.extractionStatus,
-              extractionSource: item.extractionSource,
               createdAt: item.createdAt.toISOString(),
             })
           );
