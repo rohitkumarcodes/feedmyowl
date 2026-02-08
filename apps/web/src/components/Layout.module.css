@@ -106,6 +106,14 @@
   padding: 6px 6px 6px 4px;
 }
 
+.paneToggleButton {
+  color: var(--lp-text-main);
+}
+
+.paneToggleButton svg {
+  display: block;
+}
+
 /* --- Mobile layout --- */
 
 .mobileViews {

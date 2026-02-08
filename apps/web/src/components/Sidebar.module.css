@@ -184,6 +184,14 @@
   padding: 8px;
 }
 
+.paneToggleButton {
+  color: var(--lp-text-main);
+}
+
+.paneToggleButton svg {
+  display: block;
+}
+
 .deleteDialog h3 {
   color: var(--lp-text-main);
   font-size: var(--text-base);

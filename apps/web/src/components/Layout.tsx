@@ -5,6 +5,7 @@
 import type { ReactNode } from "react";
 import primitiveStyles from "./LeftPanePrimitives.module.css";
 import styles from "./Layout.module.css";
+import { PaneToggleIcon } from "./PaneToggleIcon";
 
 interface LayoutProps {
   sidebar: ReactNode;
@@ -21,25 +22,6 @@ interface LayoutProps {
   onMobileBackToFeeds: () => void;
   onMobileBackToArticles: () => void;
 }
-
-/* SVG icon for the sidebar toggle (left section highlighted). */
-const sidebarIcon = (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2.5"/>
-    <line x1="9" y1="3" x2="9" y2="21" stroke="currentColor" strokeWidth="2.5"/>
-    <rect x="3" y="3" width="6" height="18" rx="2" fill="currentColor" fillOpacity="0.2"/>
-  </svg>
-);
-
-/* SVG icon for the article list toggle (middle section highlighted). */
-const listIcon = (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2.5"/>
-    <line x1="9" y1="3" x2="9" y2="21" stroke="currentColor" strokeWidth="2.5"/>
-    <line x1="15" y1="3" x2="15" y2="21" stroke="currentColor" strokeWidth="2.5"/>
-    <rect x="9" y="3" width="6" height="18" fill="currentColor" fillOpacity="0.2"/>
-  </svg>
-);
 
 /**
  * Renders the feed-reader layout with desktop panes and mobile view navigation.
@@ -126,12 +108,12 @@ export function Layout({
         <div className={styles.sidebarExpandToggle}>
           <button
             type="button"
-            className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.expandButton}`}
+            className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.paneToggleButton} ${styles.expandButton}`}
             onClick={onToggleSidebar}
             aria-label="Expand sidebar"
             title="Expand sidebar"
           >
-            {sidebarIcon}
+            <PaneToggleIcon variant="sidebar" />
           </button>
         </div>
       ) : null}
@@ -141,12 +123,12 @@ export function Layout({
         <div className={listExpandClassName}>
           <button
             type="button"
-            className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.expandButton}`}
+            className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.paneToggleButton} ${styles.expandButton}`}
             onClick={onToggleList}
             aria-label="Expand article list"
             title="Expand article list"
           >
-            {listIcon}
+            <PaneToggleIcon variant="list" />
           </button>
         </div>
       ) : null}
@@ -163,12 +145,12 @@ export function Layout({
           <div className={styles.collapseBar}>
             <button
               type="button"
-              className={primitiveStyles.iconButton}
+              className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.paneToggleButton}`}
               onClick={onCollapseList}
               aria-label="Collapse article list"
               title="Collapse article list"
             >
-              {listIcon}
+              <PaneToggleIcon variant="list" />
             </button>
           </div>
         </section>

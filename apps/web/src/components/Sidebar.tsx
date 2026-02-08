@@ -8,6 +8,7 @@ import { FeedItem } from "./FeedItem";
 import type { FeedViewModel, FolderViewModel } from "./feeds-types";
 import { getFeedLabel } from "./feeds-workspace.selectors";
 import primitiveStyles from "./LeftPanePrimitives.module.css";
+import { PaneToggleIcon } from "./PaneToggleIcon";
 import styles from "./Sidebar.module.css";
 
 export type SidebarScope =
@@ -812,16 +813,12 @@ export function Sidebar({
       <div className={styles.collapseBar}>
         <button
           type="button"
-          className={primitiveStyles.iconButton}
+          className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.paneToggleButton}`}
           onClick={onCollapse}
           aria-label="Collapse sidebar"
           title="Collapse sidebar"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2.5"/>
-            <line x1="9" y1="3" x2="9" y2="21" stroke="currentColor" strokeWidth="2.5"/>
-            <rect x="3" y="3" width="6" height="18" rx="2" fill="currentColor" fillOpacity="0.2"/>
-          </svg>
+          <PaneToggleIcon variant="sidebar" />
         </button>
       </div>
 
