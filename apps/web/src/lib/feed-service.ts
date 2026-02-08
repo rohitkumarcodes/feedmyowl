@@ -373,37 +373,36 @@ export async function setFeedFoldersForUser(
   const now = new Date();
 
   try {
-    await db.transaction(async (tx) => {
-      await tx
-        .delete(feedFolderMemberships)
-        .where(
-          and(
-            eq(feedFolderMemberships.userId, userId),
-            eq(feedFolderMemberships.feedId, feedId)
-          )
-        );
+    // neon-http does not support db.transaction(); execute writes sequentially.
+    await db
+      .delete(feedFolderMemberships)
+      .where(
+        and(
+          eq(feedFolderMemberships.userId, userId),
+          eq(feedFolderMemberships.feedId, feedId)
+        )
+      );
 
-      if (normalizedFolderIds.length > 0) {
-        await tx.insert(feedFolderMemberships).values(
-          normalizedFolderIds.map((folderId) => ({
-            userId,
-            feedId,
-            folderId,
-            createdAt: now,
-            updatedAt: now,
-          }))
-        );
-      }
-
-      await tx
-        .update(feeds)
-        .set({
-          // Keep legacy column synced during migration window.
-          folderId: normalizedFolderIds[0] ?? null,
+    if (normalizedFolderIds.length > 0) {
+      await db.insert(feedFolderMemberships).values(
+        normalizedFolderIds.map((folderId) => ({
+          userId,
+          feedId,
+          folderId,
+          createdAt: now,
           updatedAt: now,
-        })
-        .where(and(eq(feeds.id, feedId), eq(feeds.userId, userId)));
-    });
+        }))
+      );
+    }
+
+    await db
+      .update(feeds)
+      .set({
+        // Keep legacy column synced during migration window.
+        folderId: normalizedFolderIds[0] ?? null,
+        updatedAt: now,
+      })
+      .where(and(eq(feeds.id, feedId), eq(feeds.userId, userId)));
 
     return { status: "ok", folderIds: normalizedFolderIds };
   } catch (error) {

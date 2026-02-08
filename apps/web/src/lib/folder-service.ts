@@ -240,43 +240,42 @@ export async function deleteFolderForUser(
   const summary = await buildFolderMembershipSummary(userId, folderId);
   const now = new Date();
 
-  await db.transaction(async (tx) => {
-    if (mode === "remove_and_unsubscribe_exclusive") {
-      if (summary.exclusiveFeedIds.length > 0) {
-        await tx
-          .delete(feeds)
-          .where(
-            and(
-              eq(feeds.userId, userId),
-              inArray(feeds.id, summary.exclusiveFeedIds)
-            )
-          );
-      }
-
-      for (const feedId of summary.crossListedFeedIds) {
-        const nextLegacyFolderId = summary.nextLegacyFolderIdByFeedId.get(feedId) ?? null;
-        await tx
-          .update(feeds)
-          .set({
-            folderId: nextLegacyFolderId,
-            updatedAt: now,
-          })
-          .where(and(eq(feeds.id, feedId), eq(feeds.userId, userId)));
-      }
-    } else {
-      await tx
-        .update(feeds)
-        .set({
-          folderId: null,
-          updatedAt: now,
-        })
-        .where(and(eq(feeds.userId, userId), eq(feeds.folderId, folderId)));
+  // neon-http does not support db.transaction(); execute writes sequentially.
+  if (mode === "remove_and_unsubscribe_exclusive") {
+    if (summary.exclusiveFeedIds.length > 0) {
+      await db
+        .delete(feeds)
+        .where(
+          and(
+            eq(feeds.userId, userId),
+            inArray(feeds.id, summary.exclusiveFeedIds)
+          )
+        );
     }
 
-    await tx
-      .delete(folders)
-      .where(and(eq(folders.id, folderId), eq(folders.userId, userId)));
-  });
+    for (const feedId of summary.crossListedFeedIds) {
+      const nextLegacyFolderId = summary.nextLegacyFolderIdByFeedId.get(feedId) ?? null;
+      await db
+        .update(feeds)
+        .set({
+          folderId: nextLegacyFolderId,
+          updatedAt: now,
+        })
+        .where(and(eq(feeds.id, feedId), eq(feeds.userId, userId)));
+    }
+  } else {
+    await db
+      .update(feeds)
+      .set({
+        folderId: null,
+        updatedAt: now,
+      })
+      .where(and(eq(feeds.userId, userId), eq(feeds.folderId, folderId)));
+  }
+
+  await db
+    .delete(folders)
+    .where(and(eq(folders.id, folderId), eq(folders.userId, userId)));
 
   return {
     status: "ok",
