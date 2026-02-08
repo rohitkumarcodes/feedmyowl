@@ -4,7 +4,7 @@
 FeedMyOwl is a simple RSS/Atom feed reader focused on reading.
 
 The current phase is an intentionally narrow MVP. The product is optimized for the core loop:
-1. Add a feed.
+1. Add a feed URL or site URL.
 2. Refresh feeds.
 3. Open an article.
 4. Read comfortably.
@@ -54,6 +54,7 @@ The current phase is an intentionally narrow MVP. The product is optimized for t
 
 ### Backend
 - Feed parsing via `rss-parser`.
+- Add-feed uses direct feed parsing first, then conservative feed auto-discovery fallback for site URLs.
 - API routes:
   - `POST /api/feeds` -> create feed.
   - `PATCH /api/feeds` -> `item.markRead`, `account.delete`.
@@ -76,6 +77,7 @@ The current phase is an intentionally narrow MVP. The product is optimized for t
 ## 8. Operational scripts
 From repo root:
 - `pnpm dev:web`
+- `pnpm test:web`
 - `pnpm lint:web`
 - `pnpm build:web`
 

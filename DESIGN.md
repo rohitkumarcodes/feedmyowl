@@ -64,6 +64,11 @@ No search-specific shortcuts in MVP.
 - Manual refresh only.
 - UI should clearly indicate when refresh is running.
 
+### Add-feed behavior
+- Input accepts a direct feed URL or a site URL.
+- Backend first attempts direct feed parsing, then a conservative fallback discovery path.
+- No candidate-picker UI or multi-step setup flow is added.
+
 ### Article rendering
 - Reader renders feed-provided content directly.
 - Rendering does not trigger full-article extraction.

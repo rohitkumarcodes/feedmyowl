@@ -8,6 +8,7 @@ This runbook focuses on keeping the feed reading loop healthy.
 ## 2. Local development
 From repo root:
 - `pnpm dev:web`
+- `pnpm test:web`
 - `pnpm lint:web`
 - `pnpm build:web`
 
