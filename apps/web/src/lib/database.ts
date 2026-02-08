@@ -11,7 +11,7 @@
  * What this file exports:
  *   - db: The Drizzle database instance (for queries)
  *   - eq, and, or, not, desc, asc, inArray, lt: Query comparison operators
- *   - users, folders, feeds, feedItems: Schema table references
+ *   - users, folders, feeds, feedFolderMemberships, feedItems: Schema table references
  *
  * Usage in other files:
  *   import { db, eq, users } from "@/lib/database";
@@ -33,7 +33,13 @@ export { eq, and, or, not, desc, asc, inArray, lt } from "drizzle-orm";
  * Re-export schema table references through this module boundary.
  * API routes import these from "@/lib/database" — never from "@/db/schema" directly.
  */
-export { users, folders, feeds, feedItems } from "@/db/schema";
+export {
+  users,
+  folders,
+  feeds,
+  feedFolderMemberships,
+  feedItems,
+} from "@/db/schema";
 
 /**
  * Lazy-initialized Drizzle database instance.

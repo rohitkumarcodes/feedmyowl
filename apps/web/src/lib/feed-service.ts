@@ -1,7 +1,18 @@
-import { and, db, eq, feedItems, feeds, users } from "@/lib/database";
+import {
+  and,
+  db,
+  eq,
+  feedFolderMemberships,
+  feedItems,
+  feeds,
+  folders,
+  inArray,
+  users,
+} from "@/lib/database";
 import { captureError } from "@/lib/error-tracking";
 import { normalizeFeedError } from "@/lib/feed-errors";
 import { parseFeed, type ParsedFeed } from "@/lib/feed-parser";
+import { normalizeFolderIds } from "@/lib/folder-memberships";
 import { purgeOldFeedItemsForUser } from "@/lib/retention";
 
 export interface RefreshResult {
@@ -28,14 +39,17 @@ export async function findExistingFeedForUserByUrl(userId: string, url: string) 
 export async function createFeedWithInitialItems(
   userId: string,
   url: string,
-  parsedFeed: ParsedFeed
+  parsedFeed: ParsedFeed,
+  folderIds: string[] = []
 ) {
   const now = new Date();
+  const normalizedFolderIds = normalizeFolderIds(folderIds);
 
   const [newFeed] = await db
     .insert(feeds)
     .values({
       userId,
+      folderId: normalizedFolderIds[0] ?? null,
       url,
       title: parsedFeed.title || null,
       description: parsedFeed.description || null,
@@ -60,6 +74,18 @@ export async function createFeedWithInitialItems(
         content: item.content,
         author: item.author,
         publishedAt: item.publishedAt,
+      }))
+    );
+  }
+
+  if (normalizedFolderIds.length > 0) {
+    await db.insert(feedFolderMemberships).values(
+      normalizedFolderIds.map((folderId) => ({
+        userId,
+        feedId: newFeed.id,
+        folderId,
+        createdAt: now,
+        updatedAt: now,
       }))
     );
   }
@@ -295,4 +321,81 @@ export async function renameFeedForUser(
     });
 
   return updatedFeed || null;
+}
+
+export type SetFeedFoldersForUserResult =
+  | { status: "feed_not_found" }
+  | { status: "invalid_folder_ids"; invalidFolderIds: string[] }
+  | { status: "ok"; folderIds: string[] };
+
+/**
+ * Replace folder memberships for one feed belonging to one user.
+ */
+export async function setFeedFoldersForUser(
+  userId: string,
+  feedId: string,
+  folderIds: string[]
+): Promise<SetFeedFoldersForUserResult> {
+  const normalizedFolderIds = normalizeFolderIds(folderIds);
+
+  const feed = await db.query.feeds.findFirst({
+    where: and(eq(feeds.id, feedId), eq(feeds.userId, userId)),
+    columns: { id: true },
+  });
+
+  if (!feed) {
+    return { status: "feed_not_found" };
+  }
+
+  if (normalizedFolderIds.length > 0) {
+    const availableFolders = await db.query.folders.findMany({
+      where: and(eq(folders.userId, userId), inArray(folders.id, normalizedFolderIds)),
+      columns: { id: true },
+    });
+
+    const availableFolderIds = new Set(availableFolders.map((folder) => folder.id));
+    const invalidFolderIds = normalizedFolderIds.filter(
+      (folderId) => !availableFolderIds.has(folderId)
+    );
+
+    if (invalidFolderIds.length > 0) {
+      return { status: "invalid_folder_ids", invalidFolderIds };
+    }
+  }
+
+  const now = new Date();
+
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(feedFolderMemberships)
+      .where(
+        and(
+          eq(feedFolderMemberships.userId, userId),
+          eq(feedFolderMemberships.feedId, feedId)
+        )
+      );
+
+    if (normalizedFolderIds.length > 0) {
+      await tx.insert(feedFolderMemberships).values(
+        normalizedFolderIds.map((folderId) => ({
+          userId,
+          feedId,
+          folderId,
+          createdAt: now,
+          updatedAt: now,
+        }))
+      );
+    }
+
+    await tx
+      .update(feeds)
+      .set({
+        // Keep legacy column synced during migration window.
+        folderId: normalizedFolderIds[0] ?? null,
+        updatedAt: now,
+      })
+      .where(and(eq(feeds.id, feedId), eq(feeds.userId, userId)));
+  });
+
+  return { status: "ok", folderIds: normalizedFolderIds };
 }

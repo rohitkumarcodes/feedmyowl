@@ -6,7 +6,15 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { db, eq, users } from "@/lib/database";
+import {
+  and,
+  db,
+  eq,
+  feedFolderMemberships,
+  folders,
+  inArray,
+  users,
+} from "@/lib/database";
 import { deleteAuthUser, requireAuth } from "@/lib/auth";
 import { ensureUserRecord } from "@/lib/app-user";
 import { discoverFeedCandidates } from "@/lib/feed-discovery";
@@ -14,6 +22,10 @@ import { parseFeed, parseFeedXml, type ParsedFeed } from "@/lib/feed-parser";
 import { purgeOldFeedItemsForUser } from "@/lib/retention";
 import { normalizeFeedError } from "@/lib/feed-errors";
 import { normalizeFeedUrl } from "@/lib/feed-url";
+import {
+  normalizeFolderIds,
+  resolveFeedFolderIds,
+} from "@/lib/folder-memberships";
 import {
   createFeedWithInitialItems,
   findExistingFeedForUserByUrl,
@@ -66,6 +78,49 @@ async function getAppUser() {
 }
 
 /**
+ * Parse optional folderIds payload for feed.create.
+ */
+function parseFolderIdsPayload(payload: Record<string, unknown>): string[] | null {
+  const rawFolderIds = payload.folderIds;
+
+  if (rawFolderIds === undefined) {
+    return [];
+  }
+
+  if (!Array.isArray(rawFolderIds)) {
+    return null;
+  }
+
+  if (!rawFolderIds.every((value) => typeof value === "string")) {
+    return null;
+  }
+
+  return normalizeFolderIds(rawFolderIds);
+}
+
+/**
+ * Resolve one feed's folder ids with transitional legacy fallback.
+ */
+async function getFeedFolderIds(params: {
+  userId: string;
+  feedId: string;
+  legacyFolderId: string | null;
+}): Promise<string[]> {
+  const memberships = await db.query.feedFolderMemberships.findMany({
+    where: and(
+      eq(feedFolderMemberships.userId, params.userId),
+      eq(feedFolderMemberships.feedId, params.feedId)
+    ),
+    columns: { folderId: true },
+  });
+
+  return resolveFeedFolderIds({
+    legacyFolderId: params.legacyFolderId,
+    membershipFolderIds: memberships.map((membership) => membership.folderId),
+  });
+}
+
+/**
  * GET /api/feeds
  * Returns feeds for the authenticated user.
  */
@@ -83,9 +138,15 @@ export async function GET() {
     const user = await db.query.users.findFirst({
       where: eq(users.id, appUser.id),
       with: {
+        folders: true,
         feeds: {
           with: {
             items: true,
+            folderMemberships: {
+              columns: {
+                folderId: true,
+              },
+            },
           },
         },
       },
@@ -95,7 +156,21 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ feeds: user.feeds });
+    const responseFeeds = user.feeds.map((feed) => {
+      const { folderMemberships, ...restFeed } = feed;
+
+      return {
+        ...restFeed,
+        folderIds: resolveFeedFolderIds({
+          legacyFolderId: feed.folderId,
+          membershipFolderIds: folderMemberships.map(
+            (membership) => membership.folderId
+          ),
+        }),
+      };
+    });
+
+    return NextResponse.json({ feeds: responseFeeds, folders: user.folders });
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -136,6 +211,41 @@ export async function POST(request: NextRequest) {
     }
 
     const nextUrl = normalizeFeedUrl(payload.url);
+    const requestedFolderIds = parseFolderIdsPayload(payload);
+
+    if (!requestedFolderIds) {
+      return NextResponse.json(
+        {
+          error: "folderIds must be an array of folder IDs.",
+          code: "invalid_folder_ids",
+        } satisfies ApiError,
+        { status: 400 }
+      );
+    }
+
+    if (requestedFolderIds.length > 0) {
+      const existingFolders = await db.query.folders.findMany({
+        where: and(
+          eq(folders.userId, appUser.id),
+          inArray(folders.id, requestedFolderIds)
+        ),
+        columns: { id: true },
+      });
+      const existingFolderIds = new Set(existingFolders.map((folder) => folder.id));
+      const invalidFolderIds = requestedFolderIds.filter(
+        (folderId) => !existingFolderIds.has(folderId)
+      );
+
+      if (invalidFolderIds.length > 0) {
+        return NextResponse.json(
+          {
+            error: "One or more selected folders could not be found.",
+            code: "invalid_folder_ids",
+          } satisfies ApiError,
+          { status: 400 }
+        );
+      }
+    }
 
     if (!nextUrl) {
       return NextResponse.json(
@@ -150,8 +260,17 @@ export async function POST(request: NextRequest) {
     const existingFeed = await findExistingFeedForUserByUrl(appUser.id, nextUrl);
 
     if (existingFeed) {
+      const existingFeedFolderIds = await getFeedFolderIds({
+        userId: appUser.id,
+        feedId: existingFeed.id,
+        legacyFolderId: existingFeed.folderId,
+      });
+
       return NextResponse.json({
-        feed: existingFeed,
+        feed: {
+          ...existingFeed,
+          folderIds: existingFeedFolderIds,
+        },
         duplicate: true,
         message: "This feed is already in your library.",
       });
@@ -182,8 +301,17 @@ export async function POST(request: NextRequest) {
         const duplicateFeed = await findExistingFeedForUserByUrl(appUser.id, candidateUrl);
 
         if (duplicateFeed) {
+          const duplicateFeedFolderIds = await getFeedFolderIds({
+            userId: appUser.id,
+            feedId: duplicateFeed.id,
+            legacyFolderId: duplicateFeed.folderId,
+          });
+
           return NextResponse.json({
-            feed: duplicateFeed,
+            feed: {
+              ...duplicateFeed,
+              folderIds: duplicateFeedFolderIds,
+            },
             duplicate: true,
             message: "This feed is already in your library.",
           });
@@ -221,13 +349,27 @@ export async function POST(request: NextRequest) {
 
     let created: Awaited<ReturnType<typeof createFeedWithInitialItems>> | null = null;
     try {
-      created = await createFeedWithInitialItems(appUser.id, resolvedUrl, parsedFeed);
+      created = await createFeedWithInitialItems(
+        appUser.id,
+        resolvedUrl,
+        parsedFeed,
+        requestedFolderIds
+      );
     } catch {
       const raceExistingFeed = await findExistingFeedForUserByUrl(appUser.id, resolvedUrl);
 
       if (raceExistingFeed) {
+        const raceFeedFolderIds = await getFeedFolderIds({
+          userId: appUser.id,
+          feedId: raceExistingFeed.id,
+          legacyFolderId: raceExistingFeed.folderId,
+        });
+
         return NextResponse.json({
-          feed: raceExistingFeed,
+          feed: {
+            ...raceExistingFeed,
+            folderIds: raceFeedFolderIds,
+          },
           duplicate: true,
           message: "This feed is already in your library.",
         });
@@ -246,9 +388,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const createdFolderIds = await getFeedFolderIds({
+      userId: appUser.id,
+      feedId: created.feed.id,
+      legacyFolderId: created.feed.folderId,
+    });
+
     return NextResponse.json(
       {
-        feed: created.feed,
+        feed: {
+          ...created.feed,
+          folderIds: createdFolderIds,
+        },
         importedItemCount: created.insertedItems,
         duplicate: false,
         message: discoveredFromSiteUrl

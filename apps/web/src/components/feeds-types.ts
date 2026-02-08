@@ -3,6 +3,17 @@
  */
 
 /**
+ * Represents a user folder used to organize feeds in the sidebar.
+ */
+export interface FolderViewModel {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  feedCount?: number;
+}
+
+/**
  * Represents a persisted article item returned from the backend.
  */
 export interface FeedItemViewModel {
@@ -25,6 +36,7 @@ export interface FeedViewModel {
   customTitle: string | null;
   description: string | null;
   url: string;
+  folderIds: string[];
   lastFetchedAt: string | null;
   lastFetchStatus?: string | null;
   lastFetchErrorCode?: string | null;
@@ -48,5 +60,6 @@ export interface ArticleViewModel {
   readAt: string | null;
   feedId: string;
   feedTitle: string;
+  feedFolderIds: string[];
   snippet: string;
 }

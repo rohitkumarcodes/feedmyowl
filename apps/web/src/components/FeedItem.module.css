@@ -136,6 +136,35 @@
   gap: 8px;
 }
 
+.folderEditor {
+  display: grid;
+  gap: 8px;
+}
+
+.folderEditorList {
+  display: grid;
+  gap: 4px;
+  max-height: 160px;
+  overflow: auto;
+}
+
+.folderEditorOption {
+  align-items: center;
+  color: var(--text-primary);
+  display: flex;
+  gap: 6px;
+  min-height: 24px;
+}
+
+.folderEditorOption input {
+  margin: 0;
+}
+
+.folderEditorEmpty {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
 .renameInput {
   background: var(--bg-primary);
   border: 1px solid var(--border);

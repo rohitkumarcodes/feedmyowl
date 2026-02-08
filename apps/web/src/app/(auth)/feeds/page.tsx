@@ -6,7 +6,12 @@ import { requireAuth } from "@/lib/auth";
 import { db, eq, users } from "@/lib/database";
 import { ensureUserRecord } from "@/lib/app-user";
 import { FeedsWorkspace } from "@/components/feeds-workspace";
-import type { FeedViewModel, FeedItemViewModel } from "@/components/feeds-types";
+import type {
+  FeedViewModel,
+  FeedItemViewModel,
+  FolderViewModel,
+} from "@/components/feeds-types";
+import { resolveFeedFolderIds } from "@/lib/folder-memberships";
 import { purgeOldFeedItemsForUser } from "@/lib/retention";
 
 /**
@@ -26,7 +31,7 @@ export default async function FeedsPage() {
   const ensuredUser = await ensureUserRecord(clerkId);
 
   if (!ensuredUser) {
-    return <FeedsWorkspace initialFeeds={[]} />;
+    return <FeedsWorkspace initialFeeds={[]} initialFolders={[]} />;
   }
 
   // Enforce 90-day retention during normal feed workspace loads.
@@ -35,13 +40,29 @@ export default async function FeedsPage() {
   const user = await db.query.users.findFirst({
     where: eq(users.id, ensuredUser.id),
     with: {
+      folders: true,
       feeds: {
         with: {
           items: true,
+          folderMemberships: {
+            columns: {
+              folderId: true,
+            },
+          },
         },
       },
     },
   });
+
+  const folders: FolderViewModel[] =
+    user?.folders
+      ?.map((folder) => ({
+        id: folder.id,
+        name: folder.name,
+        createdAt: folder.createdAt.toISOString(),
+        updatedAt: folder.updatedAt.toISOString(),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name)) ?? [];
 
   const feeds: FeedViewModel[] =
     user?.feeds
@@ -71,6 +92,12 @@ export default async function FeedsPage() {
           customTitle: feed.customTitle,
           description: feed.description,
           url: feed.url,
+          folderIds: resolveFeedFolderIds({
+            legacyFolderId: feed.folderId,
+            membershipFolderIds: feed.folderMemberships.map(
+              (membership) => membership.folderId
+            ),
+          }),
           lastFetchedAt: toIsoString(feed.lastFetchedAt),
           lastFetchStatus: feed.lastFetchStatus,
           lastFetchErrorCode: feed.lastFetchErrorCode,
@@ -86,5 +113,5 @@ export default async function FeedsPage() {
         return bDate - aDate;
       }) ?? [];
 
-  return <FeedsWorkspace initialFeeds={feeds} />;
+  return <FeedsWorkspace initialFeeds={feeds} initialFolders={folders} />;
 }

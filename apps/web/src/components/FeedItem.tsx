@@ -3,6 +3,7 @@
  */
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import type { FolderViewModel } from "./feeds-types";
 import styles from "./FeedItem.module.css";
 
 interface FeedItemProps {
@@ -10,9 +11,13 @@ interface FeedItemProps {
   isActive: boolean;
   isDeleting: boolean;
   isRenaming: boolean;
+  isUpdatingFolders: boolean;
+  folderOptions: FolderViewModel[];
+  selectedFolderIds: string[];
   onSelect: () => void;
   onDelete: () => void;
   onRename: (name: string) => void | Promise<void>;
+  onSaveFolders: (folderIds: string[]) => void | Promise<void>;
 }
 
 /**
@@ -23,18 +28,24 @@ export function FeedItem({
   isActive,
   isDeleting,
   isRenaming,
+  isUpdatingFolders,
+  folderOptions,
+  selectedFolderIds,
   onSelect,
   onDelete,
   onRename,
+  onSaveFolders,
 }: FeedItemProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const [isFoldersOpen, setIsFoldersOpen] = useState(false);
   const [renameValue, setRenameValue] = useState(label);
+  const [draftFolderIds, setDraftFolderIds] = useState<string[]>(selectedFolderIds);
   const actionsRef = useRef<HTMLDivElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!isMenuOpen && !isRenameOpen) {
+    if (!isMenuOpen && !isRenameOpen && !isFoldersOpen) {
       return;
     }
 
@@ -42,6 +53,7 @@ export function FeedItem({
       if (!actionsRef.current?.contains(event.target as Node)) {
         setIsMenuOpen(false);
         setIsRenameOpen(false);
+        setIsFoldersOpen(false);
       }
     };
 
@@ -49,6 +61,7 @@ export function FeedItem({
       if (event.key === "Escape") {
         setIsMenuOpen(false);
         setIsRenameOpen(false);
+        setIsFoldersOpen(false);
       }
     };
 
@@ -59,14 +72,15 @@ export function FeedItem({
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isMenuOpen, isRenameOpen]);
+  }, [isFoldersOpen, isMenuOpen, isRenameOpen]);
 
   useEffect(() => {
-    if (isDeleting) {
+    if (isDeleting || isUpdatingFolders) {
       setIsMenuOpen(false);
       setIsRenameOpen(false);
+      setIsFoldersOpen(false);
     }
-  }, [isDeleting]);
+  }, [isDeleting, isUpdatingFolders]);
 
   useEffect(() => {
     if (!isRenameOpen) {
@@ -80,6 +94,14 @@ export function FeedItem({
     }, 0);
   }, [isRenameOpen, label]);
 
+  useEffect(() => {
+    if (!isFoldersOpen) {
+      return;
+    }
+
+    setDraftFolderIds(selectedFolderIds);
+  }, [isFoldersOpen, selectedFolderIds]);
+
   const handleDelete = () => {
     setIsMenuOpen(false);
     setIsRenameOpen(false);
@@ -89,7 +111,33 @@ export function FeedItem({
   const handleOpenRename = () => {
     setRenameValue(label);
     setIsMenuOpen(false);
+    setIsFoldersOpen(false);
     setIsRenameOpen(true);
+  };
+
+  const handleOpenFolders = () => {
+    setDraftFolderIds(selectedFolderIds);
+    setIsMenuOpen(false);
+    setIsRenameOpen(false);
+    setIsFoldersOpen(true);
+  };
+
+  const toggleDraftFolder = (folderId: string) => {
+    setDraftFolderIds((previous) =>
+      previous.includes(folderId)
+        ? previous.filter((candidate) => candidate !== folderId)
+        : [...previous, folderId]
+    );
+  };
+
+  const handleSaveFolders = async () => {
+    if (isUpdatingFolders) {
+      return;
+    }
+
+    await onSaveFolders(draftFolderIds);
+    setIsFoldersOpen(false);
+    setIsMenuOpen(false);
   };
 
   const handleRenameSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -123,8 +171,8 @@ export function FeedItem({
           onClick={() => setIsMenuOpen((previous) => !previous)}
           aria-label={`Open actions for ${label}`}
           aria-haspopup="menu"
-          aria-expanded={isMenuOpen || isRenameOpen}
-          disabled={isDeleting || isRenaming || isRenameOpen}
+          aria-expanded={isMenuOpen || isRenameOpen || isFoldersOpen}
+          disabled={isDeleting || isRenaming || isRenameOpen || isFoldersOpen}
         >
           ⋯
         </button>
@@ -163,6 +211,50 @@ export function FeedItem({
           </div>
         ) : null}
 
+        {isFoldersOpen ? (
+          <div className={styles.renamePopover} role="dialog" aria-label={`Edit folders for ${label}`}>
+            <div className={styles.folderEditor}>
+              {folderOptions.length === 0 ? (
+                <p className={styles.folderEditorEmpty}>Create a folder first.</p>
+              ) : (
+                <div className={styles.folderEditorList}>
+                  {folderOptions.map((folder) => (
+                    <label key={folder.id} className={styles.folderEditorOption}>
+                      <input
+                        type="checkbox"
+                        checked={draftFolderIds.includes(folder.id)}
+                        onChange={() => toggleDraftFolder(folder.id)}
+                        disabled={isUpdatingFolders}
+                      />
+                      <span>{folder.name}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              <div className={styles.renameActions}>
+                <button
+                  type="button"
+                  className={styles.renameButton}
+                  onClick={() => {
+                    void handleSaveFolders();
+                  }}
+                  disabled={isUpdatingFolders}
+                >
+                  {isUpdatingFolders ? "Saving..." : "Save"}
+                </button>
+                <button
+                  type="button"
+                  className={styles.renameButton}
+                  onClick={() => setIsFoldersOpen(false)}
+                  disabled={isUpdatingFolders}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         {isMenuOpen ? (
           <div className={styles.menu} role="menu">
             <button
@@ -178,8 +270,17 @@ export function FeedItem({
               type="button"
               className={styles.menuItem}
               role="menuitem"
+              onClick={handleOpenFolders}
+              disabled={isDeleting || isRenaming || isUpdatingFolders}
+            >
+              Folders...
+            </button>
+            <button
+              type="button"
+              className={styles.menuItem}
+              role="menuitem"
               onClick={handleDelete}
-              disabled={isDeleting || isRenaming}
+              disabled={isDeleting || isRenaming || isUpdatingFolders}
             >
               {isDeleting ? "Deleting..." : "Delete"}
             </button>

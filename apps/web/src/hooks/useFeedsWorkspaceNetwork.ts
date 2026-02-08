@@ -1,12 +1,14 @@
 "use client";
 
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import type { FeedViewModel } from "@/components/feeds-types";
+import type { FeedViewModel, FolderViewModel } from "@/components/feeds-types";
 import { loadWorkspaceSnapshot, saveWorkspaceSnapshot } from "@/lib/offline-cache";
 
 interface UseFeedsWorkspaceNetworkOptions {
   feeds: FeedViewModel[];
+  folders: FolderViewModel[];
   setFeeds: Dispatch<SetStateAction<FeedViewModel[]>>;
+  setFolders: Dispatch<SetStateAction<FolderViewModel[]>>;
 }
 
 /**
@@ -14,7 +16,9 @@ interface UseFeedsWorkspaceNetworkOptions {
  */
 export function useFeedsWorkspaceNetwork({
   feeds,
+  folders,
   setFeeds,
+  setFolders,
 }: UseFeedsWorkspaceNetworkOptions) {
   const [networkMessage, setNetworkMessage] = useState<string | null>(null);
 
@@ -22,10 +26,11 @@ export function useFeedsWorkspaceNetwork({
     void saveWorkspaceSnapshot({
       savedAt: new Date().toISOString(),
       feeds,
+      folders,
     }).catch(() => {
       // Snapshot cache failures should not interrupt reading flow.
     });
-  }, [feeds]);
+  }, [feeds, folders]);
 
   useEffect(() => {
     if (navigator.onLine) {
@@ -39,6 +44,7 @@ export function useFeedsWorkspaceNetwork({
         }
 
         setFeeds(snapshot.feeds);
+        setFolders(snapshot.folders ?? []);
         setNetworkMessage(
           "Could not connect to the server. Previously loaded articles are available."
         );
@@ -46,7 +52,7 @@ export function useFeedsWorkspaceNetwork({
       .catch(() => {
         // If snapshot loading fails, the UI falls back to current in-memory data.
       });
-  }, [setFeeds]);
+  }, [setFeeds, setFolders]);
 
   useEffect(() => {
     const onOnline = () => setNetworkMessage(null);

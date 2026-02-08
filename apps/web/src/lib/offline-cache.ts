@@ -5,7 +5,7 @@
  * This keeps previously loaded reading data available during offline sessions.
  */
 
-import type { FeedViewModel } from "@/components/feeds-types";
+import type { FeedViewModel, FolderViewModel } from "@/components/feeds-types";
 
 const DB_NAME = "feedmyowl_offline_cache";
 const DB_VERSION = 1;
@@ -15,6 +15,7 @@ const SNAPSHOT_KEY = "feeds_workspace_v1";
 export interface WorkspaceSnapshot {
   savedAt: string;
   feeds: FeedViewModel[];
+  folders: FolderViewModel[];
 }
 
 /**

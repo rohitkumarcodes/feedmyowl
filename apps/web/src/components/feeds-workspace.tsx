@@ -6,7 +6,7 @@ import { ArticleList } from "./ArticleList";
 import { ArticleReader } from "./ArticleReader";
 import { Layout } from "./Layout";
 import { Sidebar, SidebarScope } from "./Sidebar";
-import type { FeedViewModel } from "./feeds-types";
+import type { FeedViewModel, FolderViewModel } from "./feeds-types";
 import {
   selectAllArticles,
   selectEmptyStateMessage,
@@ -23,15 +23,17 @@ import styles from "./feeds-workspace.module.css";
 
 interface FeedsWorkspaceProps {
   initialFeeds: FeedViewModel[];
+  initialFolders: FolderViewModel[];
 }
 
 /**
  * Client orchestrator for feed subscriptions, article list state, and reader state.
  */
-export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
+export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceProps) {
   const router = useRouter();
 
   const [feeds, setFeeds] = useState<FeedViewModel[]>(initialFeeds);
+  const [folders, setFolders] = useState<FolderViewModel[]>(initialFolders);
   const [selectedScope, setSelectedScope] = useState<SidebarScope>({ type: "none" });
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
   const [openArticleId, setOpenArticleId] = useState<string | null>(null);
@@ -42,6 +44,10 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
   useEffect(() => {
     setFeeds(initialFeeds);
   }, [initialFeeds]);
+
+  useEffect(() => {
+    setFolders(initialFolders);
+  }, [initialFolders]);
 
   /* Sync collapsed states to data attributes on <html> so the
      fixed-position brand logo (rendered in the server-side auth layout)
@@ -70,7 +76,9 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
 
   const { setNetworkMessage } = useFeedsWorkspaceNetwork({
     feeds,
+    folders,
     setFeeds,
+    setFolders,
   });
 
   const allArticles = useMemo(() => selectAllArticles(feeds), [feeds]);
@@ -86,8 +94,8 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
   );
 
   const selectedScopeLabel = useMemo(
-    () => selectScopeLabel(feeds, selectedScope),
-    [feeds, selectedScope]
+    () => selectScopeLabel(feeds, folders, selectedScope),
+    [feeds, folders, selectedScope]
   );
 
   const listStatusMessage = useMemo(
@@ -103,13 +111,23 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
   const {
     isAddFeedFormVisible,
     feedUrlInput,
+    addFeedFolderIds,
+    addFeedNewFolderNameInput,
     isAddingFeed,
     isRefreshingFeeds,
+    isCreatingFolder,
     deletingFeedId,
     renamingFeedId,
+    updatingFeedFoldersId,
+    deletingFolderId,
+    renamingFolderId,
     infoMessage,
     errorMessage,
     setFeedUrlInput,
+    toggleAddFeedFolder,
+    setAddFeedNewFolderNameInput,
+    createFolderFromAddFeed,
+    createFolderFromSidebar,
     showAddFeedForm,
     cancelAddFeedForm,
     clearStatusMessages,
@@ -118,27 +136,38 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
     handleAddFeed,
     handleRenameFeed,
     handleDeleteFeed,
+    handleSetFeedFolders,
+    handleRenameFolder,
+    handleDeleteFolder,
   } = useFeedsWorkspaceActions({
     allArticles,
+    folders,
     isMobile,
     router,
     setLiveMessage,
     setFeeds,
+    setFolders,
     setSelectedScope,
     setMobileViewWithHistory,
     setNetworkMessage,
   });
 
   useEffect(() => {
-    if (selectedScope.type !== "feed") {
+    if (selectedScope.type === "feed") {
+      const stillExists = feeds.some((feed) => feed.id === selectedScope.feedId);
+      if (!stillExists) {
+        setSelectedScope({ type: "all" });
+      }
       return;
     }
 
-    const stillExists = feeds.some((feed) => feed.id === selectedScope.feedId);
-    if (!stillExists) {
-      setSelectedScope({ type: "all" });
+    if (selectedScope.type === "folder") {
+      const stillExists = folders.some((folder) => folder.id === selectedScope.folderId);
+      if (!stillExists) {
+        setSelectedScope({ type: "all" });
+      }
     }
-  }, [feeds, selectedScope]);
+  }, [feeds, folders, selectedScope]);
 
   useEffect(() => {
     if (!selectedArticleId) {
@@ -279,19 +308,30 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
         sidebar={
           <Sidebar
             feeds={feeds}
+            folders={folders}
             selectedScope={selectedScope}
             onSelectAll={() => handleSelectScope({ type: "all" })}
+            onSelectUncategorized={() => handleSelectScope({ type: "uncategorized" })}
+            onSelectFolder={(folderId) => handleSelectScope({ type: "folder", folderId })}
             onSelectFeed={(feedId) => handleSelectScope({ type: "feed", feedId })}
             isAddFeedFormVisible={isAddFeedFormVisible}
             feedUrlInput={feedUrlInput}
+            addFeedFolderIds={addFeedFolderIds}
+            addFeedNewFolderNameInput={addFeedNewFolderNameInput}
             isAddingFeed={isAddingFeed}
             isRefreshingFeeds={isRefreshingFeeds}
+            isCreatingFolder={isCreatingFolder}
             onShowAddFeedForm={showAddFeedForm}
             onRefresh={() => {
               void handleRefresh();
             }}
             onCancelAddFeed={cancelAddFeedForm}
             onFeedUrlChange={setFeedUrlInput}
+            onToggleAddFeedFolder={toggleAddFeedFolder}
+            onAddFeedNewFolderNameChange={setAddFeedNewFolderNameInput}
+            onCreateFolderFromAddFeed={() => {
+              void createFolderFromAddFeed();
+            }}
             onSubmitFeed={(event) => {
               void handleAddFeed(event);
             }}
@@ -300,11 +340,26 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
             onDismissMessage={clearStatusMessages}
             deletingFeedId={deletingFeedId}
             renamingFeedId={renamingFeedId}
+            updatingFeedFoldersId={updatingFeedFoldersId}
             onRequestFeedRename={(feedId, name) => {
               return handleRenameFeed(feedId, name);
             }}
             onRequestFeedDelete={(feedId) => {
               void handleDeleteFeed(feedId);
+            }}
+            onRequestFeedFolderUpdate={(feedId, folderIds) => {
+              return handleSetFeedFolders(feedId, folderIds);
+            }}
+            deletingFolderId={deletingFolderId}
+            renamingFolderId={renamingFolderId}
+            onCreateFolder={(name) => {
+              return createFolderFromSidebar(name);
+            }}
+            onRequestFolderRename={(folderId, name) => {
+              return handleRenameFolder(folderId, name);
+            }}
+            onRequestFolderDelete={(folderId, mode) => {
+              return handleDeleteFolder(folderId, mode);
             }}
             onCollapse={() => setSidebarCollapsed(true)}
           />
@@ -316,7 +371,7 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
             openArticleId={openArticleId}
             statusMessage={listStatusMessage}
             emptyStateMessage={emptyStateMessage}
-            showFeedTitle={selectedScope.type === "all"}
+            showFeedTitle={selectedScope.type !== "feed"}
             onSelectArticle={(articleId) => {
               void openSelectedArticle(articleId);
             }}

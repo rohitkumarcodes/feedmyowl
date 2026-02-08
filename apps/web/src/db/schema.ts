@@ -10,12 +10,14 @@
  *   - users: One row per registered user (synced from Clerk via webhook)
  *   - folders: Optional feed groups in the sidebar
  *   - feeds: RSS/Atom feeds that users have subscribed to
+ *   - feed_folder_memberships: Many-to-many feed-folder assignment links
  *   - feed_items: Individual articles/entries fetched from feeds
  *
  * Key design decisions:
  *   - UUID primary keys: No enumeration risk, safe for distributed systems
- *   - Cascade deletes: Deleting a user removes folders and feeds; deleting a
- *     folder removes feeds; deleting a feed removes items
+ *   - Cascade deletes: Deleting a user removes folders, feeds, and memberships;
+ *     deleting a folder removes memberships; deleting a feed removes memberships
+ *     and items
  *   - We store our own users table (not just rely on Clerk) so we own our data
  *     and keep service boundaries modular (Principle 4)
  *
@@ -78,7 +80,7 @@ export const users = pgTable("users", {
 /**
  * Stores user-created feed folders shown in the sidebar.
  *
- * Folder deletion cascades to its feeds by design for this MVP phase.
+ * Folder deletion removes folder memberships while feeds remain intact.
  */
 export const folders = pgTable("folders", {
   /** Unique identifier (UUID v4, auto-generated) */
@@ -173,6 +175,52 @@ export const feeds = pgTable(
 );
 
 // =============================================================================
+// FEED-FOLDER MEMBERSHIP TABLE
+// =============================================================================
+/**
+ * Stores many-to-many assignments between feeds and folders.
+ *
+ * This table enables one feed to appear in multiple folders while preserving
+ * the legacy feeds.folder_id during rollout compatibility.
+ */
+export const feedFolderMemberships = pgTable(
+  "feed_folder_memberships",
+  {
+    /** Unique identifier (UUID v4, auto-generated) */
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    /** Which user owns this membership */
+    userId: uuid("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+
+    /** Which feed is assigned */
+    feedId: uuid("feed_id")
+      .references(() => feeds.id, { onDelete: "cascade" })
+      .notNull(),
+
+    /** Which folder receives the feed assignment */
+    folderId: uuid("folder_id")
+      .references(() => folders.id, { onDelete: "cascade" })
+      .notNull(),
+
+    /** When this membership was created */
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+
+    /** When this membership was last updated */
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    /**
+     * Prevent duplicate membership rows for the same user/feed/folder.
+     */
+    userFeedFolderUniqueIdx: uniqueIndex(
+      "feed_folder_memberships_user_feed_folder_unique"
+    ).on(table.userId, table.feedId, table.folderId),
+  })
+);
+
+// =============================================================================
 // FEED ITEMS TABLE
 // =============================================================================
 /**
@@ -234,18 +282,39 @@ export const feedItems = pgTable("feed_items", {
 export const usersRelations = relations(users, ({ many }) => ({
   folders: many(folders),
   feeds: many(feeds),
+  feedFolderMemberships: many(feedFolderMemberships),
 }));
 
 export const foldersRelations = relations(folders, ({ one, many }) => ({
   user: one(users, { fields: [folders.userId], references: [users.id] }),
   feeds: many(feeds),
+  memberships: many(feedFolderMemberships),
 }));
 
 export const feedsRelations = relations(feeds, ({ one, many }) => ({
   user: one(users, { fields: [feeds.userId], references: [users.id] }),
   folder: one(folders, { fields: [feeds.folderId], references: [folders.id] }),
   items: many(feedItems),
+  folderMemberships: many(feedFolderMemberships),
 }));
+
+export const feedFolderMembershipsRelations = relations(
+  feedFolderMemberships,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [feedFolderMemberships.userId],
+      references: [users.id],
+    }),
+    feed: one(feeds, {
+      fields: [feedFolderMemberships.feedId],
+      references: [feeds.id],
+    }),
+    folder: one(folders, {
+      fields: [feedFolderMemberships.folderId],
+      references: [folders.id],
+    }),
+  })
+);
 
 export const feedItemsRelations = relations(feedItems, ({ one }) => ({
   feed: one(feeds, { fields: [feedItems.feedId], references: [feeds.id] }),

@@ -1,93 +1,56 @@
-# FeedMyOwl UX Spec (MVP)
+# FeedMyOwl UX Spec
 
 ## 1. Core user story
-"I want to quickly read updates from feeds in one calm place."
-
-The product should support this story with minimal setup and minimal UI overhead.
+"I want to read my feeds in one calm place, organized into folders when needed."
 
 ## 2. Primary user flow
-1. User opens `/feeds`.
-2. If no subscriptions, user adds a feed URL or site URL.
-3. User refreshes feeds.
-4. User selects a scope (`All articles` or one feed).
-5. User selects an article.
-6. User reads in the reader pane.
+1. Open `/feeds`.
+2. Add a feed URL or site URL.
+3. Optionally assign one or more folders during add.
+4. Refresh feeds.
+5. Choose scope (`Read all`, `Uncategorized`, folder, or feed).
+6. Open and read an article.
 
-## 3. Desktop UX
-Three panes are visible at once:
-1. Sidebar: scope and feed selection.
-2. Article list: selectable rows.
-3. Reader: article content.
+## 3. Sidebar behavior
+- Top controls:
+  - `Read all feeds`
+  - `Uncategorized`
+  - `Refresh feeds`
+  - `Add a feed`
+  - `New folder`
+- Sections:
+  - Uncategorized feed rows
+  - Folders section with collapsible folder rows
+  - Feed rows under each folder (feeds may appear in multiple folders)
 
-Expected behavior:
-- Selecting scope updates article list.
-- Selecting article opens reader and marks item read.
-- Reader renders feed-provided content directly.
-- Sidebar remains visible; no hide/show mode.
+## 4. Folder behavior
+- Create folders from sidebar and add-feed form.
+- Rename and delete folders from folder row actions.
+- Delete dialog offers:
+  - Delete folder only.
+  - Delete folder and unsubscribe exclusive feeds.
+- Dialog shows total, exclusive, and cross-listed feed counts.
 
-## 4. Mobile UX
-Stacked navigation:
-- View 1: feeds.
-- View 2: article list.
-- View 3: reader.
+## 5. Add-feed behavior
+- Add form includes:
+  - Feed/site URL input.
+  - Folder multi-select.
+  - Inline folder creation.
+- Default without assignments is Uncategorized.
 
-Expected behavior:
-- Navigating forward pushes view state.
-- Browser back returns to previous view.
-- Context labels make current scope obvious.
+## 6. Scope behavior
+- `Read all`: all articles.
+- `Uncategorized`: only feeds with no folder assignments.
+- Folder scope: union of feeds in that folder.
+- Feed scope: only that feed’s articles.
 
-## 5. Sidebar behavior
-Sidebar includes only:
-- `All articles`.
-- Flat feed list.
-- `+ Add Feed`.
-- Feed delete action.
+## 7. Mobile UX
+- Keep stacked views: `Feeds -> Articles -> Reader`.
+- Feeds view mirrors desktop information architecture, including folders.
+- Folder and feed selection enters article list view with scoped title.
 
-Add-feed behavior:
-- Input accepts feed URLs and site URLs.
-- If the submitted URL is not valid RSS/Atom XML, the backend attempts conservative feed auto-discovery before returning an error.
-
-No folders, no grouping, no tags, no search.
-
-## 6. Reader behavior
-- Opened article renders immediately from available feed content.
-- No extraction runs in the background.
-- Reader output is feed content after sanitization.
-- "Open original" remains available when article link exists.
-
-## 7. Empty states
-- No feeds: "Add a feed to get started."
-- No items in selected feed: "No articles in this feed."
-- No items globally: "No articles yet. Refresh to load the latest posts."
-
-## 8. Error handling
-- Keep language calm and specific.
-- Prefer inline messages over blocking UI.
-- Do not block reading because one feed fails refresh.
-- For add-feed failures after discovery fallback, return clear guidance to paste a direct feed URL.
-
-## 9. Keyboard UX
-- `j` and `k` move list selection.
-- `Enter` opens selected article.
-- `r` triggers refresh.
-
-No keyboard behavior for removed features.
-
-## 10. Accessibility UX
-- Focus visible on all actionable controls.
-- Logical tab order through sidebar, list, reader, toolbar.
-- Reader title is focus target after opening an article.
-- Region labels should be meaningful for assistive tech.
-
-## 11. Deliberately excluded UX
-Do not add in this MVP:
-- Search workflows.
-- Organizational workflows (folders/tags/categories).
-- Billing and plan-management flows.
-- Import/export flows.
-
-## 12. MVP UX acceptance checklist
-- First-time user can add feed and start reading without docs.
-- Desktop flow works end-to-end with three panes.
-- Mobile flow works end-to-end with view stack/back behavior.
-- No obsolete controls are visible.
+## 8. Accessibility
+- Folder expand controls use `aria-expanded`.
+- Overflow menus and dialogs dismiss with `Escape`.
+- Existing shortcuts remain:
+  - `j`, `k`, `Enter`, `r`.

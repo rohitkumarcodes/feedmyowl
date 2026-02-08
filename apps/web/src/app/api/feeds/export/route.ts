@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { db, eq, users } from "@/lib/database";
 import { ensureUserRecord } from "@/lib/app-user";
+import { resolveFeedFolderIds } from "@/lib/folder-memberships";
 
 /**
  * Escape XML-sensitive characters for OPML output.
@@ -33,7 +34,7 @@ function buildFolderAwareOpml(params: {
     url: string;
     title: string | null;
     customTitle: string | null;
-    folderId: string | null;
+    folderIds: string[];
   }>;
 }): string {
   const sortedFolders = [...params.folders].sort((a, b) =>
@@ -50,14 +51,16 @@ function buildFolderAwareOpml(params: {
   const uncategorized: typeof sortedFeeds = [];
 
   for (const feed of sortedFeeds) {
-    if (!feed.folderId) {
+    if (feed.folderIds.length === 0) {
       uncategorized.push(feed);
       continue;
     }
 
-    const existing = feedsByFolder.get(feed.folderId) ?? [];
-    existing.push(feed);
-    feedsByFolder.set(feed.folderId, existing);
+    for (const folderId of feed.folderIds) {
+      const existing = feedsByFolder.get(folderId) ?? [];
+      existing.push(feed);
+      feedsByFolder.set(folderId, existing);
+    }
   }
 
   const uncategorizedOutlines = uncategorized
@@ -126,6 +129,11 @@ export async function GET(request: NextRequest) {
         feeds: {
           with: {
             items: true,
+            folderMemberships: {
+              columns: {
+                folderId: true,
+              },
+            },
           },
         },
       },
@@ -150,7 +158,12 @@ export async function GET(request: NextRequest) {
           url: feed.url,
           title: feed.title,
           customTitle: feed.customTitle,
-          folderId: feed.folderId,
+          folderIds: resolveFeedFolderIds({
+            legacyFolderId: feed.folderId,
+            membershipFolderIds: feed.folderMemberships.map(
+              (membership) => membership.folderId
+            ),
+          }),
         })),
       });
 
@@ -188,6 +201,13 @@ export async function GET(request: NextRequest) {
             title: feed.title,
             customTitle: feed.customTitle,
             description: feed.description,
+            folderIds: resolveFeedFolderIds({
+              legacyFolderId: feed.folderId,
+              membershipFolderIds: feed.folderMemberships.map(
+                (membership) => membership.folderId
+              ),
+            }),
+            // Transitional compatibility for older imports.
             folderId: feed.folderId,
             lastFetchedAt: feed.lastFetchedAt?.toISOString() || null,
             createdAt: feed.createdAt.toISOString(),

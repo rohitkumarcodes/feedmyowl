@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   requireAuth: vi.fn(),
   ensureUserRecord: vi.fn(),
+  dbQueryFoldersFindMany: vi.fn(),
+  dbQueryFeedFolderMembershipsFindMany: vi.fn(),
   discoverFeedCandidates: vi.fn(),
   parseFeed: vi.fn(),
   parseFeedXml: vi.fn(),
@@ -15,8 +17,21 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/database", () => ({
-  db: {},
+  db: {
+    query: {
+      folders: {
+        findMany: mocks.dbQueryFoldersFindMany,
+      },
+      feedFolderMemberships: {
+        findMany: mocks.dbQueryFeedFolderMembershipsFindMany,
+      },
+    },
+  },
+  and: vi.fn(),
   eq: vi.fn(),
+  inArray: vi.fn(),
+  feedFolderMemberships: {},
+  folders: {},
   users: {},
 }));
 
@@ -73,6 +88,8 @@ describe("POST /api/feeds discovery fallback", () => {
 
     mocks.requireAuth.mockResolvedValue({ clerkId: "clerk_123" });
     mocks.ensureUserRecord.mockResolvedValue({ id: "user_123", clerkId: "clerk_123" });
+    mocks.dbQueryFoldersFindMany.mockResolvedValue([]);
+    mocks.dbQueryFeedFolderMembershipsFindMany.mockResolvedValue([]);
     mocks.findExistingFeedForUserByUrl.mockResolvedValue(null);
 
     mocks.parseFeed.mockRejectedValue(new Error("Input URL is not valid RSS/Atom"));
@@ -126,7 +143,8 @@ describe("POST /api/feeds discovery fallback", () => {
     expect(mocks.createFeedWithInitialItems).toHaveBeenCalledWith(
       "user_123",
       discoveredCandidate,
-      expect.any(Object)
+      expect.any(Object),
+      []
     );
   });
 
@@ -170,7 +188,8 @@ describe("POST /api/feeds discovery fallback", () => {
     expect(mocks.createFeedWithInitialItems).toHaveBeenCalledWith(
       "user_123",
       discoveredCandidate,
-      expect.any(Object)
+      expect.any(Object),
+      []
     );
   });
 

@@ -7,7 +7,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { ensureUserRecord } from "@/lib/app-user";
-import { deleteFeedForUser, renameFeedForUser } from "@/lib/feed-service";
+import {
+  deleteFeedForUser,
+  renameFeedForUser,
+  setFeedFoldersForUser,
+} from "@/lib/feed-service";
 
 /**
  * Safely parse JSON request bodies and return null for invalid JSON.
@@ -42,6 +46,44 @@ export async function PATCH(
     }
 
     const payload = await parseRequestJson(request);
+    if (payload?.action === "feed.setFolders") {
+      const folderIds = payload.folderIds;
+
+      if (!Array.isArray(folderIds) || !folderIds.every((value) => typeof value === "string")) {
+        return NextResponse.json(
+          {
+            error: "folderIds must be an array of folder IDs.",
+            code: "invalid_folder_ids",
+          },
+          { status: 400 }
+        );
+      }
+
+      const result = await setFeedFoldersForUser(user.id, id, folderIds);
+
+      if (result.status === "feed_not_found") {
+        return NextResponse.json({ error: "Feed not found" }, { status: 404 });
+      }
+
+      if (result.status === "invalid_folder_ids") {
+        return NextResponse.json(
+          {
+            error: "One or more selected folders could not be found.",
+            code: "invalid_folder_ids",
+            invalidFolderIds: result.invalidFolderIds,
+          },
+          { status: 400 }
+        );
+      }
+
+      return NextResponse.json({
+        feed: {
+          id,
+          folderIds: result.folderIds,
+        },
+      });
+    }
+
     const nextName = payload?.name;
 
     if (typeof nextName !== "string") {

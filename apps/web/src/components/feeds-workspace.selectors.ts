@@ -1,5 +1,9 @@
 import type { SidebarScope } from "./Sidebar";
-import type { ArticleViewModel, FeedViewModel } from "./feeds-types";
+import type {
+  ArticleViewModel,
+  FeedViewModel,
+  FolderViewModel,
+} from "./feeds-types";
 import { extractArticleSnippet } from "@/utils/articleText";
 
 /**
@@ -50,6 +54,7 @@ export function selectAllArticles(feeds: FeedViewModel[]): ArticleViewModel[] {
         createdAt: item.createdAt,
         feedId: feed.id,
         feedTitle: getFeedLabel(feed),
+        feedFolderIds: feed.folderIds,
         snippet: extractArticleSnippet(item.content),
       })
     )
@@ -79,6 +84,16 @@ export function selectVisibleArticles(
     return allArticles.filter((article) => article.feedId === selectedScope.feedId);
   }
 
+  if (selectedScope.type === "folder") {
+    return allArticles.filter((article) =>
+      article.feedFolderIds.includes(selectedScope.folderId)
+    );
+  }
+
+  if (selectedScope.type === "uncategorized") {
+    return allArticles.filter((article) => article.feedFolderIds.length === 0);
+  }
+
   return allArticles;
 }
 
@@ -97,6 +112,7 @@ export function selectOpenArticle(
  */
 export function selectScopeLabel(
   feeds: FeedViewModel[],
+  folders: FolderViewModel[],
   selectedScope: SidebarScope
 ): string {
   if (selectedScope.type === "none") {
@@ -105,6 +121,15 @@ export function selectScopeLabel(
 
   if (selectedScope.type === "all") {
     return "Read all feeds";
+  }
+
+  if (selectedScope.type === "uncategorized") {
+    return "Uncategorized";
+  }
+
+  if (selectedScope.type === "folder") {
+    const folder = folders.find((candidate) => candidate.id === selectedScope.folderId);
+    return folder?.name || "Folder";
   }
 
   const feed = feeds.find((candidate) => candidate.id === selectedScope.feedId);
@@ -122,12 +147,16 @@ export function selectListStatusMessage(
     return null;
   }
 
-  if (selectedScope.type === "feed") {
-    const feed = feeds.find((candidate) => candidate.id === selectedScope.feedId);
-    return feed?.lastFetchErrorMessage || null;
-  }
+  const scopedFeeds =
+    selectedScope.type === "feed"
+      ? feeds.filter((candidate) => candidate.id === selectedScope.feedId)
+      : selectedScope.type === "folder"
+        ? feeds.filter((candidate) => candidate.folderIds.includes(selectedScope.folderId))
+        : selectedScope.type === "uncategorized"
+          ? feeds.filter((candidate) => candidate.folderIds.length === 0)
+          : feeds;
 
-  const erroredFeed = feeds.find(
+  const erroredFeed = scopedFeeds.find(
     (feed) => feed.lastFetchStatus === "error" && feed.lastFetchErrorMessage
   );
   return erroredFeed?.lastFetchErrorMessage || null;
@@ -150,6 +179,14 @@ export function selectEmptyStateMessage(
 
   if (selectedScope.type === "feed") {
     return "No articles in this feed.";
+  }
+
+  if (selectedScope.type === "folder") {
+    return "No articles in this folder.";
+  }
+
+  if (selectedScope.type === "uncategorized") {
+    return "No uncategorized articles.";
   }
 
   return "No articles yet. Refresh to load the latest posts.";

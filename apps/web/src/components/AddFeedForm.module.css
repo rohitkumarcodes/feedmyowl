@@ -38,6 +38,43 @@
   margin-top: 4px;
 }
 
+.folderFieldset {
+  border: 1px solid var(--border);
+  margin: 0;
+  min-width: 0;
+  padding: 6px;
+}
+
+.folderList {
+  display: grid;
+  gap: 4px;
+  max-height: 120px;
+  overflow: auto;
+}
+
+.folderOption {
+  align-items: center;
+  color: var(--text-primary);
+  display: flex;
+  gap: 6px;
+  min-height: 24px;
+}
+
+.folderOption input {
+  margin: 0;
+}
+
+.folderEmpty {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.inlineFolderCreate {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .button {
   background: var(--bg-primary);
   border: 1px solid var(--border);
