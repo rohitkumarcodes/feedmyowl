@@ -145,7 +145,7 @@ export function Layout({
           <div className={styles.collapseBar}>
             <button
               type="button"
-              className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.paneToggleButton}`}
+              className={`${primitiveStyles.iconButton} ${styles.paneToggleButton}`}
               onClick={onCollapseList}
               aria-label="Collapse article list"
               title="Collapse article list"

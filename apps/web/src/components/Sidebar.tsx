@@ -329,7 +329,7 @@ export function Sidebar({
   onCollapse,
 }: SidebarProps) {
   const [expandedFolderIds, setExpandedFolderIds] = useState<Record<string, boolean>>({});
-  const [isUncategorizedExpanded, setIsUncategorizedExpanded] = useState(true);
+  const [isUncategorizedExpanded, setIsUncategorizedExpanded] = useState(false);
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
   const [isSidebarFolderFormVisible, setIsSidebarFolderFormVisible] = useState(false);
   const [sidebarFolderName, setSidebarFolderName] = useState("");
@@ -342,7 +342,7 @@ export function Sidebar({
       const next = { ...previous };
       for (const folder of folders) {
         if (next[folder.id] === undefined) {
-          next[folder.id] = true;
+          next[folder.id] = false;
         }
       }
       return next;
@@ -744,7 +744,7 @@ export function Sidebar({
         {/* User-created folders — each with nested feeds */}
         {sortedFolders.map((folder) => {
           const folderFeeds = feedsByFolderId.get(folder.id) ?? [];
-          const isExpanded = expandedFolderIds[folder.id] ?? true;
+          const isExpanded = expandedFolderIds[folder.id] ?? false;
           const isFolderActive =
             selectedScope.type === "folder" && selectedScope.folderId === folder.id;
 
@@ -828,7 +828,7 @@ export function Sidebar({
       <div className={styles.collapseBar}>
         <button
           type="button"
-          className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.paneToggleButton}`}
+          className={`${primitiveStyles.iconButton} ${styles.paneToggleButton}`}
           onClick={onCollapse}
           aria-label="Collapse sidebar"
           title="Collapse sidebar"
