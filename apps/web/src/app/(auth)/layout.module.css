@@ -4,6 +4,7 @@
 }
 
 .brand {
+  /* Fixed brand slot; sidebar header reserve uses --sidebar-header-reserve to clear this block. */
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-right: 1px solid var(--border);
@@ -18,7 +19,7 @@
   position: fixed;
   text-decoration: none;
   top: 14px;
-  width: 240px;
+  width: var(--sidebar-pane-width);
   box-sizing: border-box;
   justify-content: center;
   z-index: 40;
@@ -83,7 +84,7 @@
 
 @media (max-width: 1120px) {
   .brand {
-    width: 220px;
+    width: var(--sidebar-pane-width-compact);
   }
 }
 
