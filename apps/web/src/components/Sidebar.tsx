@@ -7,6 +7,7 @@ import { AddFeedForm } from "./AddFeedForm";
 import { FeedItem } from "./FeedItem";
 import type { FeedViewModel, FolderViewModel } from "./feeds-types";
 import { getFeedLabel } from "./feeds-workspace.selectors";
+import primitiveStyles from "./LeftPanePrimitives.module.css";
 import styles from "./Sidebar.module.css";
 
 export type SidebarScope =
@@ -163,7 +164,7 @@ function FolderRow({
     <div className={`${styles.folderRowWrap} ${isActive ? styles.folderRowWrapActive : ""}`}>
       <button
         type="button"
-        className={styles.folderExpandButton}
+        className={primitiveStyles.treeToggle}
         onClick={onToggleExpand}
         aria-label={`${isExpanded ? "Collapse" : "Expand"} folder ${folder.name}`}
         aria-expanded={isExpanded}
@@ -173,18 +174,20 @@ function FolderRow({
 
       <button
         type="button"
-        className={`${styles.folderRow} ${isActive ? styles.folderRowActive : ""}`}
+        className={`${primitiveStyles.row} ${primitiveStyles.rowStrong} ${styles.folderRow} ${
+          isActive ? primitiveStyles.rowActive : ""
+        }`}
         onClick={onSelectFolder}
         aria-current={isActive ? "true" : undefined}
       >
         <span className={styles.folderLabel}>{folder.name}</span>
-        <span className={styles.folderCount}>{feedCount}</span>
+        <span className={primitiveStyles.rowCount}>{feedCount}</span>
       </button>
 
       <div className={styles.folderActions} ref={actionsRef}>
         <button
           type="button"
-          className={styles.menuTrigger}
+          className={primitiveStyles.iconButton}
           onClick={() => setIsMenuOpen((previous) => !previous)}
           aria-label={`Open actions for folder ${folder.name}`}
           aria-haspopup="menu"
@@ -199,13 +202,15 @@ function FolderRow({
             {isMobile ? (
               <button
                 type="button"
-                className={styles.mobileSheetBackdrop}
+                className={primitiveStyles.mobileBackdrop}
                 aria-label={`Close rename dialog for ${folder.name}`}
                 onClick={() => setIsRenameOpen(false)}
               />
             ) : null}
             <div
-              className={`${styles.renamePopover} ${isMobile ? styles.renamePopoverMobile : ""}`}
+              className={`${primitiveStyles.popover} ${
+                isMobile ? primitiveStyles.mobileSheet : primitiveStyles.popoverAnchored
+              }`}
               role="dialog"
               aria-label={`Edit folder ${folder.name}`}
               aria-modal={isMobile ? "true" : undefined}
@@ -216,18 +221,22 @@ function FolderRow({
                   type="text"
                   value={renameValue}
                   onChange={(event) => setRenameValue(event.target.value)}
-                  className={styles.renameInput}
+                  className={primitiveStyles.input}
                   placeholder="Folder name"
                   maxLength={255}
                   disabled={isRenaming}
                 />
                 <div className={styles.renameActions}>
-                  <button type="submit" className={styles.renameButton} disabled={isRenaming}>
+                  <button
+                    type="submit"
+                    className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
+                    disabled={isRenaming}
+                  >
                     {isRenaming ? "Saving..." : "Save"}
                   </button>
                   <button
                     type="button"
-                    className={styles.renameButton}
+                    className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
                     onClick={() => setIsRenameOpen(false)}
                     disabled={isRenaming}
                   >
@@ -240,10 +249,10 @@ function FolderRow({
         ) : null}
 
         {isMenuOpen ? (
-          <div className={styles.menu} role="menu">
+          <div className={primitiveStyles.menu} role="menu">
             <button
               type="button"
-              className={styles.menuItem}
+              className={primitiveStyles.menuItem}
               role="menuitem"
               onClick={() => {
                 setRenameValue(folder.name);
@@ -256,7 +265,7 @@ function FolderRow({
             </button>
             <button
               type="button"
-              className={styles.menuItem}
+              className={primitiveStyles.menuItem}
               role="menuitem"
               onClick={() => {
                 setIsMenuOpen(false);
@@ -407,10 +416,10 @@ export function Sidebar({
   };
 
   const sidebarFolderForm = (
-    <div className={styles.sidebarFolderForm}>
+    <div className={`${styles.sidebarFolderForm} ${primitiveStyles.panel}`}>
       <input
         type="text"
-        className={styles.sidebarFolderInput}
+        className={primitiveStyles.input}
         value={sidebarFolderName}
         onChange={(event) => setSidebarFolderName(event.currentTarget.value)}
         placeholder="Folder name"
@@ -420,17 +429,17 @@ export function Sidebar({
       <div className={styles.sidebarFolderActions}>
         <button
           type="button"
-          className={styles.sidebarFolderButton}
+          className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
           onClick={() => {
             void handleCreateFolderFromSidebar();
           }}
           disabled={isCreatingFolder}
         >
-          {isCreatingFolder ? "Creating..." : "Create"}
+          {isCreatingFolder ? "Creating folder..." : "Create folder"}
         </button>
         <button
           type="button"
-          className={styles.sidebarFolderButton}
+          className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
           onClick={closeSidebarFolderForm}
           disabled={isCreatingFolder}
         >
@@ -467,13 +476,17 @@ export function Sidebar({
     });
 
   return (
-    <nav className={styles.root} aria-label="Feed list" role="navigation">
+    <nav
+      className={`${styles.root} ${primitiveStyles.tokenScope}`}
+      aria-label="Feed list"
+      role="navigation"
+    >
       <div className={styles.top}>
         {/* Compact horizontal toolbar: refresh (primary), add feed (secondary), add folder (tertiary) */}
         <div className={styles.toolbar}>
           <button
             type="button"
-            className={`${styles.toolbarButtonBase} ${styles.toolbarButtonPrimary}`}
+            className={`${primitiveStyles.toolbarButton} ${primitiveStyles.toolbarButtonPrimary}`}
             onClick={onRefresh}
             disabled={isRefreshingFeeds}
             aria-label={isRefreshingFeeds ? "Refreshing feeds" : "Refresh feeds"}
@@ -492,25 +505,25 @@ export function Sidebar({
             >
               <path d="M13.65 2.35A7.96 7.96 0 0 0 8 0C3.58 0 .01 3.58.01 8S3.58 16 8 16c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 8 14 6 6 0 1 1 8 2c1.66 0 3.14.69 4.22 1.78L9 7h7V0l-2.35 2.35z" fill="currentColor"/>
             </svg>
-            <span>Refresh</span>
+            <span>Refresh feeds</span>
           </button>
 
           <button
             type="button"
-            className={`${styles.toolbarButtonBase} ${styles.toolbarButtonSecondary}`}
+            className={`${primitiveStyles.toolbarButton} ${primitiveStyles.toolbarButtonSecondary}`}
             onClick={onShowAddFeedForm}
             disabled={isAddingFeed}
           >
-            + Feed
+            Add feed
           </button>
 
           <button
             type="button"
-            className={`${styles.toolbarButtonBase} ${styles.toolbarButtonMuted}`}
+            className={`${primitiveStyles.toolbarButton} ${primitiveStyles.toolbarButtonMuted}`}
             onClick={() => setIsSidebarFolderFormVisible((previous) => !previous)}
             disabled={isCreatingFolder}
           >
-            + Folder
+            New folder
           </button>
         </div>
 
@@ -519,11 +532,16 @@ export function Sidebar({
             <>
               <button
                 type="button"
-                className={styles.mobileSheetBackdrop}
+                className={primitiveStyles.mobileBackdrop}
                 aria-label="Close new folder dialog"
                 onClick={closeSidebarFolderForm}
               />
-              <div className={styles.mobileSheet} role="dialog" aria-modal="true" aria-label="Create folder">
+              <div
+                className={primitiveStyles.mobileSheet}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Create folder"
+              >
                 {sidebarFolderForm}
               </div>
             </>
@@ -587,14 +605,14 @@ export function Sidebar({
         {/* "All feeds" scope — always first, always visible */}
         <button
           type="button"
-          className={`${styles.scopeRow} ${
-            selectedScope.type === "all" ? styles.scopeRowActive : ""
+          className={`${primitiveStyles.row} ${primitiveStyles.rowStrong} ${styles.scopeRow} ${
+            selectedScope.type === "all" ? primitiveStyles.rowActive : ""
           }`}
           onClick={onSelectAll}
           aria-current={selectedScope.type === "all" ? "true" : undefined}
         >
           <span>All feeds</span>
-          <span className={styles.folderCount}>{feeds.length}</span>
+          <span className={primitiveStyles.rowCount}>{feeds.length}</span>
         </button>
 
         {/* User-created folders — each with nested feeds */}
@@ -647,7 +665,7 @@ export function Sidebar({
             >
               <button
                 type="button"
-                className={styles.folderExpandButton}
+                className={primitiveStyles.treeToggle}
                 onClick={() => setIsUncategorizedExpanded((previous) => !previous)}
                 aria-label={`${isUncategorizedExpanded ? "Collapse" : "Expand"} Uncategorized`}
                 aria-expanded={isUncategorizedExpanded}
@@ -656,14 +674,14 @@ export function Sidebar({
               </button>
               <button
                 type="button"
-                className={`${styles.folderRow} ${
-                  selectedScope.type === "uncategorized" ? styles.folderRowActive : ""
+                className={`${primitiveStyles.row} ${primitiveStyles.rowStrong} ${styles.folderRow} ${
+                  selectedScope.type === "uncategorized" ? primitiveStyles.rowActive : ""
                 }`}
                 onClick={onSelectUncategorized}
                 aria-current={selectedScope.type === "uncategorized" ? "true" : undefined}
               >
                 <span className={styles.folderLabel}>Uncategorized</span>
-                <span className={styles.folderCount}>{uncategorizedFeeds.length}</span>
+                <span className={primitiveStyles.rowCount}>{uncategorizedFeeds.length}</span>
               </button>
             </div>
 
@@ -681,7 +699,7 @@ export function Sidebar({
       <div className={styles.collapseBar}>
         <button
           type="button"
-          className={styles.collapseButton}
+          className={primitiveStyles.iconButton}
           onClick={onCollapse}
           aria-label="Collapse sidebar"
           title="Collapse sidebar"
@@ -695,8 +713,14 @@ export function Sidebar({
       </div>
 
       {pendingDeleteFolderId && pendingDeleteStats ? (
-        <div className={styles.deleteDialogBackdrop}>
-          <div className={styles.deleteDialog} role="dialog" aria-modal="true">
+        <div
+          className={`${primitiveStyles.dialogBackdrop} ${primitiveStyles.dialogBackdropBottom}`}
+        >
+          <div
+            className={`${primitiveStyles.dialog} ${primitiveStyles.dialogMobileBottom} ${styles.deleteDialog}`}
+            role="dialog"
+            aria-modal="true"
+          >
             <h3>Delete folder</h3>
             <p>
               This folder contains {pendingDeleteStats.total} feed
@@ -710,7 +734,7 @@ export function Sidebar({
             <div className={styles.deleteDialogActions}>
               <button
                 type="button"
-                className={styles.deleteDialogButton}
+                className={primitiveStyles.button}
                 onClick={() => setPendingDeleteFolderId(null)}
                 disabled={deletingFolderId === pendingDeleteFolderId}
               >
@@ -718,7 +742,7 @@ export function Sidebar({
               </button>
               <button
                 type="button"
-                className={styles.deleteDialogButton}
+                className={primitiveStyles.button}
                 onClick={() => {
                   void onRequestFolderDelete(pendingDeleteFolderId, "remove_only").then(
                     (deleted) => {
@@ -734,7 +758,7 @@ export function Sidebar({
               </button>
               <button
                 type="button"
-                className={`${styles.deleteDialogButton} ${styles.deleteDialogButtonDanger}`}
+                className={`${primitiveStyles.button} ${primitiveStyles.buttonDanger}`}
                 onClick={() => {
                   setIsDeletingWithUnsubscribe(true);
                   void onRequestFolderDelete(

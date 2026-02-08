@@ -4,6 +4,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { FolderViewModel } from "./feeds-types";
+import primitiveStyles from "./LeftPanePrimitives.module.css";
 import styles from "./FeedItem.module.css";
 
 interface FeedItemProps {
@@ -162,7 +163,9 @@ export function FeedItem({
     <div className={`${styles.rowWrap} ${isActive ? styles.rowWrapActive : ""}`}>
       <button
         type="button"
-        className={`${styles.row} ${isActive ? styles.rowActive : ""}`}
+        className={`${primitiveStyles.row} ${primitiveStyles.rowRegular} ${styles.row} ${
+          isActive ? primitiveStyles.rowActive : ""
+        }`}
         onClick={onSelect}
         title={label}
         aria-current={isActive ? "true" : undefined}
@@ -173,7 +176,7 @@ export function FeedItem({
       <div className={styles.actions} ref={actionsRef}>
         <button
           type="button"
-          className={styles.menuTrigger}
+          className={primitiveStyles.iconButton}
           onClick={() => setIsMenuOpen((previous) => !previous)}
           aria-label={`Open actions for ${label}`}
           aria-haspopup="menu"
@@ -188,13 +191,15 @@ export function FeedItem({
             {isMobile ? (
               <button
                 type="button"
-                className={styles.mobileSheetBackdrop}
+                className={primitiveStyles.mobileBackdrop}
                 aria-label={`Close rename dialog for ${label}`}
                 onClick={() => setIsRenameOpen(false)}
               />
             ) : null}
             <div
-              className={`${styles.renamePopover} ${isMobile ? styles.renamePopoverMobile : ""}`}
+              className={`${primitiveStyles.popover} ${
+                isMobile ? primitiveStyles.mobileSheet : primitiveStyles.popoverAnchored
+              }`}
               role="dialog"
               aria-label={`Edit name for ${label}`}
               aria-modal={isMobile ? "true" : undefined}
@@ -205,7 +210,7 @@ export function FeedItem({
                   type="text"
                   value={renameValue}
                   onChange={(event) => setRenameValue(event.target.value)}
-                  className={styles.renameInput}
+                  className={primitiveStyles.input}
                   placeholder="Feed name"
                   maxLength={255}
                   disabled={isRenaming}
@@ -213,14 +218,14 @@ export function FeedItem({
                 <div className={styles.renameActions}>
                   <button
                     type="submit"
-                    className={styles.renameButton}
+                    className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
                     disabled={isRenaming}
                   >
                     {isRenaming ? "Saving..." : "Save"}
                   </button>
                   <button
                     type="button"
-                    className={styles.renameButton}
+                    className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
                     onClick={() => setIsRenameOpen(false)}
                     disabled={isRenaming}
                   >
@@ -237,13 +242,15 @@ export function FeedItem({
             {isMobile ? (
               <button
                 type="button"
-                className={styles.mobileSheetBackdrop}
+                className={primitiveStyles.mobileBackdrop}
                 aria-label={`Close folders dialog for ${label}`}
                 onClick={() => setIsFoldersOpen(false)}
               />
             ) : null}
             <div
-              className={`${styles.renamePopover} ${isMobile ? styles.renamePopoverMobile : ""}`}
+              className={`${primitiveStyles.popover} ${
+                isMobile ? primitiveStyles.mobileSheet : primitiveStyles.popoverAnchored
+              }`}
               role="dialog"
               aria-label={`Edit folders for ${label}`}
               aria-modal={isMobile ? "true" : undefined}
@@ -269,7 +276,7 @@ export function FeedItem({
                 <div className={styles.renameActions}>
                   <button
                     type="button"
-                    className={styles.renameButton}
+                    className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
                     onClick={() => {
                       void handleSaveFolders();
                     }}
@@ -279,7 +286,7 @@ export function FeedItem({
                   </button>
                   <button
                     type="button"
-                    className={styles.renameButton}
+                    className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
                     onClick={() => setIsFoldersOpen(false)}
                     disabled={isUpdatingFolders}
                   >
@@ -292,10 +299,10 @@ export function FeedItem({
         ) : null}
 
         {isMenuOpen ? (
-          <div className={styles.menu} role="menu">
+          <div className={primitiveStyles.menu} role="menu">
             <button
               type="button"
-              className={styles.menuItem}
+              className={primitiveStyles.menuItem}
               role="menuitem"
               onClick={handleOpenRename}
               disabled={isDeleting || isRenaming}
@@ -304,7 +311,7 @@ export function FeedItem({
             </button>
             <button
               type="button"
-              className={styles.menuItem}
+              className={primitiveStyles.menuItem}
               role="menuitem"
               onClick={handleOpenFolders}
               disabled={isDeleting || isRenaming || isUpdatingFolders}
@@ -313,7 +320,7 @@ export function FeedItem({
             </button>
             <button
               type="button"
-              className={styles.menuItem}
+              className={primitiveStyles.menuItem}
               role="menuitem"
               onClick={handleDelete}
               disabled={isDeleting || isRenaming || isUpdatingFolders}

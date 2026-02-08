@@ -1,5 +1,5 @@
 .root {
-  background: var(--bg-secondary);
+  background: var(--lp-surface-0);
   display: grid;
   grid-template-rows: auto 1fr auto;
   height: 100%;
@@ -7,60 +7,14 @@
 }
 
 .top {
-  border-bottom: 1px solid var(--border);
-  /* Reserve space for the fixed brand slot defined in (auth)/layout.module.css. */
   padding: var(--sidebar-header-reserve) 0 4px;
 }
 
-/* --- Compact horizontal toolbar for actions --- */
 .toolbar {
   align-items: center;
   display: flex;
   gap: 4px;
   padding: 0 8px;
-}
-
-/* Shared compact action button style; variants tune hierarchy. */
-.toolbarButtonBase {
-  align-items: center;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 0;
-  cursor: pointer;
-  display: inline-flex;
-  flex: 0 0 auto;
-  font-size: var(--text-sm);
-  font-weight: var(--weight-semibold);
-  gap: 4px;
-  justify-content: center;
-  min-height: 30px;
-  padding: 4px 6px;
-  white-space: nowrap;
-}
-
-.toolbarButtonBase:hover:enabled {
-  background: var(--bg-tertiary);
-  border-color: var(--border);
-  transition: background-color 80ms ease, border-color 80ms ease, color 80ms ease;
-}
-
-.toolbarButtonBase:disabled {
-  color: var(--text-muted);
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.toolbarButtonPrimary {
-  color: var(--accent);
-}
-
-.toolbarButtonSecondary {
-  color: var(--text-primary);
-}
-
-.toolbarButtonMuted {
-  color: var(--text-secondary);
-  font-weight: var(--weight-normal);
 }
 
 .toolbarIcon {
@@ -91,21 +45,10 @@
 }
 
 .sidebarFolderForm {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
   display: grid;
   gap: 8px;
   margin-top: 4px;
   padding: 8px;
-}
-
-.sidebarFolderInput {
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-  font-size: var(--text-sm);
-  min-height: 36px;
-  padding: 6px 8px;
 }
 
 .sidebarFolderActions {
@@ -114,88 +57,38 @@
   justify-content: flex-end;
 }
 
-.sidebarFolderButton {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-  cursor: pointer;
-  font-size: var(--text-xs);
-  min-height: 28px;
-  padding: 4px 8px;
-}
-
-.sidebarFolderButton:hover:enabled {
-  background: var(--bg-tertiary);
-}
-
-.sidebarFolderButton:disabled {
-  color: var(--text-muted);
-  cursor: not-allowed;
-}
-
 .sections {
+  border-top: 1px solid var(--lp-border);
+  margin-top: 8px;
   overflow: auto;
 }
 
-.toolbarButtonBase:focus-visible,
-.sidebarMessageDismiss:focus-visible,
-.sidebarFolderInput:focus-visible,
-.sidebarFolderButton:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
 .emptyLabel {
-  color: var(--text-muted);
+  color: var(--lp-text-muted);
   font-size: var(--text-sm);
-  padding: 6px 12px;
+  padding: 8px 12px;
 }
-
-/* .feedSection and .feedSectionTitle removed — unified tree needs no section labels */
 
 .scopeRow {
-  align-items: center;
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--border);
-  border-left: 2px solid transparent;
-  color: var(--text-primary);
-  cursor: pointer;
-  display: flex;
-  font-size: var(--text-sm);
-  font-weight: var(--weight-semibold);
   justify-content: space-between;
-  min-height: 36px;
-  padding: 8px 12px 8px 10px;
-  text-align: left;
-  width: 100%;
 }
 
-.scopeRow:hover {
-  background: var(--bg-tertiary);
-}
-
-.scopeRowActive {
-  background: var(--bg-selected);
-  border-left-color: var(--accent);
-}
-
-.scopeRow:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+.scopeRow,
+.folderRowWrap {
+  border-bottom: 1px solid var(--lp-border);
 }
 
 .sidebarMessage {
   align-items: flex-start;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--lp-border);
   display: flex;
-  gap: 4px;
+  gap: 6px;
   margin-top: 8px;
   padding: 6px 12px 0;
 }
 
 .sidebarMessageText {
-  color: var(--text-primary);
+  color: var(--lp-text-main);
   flex: 1;
   font-size: var(--text-xs);
 }
@@ -207,25 +100,27 @@
 .sidebarMessageDismiss {
   background: transparent;
   border: 0;
-  color: var(--text-muted);
+  color: var(--lp-text-muted);
   cursor: pointer;
   font-size: var(--text-xs);
   padding: 0;
 }
 
 .sidebarMessageDismiss:hover {
-  color: var(--text-primary);
-  transition: color 80ms ease;
+  color: var(--lp-text-main);
 }
 
-/* .folderSection and .folderSectionTitle removed — unified tree needs no section labels */
+.sidebarMessageDismiss:focus-visible {
+  outline: 2px solid var(--lp-focus);
+  outline-offset: 2px;
+}
 
 .folderGroup + .folderGroup {
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 .folderFeeds {
-  background: var(--bg-primary);
+  background: var(--lp-surface-1);
   padding-left: 16px;
 }
 
@@ -239,69 +134,18 @@
 }
 
 .folderRowWrapActive {
-  background: var(--bg-selected);
-}
-
-.folderExpandButton {
-  align-items: center;
-  background: transparent;
-  border: 0;
-  color: var(--text-muted);
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  min-width: 28px;
-  padding: 0 4px;
-}
-
-.folderExpandButton:hover {
-  color: var(--text-primary);
-}
-
-.folderExpandButton:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  background: var(--lp-surface-active);
 }
 
 .folderRow {
-  align-items: center;
-  background: transparent;
-  border: 0;
-  border-left: 2px solid transparent;
-  color: var(--text-primary);
-  cursor: pointer;
-  display: flex;
-  font-size: var(--text-sm);
-  font-weight: var(--weight-semibold);
   justify-content: space-between;
-  min-height: 36px;
-  padding: 8px 8px 8px 2px;
-  text-align: left;
-}
-
-.folderRow:hover {
-  background: var(--bg-tertiary);
-}
-
-.folderRowActive {
-  border-left-color: var(--accent);
-}
-
-.folderRow:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  padding: var(--lp-pad-y) 8px var(--lp-pad-y) 2px;
 }
 
 .folderLabel {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.folderCount {
-  color: var(--text-muted);
-  font-size: var(--text-xs);
-  margin-left: 8px;
 }
 
 .folderActions {
@@ -312,150 +156,9 @@
   position: relative;
 }
 
-.menuTrigger {
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 0;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: var(--text-sm);
-  line-height: 1;
-  min-height: 32px;
-  min-width: 32px;
-  padding: 0 6px;
-}
-
-.menuTrigger:hover:enabled {
-  background: var(--bg-tertiary);
-  border-color: var(--border);
-  color: var(--text-primary);
-  transition: background-color 80ms ease, border-color 80ms ease;
-}
-
-.menuTrigger:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.menuTrigger:disabled {
-  color: var(--text-muted);
-  cursor: not-allowed;
-}
-
-.menu {
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  display: grid;
-  min-width: 140px;
-  padding: 2px;
-  position: absolute;
-  right: 0;
-  top: calc(100% + 4px);
-  z-index: 40;
-}
-
-.menuItem {
-  background: transparent;
-  border: 0;
-  color: var(--text-primary);
-  cursor: pointer;
-  font-size: var(--text-sm);
-  min-height: 32px;
-  padding: 6px 10px;
-  text-align: left;
-}
-
-.menuItem:hover:enabled {
-  background: var(--bg-tertiary);
-}
-
-.menuItem:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
-.menuItem:disabled {
-  color: var(--text-muted);
-  cursor: not-allowed;
-}
-
-.renamePopover {
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  min-width: 200px;
-  padding: 8px;
-  position: absolute;
-  right: 0;
-  top: calc(100% + 4px);
-  z-index: 40;
-}
-
-.mobileSheetBackdrop {
-  background: rgb(0 0 0 / 28%);
-  border: 0;
-  cursor: pointer;
-  inset: 0;
-  position: fixed;
-  z-index: 68;
-}
-
-.mobileSheet {
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-bottom: 0;
-  border-left: 0;
-  border-radius: 12px 12px 0 0;
-  border-right: 0;
-  bottom: 0;
-  left: 0;
-  max-height: min(70vh, 420px);
-  overflow: auto;
-  padding: 12px;
-  position: fixed;
-  right: 0;
-  z-index: 69;
-}
-
-.renamePopoverMobile {
-  border-bottom: 0;
-  border-left: 0;
-  border-radius: 12px 12px 0 0;
-  border-right: 0;
-  bottom: 0;
-  left: 0;
-  max-height: min(70vh, 420px);
-  min-width: 0;
-  overflow: auto;
-  padding: 12px;
-  position: fixed;
-  right: 0;
-  top: auto;
-  z-index: 69;
-}
-
 .renameForm {
   display: grid;
   gap: 8px;
-}
-
-.renameInput {
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-radius: 0;
-  color: var(--text-primary);
-  font-size: var(--text-sm);
-  min-height: 32px;
-  padding: 6px 8px;
-}
-
-.renameInput:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
-.renameInput:disabled {
-  color: var(--text-muted);
-  cursor: not-allowed;
 }
 
 .renameActions {
@@ -464,79 +167,15 @@
   justify-content: flex-end;
 }
 
-.renameButton {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-  cursor: pointer;
-  font-size: var(--text-xs);
-  min-height: 28px;
-  padding: 4px 8px;
-}
-
-.renameButton:hover:enabled {
-  background: var(--bg-tertiary);
-}
-
-.renameButton:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
-.renameButton:disabled {
-  color: var(--text-muted);
-  cursor: not-allowed;
-}
-
 .collapseBar {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--lp-border);
   display: flex;
   justify-content: center;
   padding: 8px;
 }
 
-.collapseButton {
-  align-items: center;
-  background: transparent;
-  border: 0;
-  color: var(--text-muted);
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  padding: 4px;
-}
-
-.collapseButton:hover {
-  color: var(--text-primary);
-  transition: color 80ms ease;
-}
-
-.collapseButton:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.deleteDialogBackdrop {
-  align-items: center;
-  background: rgb(0 0 0 / 28%);
-  display: flex;
-  inset: 0;
-  justify-content: center;
-  position: absolute;
-  z-index: 60;
-}
-
-.deleteDialog {
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  display: grid;
-  gap: 8px;
-  max-width: min(92vw, 360px);
-  padding: 12px;
-}
-
 .deleteDialog h3 {
-  color: var(--text-primary);
+  color: var(--lp-text-main);
   font-size: var(--text-base);
 }
 
@@ -549,52 +188,4 @@
   display: grid;
   gap: 6px;
   margin-top: 4px;
-}
-
-.deleteDialogButton {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-  cursor: pointer;
-  font-size: var(--text-sm);
-  min-height: 32px;
-  padding: 6px 8px;
-  text-align: left;
-}
-
-.deleteDialogButton:hover:enabled {
-  background: var(--bg-tertiary);
-}
-
-.deleteDialogButtonDanger {
-  border-color: #8d2f2f;
-  color: #8d2f2f;
-}
-
-.deleteDialogButton:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.deleteDialogButton:disabled {
-  color: var(--text-muted);
-  cursor: not-allowed;
-}
-
-@media (max-width: 767px) {
-  .deleteDialogBackdrop {
-    align-items: flex-end;
-  }
-
-  .deleteDialog {
-    border-bottom: 0;
-    border-left: 0;
-    border-radius: 12px 12px 0 0;
-    border-right: 0;
-    margin: 0;
-    max-height: min(80vh, 520px);
-    max-width: none;
-    overflow: auto;
-    width: 100%;
-  }
 }

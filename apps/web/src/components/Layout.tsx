@@ -3,6 +3,7 @@
  */
 
 import type { ReactNode } from "react";
+import primitiveStyles from "./LeftPanePrimitives.module.css";
 import styles from "./Layout.module.css";
 
 interface LayoutProps {
@@ -60,7 +61,7 @@ export function Layout({
 }: LayoutProps) {
   if (isMobile) {
     return (
-      <div className={styles.root}>
+      <div className={`${styles.root} ${primitiveStyles.tokenScope}`}>
         <div className={styles.mobileViews}>
           {mobileView === "feeds" ? (
             <nav className={styles.mobilePane} aria-label="Feed list" role="navigation">
@@ -119,13 +120,13 @@ export function Layout({
     : styles.listExpandToggle;
 
   return (
-    <div className={styles.root}>
+    <div className={`${styles.root} ${primitiveStyles.tokenScope}`}>
       {/* Sidebar expand tab — bottom-left, visible when sidebar is collapsed */}
       {sidebarCollapsed ? (
         <div className={styles.sidebarExpandToggle}>
           <button
             type="button"
-            className={styles.expandButton}
+            className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.expandButton}`}
             onClick={onToggleSidebar}
             aria-label="Expand sidebar"
             title="Expand sidebar"
@@ -140,7 +141,7 @@ export function Layout({
         <div className={listExpandClassName}>
           <button
             type="button"
-            className={styles.expandButton}
+            className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.expandButton}`}
             onClick={onToggleList}
             aria-label="Expand article list"
             title="Expand article list"
@@ -162,7 +163,7 @@ export function Layout({
           <div className={styles.collapseBar}>
             <button
               type="button"
-              className={styles.collapseButton}
+              className={primitiveStyles.iconButton}
               onClick={onCollapseList}
               aria-label="Collapse article list"
               title="Collapse article list"

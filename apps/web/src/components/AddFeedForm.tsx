@@ -4,6 +4,7 @@
 
 import type { FormEvent } from "react";
 import type { FolderViewModel } from "./feeds-types";
+import primitiveStyles from "./LeftPanePrimitives.module.css";
 import styles from "./AddFeedForm.module.css";
 
 interface AddFeedFormProps {
@@ -39,7 +40,7 @@ export function AddFeedForm({
   onCancelAddFeed,
 }: AddFeedFormProps) {
   return (
-    <form className={styles.form} onSubmit={onSubmitFeed}>
+    <form className={`${styles.form} ${primitiveStyles.panel}`} onSubmit={onSubmitFeed}>
       <label className={styles.label} htmlFor="sidebar-feed-url">
         Feed or site URL
       </label>
@@ -48,7 +49,7 @@ export function AddFeedForm({
         name="feed-url"
         type="url"
         required
-        className={styles.input}
+        className={primitiveStyles.input}
         value={feedUrlInput}
         onChange={(event) => onFeedUrlChange(event.currentTarget.value)}
         placeholder="https://example.com or https://example.com/rss.xml"
@@ -81,7 +82,7 @@ export function AddFeedForm({
       <div className={styles.inlineFolderCreate}>
         <input
           type="text"
-          className={styles.input}
+          className={primitiveStyles.input}
           value={newFolderNameInput}
           onChange={(event) => onNewFolderNameChange(event.currentTarget.value)}
           placeholder="New folder name"
@@ -90,21 +91,21 @@ export function AddFeedForm({
         />
         <button
           type="button"
-          className={styles.button}
+          className={primitiveStyles.button}
           onClick={onCreateFolderFromForm}
           disabled={isCreatingFolder || isAddingFeed}
         >
-          {isCreatingFolder ? "Creating..." : "Create folder"}
+          {isCreatingFolder ? "Creating folder..." : "Create folder"}
         </button>
       </div>
 
       <div className={styles.actions}>
-        <button type="submit" className={styles.button} disabled={isAddingFeed}>
-          {isAddingFeed ? "Adding..." : "Add"}
+        <button type="submit" className={primitiveStyles.button} disabled={isAddingFeed}>
+          {isAddingFeed ? "Adding feed..." : "Add feed"}
         </button>
         <button
           type="button"
-          className={styles.button}
+          className={primitiveStyles.button}
           onClick={onCancelAddFeed}
           disabled={isAddingFeed}
         >

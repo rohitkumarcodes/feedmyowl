@@ -1,6 +1,4 @@
 .form {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
   display: grid;
   gap: 6px;
   margin-top: 4px;
@@ -8,28 +6,10 @@
 }
 
 .label {
-  color: var(--text-muted);
+  color: var(--lp-text-muted);
   font-size: var(--text-xs);
   letter-spacing: 0.02em;
   text-transform: uppercase;
-}
-
-.input,
-.select {
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-radius: 0;
-  color: var(--text-primary);
-  font-size: var(--text-sm);
-  min-height: 40px;
-  padding: 6px 10px;
-  width: 100%;
-}
-
-.input:focus-visible,
-.select:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
 }
 
 .actions {
@@ -39,7 +19,7 @@
 }
 
 .folderFieldset {
-  border: 1px solid var(--border);
+  border: 1px solid var(--lp-border);
   margin: 0;
   min-width: 0;
   padding: 6px;
@@ -54,7 +34,7 @@
 
 .folderOption {
   align-items: center;
-  color: var(--text-primary);
+  color: var(--lp-text-main);
   display: flex;
   gap: 6px;
   min-height: 24px;
@@ -65,7 +45,7 @@
 }
 
 .folderEmpty {
-  color: var(--text-muted);
+  color: var(--lp-text-muted);
   font-size: var(--text-xs);
 }
 
@@ -73,30 +53,4 @@
   display: grid;
   gap: 6px;
   grid-template-columns: minmax(0, 1fr) auto;
-}
-
-.button {
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-radius: 0;
-  color: var(--text-primary);
-  cursor: pointer;
-  font-size: var(--text-sm);
-  min-height: 36px;
-  padding: 4px 10px;
-}
-
-.button:hover:enabled {
-  background: var(--bg-tertiary);
-  transition: background-color 80ms ease;
-}
-
-.button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.button:disabled {
-  color: var(--text-muted);
-  cursor: not-allowed;
 }

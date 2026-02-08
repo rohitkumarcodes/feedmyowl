@@ -7,8 +7,6 @@
   /* Fixed brand slot; sidebar header reserve uses --sidebar-header-reserve to clear this block. */
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-right: 1px solid var(--border);
-  box-shadow: inset -1px 0 0 var(--border);
   color: var(--text-primary);
   display: inline-flex;
   font-size: var(--text-lg);
