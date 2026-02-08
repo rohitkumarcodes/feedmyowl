@@ -216,6 +216,12 @@
   font-size: var(--text-base);
 }
 
+@media (min-width: 768px) {
+  :global(html[data-list-collapsed="false"]) .emptyWrap {
+    transform: translateY(-24px);
+  }
+}
+
 @media (max-width: 900px) {
   .content {
     padding: 24px 16px;
