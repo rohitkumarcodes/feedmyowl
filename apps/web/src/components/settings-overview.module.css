@@ -41,6 +41,10 @@
   font-size: var(--text-sm);
 }
 
+.hiddenFileInput {
+  display: none;
+}
+
 .linkButton {
   background: var(--bg-primary);
   border: 1px solid var(--border);
@@ -83,4 +87,21 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.importSummary {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+}
+
+.importFailureList {
+  color: var(--text-secondary);
+  display: grid;
+  font-size: var(--text-sm);
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
 }
