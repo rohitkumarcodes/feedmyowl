@@ -29,6 +29,11 @@
   width: 14px;
 }
 
+.toolbarIconRefresh {
+  height: 12px;
+  width: 12px;
+}
+
 .addMenuMobile {
   display: grid;
   gap: 2px;
