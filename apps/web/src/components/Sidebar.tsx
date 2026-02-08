@@ -327,10 +327,12 @@ export function Sidebar({
 }: SidebarProps) {
   const [expandedFolderIds, setExpandedFolderIds] = useState<Record<string, boolean>>({});
   const [isUncategorizedExpanded, setIsUncategorizedExpanded] = useState(true);
+  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
   const [isSidebarFolderFormVisible, setIsSidebarFolderFormVisible] = useState(false);
   const [sidebarFolderName, setSidebarFolderName] = useState("");
   const [pendingDeleteFolderId, setPendingDeleteFolderId] = useState<string | null>(null);
   const [isDeletingWithUnsubscribe, setIsDeletingWithUnsubscribe] = useState(false);
+  const addMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setExpandedFolderIds((previous) => {
@@ -343,6 +345,32 @@ export function Sidebar({
       return next;
     });
   }, [folders]);
+
+  useEffect(() => {
+    if (!isAddMenuOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!addMenuRef.current?.contains(event.target as Node)) {
+        setIsAddMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsAddMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isAddMenuOpen]);
 
   const sortedFolders = useMemo(
     () => [...folders].sort((a, b) => a.name.localeCompare(b.name)),
@@ -415,6 +443,20 @@ export function Sidebar({
     setSidebarFolderName("");
   };
 
+  const openAddFeedFlow = () => {
+    setIsAddMenuOpen(false);
+    closeSidebarFolderForm();
+    onShowAddFeedForm();
+  };
+
+  const openAddFolderFlow = () => {
+    setIsAddMenuOpen(false);
+    onCancelAddFeed();
+    setIsSidebarFolderFormVisible(true);
+  };
+
+  const isAddMenuDisabled = isAddingFeed || isCreatingFolder;
+
   const sidebarFolderForm = (
     <div className={`${styles.sidebarFolderForm} ${primitiveStyles.panel}`}>
       <input
@@ -482,7 +524,7 @@ export function Sidebar({
       role="navigation"
     >
       <div className={styles.top}>
-        {/* Compact horizontal toolbar: refresh (primary), add feed (secondary), add folder (tertiary) */}
+        {/* Compact horizontal toolbar: refresh and add actions */}
         <div className={styles.toolbar}>
           <button
             type="button"
@@ -508,23 +550,94 @@ export function Sidebar({
             <span>Refresh</span>
           </button>
 
-          <button
-            type="button"
-            className={`${primitiveStyles.toolbarButton} ${primitiveStyles.toolbarButtonSecondary}`}
-            onClick={onShowAddFeedForm}
-            disabled={isAddingFeed}
-          >
-            Add feed
-          </button>
+          <div className={styles.toolbarAction} ref={addMenuRef}>
+            <button
+              type="button"
+              className={`${primitiveStyles.toolbarButton} ${primitiveStyles.toolbarButtonSecondary}`}
+              onClick={() => setIsAddMenuOpen((previous) => !previous)}
+              aria-label="Add feed or folder"
+              aria-haspopup="menu"
+              aria-expanded={isAddMenuOpen}
+              disabled={isAddMenuDisabled}
+            >
+              <svg
+                className={styles.toolbarIcon}
+                width="14"
+                height="14"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  d="M7.25 2a.75.75 0 0 1 1.5 0v5.25H14a.75.75 0 0 1 0 1.5H8.75V14a.75.75 0 0 1-1.5 0V8.75H2a.75.75 0 0 1 0-1.5h5.25V2z"
+                  fill="currentColor"
+                />
+              </svg>
+              <span>Add feed/folder</span>
+            </button>
 
-          <button
-            type="button"
-            className={`${primitiveStyles.toolbarButton} ${primitiveStyles.toolbarButtonMuted}`}
-            onClick={() => setIsSidebarFolderFormVisible((previous) => !previous)}
-            disabled={isCreatingFolder}
-          >
-            New folder
-          </button>
+            {isAddMenuOpen ? (
+              isMobile ? (
+                <>
+                  <button
+                    type="button"
+                    className={primitiveStyles.mobileBackdrop}
+                    aria-label="Close add menu"
+                    onClick={() => setIsAddMenuOpen(false)}
+                  />
+                  <div
+                    className={primitiveStyles.mobileSheet}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Add feed or folder"
+                  >
+                    <div className={styles.addMenuMobile} role="menu" aria-label="Add options">
+                      <button
+                        type="button"
+                        className={primitiveStyles.menuItem}
+                        role="menuitem"
+                        onClick={openAddFeedFlow}
+                        disabled={isAddMenuDisabled}
+                      >
+                        Add feed
+                      </button>
+                      <button
+                        type="button"
+                        className={primitiveStyles.menuItem}
+                        role="menuitem"
+                        onClick={openAddFolderFlow}
+                        disabled={isAddMenuDisabled}
+                      >
+                        Add folder
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className={primitiveStyles.menu} role="menu" aria-label="Add options">
+                  <button
+                    type="button"
+                    className={primitiveStyles.menuItem}
+                    role="menuitem"
+                    onClick={openAddFeedFlow}
+                    disabled={isAddMenuDisabled}
+                  >
+                    Add feed
+                  </button>
+                  <button
+                    type="button"
+                    className={primitiveStyles.menuItem}
+                    role="menuitem"
+                    onClick={openAddFolderFlow}
+                    disabled={isAddMenuDisabled}
+                  >
+                    Add folder
+                  </button>
+                </div>
+              )
+            ) : null}
+          </div>
         </div>
 
         {isSidebarFolderFormVisible ? (

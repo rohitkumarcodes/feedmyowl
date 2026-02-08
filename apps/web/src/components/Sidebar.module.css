@@ -18,11 +18,20 @@
   padding: 0 8px 6px;
 }
 
+.toolbarAction {
+  position: relative;
+}
+
 .toolbarIcon {
   display: block;
   flex: 0 0 auto;
   height: 14px;
   width: 14px;
+}
+
+.addMenuMobile {
+  display: grid;
+  gap: 2px;
 }
 
 .toolbarIconSpinning {
