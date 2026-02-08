@@ -120,7 +120,7 @@ export function selectScopeLabel(
   }
 
   if (selectedScope.type === "all") {
-    return "Read all feeds";
+    return "All feeds";
   }
 
   if (selectedScope.type === "uncategorized") {

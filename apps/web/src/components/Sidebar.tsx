@@ -469,32 +469,37 @@ export function Sidebar({
   return (
     <nav className={styles.root} aria-label="Feed list" role="navigation">
       <div className={styles.top}>
-        <div className={styles.controls}>
+        {/* Compact horizontal toolbar: refresh (primary), add feed (secondary), add folder (tertiary) */}
+        <div className={styles.toolbar}>
           <button
             type="button"
-            className={styles.controlButton}
+            className={styles.toolbarButtonPrimary}
             onClick={onRefresh}
             disabled={isRefreshingFeeds}
+            aria-label={isRefreshingFeeds ? "Refreshing feeds" : "Refresh feeds"}
+            title="Refresh feeds"
           >
-            {isRefreshingFeeds ? "Refreshing feeds..." : "Refresh feeds"}
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M13.65 2.35A7.96 7.96 0 0 0 8 0C3.58 0 .01 3.58.01 8S3.58 16 8 16c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 8 14 6 6 0 1 1 8 2c1.66 0 3.14.69 4.22 1.78L9 7h7V0l-2.35 2.35z" fill="currentColor"/>
+            </svg>
           </button>
 
           <button
             type="button"
-            className={styles.controlButton}
+            className={styles.toolbarButton}
             onClick={onShowAddFeedForm}
             disabled={isAddingFeed}
           >
-            Add a feed
+            + Feed
           </button>
 
           <button
             type="button"
-            className={styles.controlButton}
+            className={styles.toolbarButtonMuted}
             onClick={() => setIsSidebarFolderFormVisible((previous) => !previous)}
             disabled={isCreatingFolder}
           >
-            Add a folder
+            + Folder
           </button>
         </div>
 
@@ -566,105 +571,100 @@ export function Sidebar({
         ) : null}
       </div>
 
+      {/* Unified feed tree: All feeds → user folders → uncategorized */}
       <div className={styles.sections}>
-        <div className={styles.feedSection}>
-          <p className={styles.feedSectionTitle}>Feeds</p>
+        {/* "All feeds" scope — always first, always visible */}
+        <button
+          type="button"
+          className={`${styles.scopeRow} ${
+            selectedScope.type === "all" ? styles.scopeRowActive : ""
+          }`}
+          onClick={onSelectAll}
+          aria-current={selectedScope.type === "all" ? "true" : undefined}
+        >
+          <span>All feeds</span>
+          <span className={styles.folderCount}>{feeds.length}</span>
+        </button>
 
-          <button
-            type="button"
-            className={`${styles.scopeRow} ${
-              selectedScope.type === "all" ? styles.scopeRowActive : ""
-            }`}
-            onClick={onSelectAll}
-            aria-current={selectedScope.type === "all" ? "true" : undefined}
-          >
-            <span>Read all feeds</span>
-            <span className={styles.folderCount}>{feeds.length}</span>
-          </button>
+        {/* User-created folders — each with nested feeds */}
+        {sortedFolders.map((folder) => {
+          const folderFeeds = feedsByFolderId.get(folder.id) ?? [];
+          const isExpanded = expandedFolderIds[folder.id] ?? true;
+          const isFolderActive =
+            selectedScope.type === "folder" && selectedScope.folderId === folder.id;
 
-          {uncategorizedFeeds.length > 0 ? (
-            <div className={styles.folderGroup}>
-              <div
-                className={`${styles.folderRowWrap} ${styles.folderRowWrapNoActions} ${
-                  selectedScope.type === "uncategorized" ? styles.folderRowWrapActive : ""
-                }`}
-              >
-                <button
-                  type="button"
-                  className={styles.folderExpandButton}
-                  onClick={() => setIsUncategorizedExpanded((previous) => !previous)}
-                  aria-label={`${isUncategorizedExpanded ? "Collapse" : "Expand"} Uncategorized feeds`}
-                  aria-expanded={isUncategorizedExpanded}
-                >
-                  {isUncategorizedExpanded ? "▾" : "▸"}
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.folderRow} ${
-                    selectedScope.type === "uncategorized" ? styles.folderRowActive : ""
-                  }`}
-                  onClick={onSelectUncategorized}
-                  aria-current={selectedScope.type === "uncategorized" ? "true" : undefined}
-                >
-                  <span className={styles.folderLabel}>Uncategorized feeds</span>
-                  <span className={styles.folderCount}>{uncategorizedFeeds.length}</span>
-                </button>
-              </div>
+          return (
+            <div key={folder.id} className={styles.folderGroup}>
+              <FolderRow
+                folder={folder}
+                isMobile={isMobile}
+                feedCount={folderFeeds.length}
+                isActive={isFolderActive}
+                isExpanded={isExpanded}
+                isDeleting={deletingFolderId === folder.id}
+                isRenaming={renamingFolderId === folder.id}
+                onToggleExpand={() =>
+                  setExpandedFolderIds((previous) => ({
+                    ...previous,
+                    [folder.id]: !(previous[folder.id] ?? true),
+                  }))
+                }
+                onSelectFolder={() => onSelectFolder(folder.id)}
+                onRenameFolder={(name) =>
+                  Promise.resolve(onRequestFolderRename(folder.id, name))
+                }
+                onPromptDeleteFolder={() => {
+                  setPendingDeleteFolderId(folder.id);
+                  setIsDeletingWithUnsubscribe(false);
+                }}
+              />
 
-              {isUncategorizedExpanded ? (
-                <div className={styles.folderFeeds}>{renderFeedRows(uncategorizedFeeds)}</div>
+              {isExpanded ? (
+                <div className={styles.folderFeeds}>{renderFeedRows(folderFeeds)}</div>
               ) : null}
             </div>
-          ) : null}
+          );
+        })}
 
-          {feeds.length === 0 && sortedFolders.length === 0 ? (
-            <p className={styles.emptyLabel}>No feeds yet.</p>
-          ) : null}
+        {/* Uncategorized feeds — last, only when present */}
+        {uncategorizedFeeds.length > 0 ? (
+          <div className={styles.folderGroup}>
+            <div
+              className={`${styles.folderRowWrap} ${styles.folderRowWrapNoActions} ${
+                selectedScope.type === "uncategorized" ? styles.folderRowWrapActive : ""
+              }`}
+            >
+              <button
+                type="button"
+                className={styles.folderExpandButton}
+                onClick={() => setIsUncategorizedExpanded((previous) => !previous)}
+                aria-label={`${isUncategorizedExpanded ? "Collapse" : "Expand"} Uncategorized`}
+                aria-expanded={isUncategorizedExpanded}
+              >
+                {isUncategorizedExpanded ? "▾" : "▸"}
+              </button>
+              <button
+                type="button"
+                className={`${styles.folderRow} ${
+                  selectedScope.type === "uncategorized" ? styles.folderRowActive : ""
+                }`}
+                onClick={onSelectUncategorized}
+                aria-current={selectedScope.type === "uncategorized" ? "true" : undefined}
+              >
+                <span className={styles.folderLabel}>Uncategorized</span>
+                <span className={styles.folderCount}>{uncategorizedFeeds.length}</span>
+              </button>
+            </div>
 
-          {sortedFolders.length > 0 ? (
-            <>
-              <p className={styles.folderSectionTitle}>Folders</p>
-              {sortedFolders.map((folder) => {
-                const folderFeeds = feedsByFolderId.get(folder.id) ?? [];
-                const isExpanded = expandedFolderIds[folder.id] ?? true;
-                const isFolderActive =
-                  selectedScope.type === "folder" && selectedScope.folderId === folder.id;
+            {isUncategorizedExpanded ? (
+              <div className={styles.folderFeeds}>{renderFeedRows(uncategorizedFeeds)}</div>
+            ) : null}
+          </div>
+        ) : null}
 
-                return (
-                  <div key={folder.id} className={styles.folderGroup}>
-                    <FolderRow
-                      folder={folder}
-                      isMobile={isMobile}
-                      feedCount={folderFeeds.length}
-                      isActive={isFolderActive}
-                      isExpanded={isExpanded}
-                      isDeleting={deletingFolderId === folder.id}
-                      isRenaming={renamingFolderId === folder.id}
-                      onToggleExpand={() =>
-                        setExpandedFolderIds((previous) => ({
-                          ...previous,
-                          [folder.id]: !(previous[folder.id] ?? true),
-                        }))
-                      }
-                      onSelectFolder={() => onSelectFolder(folder.id)}
-                      onRenameFolder={(name) =>
-                        Promise.resolve(onRequestFolderRename(folder.id, name))
-                      }
-                      onPromptDeleteFolder={() => {
-                        setPendingDeleteFolderId(folder.id);
-                        setIsDeletingWithUnsubscribe(false);
-                      }}
-                    />
-
-                    {isExpanded ? (
-                      <div className={styles.folderFeeds}>{renderFeedRows(folderFeeds)}</div>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </>
-          ) : null}
-        </div>
+        {feeds.length === 0 && sortedFolders.length === 0 ? (
+          <p className={styles.emptyLabel}>No feeds yet.</p>
+        ) : null}
       </div>
 
       <div className={styles.collapseBar}>
