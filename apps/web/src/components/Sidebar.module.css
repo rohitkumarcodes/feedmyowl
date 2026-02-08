@@ -10,7 +10,7 @@
 }
 
 .top {
-  padding: var(--sidebar-header-reserve) 0 4px;
+  padding: var(--sidebar-header-reserve) 0 0;
 }
 
 .toolbar {
@@ -77,7 +77,7 @@
 
 .sections {
   border-top: 1px solid var(--lp-border);
-  margin-top: 8px;
+  margin-top: 0;
   overflow: auto;
 }
 
