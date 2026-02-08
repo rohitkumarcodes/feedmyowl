@@ -14,7 +14,7 @@ interface AddFeedFormProps {
 }
 
 /**
- * Renders a compact inline feed URL form.
+ * Renders a compact inline feed/site URL form.
  */
 export function AddFeedForm({
   feedUrlInput,
@@ -26,7 +26,7 @@ export function AddFeedForm({
   return (
     <form className={styles.form} onSubmit={onSubmitFeed}>
       <label className={styles.label} htmlFor="sidebar-feed-url">
-        Feed URL
+        Feed or site URL
       </label>
       <input
         id="sidebar-feed-url"
@@ -36,7 +36,7 @@ export function AddFeedForm({
         className={styles.input}
         value={feedUrlInput}
         onChange={(event) => onFeedUrlChange(event.currentTarget.value)}
-        placeholder="https://example.com/rss.xml"
+        placeholder="https://example.com or https://example.com/rss.xml"
       />
 
       <div className={styles.actions}>

@@ -9,7 +9,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db, eq, users } from "@/lib/database";
 import { deleteAuthUser, requireAuth } from "@/lib/auth";
 import { ensureUserRecord } from "@/lib/app-user";
-import { parseFeed } from "@/lib/feed-parser";
+import { discoverFeedCandidates } from "@/lib/feed-discovery";
+import { parseFeed, parseFeedXml, type ParsedFeed } from "@/lib/feed-parser";
 import { purgeOldFeedItemsForUser } from "@/lib/retention";
 import { normalizeFeedError } from "@/lib/feed-errors";
 import { normalizeFeedUrl } from "@/lib/feed-url";
@@ -22,6 +23,25 @@ import {
 interface ApiError {
   error: string;
   code?: string;
+}
+
+const FEED_CANDIDATE_TIMEOUT_MS = 7_000;
+
+async function fetchFeedCandidateXml(url: string): Promise<string> {
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Accept: "application/rss+xml,application/atom+xml,application/xml,text/xml;q=0.9,*/*;q=0.1",
+    },
+    redirect: "follow",
+    signal: AbortSignal.timeout(FEED_CANDIDATE_TIMEOUT_MS),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Feed candidate request failed with status ${response.status}`);
+  }
+
+  return await response.text();
 }
 
 /**
@@ -137,25 +157,73 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    let parsedFeed;
+    let parsedFeed: ParsedFeed | null = null;
+    let resolvedUrl = nextUrl;
+    let discoveredFromSiteUrl = false;
+
     try {
       parsedFeed = await parseFeed(nextUrl);
     } catch (error) {
       const normalizedError = normalizeFeedError(error, "create");
+
+      if (normalizedError.code !== "invalid_xml") {
+        return NextResponse.json(
+          {
+            error: normalizedError.message,
+            code: normalizedError.code,
+          } satisfies ApiError,
+          { status: 400 }
+        );
+      }
+
+      const discovery = await discoverFeedCandidates(nextUrl);
+
+      for (const candidateUrl of discovery.candidates) {
+        const duplicateFeed = await findExistingFeedForUserByUrl(appUser.id, candidateUrl);
+
+        if (duplicateFeed) {
+          return NextResponse.json({
+            feed: duplicateFeed,
+            duplicate: true,
+            message: "This feed is already in your library.",
+          });
+        }
+
+        try {
+          const candidateXml = await fetchFeedCandidateXml(candidateUrl);
+          parsedFeed = await parseFeedXml(candidateXml);
+          resolvedUrl = candidateUrl;
+          discoveredFromSiteUrl = true;
+          break;
+        } catch {
+          // Keep trying additional candidates.
+        }
+      }
+
+      if (!parsedFeed) {
+        return NextResponse.json(
+          {
+            error:
+              "Could not find a valid RSS/Atom feed at this address. Try pasting the feed URL directly.",
+            code: "invalid_xml",
+          } satisfies ApiError,
+          { status: 400 }
+        );
+      }
+    }
+
+    if (!parsedFeed) {
       return NextResponse.json(
-        {
-          error: normalizedError.message,
-          code: normalizedError.code,
-        } satisfies ApiError,
-        { status: 400 }
+        { error: "Could not add this feed right now." },
+        { status: 500 }
       );
     }
 
     let created: Awaited<ReturnType<typeof createFeedWithInitialItems>> | null = null;
     try {
-      created = await createFeedWithInitialItems(appUser.id, nextUrl, parsedFeed);
+      created = await createFeedWithInitialItems(appUser.id, resolvedUrl, parsedFeed);
     } catch {
-      const raceExistingFeed = await findExistingFeedForUserByUrl(appUser.id, nextUrl);
+      const raceExistingFeed = await findExistingFeedForUserByUrl(appUser.id, resolvedUrl);
 
       if (raceExistingFeed) {
         return NextResponse.json({
@@ -183,6 +251,9 @@ export async function POST(request: NextRequest) {
         feed: created.feed,
         importedItemCount: created.insertedItems,
         duplicate: false,
+        message: discoveredFromSiteUrl
+          ? "Feed found automatically and added."
+          : undefined,
       },
       { status: 201 }
     );

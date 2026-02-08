@@ -81,5 +81,15 @@ This log records active product and technical decisions for the current MVP phas
 - Why: Remove setup/admin complexity from reading flow.
 - Notes: import/export and billing UI are not part of the current product surface.
 
+### D-2026-02-08-01
+- Date: 2026-02-08
+- Status: active
+- Decision: Add-feed accepts feed URLs and site URLs, with conservative fallback discovery.
+- Why: Reduce first-use friction without expanding MVP UI or workflow complexity.
+- Notes:
+  - Direct feed URL parsing remains the first attempt.
+  - Discovery runs only when create fails with invalid feed XML.
+  - Discovery is intentionally constrained: one HTML fetch, small heuristic candidate list, no crawling, no background jobs, no candidate-picker UI.
+
 ## Superseded decisions
 - Any prior decision that required folders, search, OPML import/export, or billing in the MVP is superseded by D-2026-02-07-01 through D-2026-02-07-09.

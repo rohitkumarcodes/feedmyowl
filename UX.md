@@ -7,7 +7,7 @@ The product should support this story with minimal setup and minimal UI overhead
 
 ## 2. Primary user flow
 1. User opens `/feeds`.
-2. If no subscriptions, user adds a feed URL.
+2. If no subscriptions, user adds a feed URL or site URL.
 3. User refreshes feeds.
 4. User selects a scope (`All articles` or one feed).
 5. User selects an article.
@@ -43,6 +43,10 @@ Sidebar includes only:
 - `+ Add Feed`.
 - Feed delete action.
 
+Add-feed behavior:
+- Input accepts feed URLs and site URLs.
+- If the submitted URL is not valid RSS/Atom XML, the backend attempts conservative feed auto-discovery before returning an error.
+
 No folders, no grouping, no tags, no search.
 
 ## 6. Reader behavior
@@ -60,6 +64,7 @@ No folders, no grouping, no tags, no search.
 - Keep language calm and specific.
 - Prefer inline messages over blocking UI.
 - Do not block reading because one feed fails refresh.
+- For add-feed failures after discovery fallback, return clear guidance to paste a direct feed URL.
 
 ## 9. Keyboard UX
 - `j` and `k` move list selection.

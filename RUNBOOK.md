@@ -13,7 +13,7 @@ From repo root:
 
 ## 3. MVP surface area
 ### User-facing
-- Add feed.
+- Add feed (feed URL or site URL).
 - Delete feed.
 - Manual refresh.
 - Read articles.
@@ -38,8 +38,11 @@ If feeds cannot be created/refreshed, first verify auth + DB env vars.
 Checklist:
 1. Confirm URL is valid `http` or `https`.
 2. Check API response from `POST /api/feeds`.
-3. Validate parser behavior against the feed URL.
-4. Inspect server logs for parser/network errors.
+3. If a site URL was submitted, verify discovery fallback inputs:
+   - Check the page for `<link rel="alternate"...>` feed references.
+   - Check common feed paths (`/feed`, `/feed.xml`, `/rss`, `/rss.xml`, `/atom.xml`, `/?feed=rss2`).
+4. Validate parser behavior against the resolved feed URL.
+5. Inspect server logs for parser/network errors.
 
 ### Refresh fails for one or more feeds
 Checklist:

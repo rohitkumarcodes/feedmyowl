@@ -9,6 +9,7 @@
  *
  * What this file provides:
  *   - parseFeed(): Fetch and parse an RSS/Atom feed URL into a normalized format
+ *   - parseFeedXml(): Parse RSS/Atom feed XML text into the same normalized format
  *
  * rss-parser handles RSS 1.0, RSS 2.0, and Atom feeds, including many
  * common malformations found in real-world feeds.
@@ -45,16 +46,9 @@ export interface ParsedFeedItem {
   publishedAt: Date | undefined;
 }
 
-/**
- * Fetch and parse an RSS/Atom feed from a URL.
- *
- * @param url - The feed URL to fetch and parse
- * @returns A normalized ParsedFeed object with feed metadata and items
- * @throws Error if the URL is unreachable or the response is not a valid feed
- */
-export async function parseFeed(url: string): Promise<ParsedFeed> {
-  const feed = await parser.parseURL(url);
+type RawParsedFeed = Awaited<ReturnType<typeof parser.parseURL>>;
 
+function normalizeParsedFeed(feed: RawParsedFeed): ParsedFeed {
   return {
     title: feed.title,
     description: feed.description,
@@ -67,4 +61,29 @@ export async function parseFeed(url: string): Promise<ParsedFeed> {
       publishedAt: item.pubDate ? new Date(item.pubDate) : undefined,
     })),
   };
+}
+
+/**
+ * Fetch and parse an RSS/Atom feed from a URL.
+ *
+ * @param url - The feed URL to fetch and parse
+ * @returns A normalized ParsedFeed object with feed metadata and items
+ * @throws Error if the URL is unreachable or the response is not a valid feed
+ */
+export async function parseFeed(url: string): Promise<ParsedFeed> {
+  const feed = await parser.parseURL(url);
+
+  return normalizeParsedFeed(feed);
+}
+
+/**
+ * Parse RSS/Atom XML content directly.
+ *
+ * @param xml - Raw XML content from a candidate feed endpoint
+ * @returns A normalized ParsedFeed object with feed metadata and items
+ * @throws Error if XML content is not a valid RSS/Atom feed
+ */
+export async function parseFeedXml(xml: string): Promise<ParsedFeed> {
+  const feed = await parser.parseString(xml);
+  return normalizeParsedFeed(feed);
 }
