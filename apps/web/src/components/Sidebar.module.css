@@ -144,10 +144,23 @@
     var(--sidebar-tree-toggle-col)
     minmax(0, 1fr)
     var(--sidebar-tree-actions-col);
+  position: relative;
 }
 
 .folderRowWrapActive {
   background: var(--lp-surface-active);
+}
+
+.folderRowWrapActive::before {
+  background: var(--lp-focus);
+  content: "";
+  inset: 0 auto 0 0;
+  position: absolute;
+  width: 2px;
+}
+
+.folderRowWrapActive .folderRow {
+  border-left-color: transparent;
 }
 
 .folderRow {

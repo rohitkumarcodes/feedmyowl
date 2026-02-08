@@ -2,10 +2,23 @@
   border-bottom: 1px solid var(--lp-border);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
+  position: relative;
 }
 
 .rowWrapActive {
   background: var(--lp-surface-active);
+}
+
+.rowWrapActive::before {
+  background: var(--lp-focus);
+  content: "";
+  inset: 0 auto 0 0;
+  position: absolute;
+  width: 2px;
+}
+
+.rowWrapActive .row {
+  border-left-color: transparent;
 }
 
 .row {
