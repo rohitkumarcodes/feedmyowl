@@ -12,9 +12,23 @@
 .rowWrapActive::before {
   background: var(--lp-focus);
   content: "";
-  inset: 0 auto 0 -16px;
+  bottom: 0;
+  left: calc(-1 * var(--sidebar-feed-indent, 16px));
   position: absolute;
+  top: 0;
   width: 2px;
+  z-index: 1;
+}
+
+.rowWrapActive::after {
+  background: var(--lp-surface-active);
+  bottom: 0;
+  content: "";
+  left: calc(-1 * var(--sidebar-feed-indent, 16px));
+  position: absolute;
+  top: 0;
+  width: var(--sidebar-feed-indent, 16px);
+  z-index: 0;
 }
 
 .rowWrapActive .row {

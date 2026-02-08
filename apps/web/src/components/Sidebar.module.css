@@ -1,4 +1,5 @@
 .root {
+  --sidebar-feed-indent: 16px;
   --sidebar-tree-toggle-col: 28px;
   --sidebar-tree-count-col: 33px;
   --sidebar-tree-actions-col: 35px;
@@ -134,7 +135,7 @@
 
 .folderFeeds {
   background: var(--lp-surface-1);
-  padding-left: 16px;
+  padding-left: var(--sidebar-feed-indent);
 }
 
 .folderRowWrap {
