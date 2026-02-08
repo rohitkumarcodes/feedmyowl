@@ -317,6 +317,7 @@ export function Sidebar({
   onCollapse,
 }: SidebarProps) {
   const [expandedFolderIds, setExpandedFolderIds] = useState<Record<string, boolean>>({});
+  const [isUncategorizedExpanded, setIsUncategorizedExpanded] = useState(true);
   const [isSidebarFolderFormVisible, setIsSidebarFolderFormVisible] = useState(false);
   const [sidebarFolderName, setSidebarFolderName] = useState("");
   const [pendingDeleteFolderId, setPendingDeleteFolderId] = useState<string | null>(null);
@@ -471,33 +472,11 @@ export function Sidebar({
         <div className={styles.controls}>
           <button
             type="button"
-            className={`${styles.controlButton} ${
-              selectedScope.type === "all" ? styles.controlButtonActive : ""
-            }`}
-            onClick={onSelectAll}
-            aria-current={selectedScope.type === "all" ? "true" : undefined}
-          >
-            Read all feeds
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.controlButton} ${
-              selectedScope.type === "uncategorized" ? styles.controlButtonActive : ""
-            }`}
-            onClick={onSelectUncategorized}
-            aria-current={selectedScope.type === "uncategorized" ? "true" : undefined}
-          >
-            Uncategorized
-          </button>
-
-          <button
-            type="button"
             className={styles.controlButton}
             onClick={onRefresh}
             disabled={isRefreshingFeeds}
           >
-            {isRefreshingFeeds ? "⟳ Refreshing..." : "⟳ Refresh feeds"}
+            {isRefreshingFeeds ? "Refreshing feeds..." : "Refresh feeds"}
           </button>
 
           <button
@@ -506,7 +485,7 @@ export function Sidebar({
             onClick={onShowAddFeedForm}
             disabled={isAddingFeed}
           >
-            + Add a feed
+            Add a feed
           </button>
 
           <button
@@ -515,7 +494,7 @@ export function Sidebar({
             onClick={() => setIsSidebarFolderFormVisible((previous) => !previous)}
             disabled={isCreatingFolder}
           >
-            + New folder
+            Add a folder
           </button>
         </div>
 
@@ -588,60 +567,104 @@ export function Sidebar({
       </div>
 
       <div className={styles.sections}>
-        {uncategorizedFeeds.length === 0 && sortedFolders.length === 0 && feeds.length === 0 ? (
-          <p className={styles.emptyLabel}>No feeds yet.</p>
-        ) : null}
+        <div className={styles.feedSection}>
+          <p className={styles.feedSectionTitle}>Feeds</p>
 
-        {uncategorizedFeeds.length > 0 ? (
-          <div className={styles.folderSection}>
-            <p className={styles.folderSectionTitle}>Uncategorized feeds</p>
-            {renderFeedRows(uncategorizedFeeds)}
-          </div>
-        ) : null}
+          <button
+            type="button"
+            className={`${styles.scopeRow} ${
+              selectedScope.type === "all" ? styles.scopeRowActive : ""
+            }`}
+            onClick={onSelectAll}
+            aria-current={selectedScope.type === "all" ? "true" : undefined}
+          >
+            <span>Read all feeds</span>
+            <span className={styles.folderCount}>{feeds.length}</span>
+          </button>
 
-        {sortedFolders.length > 0 ? (
-          <div className={styles.folderSection}>
-            <p className={styles.folderSectionTitle}>Folders</p>
-            {sortedFolders.map((folder) => {
-              const folderFeeds = feedsByFolderId.get(folder.id) ?? [];
-              const isExpanded = expandedFolderIds[folder.id] ?? true;
-              const isFolderActive =
-                selectedScope.type === "folder" && selectedScope.folderId === folder.id;
+          {uncategorizedFeeds.length > 0 ? (
+            <div className={styles.folderGroup}>
+              <div
+                className={`${styles.folderRowWrap} ${styles.folderRowWrapNoActions} ${
+                  selectedScope.type === "uncategorized" ? styles.folderRowWrapActive : ""
+                }`}
+              >
+                <button
+                  type="button"
+                  className={styles.folderExpandButton}
+                  onClick={() => setIsUncategorizedExpanded((previous) => !previous)}
+                  aria-label={`${isUncategorizedExpanded ? "Collapse" : "Expand"} Uncategorized feeds`}
+                  aria-expanded={isUncategorizedExpanded}
+                >
+                  {isUncategorizedExpanded ? "▾" : "▸"}
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.folderRow} ${
+                    selectedScope.type === "uncategorized" ? styles.folderRowActive : ""
+                  }`}
+                  onClick={onSelectUncategorized}
+                  aria-current={selectedScope.type === "uncategorized" ? "true" : undefined}
+                >
+                  <span className={styles.folderLabel}>Uncategorized feeds</span>
+                  <span className={styles.folderCount}>{uncategorizedFeeds.length}</span>
+                </button>
+              </div>
 
-              return (
-                <div key={folder.id} className={styles.folderGroup}>
-                  <FolderRow
-                    folder={folder}
-                    isMobile={isMobile}
-                    feedCount={folderFeeds.length}
-                    isActive={isFolderActive}
-                    isExpanded={isExpanded}
-                    isDeleting={deletingFolderId === folder.id}
-                    isRenaming={renamingFolderId === folder.id}
-                    onToggleExpand={() =>
-                      setExpandedFolderIds((previous) => ({
-                        ...previous,
-                        [folder.id]: !(previous[folder.id] ?? true),
-                      }))
-                    }
-                    onSelectFolder={() => onSelectFolder(folder.id)}
-                    onRenameFolder={(name) =>
-                      Promise.resolve(onRequestFolderRename(folder.id, name))
-                    }
-                    onPromptDeleteFolder={() => {
-                      setPendingDeleteFolderId(folder.id);
-                      setIsDeletingWithUnsubscribe(false);
-                    }}
-                  />
+              {isUncategorizedExpanded ? (
+                <div className={styles.folderFeeds}>{renderFeedRows(uncategorizedFeeds)}</div>
+              ) : null}
+            </div>
+          ) : null}
 
-                  {isExpanded ? (
-                    <div className={styles.folderFeeds}>{renderFeedRows(folderFeeds)}</div>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        ) : null}
+          {feeds.length === 0 && sortedFolders.length === 0 ? (
+            <p className={styles.emptyLabel}>No feeds yet.</p>
+          ) : null}
+
+          {sortedFolders.length > 0 ? (
+            <>
+              <p className={styles.folderSectionTitle}>Folders</p>
+              {sortedFolders.map((folder) => {
+                const folderFeeds = feedsByFolderId.get(folder.id) ?? [];
+                const isExpanded = expandedFolderIds[folder.id] ?? true;
+                const isFolderActive =
+                  selectedScope.type === "folder" && selectedScope.folderId === folder.id;
+
+                return (
+                  <div key={folder.id} className={styles.folderGroup}>
+                    <FolderRow
+                      folder={folder}
+                      isMobile={isMobile}
+                      feedCount={folderFeeds.length}
+                      isActive={isFolderActive}
+                      isExpanded={isExpanded}
+                      isDeleting={deletingFolderId === folder.id}
+                      isRenaming={renamingFolderId === folder.id}
+                      onToggleExpand={() =>
+                        setExpandedFolderIds((previous) => ({
+                          ...previous,
+                          [folder.id]: !(previous[folder.id] ?? true),
+                        }))
+                      }
+                      onSelectFolder={() => onSelectFolder(folder.id)}
+                      onRenameFolder={(name) =>
+                        Promise.resolve(onRequestFolderRename(folder.id, name))
+                      }
+                      onPromptDeleteFolder={() => {
+                        setPendingDeleteFolderId(folder.id);
+                        setIsDeletingWithUnsubscribe(false);
+                      }}
+                    />
+
+                    {isExpanded ? (
+                      <div className={styles.folderFeeds}>{renderFeedRows(folderFeeds)}</div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </>
+          ) : null}
+        </div>
       </div>
 
       <div className={styles.collapseBar}>

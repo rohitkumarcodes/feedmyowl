@@ -161,6 +161,14 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
       return;
     }
 
+    if (selectedScope.type === "uncategorized") {
+      const hasUncategorizedFeeds = feeds.some((feed) => feed.folderIds.length === 0);
+      if (!hasUncategorizedFeeds) {
+        setSelectedScope({ type: "all" });
+      }
+      return;
+    }
+
     if (selectedScope.type === "folder") {
       const stillExists = folders.some((folder) => folder.id === selectedScope.folderId);
       if (!stillExists) {
