@@ -1,4 +1,7 @@
 .root {
+  --sidebar-tree-toggle-col: 28px;
+  --sidebar-tree-count-col: 33px;
+  --sidebar-tree-actions-col: 35px;
   background: var(--lp-surface-0);
   display: grid;
   grid-template-rows: auto 1fr auto;
@@ -84,11 +87,6 @@
   padding: 8px 12px;
 }
 
-.scopeRow {
-  justify-content: space-between;
-}
-
-.scopeRow,
 .folderRowWrap {
   border-bottom: 1px solid var(--lp-border);
 }
@@ -140,12 +138,12 @@
 }
 
 .folderRowWrap {
+  align-items: stretch;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-}
-
-.folderRowWrapNoActions {
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns:
+    var(--sidebar-tree-toggle-col)
+    minmax(0, 1fr)
+    var(--sidebar-tree-actions-col);
 }
 
 .folderRowWrapActive {
@@ -153,7 +151,9 @@
 }
 
 .folderRow {
-  justify-content: space-between;
+  align-items: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--sidebar-tree-count-col);
   padding: var(--lp-pad-y) 8px var(--lp-pad-y) 2px;
 }
 
@@ -163,12 +163,35 @@
   white-space: nowrap;
 }
 
+.rowCountAligned {
+  font-variant-numeric: tabular-nums;
+  margin-left: 0;
+  padding-right: 1px;
+  text-align: right;
+}
+
 .folderActions {
   align-items: center;
-  display: inline-flex;
+  display: flex;
   justify-content: center;
-  padding-right: 6px;
+  min-width: var(--sidebar-tree-actions-col);
   position: relative;
+  width: var(--sidebar-tree-actions-col);
+}
+
+.folderActionsSpacer {
+  min-width: var(--sidebar-tree-actions-col);
+  width: var(--sidebar-tree-actions-col);
+}
+
+.folderToggle {
+  min-width: var(--sidebar-tree-toggle-col);
+  width: var(--sidebar-tree-toggle-col);
+}
+
+.folderToggleSpacer {
+  min-width: var(--sidebar-tree-toggle-col);
+  width: var(--sidebar-tree-toggle-col);
 }
 
 .renameForm {
@@ -195,6 +218,20 @@
 
 .paneToggleButton svg {
   display: block;
+}
+
+@media (max-width: 767px) {
+  .root {
+    --sidebar-tree-count-col: 30px;
+    --sidebar-tree-actions-col: 32px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1120px) {
+  .root {
+    --sidebar-tree-count-col: 31px;
+    --sidebar-tree-actions-col: 33px;
+  }
 }
 
 .deleteDialog h3 {

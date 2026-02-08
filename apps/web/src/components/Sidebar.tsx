@@ -165,7 +165,7 @@ function FolderRow({
     <div className={`${styles.folderRowWrap} ${isActive ? styles.folderRowWrapActive : ""}`}>
       <button
         type="button"
-        className={primitiveStyles.treeToggle}
+        className={`${primitiveStyles.treeToggle} ${styles.folderToggle}`}
         onClick={onToggleExpand}
         aria-label={`${isExpanded ? "Collapse" : "Expand"} folder ${folder.name}`}
         aria-expanded={isExpanded}
@@ -182,7 +182,9 @@ function FolderRow({
         aria-current={isActive ? "true" : undefined}
       >
         <span className={styles.folderLabel}>{folder.name}</span>
-        <span className={primitiveStyles.rowCount}>{feedCount}</span>
+        <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
+          {feedCount}
+        </span>
       </button>
 
       <div className={styles.folderActions} ref={actionsRef}>
@@ -717,17 +719,27 @@ export function Sidebar({
       {/* Unified feed tree: All feeds → user folders → uncategorized */}
       <div className={styles.sections}>
         {/* "All feeds" scope — always first, always visible */}
-        <button
-          type="button"
-          className={`${primitiveStyles.row} ${primitiveStyles.rowStrong} ${styles.scopeRow} ${
-            selectedScope.type === "all" ? primitiveStyles.rowActive : ""
+        <div
+          className={`${styles.folderRowWrap} ${
+            selectedScope.type === "all" ? styles.folderRowWrapActive : ""
           }`}
-          onClick={onSelectAll}
-          aria-current={selectedScope.type === "all" ? "true" : undefined}
         >
-          <span>All feeds</span>
-          <span className={primitiveStyles.rowCount}>{feeds.length}</span>
-        </button>
+          <div className={styles.folderToggleSpacer} aria-hidden="true" />
+          <button
+            type="button"
+            className={`${primitiveStyles.row} ${primitiveStyles.rowStrong} ${styles.folderRow} ${
+              selectedScope.type === "all" ? primitiveStyles.rowActive : ""
+            }`}
+            onClick={onSelectAll}
+            aria-current={selectedScope.type === "all" ? "true" : undefined}
+          >
+            <span className={styles.folderLabel}>All feeds</span>
+            <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
+              {feeds.length}
+            </span>
+          </button>
+          <div className={styles.folderActionsSpacer} aria-hidden="true" />
+        </div>
 
         {/* User-created folders — each with nested feeds */}
         {sortedFolders.map((folder) => {
@@ -773,13 +785,13 @@ export function Sidebar({
         {uncategorizedFeeds.length > 0 ? (
           <div className={styles.folderGroup}>
             <div
-              className={`${styles.folderRowWrap} ${styles.folderRowWrapNoActions} ${
+              className={`${styles.folderRowWrap} ${
                 selectedScope.type === "uncategorized" ? styles.folderRowWrapActive : ""
               }`}
             >
               <button
                 type="button"
-                className={primitiveStyles.treeToggle}
+                className={`${primitiveStyles.treeToggle} ${styles.folderToggle}`}
                 onClick={() => setIsUncategorizedExpanded((previous) => !previous)}
                 aria-label={`${isUncategorizedExpanded ? "Collapse" : "Expand"} Uncategorized`}
                 aria-expanded={isUncategorizedExpanded}
@@ -795,8 +807,11 @@ export function Sidebar({
                 aria-current={selectedScope.type === "uncategorized" ? "true" : undefined}
               >
                 <span className={styles.folderLabel}>Uncategorized</span>
-                <span className={primitiveStyles.rowCount}>{uncategorizedFeeds.length}</span>
+                <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
+                  {uncategorizedFeeds.length}
+                </span>
               </button>
+              <div className={styles.folderActionsSpacer} aria-hidden="true" />
             </div>
 
             {isUncategorizedExpanded ? (
