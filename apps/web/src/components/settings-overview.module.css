@@ -18,6 +18,14 @@
   font-weight: var(--weight-semibold);
 }
 
+.headerTopRow {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+}
+
 .panel {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
@@ -73,6 +81,27 @@
   cursor: not-allowed;
 }
 
+.compactButton {
+  justify-self: start;
+  width: fit-content;
+}
+
+.headerTopRow .compactButton {
+  margin-left: auto;
+}
+
+.iconButtonContent {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+}
+
+.buttonIcon {
+  flex: 0 0 auto;
+  height: 14px;
+  width: 14px;
+}
+
 .deleteConfirm {
   display: grid;
   gap: 8px;
@@ -104,4 +133,14 @@
   gap: 4px;
   margin: 0;
   padding-left: 18px;
+}
+
+@media (max-width: 640px) {
+  .headerTopRow {
+    align-items: flex-start;
+  }
+
+  .headerTopRow .compactButton {
+    margin-left: 0;
+  }
 }

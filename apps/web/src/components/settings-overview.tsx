@@ -137,6 +137,65 @@ async function parseImportFile(file: File): Promise<ParsedImportFile> {
   throw new Error("Unsupported file type. Use .opml, .xml, or .json.");
 }
 
+const backIcon = (
+  <svg
+    className={styles.buttonIcon}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M10 6L4 12L10 18"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M5 12H20"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const trashIcon = (
+  <svg
+    className={styles.buttonIcon}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M4 7H20"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M9 7V5.8C9 5.36 9.36 5 9.8 5H14.2C14.64 5 15 5.36 15 5.8V7"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M7.5 7L8.2 18.2C8.25 18.96 8.88 19.55 9.65 19.55H14.35C15.12 19.55 15.75 18.96 15.8 18.2L16.5 7"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path d="M10 10.2V16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    <path d="M14 10.2V16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+  </svg>
+);
+
 /**
  * Renders minimal account settings for the reading MVP.
  */
@@ -274,11 +333,16 @@ export function SettingsOverview({ email }: SettingsOverviewProps) {
   return (
     <div className={styles.root}>
       <header className={styles.header}>
-        <h1>Account</h1>
+        <div className={styles.headerTopRow}>
+          <h1>Account</h1>
+          <Link href="/feeds" className={`${styles.linkButton} ${styles.compactButton}`}>
+            <span className={styles.iconButtonContent}>
+              {backIcon}
+              <span>Return to feeds</span>
+            </span>
+          </Link>
+        </div>
         <p className={styles.muted}>Signed in as {email}</p>
-        <Link href="/feeds" className={styles.linkButton}>
-          Return to feeds
-        </Link>
       </header>
 
       <section className={styles.panel}>
@@ -340,10 +404,13 @@ export function SettingsOverview({ email }: SettingsOverviewProps) {
         {!showDeleteConfirm ? (
           <button
             type="button"
-            className={styles.linkButton}
+            className={`${styles.linkButton} ${styles.compactButton}`}
             onClick={() => setShowDeleteConfirm(true)}
           >
-            Delete my account
+            <span className={styles.iconButtonContent}>
+              {trashIcon}
+              <span>Delete my account</span>
+            </span>
           </button>
         ) : (
           <div className={styles.deleteConfirm}>
@@ -351,13 +418,16 @@ export function SettingsOverview({ email }: SettingsOverviewProps) {
             <div className={styles.inlineActions}>
               <button
                 type="button"
-                className={styles.linkButton}
+                className={`${styles.linkButton} ${styles.compactButton}`}
                 onClick={() => {
                   void handleDeleteAccount();
                 }}
                 disabled={isDeletingAccount}
               >
-                {isDeletingAccount ? "Deleting..." : "Yes, delete my account"}
+                <span className={styles.iconButtonContent}>
+                  {trashIcon}
+                  <span>{isDeletingAccount ? "Deleting..." : "Yes, delete my account"}</span>
+                </span>
               </button>
               <button
                 type="button"

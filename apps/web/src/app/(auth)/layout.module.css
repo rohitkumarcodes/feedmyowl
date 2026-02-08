@@ -5,6 +5,9 @@
 
 .brand {
   background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  box-shadow: inset -1px 0 0 var(--border);
   color: var(--text-primary);
   display: inline-flex;
   font-size: var(--text-lg);
@@ -56,10 +59,17 @@
   border: 1px solid var(--border);
   color: var(--text-primary);
   display: inline-flex;
+  gap: 6px;
   font-size: var(--text-sm);
   min-height: 32px;
   padding: 0 10px;
   text-decoration: none;
+}
+
+.settingsIcon {
+  flex: 0 0 auto;
+  height: 14px;
+  width: 14px;
 }
 
 .settingsLink:hover {
