@@ -3,25 +3,31 @@
   position: relative;
 }
 
-.brand {
+.brandSlot {
   /* Fixed brand slot; sidebar header reserve uses --sidebar-header-reserve to clear this block. */
+  display: flex;
+  justify-content: center;
+  left: 0;
+  position: fixed;
+  top: 14px;
+  width: var(--sidebar-pane-width);
+  z-index: 40;
+}
+
+.brand {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-right: 1px solid var(--border);
+  box-sizing: border-box;
   color: var(--text-primary);
   display: inline-flex;
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
-  left: 0;
-  letter-spacing: 0.02em;
-  padding: 14px 16px;
-  position: fixed;
-  text-decoration: none;
-  top: 14px;
-  width: var(--sidebar-pane-width);
-  box-sizing: border-box;
   justify-content: center;
-  z-index: 40;
+  letter-spacing: 0.02em;
+  max-width: calc(100% - 16px);
+  padding: 14px 16px;
+  text-decoration: none;
+  width: fit-content;
 }
 
 .brand:hover {
@@ -36,7 +42,7 @@
 
 /* Hide the brand logo when sidebar is collapsed.
    The data attribute is set on <html> by FeedsWorkspace. */
-:global([data-sidebar-collapsed="true"]) .brand {
+:global([data-sidebar-collapsed="true"]) .brandSlot {
   display: none;
 }
 
@@ -79,13 +85,13 @@
 }
 
 @media (max-width: 1120px) {
-  .brand {
+  .brandSlot {
     width: var(--sidebar-pane-width-compact);
   }
 }
 
 @media (max-width: 900px) {
-  .brand {
+  .brandSlot {
     top: 8px;
   }
 

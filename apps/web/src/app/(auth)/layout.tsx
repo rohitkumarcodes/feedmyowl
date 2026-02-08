@@ -16,9 +16,11 @@ export default function AuthLayout({
 }) {
   return (
     <div className={styles.shell}>
-      <Link href="/feeds" className={styles.brand}>
-        Feed my owl 🦉
-      </Link>
+      <div className={styles.brandSlot}>
+        <Link href="/feeds" className={styles.brand}>
+          Feed my owl 🦉
+        </Link>
+      </div>
 
       <div className={styles.accountControls}>
         <Link href="/settings" className={styles.settingsLink}>
