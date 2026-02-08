@@ -68,6 +68,7 @@ export default async function FeedsPage() {
         return {
           id: feed.id,
           title: feed.title,
+          customTitle: feed.customTitle,
           description: feed.description,
           url: feed.url,
           lastFetchedAt: toIsoString(feed.lastFetchedAt),

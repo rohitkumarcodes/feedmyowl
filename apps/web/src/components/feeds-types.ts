@@ -22,6 +22,7 @@ export interface FeedItemViewModel {
 export interface FeedViewModel {
   id: string;
   title: string | null;
+  customTitle: string | null;
   description: string | null;
   url: string;
   lastFetchedAt: string | null;

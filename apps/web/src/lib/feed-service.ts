@@ -269,3 +269,30 @@ export async function deleteFeedForUser(userId: string, feedId: string): Promise
 
   return deleted.length > 0;
 }
+
+/**
+ * Update the user-defined display name for one feed belonging to one user.
+ */
+export async function renameFeedForUser(
+  userId: string,
+  feedId: string,
+  customTitle: string | null
+) {
+  const now = new Date();
+  const [updatedFeed] = await db
+    .update(feeds)
+    .set({
+      customTitle,
+      updatedAt: now,
+    })
+    .where(and(eq(feeds.id, feedId), eq(feeds.userId, userId)))
+    .returning({
+      id: feeds.id,
+      url: feeds.url,
+      title: feeds.title,
+      customTitle: feeds.customTitle,
+      updatedAt: feeds.updatedAt,
+    });
+
+  return updatedFeed || null;
+}

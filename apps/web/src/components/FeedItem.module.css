@@ -87,6 +87,7 @@
   background: var(--bg-primary);
   border: 1px solid var(--border);
   display: grid;
+  min-width: 140px;
   padding: 2px;
   position: absolute;
   right: 0;
@@ -115,6 +116,72 @@
 }
 
 .menuItem:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.renamePopover {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  min-width: 200px;
+  padding: 8px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 20;
+}
+
+.renameForm {
+  display: grid;
+  gap: 8px;
+}
+
+.renameInput {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  min-height: 32px;
+  padding: 6px 8px;
+}
+
+.renameInput:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.renameInput:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.renameActions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.renameButton {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: var(--text-xs);
+  min-height: 28px;
+  padding: 4px 8px;
+}
+
+.renameButton:hover:enabled {
+  background: var(--bg-tertiary);
+}
+
+.renameButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.renameButton:disabled {
   color: var(--text-muted);
   cursor: not-allowed;
 }

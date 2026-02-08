@@ -29,15 +29,20 @@ function escapeXml(value: string): string {
 function buildFolderAwareOpml(params: {
   nowIso: string;
   folders: Array<{ id: string; name: string }>;
-  feeds: Array<{ url: string; title: string | null; folderId: string | null }>;
+  feeds: Array<{
+    url: string;
+    title: string | null;
+    customTitle: string | null;
+    folderId: string | null;
+  }>;
 }): string {
   const sortedFolders = [...params.folders].sort((a, b) =>
     a.name.localeCompare(b.name)
   );
 
   const sortedFeeds = [...params.feeds].sort((a, b) => {
-    const aLabel = a.title || a.url;
-    const bLabel = b.title || b.url;
+    const aLabel = a.customTitle || a.title || a.url;
+    const bLabel = b.customTitle || b.title || b.url;
     return aLabel.localeCompare(bLabel);
   });
 
@@ -57,7 +62,7 @@ function buildFolderAwareOpml(params: {
 
   const uncategorizedOutlines = uncategorized
     .map((feed) => {
-      const title = escapeXml(feed.title || feed.url);
+      const title = escapeXml(feed.customTitle || feed.title || feed.url);
       const url = escapeXml(feed.url);
       return `    <outline text="${title}" title="${title}" type="rss" xmlUrl="${url}" htmlUrl="${url}" />`;
     })
@@ -73,7 +78,7 @@ function buildFolderAwareOpml(params: {
       const folderName = escapeXml(folder.name);
       const feedOutlines = folderFeeds
         .map((feed) => {
-          const title = escapeXml(feed.title || feed.url);
+          const title = escapeXml(feed.customTitle || feed.title || feed.url);
           const url = escapeXml(feed.url);
           return `      <outline text="${title}" title="${title}" type="rss" xmlUrl="${url}" htmlUrl="${url}" />`;
         })
@@ -144,6 +149,7 @@ export async function GET(request: NextRequest) {
         feeds: user.feeds.map((feed) => ({
           url: feed.url,
           title: feed.title,
+          customTitle: feed.customTitle,
           folderId: feed.folderId,
         })),
       });
@@ -180,6 +186,7 @@ export async function GET(request: NextRequest) {
             id: feed.id,
             url: feed.url,
             title: feed.title,
+            customTitle: feed.customTitle,
             description: feed.description,
             folderId: feed.folderId,
             lastFetchedAt: feed.lastFetchedAt?.toISOString() || null,
@@ -198,8 +205,8 @@ export async function GET(request: NextRequest) {
             })),
           }))
           .sort((a, b) => {
-            const aLabel = a.title || a.url;
-            const bLabel = b.title || b.url;
+            const aLabel = a.customTitle || a.title || a.url;
+            const bLabel = b.customTitle || b.title || b.url;
             return aLabel.localeCompare(bLabel);
           }),
       };

@@ -133,6 +133,9 @@ export const feeds = pgTable(
     /** Feed title (populated from the feed's <title> after first fetch) */
     title: varchar("title", { length: 500 }),
 
+    /** Optional user-defined display name that overrides the source feed title */
+    customTitle: varchar("custom_title", { length: 255 }),
+
     /** Feed description (populated from the feed's <description> after first fetch) */
     description: text("description"),
 

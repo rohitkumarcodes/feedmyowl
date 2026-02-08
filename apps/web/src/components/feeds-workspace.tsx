@@ -106,6 +106,7 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
     isAddingFeed,
     isRefreshingFeeds,
     deletingFeedId,
+    renamingFeedId,
     infoMessage,
     errorMessage,
     setFeedUrlInput,
@@ -115,6 +116,7 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
     markArticleAsRead,
     handleRefresh,
     handleAddFeed,
+    handleRenameFeed,
     handleDeleteFeed,
   } = useFeedsWorkspaceActions({
     allArticles,
@@ -297,6 +299,10 @@ export function FeedsWorkspace({ initialFeeds }: FeedsWorkspaceProps) {
             errorMessage={errorMessage}
             onDismissMessage={clearStatusMessages}
             deletingFeedId={deletingFeedId}
+            renamingFeedId={renamingFeedId}
+            onRequestFeedRename={(feedId, name) => {
+              return handleRenameFeed(feedId, name);
+            }}
             onRequestFeedDelete={(feedId) => {
               void handleDeleteFeed(feedId);
             }}

@@ -6,6 +6,7 @@ import type { FormEvent } from "react";
 import { AddFeedForm } from "./AddFeedForm";
 import { FeedItem } from "./FeedItem";
 import type { FeedViewModel } from "./feeds-types";
+import { getFeedLabel } from "./feeds-workspace.selectors";
 import styles from "./Sidebar.module.css";
 
 export type SidebarScope = { type: "none" } | { type: "all" } | { type: "feed"; feedId: string };
@@ -31,7 +32,9 @@ interface SidebarProps {
   onDismissMessage: () => void;
 
   deletingFeedId: string | null;
+  renamingFeedId: string | null;
   onRequestFeedDelete: (feedId: string) => void;
+  onRequestFeedRename: (feedId: string, name: string) => void | Promise<void>;
 
   onCollapse: () => void;
 }
@@ -57,12 +60,14 @@ export function Sidebar({
   errorMessage,
   onDismissMessage,
   deletingFeedId,
+  renamingFeedId,
   onRequestFeedDelete,
+  onRequestFeedRename,
   onCollapse,
 }: SidebarProps) {
   const sortedFeeds = [...feeds].sort((a, b) => {
-    const aLabel = a.title || a.url;
-    const bLabel = b.title || b.url;
+    const aLabel = getFeedLabel(a);
+    const bLabel = getFeedLabel(b);
     return aLabel.localeCompare(bLabel);
   });
 
@@ -148,7 +153,7 @@ export function Sidebar({
           <p className={styles.emptyLabel}>No feeds yet.</p>
         ) : (
           sortedFeeds.map((feed) => {
-            const label = feed.title || feed.url;
+            const label = getFeedLabel(feed);
             const isActive = selectedScope.type === "feed" && selectedScope.feedId === feed.id;
 
             return (
@@ -157,8 +162,10 @@ export function Sidebar({
                 label={label}
                 isActive={isActive}
                 isDeleting={deletingFeedId === feed.id}
+                isRenaming={renamingFeedId === feed.id}
                 onSelect={() => onSelectFeed(feed.id)}
                 onDelete={() => onRequestFeedDelete(feed.id)}
+                onRename={(name) => onRequestFeedRename(feed.id, name)}
               />
             );
           })

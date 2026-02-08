@@ -6,6 +6,10 @@ import { extractArticleSnippet } from "@/utils/articleText";
  * Builds a readable feed label from title or URL fallback.
  */
 export function getFeedLabel(feed: FeedViewModel): string {
+  if (feed.customTitle?.trim()) {
+    return feed.customTitle.trim();
+  }
+
   if (feed.title?.trim()) {
     return feed.title.trim();
   }

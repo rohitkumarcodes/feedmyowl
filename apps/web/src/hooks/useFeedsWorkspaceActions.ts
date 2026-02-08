@@ -29,6 +29,7 @@ interface FeedCreateResponse {
   feed?: {
     id: string;
     title?: string | null;
+    customTitle?: string | null;
     description?: string | null;
     url: string;
     lastFetchedAt?: string | null;
@@ -40,6 +41,16 @@ interface FeedCreateResponse {
   };
   duplicate?: boolean;
   message?: string;
+}
+
+interface FeedRenameResponse {
+  feed?: {
+    id: string;
+    title?: string | null;
+    customTitle?: string | null;
+    url?: string;
+    updatedAt?: string;
+  };
 }
 
 interface UseFeedsWorkspaceActionsOptions {
@@ -88,6 +99,7 @@ export function useFeedsWorkspaceActions({
   const [isAddingFeed, setIsAddingFeed] = useState(false);
   const [isRefreshingFeeds, setIsRefreshingFeeds] = useState(false);
   const [deletingFeedId, setDeletingFeedId] = useState<string | null>(null);
+  const [renamingFeedId, setRenamingFeedId] = useState<string | null>(null);
 
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -233,6 +245,7 @@ export function useFeedsWorkspaceActions({
             const nextFeed: FeedViewModel = {
               id: createdFeed.id,
               title: createdFeed.title ?? null,
+              customTitle: createdFeed.customTitle ?? null,
               description: createdFeed.description ?? null,
               url: createdFeed.url,
               lastFetchedAt: createdFeed.lastFetchedAt ?? null,
@@ -277,7 +290,7 @@ export function useFeedsWorkspaceActions({
 
   const handleDeleteFeed = useCallback(
     async (feedId: string) => {
-      if (deletingFeedId) {
+      if (renamingFeedId || deletingFeedId) {
         return;
       }
 
@@ -315,7 +328,50 @@ export function useFeedsWorkspaceActions({
         setDeletingFeedId(null);
       }
     },
-    [deletingFeedId, router, setFeeds, setSelectedScope]
+    [deletingFeedId, renamingFeedId, router, setFeeds, setSelectedScope]
+  );
+
+  const handleRenameFeed = useCallback(
+    async (feedId: string, name: string) => {
+      if (deletingFeedId || renamingFeedId) {
+        return;
+      }
+
+      setRenamingFeedId(feedId);
+      setInfoMessage(null);
+      setErrorMessage(null);
+
+      try {
+        const response = await fetch(`/api/feeds/${feedId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name }),
+        });
+
+        const body = await parseResponseJson<ApiErrorResponse & FeedRenameResponse>(response);
+
+        if (!response.ok) {
+          setErrorMessage(body?.error || "Could not update feed name.");
+          setRenamingFeedId(null);
+          return;
+        }
+
+        const nextCustomTitle = body?.feed?.customTitle ?? null;
+        setFeeds((previousFeeds) =>
+          previousFeeds.map((feed) =>
+            feed.id === feedId ? { ...feed, customTitle: nextCustomTitle } : feed
+          )
+        );
+
+        setInfoMessage(name.trim() ? "Feed name updated." : "Feed name reset.");
+        setRenamingFeedId(null);
+        router.refresh();
+      } catch {
+        setErrorMessage("Could not connect to the server.");
+        setRenamingFeedId(null);
+      }
+    },
+    [deletingFeedId, renamingFeedId, router, setFeeds]
   );
 
   const clearStatusMessages = useCallback(() => {
@@ -337,6 +393,7 @@ export function useFeedsWorkspaceActions({
     isAddingFeed,
     isRefreshingFeeds,
     deletingFeedId,
+    renamingFeedId,
     infoMessage,
     errorMessage,
     setFeedUrlInput,
@@ -346,6 +403,7 @@ export function useFeedsWorkspaceActions({
     markArticleAsRead,
     handleRefresh,
     handleAddFeed,
+    handleRenameFeed,
     handleDeleteFeed,
   };
 }

@@ -1,0 +1,1 @@
+ALTER TABLE "feeds" ADD COLUMN "custom_title" varchar(255);

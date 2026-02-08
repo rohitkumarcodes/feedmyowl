@@ -1,13 +1,79 @@
 /**
  * API Route: /api/feeds/[id]
  *
- * Handles unsubscribing from a specific feed.
+ * Handles renaming and unsubscribing from a specific feed.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { ensureUserRecord } from "@/lib/app-user";
-import { deleteFeedForUser } from "@/lib/feed-service";
+import { deleteFeedForUser, renameFeedForUser } from "@/lib/feed-service";
+
+/**
+ * Safely parse JSON request bodies and return null for invalid JSON.
+ */
+async function parseRequestJson(
+  request: NextRequest
+): Promise<Record<string, unknown> | null> {
+  try {
+    return (await request.json()) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+const FEED_CUSTOM_TITLE_MAX_LENGTH = 255;
+
+/**
+ * PATCH /api/feeds/[id]
+ * Rename a feed for the authenticated user.
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { clerkId } = await requireAuth();
+    const { id } = await params;
+    const user = await ensureUserRecord(clerkId);
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const payload = await parseRequestJson(request);
+    const nextName = payload?.name;
+
+    if (typeof nextName !== "string") {
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
+    }
+
+    const trimmedName = nextName.trim();
+    if (trimmedName.length > FEED_CUSTOM_TITLE_MAX_LENGTH) {
+      return NextResponse.json(
+        {
+          error: `Name must be ${FEED_CUSTOM_TITLE_MAX_LENGTH} characters or fewer.`,
+          code: "name_too_long",
+        },
+        { status: 400 }
+      );
+    }
+
+    const updatedFeed = await renameFeedForUser(
+      user.id,
+      id,
+      trimmedName.length > 0 ? trimmedName : null
+    );
+
+    if (!updatedFeed) {
+      return NextResponse.json({ error: "Feed not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ feed: updatedFeed });
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+}
 
 /**
  * DELETE /api/feeds/[id]
