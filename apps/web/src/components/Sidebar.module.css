@@ -321,6 +321,49 @@
   z-index: 40;
 }
 
+.mobileSheetBackdrop {
+  background: rgb(0 0 0 / 28%);
+  border: 0;
+  cursor: pointer;
+  inset: 0;
+  position: fixed;
+  z-index: 68;
+}
+
+.mobileSheet {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-left: 0;
+  border-radius: 12px 12px 0 0;
+  border-right: 0;
+  bottom: 0;
+  left: 0;
+  max-height: min(70vh, 420px);
+  overflow: auto;
+  padding: 12px;
+  position: fixed;
+  right: 0;
+  z-index: 69;
+}
+
+.renamePopoverMobile {
+  border-bottom: 0;
+  border-left: 0;
+  border-radius: 12px 12px 0 0;
+  border-right: 0;
+  bottom: 0;
+  left: 0;
+  max-height: min(70vh, 420px);
+  min-width: 0;
+  overflow: auto;
+  padding: 12px;
+  position: fixed;
+  right: 0;
+  top: auto;
+  z-index: 69;
+}
+
 .renameForm {
   display: grid;
   gap: 8px;
@@ -467,4 +510,22 @@
 .deleteDialogButton:disabled {
   color: var(--text-muted);
   cursor: not-allowed;
+}
+
+@media (max-width: 767px) {
+  .deleteDialogBackdrop {
+    align-items: flex-end;
+  }
+
+  .deleteDialog {
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 12px 12px 0 0;
+    border-right: 0;
+    margin: 0;
+    max-height: min(80vh, 520px);
+    max-width: none;
+    overflow: auto;
+    width: 100%;
+  }
 }

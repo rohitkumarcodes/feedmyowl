@@ -16,6 +16,7 @@ import {
   users,
 } from "@/lib/database";
 import { deleteAuthUser, requireAuth } from "@/lib/auth";
+import { handleApiRouteError } from "@/lib/api-errors";
 import { ensureUserRecord } from "@/lib/app-user";
 import { isMissingRelationError } from "@/lib/db-compat";
 import { discoverFeedCandidates } from "@/lib/feed-discovery";
@@ -239,7 +240,21 @@ export async function GET() {
         | undefined) ?? [];
 
     const responseFeeds = feedRows.map((feed) => ({
-      ...feed,
+      id: feed.id,
+      userId: feed.userId,
+      folderId: feed.folderId,
+      url: feed.url,
+      title: feed.title,
+      customTitle: feed.customTitle,
+      description: feed.description,
+      lastFetchedAt: feed.lastFetchedAt,
+      lastFetchStatus: feed.lastFetchStatus,
+      lastFetchErrorCode: feed.lastFetchErrorCode,
+      lastFetchErrorMessage: feed.lastFetchErrorMessage,
+      lastFetchErrorAt: feed.lastFetchErrorAt,
+      createdAt: feed.createdAt,
+      updatedAt: feed.updatedAt,
+      items: feed.items,
       folderIds: resolveFeedFolderIds({
         legacyFolderId: feed.folderId,
         membershipFolderIds: getMembershipFolderIds(feed),
@@ -247,8 +262,8 @@ export async function GET() {
     }));
 
     return NextResponse.json({ feeds: responseFeeds, folders: folderRows });
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (error) {
+    return handleApiRouteError(error, "api.feeds.get");
   }
 }
 
@@ -484,8 +499,8 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (error) {
+    return handleApiRouteError(error, "api.feeds.post");
   }
 }
 
@@ -557,7 +572,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (error) {
+    return handleApiRouteError(error, "api.feeds.patch");
   }
 }

@@ -22,6 +22,7 @@ interface SidebarProps {
   feeds: FeedViewModel[];
   folders: FolderViewModel[];
   selectedScope: SidebarScope;
+  isMobile: boolean;
   onSelectAll: () => void;
   onSelectUncategorized: () => void;
   onSelectFolder: (folderId: string) => void;
@@ -51,19 +52,19 @@ interface SidebarProps {
   renamingFeedId: string | null;
   updatingFeedFoldersId: string | null;
   onRequestFeedDelete: (feedId: string) => void;
-  onRequestFeedRename: (feedId: string, name: string) => void | Promise<void>;
+  onRequestFeedRename: (feedId: string, name: string) => boolean | Promise<boolean>;
   onRequestFeedFolderUpdate: (
     feedId: string,
     folderIds: string[]
-  ) => void | Promise<void>;
+  ) => boolean | Promise<boolean>;
 
   deletingFolderId: string | null;
   renamingFolderId: string | null;
-  onCreateFolder: (name: string) => void | Promise<void>;
+  onCreateFolder: (name: string) => boolean | Promise<boolean>;
   onRequestFolderRename: (
     folderId: string,
     name: string
-  ) => void | Promise<void>;
+  ) => boolean | Promise<boolean>;
   onRequestFolderDelete: (
     folderId: string,
     mode: FolderDeleteMode
@@ -74,6 +75,7 @@ interface SidebarProps {
 
 interface FolderRowProps {
   folder: FolderViewModel;
+  isMobile: boolean;
   feedCount: number;
   isActive: boolean;
   isExpanded: boolean;
@@ -81,12 +83,13 @@ interface FolderRowProps {
   isRenaming: boolean;
   onToggleExpand: () => void;
   onSelectFolder: () => void;
-  onRenameFolder: (name: string) => Promise<void>;
+  onRenameFolder: (name: string) => Promise<boolean>;
   onPromptDeleteFolder: () => void;
 }
 
 function FolderRow({
   folder,
+  isMobile,
   feedCount,
   isActive,
   isExpanded,
@@ -149,9 +152,11 @@ function FolderRow({
       return;
     }
 
-    await onRenameFolder(renameValue);
-    setIsMenuOpen(false);
-    setIsRenameOpen(false);
+    const renamed = await onRenameFolder(renameValue);
+    if (renamed) {
+      setIsMenuOpen(false);
+      setIsRenameOpen(false);
+    }
   };
 
   return (
@@ -190,33 +195,48 @@ function FolderRow({
         </button>
 
         {isRenameOpen ? (
-          <div className={styles.renamePopover} role="dialog" aria-label={`Edit folder ${folder.name}`}>
-            <form className={styles.renameForm} onSubmit={handleRenameSubmit}>
-              <input
-                ref={renameInputRef}
-                type="text"
-                value={renameValue}
-                onChange={(event) => setRenameValue(event.target.value)}
-                className={styles.renameInput}
-                placeholder="Folder name"
-                maxLength={255}
-                disabled={isRenaming}
+          <>
+            {isMobile ? (
+              <button
+                type="button"
+                className={styles.mobileSheetBackdrop}
+                aria-label={`Close rename dialog for ${folder.name}`}
+                onClick={() => setIsRenameOpen(false)}
               />
-              <div className={styles.renameActions}>
-                <button type="submit" className={styles.renameButton} disabled={isRenaming}>
-                  {isRenaming ? "Saving..." : "Save"}
-                </button>
-                <button
-                  type="button"
-                  className={styles.renameButton}
-                  onClick={() => setIsRenameOpen(false)}
+            ) : null}
+            <div
+              className={`${styles.renamePopover} ${isMobile ? styles.renamePopoverMobile : ""}`}
+              role="dialog"
+              aria-label={`Edit folder ${folder.name}`}
+              aria-modal={isMobile ? "true" : undefined}
+            >
+              <form className={styles.renameForm} onSubmit={handleRenameSubmit}>
+                <input
+                  ref={renameInputRef}
+                  type="text"
+                  value={renameValue}
+                  onChange={(event) => setRenameValue(event.target.value)}
+                  className={styles.renameInput}
+                  placeholder="Folder name"
+                  maxLength={255}
                   disabled={isRenaming}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
+                />
+                <div className={styles.renameActions}>
+                  <button type="submit" className={styles.renameButton} disabled={isRenaming}>
+                    {isRenaming ? "Saving..." : "Save"}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.renameButton}
+                    onClick={() => setIsRenameOpen(false)}
+                    disabled={isRenaming}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </>
         ) : null}
 
         {isMenuOpen ? (
@@ -260,6 +280,7 @@ export function Sidebar({
   feeds,
   folders,
   selectedScope,
+  isMobile,
   onSelectAll,
   onSelectUncategorized,
   onSelectFolder,
@@ -372,10 +393,51 @@ export function Sidebar({
       return;
     }
 
-    await onCreateFolder(nextName);
-    setSidebarFolderName("");
-    setIsSidebarFolderFormVisible(false);
+    const created = await onCreateFolder(nextName);
+    if (created) {
+      setSidebarFolderName("");
+      setIsSidebarFolderFormVisible(false);
+    }
   };
+
+  const closeSidebarFolderForm = () => {
+    setIsSidebarFolderFormVisible(false);
+    setSidebarFolderName("");
+  };
+
+  const sidebarFolderForm = (
+    <div className={styles.sidebarFolderForm}>
+      <input
+        type="text"
+        className={styles.sidebarFolderInput}
+        value={sidebarFolderName}
+        onChange={(event) => setSidebarFolderName(event.currentTarget.value)}
+        placeholder="Folder name"
+        maxLength={255}
+        disabled={isCreatingFolder}
+      />
+      <div className={styles.sidebarFolderActions}>
+        <button
+          type="button"
+          className={styles.sidebarFolderButton}
+          onClick={() => {
+            void handleCreateFolderFromSidebar();
+          }}
+          disabled={isCreatingFolder}
+        >
+          {isCreatingFolder ? "Creating..." : "Create"}
+        </button>
+        <button
+          type="button"
+          className={styles.sidebarFolderButton}
+          onClick={closeSidebarFolderForm}
+          disabled={isCreatingFolder}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
 
   const renderFeedRows = (folderFeedList: FeedViewModel[]) =>
     folderFeedList.map((feed) => {
@@ -387,6 +449,7 @@ export function Sidebar({
           key={`${feed.id}`}
           label={label}
           isActive={isActive}
+          isMobile={isMobile}
           isDeleting={deletingFeedId === feed.id}
           isRenaming={renamingFeedId === feed.id}
           isUpdatingFolders={updatingFeedFoldersId === feed.id}
@@ -457,42 +520,21 @@ export function Sidebar({
         </div>
 
         {isSidebarFolderFormVisible ? (
-          <div className={styles.formWrap}>
-            <div className={styles.sidebarFolderForm}>
-              <input
-                type="text"
-                className={styles.sidebarFolderInput}
-                value={sidebarFolderName}
-                onChange={(event) => setSidebarFolderName(event.currentTarget.value)}
-                placeholder="Folder name"
-                maxLength={255}
-                disabled={isCreatingFolder}
+          isMobile ? (
+            <>
+              <button
+                type="button"
+                className={styles.mobileSheetBackdrop}
+                aria-label="Close new folder dialog"
+                onClick={closeSidebarFolderForm}
               />
-              <div className={styles.sidebarFolderActions}>
-                <button
-                  type="button"
-                  className={styles.sidebarFolderButton}
-                  onClick={() => {
-                    void handleCreateFolderFromSidebar();
-                  }}
-                  disabled={isCreatingFolder}
-                >
-                  {isCreatingFolder ? "Creating..." : "Create"}
-                </button>
-                <button
-                  type="button"
-                  className={styles.sidebarFolderButton}
-                  onClick={() => {
-                    setIsSidebarFolderFormVisible(false);
-                    setSidebarFolderName("");
-                  }}
-                  disabled={isCreatingFolder}
-                >
-                  Cancel
-                </button>
+              <div className={styles.mobileSheet} role="dialog" aria-modal="true" aria-label="Create folder">
+                {sidebarFolderForm}
               </div>
-            </div>
-          </div>
+            </>
+          ) : (
+            <div className={styles.formWrap}>{sidebarFolderForm}</div>
+          )
         ) : null}
 
         {isAddFeedFormVisible ? (
@@ -570,6 +612,7 @@ export function Sidebar({
                 <div key={folder.id} className={styles.folderGroup}>
                   <FolderRow
                     folder={folder}
+                    isMobile={isMobile}
                     feedCount={folderFeeds.length}
                     isActive={isFolderActive}
                     isExpanded={isExpanded}

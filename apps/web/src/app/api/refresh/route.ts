@@ -8,6 +8,7 @@
 
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
+import { handleApiRouteError } from "@/lib/api-errors";
 import { ensureUserRecord } from "@/lib/app-user";
 import { refreshFeedsForUser } from "@/lib/feed-service";
 
@@ -42,7 +43,7 @@ export async function POST() {
       results: refresh.results,
       retentionDeletedCount: refresh.retentionDeletedCount,
     });
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (error) {
+    return handleApiRouteError(error, "api.refresh.post");
   }
 }

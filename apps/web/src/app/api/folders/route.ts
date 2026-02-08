@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
+import { handleApiRouteError } from "@/lib/api-errors";
 import { ensureUserRecord } from "@/lib/app-user";
 import {
   createFolderForUser,
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ folder: result.folder }, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (error) {
+    return handleApiRouteError(error, "api.folders.post");
   }
 }

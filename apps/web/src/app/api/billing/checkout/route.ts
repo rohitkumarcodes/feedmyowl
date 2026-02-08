@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
+import { handleApiRouteError } from "@/lib/api-errors";
 import { db, eq, users } from "@/lib/database";
-import { captureError } from "@/lib/error-tracking";
 import { ensureUserRecord } from "@/lib/app-user";
 import { createCheckoutSession, createStripeCustomer } from "@/lib/payments";
 
@@ -45,7 +45,6 @@ export async function POST() {
 
     return NextResponse.json({ url: checkoutUrl });
   } catch (error) {
-    captureError(error, { route: "billing.checkout" });
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return handleApiRouteError(error, "api.billing.checkout.post");
   }
 }

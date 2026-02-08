@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { captureError } from "@/lib/error-tracking";
+import { handleApiRouteError } from "@/lib/api-errors";
 import { ensureUserRecord } from "@/lib/app-user";
 import { createPortalSession } from "@/lib/payments";
 
@@ -30,7 +30,6 @@ export async function POST() {
 
     return NextResponse.json({ url: portalUrl });
   } catch (error) {
-    captureError(error, { route: "billing.portal" });
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return handleApiRouteError(error, "api.billing.portal.post");
   }
 }

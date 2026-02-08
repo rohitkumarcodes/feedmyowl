@@ -319,8 +319,9 @@ export function useFeedsWorkspaceActions({
   }, [addFeedNewFolderNameInput, createFolder]);
 
   const createFolderFromSidebar = useCallback(
-    async (name: string) => {
-      await createFolder(name);
+    async (name: string): Promise<boolean> => {
+      const created = await createFolder(name);
+      return Boolean(created);
     },
     [createFolder]
   );
@@ -488,9 +489,9 @@ export function useFeedsWorkspaceActions({
   );
 
   const handleRenameFeed = useCallback(
-    async (feedId: string, name: string) => {
+    async (feedId: string, name: string): Promise<boolean> => {
       if (deletingFeedId || renamingFeedId || updatingFeedFoldersId) {
-        return;
+        return false;
       }
 
       setRenamingFeedId(feedId);
@@ -509,7 +510,7 @@ export function useFeedsWorkspaceActions({
         if (!response.ok) {
           setErrorMessage(body?.error || "Could not update feed name.");
           setRenamingFeedId(null);
-          return;
+          return false;
         }
 
         const nextCustomTitle = body?.feed?.customTitle ?? null;
@@ -522,18 +523,20 @@ export function useFeedsWorkspaceActions({
         setInfoMessage(name.trim() ? "Feed name updated." : "Feed name reset.");
         setRenamingFeedId(null);
         router.refresh();
+        return true;
       } catch {
         setErrorMessage("Could not connect to the server.");
         setRenamingFeedId(null);
+        return false;
       }
     },
     [deletingFeedId, renamingFeedId, router, setFeeds, updatingFeedFoldersId]
   );
 
   const handleSetFeedFolders = useCallback(
-    async (feedId: string, folderIds: string[]) => {
+    async (feedId: string, folderIds: string[]): Promise<boolean> => {
       if (deletingFeedId || renamingFeedId || updatingFeedFoldersId) {
-        return;
+        return false;
       }
 
       setUpdatingFeedFoldersId(feedId);
@@ -554,7 +557,7 @@ export function useFeedsWorkspaceActions({
         if (!response.ok) {
           setErrorMessage(body?.error || "Could not update feed folders.");
           setUpdatingFeedFoldersId(null);
-          return;
+          return false;
         }
 
         const nextFolderIds = body?.feed?.folderIds ?? [];
@@ -573,18 +576,20 @@ export function useFeedsWorkspaceActions({
         );
         setUpdatingFeedFoldersId(null);
         router.refresh();
+        return true;
       } catch {
         setErrorMessage("Could not connect to the server.");
         setUpdatingFeedFoldersId(null);
+        return false;
       }
     },
     [deletingFeedId, renamingFeedId, router, setFeeds, updatingFeedFoldersId]
   );
 
   const handleRenameFolder = useCallback(
-    async (folderId: string, name: string) => {
+    async (folderId: string, name: string): Promise<boolean> => {
       if (deletingFolderId || renamingFolderId || isCreatingFolder) {
-        return;
+        return false;
       }
 
       setRenamingFolderId(folderId);
@@ -602,7 +607,7 @@ export function useFeedsWorkspaceActions({
         if (!response.ok || !body?.folder?.id) {
           setErrorMessage(body?.error || "Could not rename folder.");
           setRenamingFolderId(null);
-          return;
+          return false;
         }
 
         setFolders((previousFolders) =>
@@ -622,9 +627,11 @@ export function useFeedsWorkspaceActions({
         setInfoMessage("Folder name updated.");
         setRenamingFolderId(null);
         router.refresh();
+        return true;
       } catch {
         setErrorMessage("Could not connect to the server.");
         setRenamingFolderId(null);
+        return false;
       }
     },
     [deletingFolderId, isCreatingFolder, renamingFolderId, router, setFolders]

@@ -9,6 +9,7 @@ import styles from "./FeedItem.module.css";
 interface FeedItemProps {
   label: string;
   isActive: boolean;
+  isMobile: boolean;
   isDeleting: boolean;
   isRenaming: boolean;
   isUpdatingFolders: boolean;
@@ -16,8 +17,8 @@ interface FeedItemProps {
   selectedFolderIds: string[];
   onSelect: () => void;
   onDelete: () => void;
-  onRename: (name: string) => void | Promise<void>;
-  onSaveFolders: (folderIds: string[]) => void | Promise<void>;
+  onRename: (name: string) => boolean | Promise<boolean>;
+  onSaveFolders: (folderIds: string[]) => boolean | Promise<boolean>;
 }
 
 /**
@@ -26,6 +27,7 @@ interface FeedItemProps {
 export function FeedItem({
   label,
   isActive,
+  isMobile,
   isDeleting,
   isRenaming,
   isUpdatingFolders,
@@ -135,9 +137,11 @@ export function FeedItem({
       return;
     }
 
-    await onSaveFolders(draftFolderIds);
-    setIsFoldersOpen(false);
-    setIsMenuOpen(false);
+    const saved = await onSaveFolders(draftFolderIds);
+    if (saved) {
+      setIsFoldersOpen(false);
+      setIsMenuOpen(false);
+    }
   };
 
   const handleRenameSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -147,9 +151,11 @@ export function FeedItem({
       return;
     }
 
-    await onRename(renameValue);
-    setIsRenameOpen(false);
-    setIsMenuOpen(false);
+    const renamed = await onRename(renameValue);
+    if (renamed) {
+      setIsRenameOpen(false);
+      setIsMenuOpen(false);
+    }
   };
 
   return (
@@ -178,81 +184,111 @@ export function FeedItem({
         </button>
 
         {isRenameOpen ? (
-          <div className={styles.renamePopover} role="dialog" aria-label={`Edit name for ${label}`}>
-            <form className={styles.renameForm} onSubmit={handleRenameSubmit}>
-              <input
-                ref={renameInputRef}
-                type="text"
-                value={renameValue}
-                onChange={(event) => setRenameValue(event.target.value)}
-                className={styles.renameInput}
-                placeholder="Feed name"
-                maxLength={255}
-                disabled={isRenaming}
+          <>
+            {isMobile ? (
+              <button
+                type="button"
+                className={styles.mobileSheetBackdrop}
+                aria-label={`Close rename dialog for ${label}`}
+                onClick={() => setIsRenameOpen(false)}
               />
-              <div className={styles.renameActions}>
-                <button
-                  type="submit"
-                  className={styles.renameButton}
+            ) : null}
+            <div
+              className={`${styles.renamePopover} ${isMobile ? styles.renamePopoverMobile : ""}`}
+              role="dialog"
+              aria-label={`Edit name for ${label}`}
+              aria-modal={isMobile ? "true" : undefined}
+            >
+              <form className={styles.renameForm} onSubmit={handleRenameSubmit}>
+                <input
+                  ref={renameInputRef}
+                  type="text"
+                  value={renameValue}
+                  onChange={(event) => setRenameValue(event.target.value)}
+                  className={styles.renameInput}
+                  placeholder="Feed name"
+                  maxLength={255}
                   disabled={isRenaming}
-                >
-                  {isRenaming ? "Saving..." : "Save"}
-                </button>
-                <button
-                  type="button"
-                  className={styles.renameButton}
-                  onClick={() => setIsRenameOpen(false)}
-                  disabled={isRenaming}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
+                />
+                <div className={styles.renameActions}>
+                  <button
+                    type="submit"
+                    className={styles.renameButton}
+                    disabled={isRenaming}
+                  >
+                    {isRenaming ? "Saving..." : "Save"}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.renameButton}
+                    onClick={() => setIsRenameOpen(false)}
+                    disabled={isRenaming}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </>
         ) : null}
 
         {isFoldersOpen ? (
-          <div className={styles.renamePopover} role="dialog" aria-label={`Edit folders for ${label}`}>
-            <div className={styles.folderEditor}>
-              {folderOptions.length === 0 ? (
-                <p className={styles.folderEditorEmpty}>Create a folder first.</p>
-              ) : (
-                <div className={styles.folderEditorList}>
-                  {folderOptions.map((folder) => (
-                    <label key={folder.id} className={styles.folderEditorOption}>
-                      <input
-                        type="checkbox"
-                        checked={draftFolderIds.includes(folder.id)}
-                        onChange={() => toggleDraftFolder(folder.id)}
-                        disabled={isUpdatingFolders}
-                      />
-                      <span>{folder.name}</span>
-                    </label>
-                  ))}
+          <>
+            {isMobile ? (
+              <button
+                type="button"
+                className={styles.mobileSheetBackdrop}
+                aria-label={`Close folders dialog for ${label}`}
+                onClick={() => setIsFoldersOpen(false)}
+              />
+            ) : null}
+            <div
+              className={`${styles.renamePopover} ${isMobile ? styles.renamePopoverMobile : ""}`}
+              role="dialog"
+              aria-label={`Edit folders for ${label}`}
+              aria-modal={isMobile ? "true" : undefined}
+            >
+              <div className={styles.folderEditor}>
+                {folderOptions.length === 0 ? (
+                  <p className={styles.folderEditorEmpty}>Create a folder first.</p>
+                ) : (
+                  <div className={styles.folderEditorList}>
+                    {folderOptions.map((folder) => (
+                      <label key={folder.id} className={styles.folderEditorOption}>
+                        <input
+                          type="checkbox"
+                          checked={draftFolderIds.includes(folder.id)}
+                          onChange={() => toggleDraftFolder(folder.id)}
+                          disabled={isUpdatingFolders}
+                        />
+                        <span>{folder.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+                <div className={styles.renameActions}>
+                  <button
+                    type="button"
+                    className={styles.renameButton}
+                    onClick={() => {
+                      void handleSaveFolders();
+                    }}
+                    disabled={isUpdatingFolders}
+                  >
+                    {isUpdatingFolders ? "Saving..." : "Save"}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.renameButton}
+                    onClick={() => setIsFoldersOpen(false)}
+                    disabled={isUpdatingFolders}
+                  >
+                    Cancel
+                  </button>
                 </div>
-              )}
-              <div className={styles.renameActions}>
-                <button
-                  type="button"
-                  className={styles.renameButton}
-                  onClick={() => {
-                    void handleSaveFolders();
-                  }}
-                  disabled={isUpdatingFolders}
-                >
-                  {isUpdatingFolders ? "Saving..." : "Save"}
-                </button>
-                <button
-                  type="button"
-                  className={styles.renameButton}
-                  onClick={() => setIsFoldersOpen(false)}
-                  disabled={isUpdatingFolders}
-                >
-                  Cancel
-                </button>
               </div>
             </div>
-          </div>
+          </>
         ) : null}
 
         {isMenuOpen ? (

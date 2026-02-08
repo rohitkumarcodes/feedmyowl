@@ -53,6 +53,31 @@ export { SignUp as SignUpForm } from "@clerk/nextjs";
 export { UserButton as UserMenu } from "@clerk/nextjs";
 
 /**
+ * Error thrown when an API route requires authentication but no user is signed in.
+ */
+export class AuthRequiredError extends Error {
+  constructor(message = "Unauthorized: user is not signed in") {
+    super(message);
+    this.name = "AuthRequiredError";
+  }
+}
+
+/**
+ * Runtime guard for authentication failures emitted by requireAuth().
+ */
+export function isAuthRequiredError(error: unknown): error is AuthRequiredError {
+  if (error instanceof AuthRequiredError) {
+    return true;
+  }
+
+  if (error instanceof Error) {
+    return error.message === "Unauthorized: user is not signed in";
+  }
+
+  return false;
+}
+
+/**
  * Get the current authenticated user's info from Clerk.
  * Returns null if the user is not signed in.
  *
@@ -82,7 +107,7 @@ export async function requireAuth() {
   const { userId } = await auth();
 
   if (!userId) {
-    throw new Error("Unauthorized: user is not signed in");
+    throw new AuthRequiredError();
   }
 
   return { clerkId: userId };

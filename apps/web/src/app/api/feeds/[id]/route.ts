@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
+import { handleApiRouteError } from "@/lib/api-errors";
 import { ensureUserRecord } from "@/lib/app-user";
 import {
   deleteFeedForUser,
@@ -112,8 +113,8 @@ export async function PATCH(
     }
 
     return NextResponse.json({ feed: updatedFeed });
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (error) {
+    return handleApiRouteError(error, "api.feeds.id.patch");
   }
 }
 
@@ -142,7 +143,7 @@ export async function DELETE(
     }
 
     return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (error) {
+    return handleApiRouteError(error, "api.feeds.id.delete");
   }
 }

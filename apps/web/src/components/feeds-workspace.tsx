@@ -310,6 +310,7 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
             feeds={feeds}
             folders={folders}
             selectedScope={selectedScope}
+            isMobile={isMobile}
             onSelectAll={() => handleSelectScope({ type: "all" })}
             onSelectUncategorized={() => handleSelectScope({ type: "uncategorized" })}
             onSelectFolder={(folderId) => handleSelectScope({ type: "folder", folderId })}

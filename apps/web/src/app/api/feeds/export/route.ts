@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { db, eq, users } from "@/lib/database";
+import { handleApiRouteError } from "@/lib/api-errors";
 import { ensureUserRecord } from "@/lib/app-user";
 import { isMissingRelationError } from "@/lib/db-compat";
 import { resolveFeedFolderIds } from "@/lib/folder-memberships";
@@ -308,7 +309,7 @@ export async function GET(request: NextRequest) {
       { error: "Unsupported export format" },
       { status: 400 }
     );
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  } catch (error) {
+    return handleApiRouteError(error, "api.feeds.export.get");
   }
 }
