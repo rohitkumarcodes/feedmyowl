@@ -17,6 +17,7 @@ import {
 } from "@/lib/database";
 import { deleteAuthUser, requireAuth } from "@/lib/auth";
 import { ensureUserRecord } from "@/lib/app-user";
+import { isMissingRelationError } from "@/lib/db-compat";
 import { discoverFeedCandidates } from "@/lib/feed-discovery";
 import { parseFeed, parseFeedXml, type ParsedFeed } from "@/lib/feed-parser";
 import { purgeOldFeedItemsForUser } from "@/lib/retention";
@@ -106,18 +107,35 @@ async function getFeedFolderIds(params: {
   feedId: string;
   legacyFolderId: string | null;
 }): Promise<string[]> {
-  const memberships = await db.query.feedFolderMemberships.findMany({
-    where: and(
-      eq(feedFolderMemberships.userId, params.userId),
-      eq(feedFolderMemberships.feedId, params.feedId)
-    ),
-    columns: { folderId: true },
-  });
+  let memberships: Array<{ folderId: string }> = [];
+
+  try {
+    memberships = await db.query.feedFolderMemberships.findMany({
+      where: and(
+        eq(feedFolderMemberships.userId, params.userId),
+        eq(feedFolderMemberships.feedId, params.feedId)
+      ),
+      columns: { folderId: true },
+    });
+  } catch (error) {
+    if (!isMissingRelationError(error, "feed_folder_memberships")) {
+      throw error;
+    }
+  }
 
   return resolveFeedFolderIds({
     legacyFolderId: params.legacyFolderId,
     membershipFolderIds: memberships.map((membership) => membership.folderId),
   });
+}
+
+function getMembershipFolderIds(feed: unknown): string[] {
+  const candidate = feed as { folderMemberships?: Array<{ folderId: string }> };
+  if (!Array.isArray(candidate.folderMemberships)) {
+    return [];
+  }
+
+  return candidate.folderMemberships.map((membership) => membership.folderId);
 }
 
 /**
@@ -135,42 +153,100 @@ export async function GET() {
     // Keep retention policy enforced even during read-heavy sessions.
     await purgeOldFeedItemsForUser(appUser.id);
 
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, appUser.id),
-      with: {
-        folders: true,
-        feeds: {
-          with: {
-            items: true,
-            folderMemberships: {
-              columns: {
-                folderId: true,
+    let user: Record<string, unknown> | null = null;
+
+    try {
+      user = (await db.query.users.findFirst({
+        where: eq(users.id, appUser.id),
+        with: {
+          folders: true,
+          feeds: {
+            with: {
+              items: true,
+              folderMemberships: {
+                columns: {
+                  folderId: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      })) as Record<string, unknown> | null;
+    } catch (error) {
+      if (!isMissingRelationError(error, "feed_folder_memberships")) {
+        throw error;
+      }
+
+      user = (await db.query.users.findFirst({
+        where: eq(users.id, appUser.id),
+        with: {
+          folders: true,
+          feeds: {
+            with: {
+              items: true,
+            },
+          },
+        },
+      })) as Record<string, unknown> | null;
+    }
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const responseFeeds = user.feeds.map((feed) => {
-      const { folderMemberships, ...restFeed } = feed;
+    const folderRows =
+      (user.folders as
+        | Array<{
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+          }>
+        | undefined) ?? [];
 
-      return {
-        ...restFeed,
-        folderIds: resolveFeedFolderIds({
-          legacyFolderId: feed.folderId,
-          membershipFolderIds: folderMemberships.map(
-            (membership) => membership.folderId
-          ),
-        }),
-      };
-    });
+    const feedRows =
+      (user.feeds as
+        | Array<{
+            id: string;
+            userId: string;
+            folderId: string | null;
+            url: string;
+            title: string | null;
+            customTitle: string | null;
+            description: string | null;
+            lastFetchedAt: Date | null;
+            lastFetchStatus: string | null;
+            lastFetchErrorCode: string | null;
+            lastFetchErrorMessage: string | null;
+            lastFetchErrorAt: Date | null;
+            createdAt: Date;
+            updatedAt: Date;
+            items: Array<{
+              id: string;
+              feedId: string;
+              guid: string | null;
+              title: string | null;
+              link: string | null;
+              content: string | null;
+              author: string | null;
+              publishedAt: Date | null;
+              readAt: Date | null;
+              createdAt: Date;
+              updatedAt: Date;
+            }>;
+            folderMemberships?: Array<{ folderId: string }>;
+          }>
+        | undefined) ?? [];
 
-    return NextResponse.json({ feeds: responseFeeds, folders: user.folders });
+    const responseFeeds = feedRows.map((feed) => ({
+      ...feed,
+      folderIds: resolveFeedFolderIds({
+        legacyFolderId: feed.folderId,
+        membershipFolderIds: getMembershipFolderIds(feed),
+      }),
+    }));
+
+    return NextResponse.json({ feeds: responseFeeds, folders: folderRows });
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

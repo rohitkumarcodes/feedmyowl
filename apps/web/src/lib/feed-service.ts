@@ -9,6 +9,7 @@ import {
   inArray,
   users,
 } from "@/lib/database";
+import { isMissingRelationError } from "@/lib/db-compat";
 import { captureError } from "@/lib/error-tracking";
 import { normalizeFeedError } from "@/lib/feed-errors";
 import { parseFeed, type ParsedFeed } from "@/lib/feed-parser";
@@ -79,15 +80,21 @@ export async function createFeedWithInitialItems(
   }
 
   if (normalizedFolderIds.length > 0) {
-    await db.insert(feedFolderMemberships).values(
-      normalizedFolderIds.map((folderId) => ({
-        userId,
-        feedId: newFeed.id,
-        folderId,
-        createdAt: now,
-        updatedAt: now,
-      }))
-    );
+    try {
+      await db.insert(feedFolderMemberships).values(
+        normalizedFolderIds.map((folderId) => ({
+          userId,
+          feedId: newFeed.id,
+          folderId,
+          createdAt: now,
+          updatedAt: now,
+        }))
+      );
+    } catch (error) {
+      if (!isMissingRelationError(error, "feed_folder_memberships")) {
+        throw error;
+      }
+    }
   }
 
   return { feed: newFeed, insertedItems: insertableItems.length };
@@ -365,37 +372,54 @@ export async function setFeedFoldersForUser(
 
   const now = new Date();
 
-  await db.transaction(async (tx) => {
-    await tx
-      .delete(feedFolderMemberships)
-      .where(
-        and(
-          eq(feedFolderMemberships.userId, userId),
-          eq(feedFolderMemberships.feedId, feedId)
-        )
-      );
+  try {
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(feedFolderMemberships)
+        .where(
+          and(
+            eq(feedFolderMemberships.userId, userId),
+            eq(feedFolderMemberships.feedId, feedId)
+          )
+        );
 
-    if (normalizedFolderIds.length > 0) {
-      await tx.insert(feedFolderMemberships).values(
-        normalizedFolderIds.map((folderId) => ({
-          userId,
-          feedId,
-          folderId,
-          createdAt: now,
+      if (normalizedFolderIds.length > 0) {
+        await tx.insert(feedFolderMemberships).values(
+          normalizedFolderIds.map((folderId) => ({
+            userId,
+            feedId,
+            folderId,
+            createdAt: now,
+            updatedAt: now,
+          }))
+        );
+      }
+
+      await tx
+        .update(feeds)
+        .set({
+          // Keep legacy column synced during migration window.
+          folderId: normalizedFolderIds[0] ?? null,
           updatedAt: now,
-        }))
-      );
+        })
+        .where(and(eq(feeds.id, feedId), eq(feeds.userId, userId)));
+    });
+
+    return { status: "ok", folderIds: normalizedFolderIds };
+  } catch (error) {
+    if (!isMissingRelationError(error, "feed_folder_memberships")) {
+      throw error;
     }
 
-    await tx
+    const fallbackFolderIds = normalizedFolderIds.slice(0, 1);
+    await db
       .update(feeds)
       .set({
-        // Keep legacy column synced during migration window.
-        folderId: normalizedFolderIds[0] ?? null,
+        folderId: fallbackFolderIds[0] ?? null,
         updatedAt: now,
       })
       .where(and(eq(feeds.id, feedId), eq(feeds.userId, userId)));
-  });
 
-  return { status: "ok", folderIds: normalizedFolderIds };
+    return { status: "ok", folderIds: fallbackFolderIds };
+  }
 }

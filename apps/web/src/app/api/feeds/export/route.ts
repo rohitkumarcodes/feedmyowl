@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { db, eq, users } from "@/lib/database";
 import { ensureUserRecord } from "@/lib/app-user";
+import { isMissingRelationError } from "@/lib/db-compat";
 import { resolveFeedFolderIds } from "@/lib/folder-memberships";
 
 /**
@@ -22,6 +23,15 @@ function escapeXml(value: string): string {
     .replace(/>/g, "&gt;")
     .replace(/\"/g, "&quot;")
     .replace(/'/g, "&apos;");
+}
+
+function getMembershipFolderIds(feed: unknown): string[] {
+  const candidate = feed as { folderMemberships?: Array<{ folderId: string }> };
+  if (!Array.isArray(candidate.folderMemberships)) {
+    return [];
+  }
+
+  return candidate.folderMemberships.map((membership) => membership.folderId);
 }
 
 /**
@@ -122,26 +132,83 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, ensuredUser.id),
-      with: {
-        folders: true,
-        feeds: {
-          with: {
-            items: true,
-            folderMemberships: {
-              columns: {
-                folderId: true,
+    let user: Record<string, unknown> | null = null;
+
+    try {
+      user = (await db.query.users.findFirst({
+        where: eq(users.id, ensuredUser.id),
+        with: {
+          folders: true,
+          feeds: {
+            with: {
+              items: true,
+              folderMemberships: {
+                columns: {
+                  folderId: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      })) as Record<string, unknown> | null;
+    } catch (error) {
+      if (!isMissingRelationError(error, "feed_folder_memberships")) {
+        throw error;
+      }
+
+      user = (await db.query.users.findFirst({
+        where: eq(users.id, ensuredUser.id),
+        with: {
+          folders: true,
+          feeds: {
+            with: {
+              items: true,
+            },
+          },
+        },
+      })) as Record<string, unknown> | null;
+    }
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
+
+    const folderRows =
+      (user.folders as
+        | Array<{
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+          }>
+        | undefined) ?? [];
+
+    const feedRows =
+      (user.feeds as
+        | Array<{
+            id: string;
+            url: string;
+            title: string | null;
+            customTitle: string | null;
+            description: string | null;
+            folderId: string | null;
+            lastFetchedAt: Date | null;
+            createdAt: Date;
+            updatedAt: Date;
+            items: Array<{
+              id: string;
+              guid: string | null;
+              title: string | null;
+              link: string | null;
+              author: string | null;
+              publishedAt: Date | null;
+              readAt: Date | null;
+              createdAt: Date;
+              updatedAt: Date;
+            }>;
+            folderMemberships?: Array<{ folderId: string }>;
+          }>
+        | undefined) ?? [];
 
     const format = request.nextUrl.searchParams.get("format") || "opml";
     const nowIso = new Date().toISOString();
@@ -150,19 +217,17 @@ export async function GET(request: NextRequest) {
     if (format === "opml") {
       const opml = buildFolderAwareOpml({
         nowIso,
-        folders: user.folders.map((folder) => ({
+        folders: folderRows.map((folder) => ({
           id: folder.id,
           name: folder.name,
         })),
-        feeds: user.feeds.map((feed) => ({
+        feeds: feedRows.map((feed) => ({
           url: feed.url,
           title: feed.title,
           customTitle: feed.customTitle,
           folderIds: resolveFeedFolderIds({
             legacyFolderId: feed.folderId,
-            membershipFolderIds: feed.folderMemberships.map(
-              (membership) => membership.folderId
-            ),
+            membershipFolderIds: getMembershipFolderIds(feed),
           }),
         })),
       });
@@ -181,12 +246,12 @@ export async function GET(request: NextRequest) {
       const exportedData = {
         exportedAt: nowIso,
         user: {
-          id: user.id,
-          clerkId: user.clerkId,
-          email: user.email,
-          createdAt: user.createdAt.toISOString(),
+          id: (user.id as string) || "",
+          clerkId: (user.clerkId as string) || "",
+          email: (user.email as string) || "",
+          createdAt: (user.createdAt as Date).toISOString(),
         },
-        folders: user.folders
+        folders: folderRows
           .map((folder) => ({
             id: folder.id,
             name: folder.name,
@@ -194,7 +259,7 @@ export async function GET(request: NextRequest) {
             updatedAt: folder.updatedAt.toISOString(),
           }))
           .sort((a, b) => a.name.localeCompare(b.name)),
-        feeds: user.feeds
+        feeds: feedRows
           .map((feed) => ({
             id: feed.id,
             url: feed.url,
@@ -203,9 +268,7 @@ export async function GET(request: NextRequest) {
             description: feed.description,
             folderIds: resolveFeedFolderIds({
               legacyFolderId: feed.folderId,
-              membershipFolderIds: feed.folderMemberships.map(
-                (membership) => membership.folderId
-              ),
+              membershipFolderIds: getMembershipFolderIds(feed),
             }),
             // Transitional compatibility for older imports.
             folderId: feed.folderId,

@@ -7,6 +7,7 @@ import {
   folders,
   inArray,
 } from "@/lib/database";
+import { isMissingRelationError } from "@/lib/db-compat";
 import { normalizeFolderIds, resolveFeedFolderIds } from "@/lib/folder-memberships";
 
 export const FOLDER_NAME_MAX_LENGTH = 255;
@@ -165,10 +166,17 @@ async function buildFolderMembershipSummary(
     columns: { id: true, folderId: true },
   });
 
-  const memberships = await db.query.feedFolderMemberships.findMany({
-    where: eq(feedFolderMemberships.userId, userId),
-    columns: { feedId: true, folderId: true },
-  });
+  let memberships: Array<{ feedId: string; folderId: string }> = [];
+  try {
+    memberships = await db.query.feedFolderMemberships.findMany({
+      where: eq(feedFolderMemberships.userId, userId),
+      columns: { feedId: true, folderId: true },
+    });
+  } catch (error) {
+    if (!isMissingRelationError(error, "feed_folder_memberships")) {
+      throw error;
+    }
+  }
 
   const feedToMembershipFolderIds = new Map<string, string[]>();
   for (const membership of memberships) {

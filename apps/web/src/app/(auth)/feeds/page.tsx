@@ -11,6 +11,7 @@ import type {
   FeedItemViewModel,
   FolderViewModel,
 } from "@/components/feeds-types";
+import { isMissingRelationError } from "@/lib/db-compat";
 import { resolveFeedFolderIds } from "@/lib/folder-memberships";
 import { purgeOldFeedItemsForUser } from "@/lib/retention";
 
@@ -21,6 +22,15 @@ export const dynamic = "force-dynamic";
 
 function toIsoString(value: Date | null): string | null {
   return value ? value.toISOString() : null;
+}
+
+function getMembershipFolderIds(feed: unknown): string[] {
+  const candidate = feed as { folderMemberships?: Array<{ folderId: string }> };
+  if (!Array.isArray(candidate.folderMemberships)) {
+    return [];
+  }
+
+  return candidate.folderMemberships.map((membership) => membership.folderId);
 }
 
 /**
@@ -37,36 +47,99 @@ export default async function FeedsPage() {
   // Enforce 90-day retention during normal feed workspace loads.
   await purgeOldFeedItemsForUser(ensuredUser.id);
 
-  const user = await db.query.users.findFirst({
-    where: eq(users.id, ensuredUser.id),
-    with: {
-      folders: true,
-      feeds: {
-        with: {
-          items: true,
-          folderMemberships: {
-            columns: {
-              folderId: true,
+  let user: Record<string, unknown> | null = null;
+
+  try {
+    user = (await db.query.users.findFirst({
+      where: eq(users.id, ensuredUser.id),
+      with: {
+        folders: true,
+        feeds: {
+          with: {
+            items: true,
+            folderMemberships: {
+              columns: {
+                folderId: true,
+              },
             },
           },
         },
       },
-    },
-  });
+    })) as Record<string, unknown> | null;
+  } catch (error) {
+    if (!isMissingRelationError(error, "feed_folder_memberships")) {
+      throw error;
+    }
+
+    user = (await db.query.users.findFirst({
+      where: eq(users.id, ensuredUser.id),
+      with: {
+        folders: true,
+        feeds: {
+          with: {
+            items: true,
+          },
+        },
+      },
+    })) as Record<string, unknown> | null;
+  }
+
+  if (!user) {
+    return <FeedsWorkspace initialFeeds={[]} initialFolders={[]} />;
+  }
+
+  const folderRows =
+    (user.folders as
+      | Array<{
+          id: string;
+          name: string;
+          createdAt: Date;
+          updatedAt: Date;
+        }>
+      | undefined) ?? [];
+
+  const feedRows =
+    (user.feeds as
+      | Array<{
+          id: string;
+          title: string | null;
+          customTitle: string | null;
+          description: string | null;
+          url: string;
+          folderId: string | null;
+          lastFetchedAt: Date | null;
+          lastFetchStatus: string | null;
+          lastFetchErrorCode: string | null;
+          lastFetchErrorMessage: string | null;
+          lastFetchErrorAt: Date | null;
+          createdAt: Date;
+          items: Array<{
+            id: string;
+            title: string | null;
+            link: string | null;
+            content: string | null;
+            author: string | null;
+            publishedAt: Date | null;
+            readAt: Date | null;
+            createdAt: Date;
+          }>;
+          folderMemberships?: Array<{ folderId: string }>;
+        }>
+      | undefined) ?? [];
 
   const folders: FolderViewModel[] =
-    user?.folders
-      ?.map((folder) => ({
+    folderRows
+      .map((folder) => ({
         id: folder.id,
         name: folder.name,
         createdAt: folder.createdAt.toISOString(),
         updatedAt: folder.updatedAt.toISOString(),
       }))
-      .sort((a, b) => a.name.localeCompare(b.name)) ?? [];
+      .sort((a, b) => a.name.localeCompare(b.name));
 
   const feeds: FeedViewModel[] =
-    user?.feeds
-      ?.map((feed) => {
+    feedRows
+      .map((feed) => {
         const items = [...feed.items]
           .sort((a, b) => {
             const aDate = a.publishedAt?.valueOf() ?? a.createdAt.valueOf();
@@ -94,9 +167,7 @@ export default async function FeedsPage() {
           url: feed.url,
           folderIds: resolveFeedFolderIds({
             legacyFolderId: feed.folderId,
-            membershipFolderIds: feed.folderMemberships.map(
-              (membership) => membership.folderId
-            ),
+            membershipFolderIds: getMembershipFolderIds(feed),
           }),
           lastFetchedAt: toIsoString(feed.lastFetchedAt),
           lastFetchStatus: feed.lastFetchStatus,
@@ -111,7 +182,7 @@ export default async function FeedsPage() {
         const aDate = Date.parse(a.lastFetchedAt || a.createdAt) || 0;
         const bDate = Date.parse(b.lastFetchedAt || b.createdAt) || 0;
         return bDate - aDate;
-      }) ?? [];
+      });
 
   return <FeedsWorkspace initialFeeds={feeds} initialFolders={folders} />;
 }
