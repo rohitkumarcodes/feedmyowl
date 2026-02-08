@@ -42,11 +42,8 @@
 
 .accountControls {
   align-items: center;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
   display: flex;
   gap: 6px;
-  padding: 4px 6px;
   position: fixed;
   right: 12px;
   top: 10px;
