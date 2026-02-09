@@ -47,9 +47,10 @@
 }
 
 .accountControls {
-  align-items: center;
+  align-items: flex-end;
   display: flex;
-  gap: 6px;
+  flex-direction: column;
+  gap: 8px;
   position: fixed;
   right: 12px;
   top: 10px;
@@ -62,17 +63,17 @@
   border: 1px solid var(--border);
   color: var(--text-primary);
   display: inline-flex;
-  gap: 6px;
-  font-size: var(--text-sm);
+  justify-content: center;
   min-height: 32px;
-  padding: 0 10px;
+  padding: 0;
   text-decoration: none;
+  width: 32px;
 }
 
 .settingsIcon {
   flex: 0 0 auto;
-  height: 14px;
-  width: 14px;
+  height: 16px;
+  width: 16px;
 }
 
 .settingsLink:hover {
