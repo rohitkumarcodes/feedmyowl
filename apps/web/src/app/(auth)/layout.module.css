@@ -52,7 +52,7 @@
   flex-direction: column;
   gap: 8px;
   position: fixed;
-  right: 12px;
+  right: max(20px, calc(env(safe-area-inset-right) + 12px));
   top: 10px;
   z-index: 40;
 }
@@ -97,7 +97,7 @@
   }
 
   .accountControls {
-    right: 8px;
+    right: max(14px, calc(env(safe-area-inset-right) + 8px));
     top: 8px;
   }
 }
