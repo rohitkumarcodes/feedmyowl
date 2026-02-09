@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import type {
   ArticleViewModel,
   FeedViewModel,
@@ -8,6 +8,38 @@ import type {
 } from "@/components/feeds-types";
 import type { SidebarScope } from "@/components/Sidebar";
 import type { FeedsWorkspaceMobileView } from "@/hooks/useFeedsWorkspaceMobile";
+import {
+  dedupeBulkFeedLines,
+  parseBulkFeedLines,
+  summarizeBulkAddRows,
+} from "@/lib/add-feed-bulk";
+import { normalizeFeedUrl } from "@/lib/feed-url";
+
+export type AddFeedStage =
+  | "normalizing"
+  | "discovering"
+  | "awaiting_selection"
+  | "creating";
+
+export interface DiscoveryCandidate {
+  url: string;
+  title: string | null;
+  method: "direct" | "html_alternate" | "heuristic_path";
+  duplicate: boolean;
+  existingFeedId: string | null;
+}
+
+export interface FeedDiscoverResponse {
+  status?: "single" | "multiple" | "duplicate";
+  normalizedInputUrl?: string;
+  candidates?: DiscoveryCandidate[];
+}
+
+export interface BulkAddResultRow {
+  url: string;
+  status: "imported" | "duplicate" | "failed";
+  message?: string;
+}
 
 interface ApiErrorResponse {
   error?: string;
@@ -94,6 +126,7 @@ interface FolderDeleteResponse {
 
 interface UseFeedsWorkspaceActionsOptions {
   allArticles: ArticleViewModel[];
+  feeds: FeedViewModel[];
   folders: FolderViewModel[];
   isMobile: boolean;
   router: {
@@ -126,6 +159,7 @@ async function parseResponseJson<T>(response: Response): Promise<T | null> {
  */
 export function useFeedsWorkspaceActions({
   allArticles,
+  feeds,
   folders,
   isMobile,
   router,
@@ -137,9 +171,29 @@ export function useFeedsWorkspaceActions({
   setNetworkMessage,
 }: UseFeedsWorkspaceActionsOptions) {
   const [isAddFeedFormVisible, setIsAddFeedFormVisible] = useState(false);
+  const [addFeedInputMode, setAddFeedInputMode] = useState<"single" | "bulk">(
+    "single"
+  );
   const [feedUrlInput, setFeedUrlInput] = useState("");
+  const [bulkFeedUrlInput, setBulkFeedUrlInput] = useState("");
   const [addFeedFolderIds, setAddFeedFolderIds] = useState<string[]>([]);
+  const [lastUsedAddFeedFolderIds, setLastUsedAddFeedFolderIds] = useState<string[]>(
+    []
+  );
   const [addFeedNewFolderNameInput, setAddFeedNewFolderNameInput] = useState("");
+  const [addFeedStage, setAddFeedStage] = useState<AddFeedStage | null>(null);
+  const [addFeedProgressMessage, setAddFeedProgressMessage] = useState<string | null>(
+    null
+  );
+  const [discoveryCandidates, setDiscoveryCandidates] = useState<
+    DiscoveryCandidate[]
+  >([]);
+  const [selectedDiscoveryCandidateUrl, setSelectedDiscoveryCandidateUrl] =
+    useState("");
+  const [bulkAddResultRows, setBulkAddResultRows] = useState<
+    BulkAddResultRow[] | null
+  >(null);
+  const [showAddAnotherAction, setShowAddAnotherAction] = useState(false);
 
   const [isAddingFeed, setIsAddingFeed] = useState(false);
   const [isRefreshingFeeds, setIsRefreshingFeeds] = useState(false);
@@ -159,6 +213,41 @@ export function useFeedsWorkspaceActions({
       previous.filter((folderId) => validFolderIds.has(folderId))
     );
   }, [folders]);
+
+  const normalizedExistingFeedUrls = useMemo(() => {
+    const normalizedUrls = new Set<string>();
+
+    for (const feed of feeds) {
+      const normalizedUrl = normalizeFeedUrl(feed.url);
+      if (!normalizedUrl) {
+        continue;
+      }
+
+      normalizedUrls.add(normalizedUrl);
+    }
+
+    return normalizedUrls;
+  }, [feeds]);
+
+  const normalizedSingleUrlInput = useMemo(
+    () => normalizeFeedUrl(feedUrlInput),
+    [feedUrlInput]
+  );
+
+  const isSingleInputDuplicate = Boolean(
+    normalizedSingleUrlInput && normalizedExistingFeedUrls.has(normalizedSingleUrlInput)
+  );
+
+  useEffect(() => {
+    setDiscoveryCandidates([]);
+    setSelectedDiscoveryCandidateUrl("");
+    setAddFeedStage((previous) =>
+      previous === "awaiting_selection" ? null : previous
+    );
+    setAddFeedProgressMessage((previous) =>
+      previous && addFeedInputMode === "single" ? null : previous
+    );
+  }, [feedUrlInput, addFeedInputMode]);
 
   const markArticleAsRead = useCallback(
     async (articleId: string) => {
@@ -215,6 +304,7 @@ export function useFeedsWorkspaceActions({
     setIsRefreshingFeeds(true);
     setInfoMessage(null);
     setErrorMessage(null);
+    setShowAddAnotherAction(false);
 
     try {
       const response = await fetch("/api/refresh", { method: "POST" });
@@ -260,6 +350,7 @@ export function useFeedsWorkspaceActions({
       setIsCreatingFolder(true);
       setInfoMessage(null);
       setErrorMessage(null);
+      setShowAddAnotherAction(false);
 
       try {
         const response = await fetch("/api/folders", {
@@ -326,6 +417,45 @@ export function useFeedsWorkspaceActions({
     [createFolder]
   );
 
+  const applyCreatedFeed = useCallback(
+    (createdFeed: FeedCreateResponse["feed"]) => {
+      if (!createdFeed?.id) {
+        return;
+      }
+
+      setFeeds((previousFeeds) => {
+        const exists = previousFeeds.some((feed) => feed.id === createdFeed.id);
+        if (exists) {
+          return previousFeeds;
+        }
+
+        const nextFeed: FeedViewModel = {
+          id: createdFeed.id,
+          title: createdFeed.title ?? null,
+          customTitle: createdFeed.customTitle ?? null,
+          description: createdFeed.description ?? null,
+          url: createdFeed.url,
+          folderIds: createdFeed.folderIds ?? [],
+          lastFetchedAt: createdFeed.lastFetchedAt ?? null,
+          lastFetchStatus: createdFeed.lastFetchStatus ?? null,
+          lastFetchErrorCode: createdFeed.lastFetchErrorCode ?? null,
+          lastFetchErrorMessage: createdFeed.lastFetchErrorMessage ?? null,
+          lastFetchErrorAt: createdFeed.lastFetchErrorAt ?? null,
+          createdAt: createdFeed.createdAt ?? new Date().toISOString(),
+          items: [],
+        };
+
+        return [nextFeed, ...previousFeeds];
+      });
+
+      setSelectedScope({ type: "feed", feedId: createdFeed.id });
+      if (isMobile) {
+        setMobileViewWithHistory("articles", true);
+      }
+    },
+    [isMobile, setFeeds, setMobileViewWithHistory, setSelectedScope]
+  );
+
   const handleAddFeed = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -339,102 +469,380 @@ export function useFeedsWorkspaceActions({
         return;
       }
 
-      const nextUrl = feedUrlInput.trim();
-      if (!nextUrl) {
-        setErrorMessage("Feed URL is required.");
-        setInfoMessage(null);
-        return;
-      }
+      const discoverFeed = async (
+        url: string
+      ): Promise<(ApiErrorResponse & FeedDiscoverResponse) | null> => {
+        try {
+          const response = await fetch("/api/feeds", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "feed.discover",
+              url,
+            }),
+          });
+
+          const body = await parseResponseJson<ApiErrorResponse & FeedDiscoverResponse>(
+            response
+          );
+
+          if (!response.ok) {
+            return {
+              error: body?.error || "Could not discover feed URLs.",
+              code: body?.code,
+            };
+          }
+
+          return body;
+        } catch {
+          return {
+            error: "Could not connect to the server.",
+          };
+        }
+      };
+
+      const createFeed = async (
+        url: string
+      ): Promise<(ApiErrorResponse & FeedCreateResponse) | null> => {
+        try {
+          const response = await fetch("/api/feeds", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "feed.create",
+              url,
+              folderIds: addFeedFolderIds,
+            }),
+          });
+
+          const body = await parseResponseJson<ApiErrorResponse & FeedCreateResponse>(
+            response
+          );
+
+          if (!response.ok) {
+            return {
+              error: body?.error || "Could not add feed.",
+              code: body?.code,
+            };
+          }
+
+          return body;
+        } catch {
+          return {
+            error: "Could not connect to the server.",
+          };
+        }
+      };
 
       setIsAddingFeed(true);
       setInfoMessage(null);
       setErrorMessage(null);
+      setShowAddAnotherAction(false);
+      setBulkAddResultRows(null);
 
-      try {
-        const response = await fetch("/api/feeds", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "feed.create",
-            url: nextUrl,
-            folderIds: addFeedFolderIds,
-          }),
-        });
-        const body = await parseResponseJson<ApiErrorResponse & FeedCreateResponse>(response);
-
-        if (!response.ok) {
-          setErrorMessage(body?.error || "Could not add feed.");
+      if (addFeedInputMode === "bulk") {
+        const parsedLines = dedupeBulkFeedLines(parseBulkFeedLines(bulkFeedUrlInput));
+        if (parsedLines.length === 0) {
+          setErrorMessage("Paste at least one feed or site URL.");
           setIsAddingFeed(false);
           return;
         }
 
-        if (body?.feed?.id) {
-          const createdFeed = body.feed;
-          setFeeds((previousFeeds) => {
-            const exists = previousFeeds.some((feed) => feed.id === createdFeed.id);
-            if (exists) {
-              return previousFeeds;
-            }
+        const knownUrls = new Set(normalizedExistingFeedUrls);
+        const rows: BulkAddResultRow[] = [];
+        let hasStateChanges = false;
 
-            const nextFeed: FeedViewModel = {
-              id: createdFeed.id,
-              title: createdFeed.title ?? null,
-              customTitle: createdFeed.customTitle ?? null,
-              description: createdFeed.description ?? null,
-              url: createdFeed.url,
-              folderIds: createdFeed.folderIds ?? [],
-              lastFetchedAt: createdFeed.lastFetchedAt ?? null,
-              lastFetchStatus: createdFeed.lastFetchStatus ?? null,
-              lastFetchErrorCode: createdFeed.lastFetchErrorCode ?? null,
-              lastFetchErrorMessage: createdFeed.lastFetchErrorMessage ?? null,
-              lastFetchErrorAt: createdFeed.lastFetchErrorAt ?? null,
-              createdAt: createdFeed.createdAt ?? new Date().toISOString(),
-              items: [],
-            };
+        for (let index = 0; index < parsedLines.length; index += 1) {
+          const rawLine = parsedLines[index];
+          setAddFeedStage("normalizing");
+          setAddFeedProgressMessage(
+            `Normalizing URL ${index + 1} of ${parsedLines.length}...`
+          );
 
-            return [nextFeed, ...previousFeeds];
-          });
-
-          setSelectedScope({ type: "feed", feedId: body.feed.id });
-          if (isMobile) {
-            setMobileViewWithHistory("articles", true);
+          const normalizedLine = normalizeFeedUrl(rawLine);
+          if (!normalizedLine) {
+            rows.push({
+              url: rawLine,
+              status: "failed",
+              message: "This URL does not appear to be valid.",
+            });
+            continue;
           }
+
+          if (knownUrls.has(normalizedLine)) {
+            rows.push({
+              url: normalizedLine,
+              status: "duplicate",
+              message: "This feed is already in your library.",
+            });
+            continue;
+          }
+
+          setAddFeedStage("discovering");
+          setAddFeedProgressMessage(
+            `Looking for feed URLs ${index + 1} of ${parsedLines.length}...`
+          );
+          const discoverBody = await discoverFeed(normalizedLine);
+          if (!discoverBody) {
+            rows.push({
+              url: normalizedLine,
+              status: "failed",
+              message: "Could not discover feed URLs.",
+            });
+            continue;
+          }
+
+          if (discoverBody.error) {
+            rows.push({
+              url: normalizedLine,
+              status: "failed",
+              message: discoverBody.error,
+            });
+            continue;
+          }
+
+          const candidates = discoverBody.candidates ?? [];
+          const addableCandidates = candidates.filter((candidate) => !candidate.duplicate);
+          if (discoverBody.status === "multiple" || addableCandidates.length > 1) {
+            rows.push({
+              url: normalizedLine,
+              status: "failed",
+              message:
+                "Multiple feeds found; add this URL individually to choose one.",
+            });
+            continue;
+          }
+
+          if (discoverBody.status === "duplicate" || addableCandidates.length === 0) {
+            rows.push({
+              url: normalizedLine,
+              status: "duplicate",
+              message: "This feed is already in your library.",
+            });
+            knownUrls.add(normalizedLine);
+            continue;
+          }
+
+          setAddFeedStage("creating");
+          setAddFeedProgressMessage(
+            `Adding feed ${index + 1} of ${parsedLines.length}...`
+          );
+          const createBody = await createFeed(addableCandidates[0].url);
+          if (!createBody) {
+            rows.push({
+              url: addableCandidates[0].url,
+              status: "failed",
+              message: "Could not add feed.",
+            });
+            continue;
+          }
+
+          if (createBody.error) {
+            rows.push({
+              url: addableCandidates[0].url,
+              status: "failed",
+              message: createBody.error,
+            });
+            continue;
+          }
+
+          if (createBody.duplicate) {
+            rows.push({
+              url: addableCandidates[0].url,
+              status: "duplicate",
+              message: createBody.message || "This feed is already in your library.",
+            });
+            knownUrls.add(addableCandidates[0].url);
+            continue;
+          }
+
+          rows.push({
+            url: addableCandidates[0].url,
+            status: "imported",
+          });
+          knownUrls.add(addableCandidates[0].url);
+          applyCreatedFeed(createBody.feed);
+          hasStateChanges = true;
         }
 
-        setFeedUrlInput("");
-        setAddFeedFolderIds([]);
-        setAddFeedNewFolderNameInput("");
-        setIsAddFeedFormVisible(false);
+        const summary = summarizeBulkAddRows(rows);
+        setBulkAddResultRows(rows);
+        setInfoMessage(
+          `Processed ${summary.processedCount} URL${
+            summary.processedCount === 1 ? "" : "s"
+          }. Imported ${summary.importedCount}, skipped ${summary.duplicateCount} duplicate${
+            summary.duplicateCount === 1 ? "" : "s"
+          }, failed ${summary.failedCount}.`
+        );
+        setAddFeedStage(null);
+        setAddFeedProgressMessage(null);
+        setIsAddingFeed(false);
 
-        if (body?.duplicate) {
-          setInfoMessage(body.message || "This feed is already in your library.");
-        } else {
-          const folderCount = body?.feed?.folderIds?.length ?? 0;
-          const assignmentMessage =
-            folderCount > 0
-              ? `Added to ${folderCount} folder${folderCount === 1 ? "" : "s"}.`
-              : "Added to Uncategorized.";
-          const baseMessage = body?.message || "Feed added.";
-          setInfoMessage(`${baseMessage} ${assignmentMessage}`);
+        if (hasStateChanges) {
+          router.refresh();
         }
-
-        setIsAddingFeed(false);
-        router.refresh();
-      } catch {
-        setErrorMessage("Could not connect to the server.");
-        setIsAddingFeed(false);
+        return;
       }
+
+      const typedUrl = feedUrlInput.trim();
+      if (!typedUrl) {
+        setErrorMessage("Feed URL is required.");
+        setAddFeedStage(null);
+        setAddFeedProgressMessage(null);
+        setIsAddingFeed(false);
+        return;
+      }
+
+      setAddFeedStage("normalizing");
+      setAddFeedProgressMessage("Normalizing URL...");
+      const normalizedSingleUrl = normalizeFeedUrl(typedUrl);
+      if (!normalizedSingleUrl) {
+        setErrorMessage("This URL does not appear to be valid.");
+        setAddFeedStage(null);
+        setAddFeedProgressMessage(null);
+        setIsAddingFeed(false);
+        return;
+      }
+
+      if (normalizedExistingFeedUrls.has(normalizedSingleUrl)) {
+        setErrorMessage("This feed is already in your library.");
+        setAddFeedStage(null);
+        setAddFeedProgressMessage(null);
+        setIsAddingFeed(false);
+        return;
+      }
+
+      let candidateToCreateUrl: string | null = null;
+      if (discoveryCandidates.length > 1) {
+        if (!selectedDiscoveryCandidateUrl) {
+          setErrorMessage("Select one discovered feed URL to continue.");
+          setAddFeedStage("awaiting_selection");
+          setAddFeedProgressMessage(
+            "Multiple feeds found. Select one to continue."
+          );
+          setIsAddingFeed(false);
+          return;
+        }
+
+        candidateToCreateUrl = selectedDiscoveryCandidateUrl;
+      } else {
+        setAddFeedStage("discovering");
+        setAddFeedProgressMessage("Looking for feed URLs...");
+        const discoverBody = await discoverFeed(normalizedSingleUrl);
+        if (!discoverBody) {
+          setErrorMessage("Could not discover feed URLs.");
+          setAddFeedStage(null);
+          setAddFeedProgressMessage(null);
+          setIsAddingFeed(false);
+          return;
+        }
+
+        if (discoverBody.error) {
+          setErrorMessage(discoverBody.error);
+          setAddFeedStage(null);
+          setAddFeedProgressMessage(null);
+          setIsAddingFeed(false);
+          return;
+        }
+
+        const candidates = discoverBody.candidates ?? [];
+        const addableCandidates = candidates.filter((candidate) => !candidate.duplicate);
+
+        if (discoverBody.status === "duplicate" || addableCandidates.length === 0) {
+          setInfoMessage("This feed is already in your library.");
+          setAddFeedStage(null);
+          setAddFeedProgressMessage(null);
+          setIsAddingFeed(false);
+          return;
+        }
+
+        if (discoverBody.status === "multiple" || addableCandidates.length > 1) {
+          setDiscoveryCandidates(candidates);
+          setSelectedDiscoveryCandidateUrl("");
+          setAddFeedStage("awaiting_selection");
+          setAddFeedProgressMessage(
+            "Multiple feeds found. Select one to continue."
+          );
+          setIsAddingFeed(false);
+          return;
+        }
+
+        candidateToCreateUrl = addableCandidates[0].url;
+      }
+
+      if (!candidateToCreateUrl) {
+        setErrorMessage("Could not resolve a feed URL to add.");
+        setAddFeedStage(null);
+        setAddFeedProgressMessage(null);
+        setIsAddingFeed(false);
+        return;
+      }
+
+      setAddFeedStage("creating");
+      setAddFeedProgressMessage("Adding selected feed...");
+      const createBody = await createFeed(candidateToCreateUrl);
+      if (!createBody) {
+        setErrorMessage("Could not add feed.");
+        setAddFeedStage(null);
+        setAddFeedProgressMessage(null);
+        setIsAddingFeed(false);
+        return;
+      }
+
+      if (createBody.error) {
+        setErrorMessage(createBody.error);
+        setAddFeedStage(null);
+        setAddFeedProgressMessage(null);
+        setIsAddingFeed(false);
+        return;
+      }
+
+      if (createBody.feed?.id) {
+        applyCreatedFeed(createBody.feed);
+      }
+
+      setFeedUrlInput("");
+      setBulkFeedUrlInput("");
+      setAddFeedNewFolderNameInput("");
+      setDiscoveryCandidates([]);
+      setSelectedDiscoveryCandidateUrl("");
+      setAddFeedStage(null);
+      setAddFeedProgressMessage(null);
+      setIsAddingFeed(false);
+
+      if (createBody.duplicate) {
+        setInfoMessage(createBody.message || "This feed is already in your library.");
+        setAddFeedFolderIds([]);
+        setIsAddFeedFormVisible(false);
+        router.refresh();
+        return;
+      }
+
+      const folderCount = createBody?.feed?.folderIds?.length ?? 0;
+      const assignmentMessage =
+        folderCount > 0
+          ? `Added to ${folderCount} folder${folderCount === 1 ? "" : "s"}.`
+          : "Added to Uncategorized.";
+      const baseMessage = createBody?.message || "Feed added.";
+      setInfoMessage(`${baseMessage} ${assignmentMessage}`);
+      setShowAddAnotherAction(true);
+      setLastUsedAddFeedFolderIds(addFeedFolderIds);
+      setAddFeedFolderIds([]);
+      setIsAddFeedFormVisible(false);
+      router.refresh();
     },
     [
+      addFeedInputMode,
       addFeedFolderIds,
+      applyCreatedFeed,
+      bulkFeedUrlInput,
+      discoveryCandidates.length,
       feedUrlInput,
       isAddingFeed,
-      isMobile,
+      normalizedExistingFeedUrls,
       router,
-      setFeeds,
-      setMobileViewWithHistory,
       setNetworkMessage,
-      setSelectedScope,
+      selectedDiscoveryCandidateUrl,
     ]
   );
 
@@ -447,6 +855,7 @@ export function useFeedsWorkspaceActions({
       setDeletingFeedId(feedId);
       setInfoMessage(null);
       setErrorMessage(null);
+      setShowAddAnotherAction(false);
 
       try {
         const response = await fetch(`/api/feeds/${feedId}`, {
@@ -497,6 +906,7 @@ export function useFeedsWorkspaceActions({
       setRenamingFeedId(feedId);
       setInfoMessage(null);
       setErrorMessage(null);
+      setShowAddAnotherAction(false);
 
       try {
         const response = await fetch(`/api/feeds/${feedId}`, {
@@ -542,6 +952,7 @@ export function useFeedsWorkspaceActions({
       setUpdatingFeedFoldersId(feedId);
       setInfoMessage(null);
       setErrorMessage(null);
+      setShowAddAnotherAction(false);
 
       try {
         const response = await fetch(`/api/feeds/${feedId}`, {
@@ -595,6 +1006,7 @@ export function useFeedsWorkspaceActions({
       setRenamingFolderId(folderId);
       setInfoMessage(null);
       setErrorMessage(null);
+      setShowAddAnotherAction(false);
 
       try {
         const response = await fetch(`/api/folders/${folderId}`, {
@@ -649,6 +1061,7 @@ export function useFeedsWorkspaceActions({
       setDeletingFolderId(folderId);
       setInfoMessage(null);
       setErrorMessage(null);
+      setShowAddAnotherAction(false);
 
       try {
         const response = await fetch(`/api/folders/${folderId}?mode=${mode}`, {
@@ -726,16 +1139,28 @@ export function useFeedsWorkspaceActions({
   const clearStatusMessages = useCallback(() => {
     setInfoMessage(null);
     setErrorMessage(null);
+    setShowAddAnotherAction(false);
   }, []);
 
   const showAddFeedForm = useCallback(() => {
     setIsAddFeedFormVisible(true);
+    setErrorMessage(null);
+    setAddFeedStage(null);
+    setAddFeedProgressMessage(null);
   }, []);
 
   const cancelAddFeedForm = useCallback(() => {
     setIsAddFeedFormVisible(false);
+    setAddFeedInputMode("single");
+    setFeedUrlInput("");
+    setBulkFeedUrlInput("");
     setAddFeedFolderIds([]);
     setAddFeedNewFolderNameInput("");
+    setDiscoveryCandidates([]);
+    setSelectedDiscoveryCandidateUrl("");
+    setBulkAddResultRows(null);
+    setAddFeedStage(null);
+    setAddFeedProgressMessage(null);
   }, []);
 
   const toggleAddFeedFolder = useCallback((folderId: string) => {
@@ -746,11 +1171,67 @@ export function useFeedsWorkspaceActions({
     );
   }, []);
 
+  const updateAddFeedInputMode = useCallback((mode: "single" | "bulk") => {
+    setAddFeedInputMode(mode);
+    setErrorMessage(null);
+    setInfoMessage(null);
+    setBulkAddResultRows(null);
+    setDiscoveryCandidates([]);
+    setSelectedDiscoveryCandidateUrl("");
+    setAddFeedStage(null);
+    setAddFeedProgressMessage(null);
+  }, []);
+
+  const handleAddAnother = useCallback(() => {
+    setIsAddFeedFormVisible(true);
+    setAddFeedInputMode("single");
+    setFeedUrlInput("");
+    setBulkFeedUrlInput("");
+    setAddFeedFolderIds(lastUsedAddFeedFolderIds);
+    setAddFeedNewFolderNameInput("");
+    setDiscoveryCandidates([]);
+    setSelectedDiscoveryCandidateUrl("");
+    setBulkAddResultRows(null);
+    setAddFeedStage(null);
+    setAddFeedProgressMessage(null);
+    setInfoMessage(null);
+    setErrorMessage(null);
+    setShowAddAnotherAction(false);
+  }, [lastUsedAddFeedFolderIds]);
+
+  const selectDiscoveryCandidate = useCallback((url: string) => {
+    setSelectedDiscoveryCandidateUrl(url);
+    setErrorMessage(null);
+  }, []);
+
+  const inlineDuplicateMessage =
+    addFeedInputMode === "single" && isSingleInputDuplicate
+      ? "This feed is already in your library."
+      : null;
+
+  const bulkAddSummary = useMemo(() => {
+    if (!bulkAddResultRows) {
+      return null;
+    }
+
+    return summarizeBulkAddRows(bulkAddResultRows);
+  }, [bulkAddResultRows]);
+
   return {
     isAddFeedFormVisible,
+    addFeedInputMode,
+    addFeedStage,
+    addFeedProgressMessage,
     feedUrlInput,
+    bulkFeedUrlInput,
+    inlineDuplicateMessage,
     addFeedFolderIds,
     addFeedNewFolderNameInput,
+    discoveryCandidates,
+    selectedDiscoveryCandidateUrl,
+    bulkAddResultRows,
+    bulkAddSummary,
+    showAddAnotherAction,
     isAddingFeed,
     isRefreshingFeeds,
     isCreatingFolder,
@@ -761,11 +1242,15 @@ export function useFeedsWorkspaceActions({
     renamingFolderId,
     infoMessage,
     errorMessage,
+    setAddFeedInputMode: updateAddFeedInputMode,
+    setBulkFeedUrlInput,
     setFeedUrlInput,
     toggleAddFeedFolder,
     setAddFeedNewFolderNameInput,
+    selectDiscoveryCandidate,
     createFolderFromAddFeed,
     createFolderFromSidebar,
+    handleAddAnother,
     showAddFeedForm,
     cancelAddFeedForm,
     clearStatusMessages,

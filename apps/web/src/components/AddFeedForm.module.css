@@ -12,6 +12,30 @@
   text-transform: uppercase;
 }
 
+.modeFieldset {
+  border: 1px solid var(--lp-border);
+  margin: 0;
+  min-width: 0;
+  padding: 6px;
+}
+
+.modeOptions {
+  display: flex;
+  gap: 8px;
+}
+
+.modeOption {
+  align-items: center;
+  color: var(--lp-text-main);
+  display: inline-flex;
+  font-size: var(--text-xs);
+  gap: 4px;
+}
+
+.modeOption input {
+  margin: 0;
+}
+
 .actions {
   display: flex;
   gap: 6px;
@@ -23,6 +47,42 @@
   margin: 0;
   min-width: 0;
   padding: 6px;
+}
+
+.discoveryFieldset {
+  border: 1px solid var(--lp-border);
+  margin: 0;
+  min-width: 0;
+  padding: 6px;
+}
+
+.discoveryList {
+  display: grid;
+  gap: 4px;
+  max-height: 140px;
+  overflow: auto;
+}
+
+.discoveryOption {
+  align-items: flex-start;
+  color: var(--lp-text-main);
+  display: flex;
+  gap: 6px;
+}
+
+.discoveryOption input {
+  margin: 2px 0 0;
+}
+
+.discoveryText {
+  display: grid;
+  gap: 2px;
+}
+
+.discoveryUrl {
+  color: var(--lp-text-muted);
+  font-size: var(--text-xs);
+  word-break: break-all;
 }
 
 .folderList {
@@ -53,4 +113,29 @@
   display: grid;
   gap: 6px;
   grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.bulkTextarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.inlineMessage {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.bulkSummary {
+  border: 1px solid var(--lp-border);
+  color: var(--lp-text-main);
+  display: grid;
+  font-size: var(--text-xs);
+  gap: 4px;
+  margin-top: 2px;
+  padding: 6px;
+}
+
+.bulkFailures {
+  margin: 0;
+  padding-left: 16px;
 }

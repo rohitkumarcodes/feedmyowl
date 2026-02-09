@@ -80,6 +80,16 @@ function createFeedCreateRequest(url: string): NextRequest {
   }) as NextRequest;
 }
 
+function createLegacyFeedCreateRequest(url: string): NextRequest {
+  return new Request("https://app.feedmyowl.test/api/feeds", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      url,
+    }),
+  }) as NextRequest;
+}
+
 describe("POST /api/feeds discovery fallback", () => {
   const fetchMock = vi.fn();
 
@@ -217,9 +227,38 @@ describe("POST /api/feeds discovery fallback", () => {
     expect(response.status).toBe(400);
     expect(body.code).toBe("invalid_xml");
     expect(body.error).toBe(
-      "Could not find a valid RSS/Atom feed at this address. Try pasting the feed URL directly."
+      "Error: We couldn't find any feed at this URL. Contact site owner and ask for the feed link."
     );
     expect(mocks.createFeedWithInitialItems).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps legacy feed.create compatibility when action is omitted", async () => {
+    mocks.parseFeed.mockResolvedValue({
+      title: "Example Feed",
+      description: "Example description",
+      items: [],
+    });
+
+    mocks.createFeedWithInitialItems.mockResolvedValue({
+      feed: {
+        id: "feed_legacy",
+        userId: "user_123",
+        url: "https://example.com/feed.xml",
+      },
+      insertedItems: 0,
+    });
+
+    const response = await POST(createLegacyFeedCreateRequest("https://example.com/feed.xml"));
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.feed.id).toBe("feed_legacy");
+    expect(mocks.createFeedWithInitialItems).toHaveBeenCalledWith(
+      "user_123",
+      "https://example.com/feed.xml",
+      expect.any(Object),
+      []
+    );
   });
 });

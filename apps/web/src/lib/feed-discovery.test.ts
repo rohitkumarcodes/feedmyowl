@@ -57,4 +57,31 @@ describe("discoverFeedCandidates", () => {
       expect(result.methodHints[candidate]).toBe("heuristic_path");
     }
   });
+
+  it("dedupes alternates and keeps the first discovery method hint", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        `
+          <html>
+            <head>
+              <link rel="alternate" type="application/rss+xml" title="Main feed" href="/feed" />
+            </head>
+          </html>
+        `,
+        { status: 200, headers: { "content-type": "text/html" } }
+      )
+    );
+
+    const result = await discoverFeedCandidates("https://site.example.com/blog");
+
+    expect(result.candidates).toEqual([
+      "https://site.example.com/feed",
+      "https://site.example.com/feed.xml",
+      "https://site.example.com/rss",
+      "https://site.example.com/rss.xml",
+      "https://site.example.com/atom.xml",
+    ]);
+    expect(result.methodHints["https://site.example.com/feed"]).toBe("html_alternate");
+    expect(Object.keys(result.methodHints)).toHaveLength(result.candidates.length);
+  });
 });

@@ -14,6 +14,8 @@ From repo root:
 - Add/rename/delete feed.
 - Create/rename/delete folder.
 - Assign feeds to multiple folders.
+- Discover feed candidates from site URLs before create.
+- Bulk add feed/site URLs from sidebar add form.
 - Manual refresh.
 - Read articles.
 - Account deletion.
@@ -33,9 +35,10 @@ From repo root:
 
 ### Feed cannot be added
 1. Validate URL format.
-2. Check `POST /api/feeds` response.
-3. If site URL, verify discovery fallback candidates.
-4. Check parser/network errors in logs.
+2. For interactive add flow, check `POST /api/feeds` action `feed.discover`.
+3. If discovery status is `multiple`, user must select one candidate before `feed.create`.
+4. If discovery returns `invalid_xml`, expected message is: `Error: We couldn't find any feed at this URL. Contact site owner and ask for the feed link.`
+5. Check parser/network errors in logs.
 
 ### Folder operation fails
 1. Validate folder name length and uniqueness.
@@ -62,8 +65,12 @@ From repo root:
 ## 7. Smoke test after deploy
 1. Sign in.
 2. Create a folder.
-3. Add a feed and assign it to multiple folders.
-4. Refresh feeds.
-5. Open an article and verify read-state.
-6. Reassign feed folders via feed actions.
-7. Delete a folder in both modes and verify expected outcomes.
+3. Add a single feed with a scheme-less URL (`example.com`) and confirm it resolves.
+4. Add a site URL with multiple discovered feeds and confirm chooser gating.
+5. Use bulk mode with mixed valid/duplicate/invalid URLs and verify summary.
+6. Add a feed and assign it to multiple folders.
+7. Verify `Add another` reopens add form with previous folder selection.
+8. Refresh feeds.
+9. Open an article and verify read-state.
+10. Reassign feed folders via feed actions.
+11. Delete a folder in both modes and verify expected outcomes.

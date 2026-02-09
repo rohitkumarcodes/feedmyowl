@@ -27,6 +27,29 @@ export type SidebarScope =
   | { type: "feed"; feedId: string };
 
 type FolderDeleteMode = "remove_only" | "remove_and_unsubscribe_exclusive";
+type AddFeedStage = "normalizing" | "discovering" | "awaiting_selection" | "creating";
+
+interface SidebarDiscoveryCandidate {
+  url: string;
+  title: string | null;
+  method: "direct" | "html_alternate" | "heuristic_path";
+  duplicate: boolean;
+  existingFeedId: string | null;
+}
+
+interface SidebarBulkAddResultRow {
+  url: string;
+  status: "imported" | "duplicate" | "failed";
+  message?: string;
+}
+
+interface SidebarBulkAddSummary {
+  processedCount: number;
+  importedCount: number;
+  duplicateCount: number;
+  failedCount: number;
+  failedDetails: string[];
+}
 
 interface SidebarProps {
   feeds: FeedViewModel[];
@@ -39,19 +62,33 @@ interface SidebarProps {
   onSelectFeed: (feedId: string) => void;
 
   isAddFeedFormVisible: boolean;
+  addFeedInputMode: "single" | "bulk";
+  addFeedStage: AddFeedStage | null;
+  addFeedProgressMessage: string | null;
   feedUrlInput: string;
+  bulkFeedUrlInput: string;
+  inlineDuplicateMessage: string | null;
   addFeedFolderIds: string[];
   addFeedNewFolderNameInput: string;
+  discoveryCandidates: SidebarDiscoveryCandidate[];
+  selectedDiscoveryCandidateUrl: string;
+  bulkAddResultRows: SidebarBulkAddResultRow[] | null;
+  bulkAddSummary: SidebarBulkAddSummary | null;
+  showAddAnotherAction: boolean;
   isAddingFeed: boolean;
   isRefreshingFeeds: boolean;
   isCreatingFolder: boolean;
   onShowAddFeedForm: () => void;
   onRefresh: () => void;
   onCancelAddFeed: () => void;
+  onAddFeedInputModeChange: (mode: "single" | "bulk") => void;
   onFeedUrlChange: (value: string) => void;
+  onBulkFeedUrlChange: (value: string) => void;
   onToggleAddFeedFolder: (folderId: string) => void;
   onAddFeedNewFolderNameChange: (value: string) => void;
+  onSelectDiscoveryCandidate: (url: string) => void;
   onCreateFolderFromAddFeed: () => void;
+  onAddAnother: () => void;
   onSubmitFeed: (event: FormEvent<HTMLFormElement>) => void;
 
   infoMessage: string | null;
@@ -472,19 +509,33 @@ export function Sidebar({
   onSelectFolder,
   onSelectFeed,
   isAddFeedFormVisible,
+  addFeedInputMode,
+  addFeedStage,
+  addFeedProgressMessage,
   feedUrlInput,
+  bulkFeedUrlInput,
+  inlineDuplicateMessage,
   addFeedFolderIds,
   addFeedNewFolderNameInput,
+  discoveryCandidates,
+  selectedDiscoveryCandidateUrl,
+  bulkAddResultRows,
+  bulkAddSummary,
+  showAddAnotherAction,
   isAddingFeed,
   isRefreshingFeeds,
   isCreatingFolder,
   onShowAddFeedForm,
   onRefresh,
   onCancelAddFeed,
+  onAddFeedInputModeChange,
   onFeedUrlChange,
+  onBulkFeedUrlChange,
   onToggleAddFeedFolder,
   onAddFeedNewFolderNameChange,
+  onSelectDiscoveryCandidate,
   onCreateFolderFromAddFeed,
+  onAddAnother,
   onSubmitFeed,
   infoMessage,
   errorMessage,
@@ -835,15 +886,26 @@ export function Sidebar({
         {isAddFeedFormVisible ? (
           <div className={styles.formWrap}>
             <AddFeedForm
+              addFeedInputMode={addFeedInputMode}
+              addFeedStage={addFeedStage}
+              discoveryCandidates={discoveryCandidates}
+              selectedDiscoveryCandidateUrl={selectedDiscoveryCandidateUrl}
+              bulkFeedUrlInput={bulkFeedUrlInput}
+              inlineDuplicateMessage={inlineDuplicateMessage}
+              bulkAddResultRows={bulkAddResultRows}
+              bulkAddSummary={bulkAddSummary}
               feedUrlInput={feedUrlInput}
               isAddingFeed={isAddingFeed}
               availableFolders={sortedFolders}
               selectedFolderIds={addFeedFolderIds}
               newFolderNameInput={addFeedNewFolderNameInput}
               isCreatingFolder={isCreatingFolder}
+              onAddFeedInputModeChange={onAddFeedInputModeChange}
               onFeedUrlChange={onFeedUrlChange}
+              onBulkFeedUrlChange={onBulkFeedUrlChange}
               onToggleFolder={onToggleAddFeedFolder}
               onNewFolderNameChange={onAddFeedNewFolderNameChange}
+              onSelectDiscoveryCandidate={onSelectDiscoveryCandidate}
               onCreateFolderFromForm={onCreateFolderFromAddFeed}
               onSubmitFeed={onSubmitFeed}
               onCancelAddFeed={onCancelAddFeed}
@@ -851,9 +913,24 @@ export function Sidebar({
           </div>
         ) : null}
 
+        {addFeedProgressMessage ? (
+          <div className={styles.sidebarMessage}>
+            <span className={styles.sidebarMessageText}>{addFeedProgressMessage}</span>
+          </div>
+        ) : null}
+
         {infoMessage ? (
           <div className={styles.sidebarMessage}>
             <span className={styles.sidebarMessageText}>{infoMessage}</span>
+            {showAddAnotherAction ? (
+              <button
+                type="button"
+                className={styles.sidebarMessageAction}
+                onClick={onAddAnother}
+              >
+                Add another
+              </button>
+            ) : null}
             <button
               type="button"
               className={styles.sidebarMessageDismiss}

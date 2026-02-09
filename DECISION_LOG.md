@@ -51,6 +51,17 @@ This log records active product and technical decisions for the current app phas
 - Decision: Existing keyboard shortcuts remain unchanged (`j`, `k`, `Enter`, `r`).
 - Why: Preserve reading interaction consistency.
 
+### D-2026-02-09-01
+- Date: 2026-02-09
+- Status: active
+- Decision: Add-feed uses explicit `discover -> create` flow with required candidate selection for ambiguous site URLs.
+- Why: Reduce failed adds and prevent auto-subscribing to the wrong feed when multiple valid candidates exist.
+- Details:
+  - Input without scheme auto-normalizes to `https://`.
+  - Do not auto-add `www` or infer TLD suffixes.
+  - Interactive add supports bulk newline input with per-row outcomes.
+  - No-feed fallback message is fixed to: `Error: We couldn't find any feed at this URL. Contact site owner and ask for the feed link.`
+
 ## Superseded decisions
 
 ### D-2026-02-07-05

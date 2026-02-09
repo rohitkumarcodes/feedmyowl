@@ -33,9 +33,27 @@
 
 ## 5. Add-feed behavior
 - Add form includes:
-  - Feed/site URL input.
+  - Input mode toggle: `Single URL` or `Paste many`.
+  - Feed/site URL input (single mode).
+  - Newline-separated URL textarea (bulk mode).
   - Folder multi-select.
   - Inline folder creation.
+- URL handling:
+  - Missing scheme auto-normalizes to `https://`.
+  - Do not auto-add `www` or infer TLDs.
+- Discovery flow:
+  - Single add runs `discover` then `create`.
+  - If exactly one addable feed is found, add proceeds automatically.
+  - If multiple addable feeds are found, user must choose one before create.
+  - If none are valid, show: `Error: We couldn't find any feed at this URL. Contact site owner and ask for the feed link.`
+- Progress and feedback:
+  - Stage messages: normalizing, discovering, awaiting selection, creating.
+  - Inline duplicate hint disables submit for exact URL duplicates.
+  - Successful single add closes form by default and offers `Add another`.
+- Bulk behavior:
+  - Rows are processed sequentially.
+  - Rows with multiple discovered feeds fail with: `Multiple feeds found; add this URL individually to choose one.`
+  - Summary shows imported, duplicate, failed counts and top failures.
 - Default without assignments is Uncategorized.
 
 ## 6. Scope behavior

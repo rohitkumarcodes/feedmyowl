@@ -110,9 +110,19 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
 
   const {
     isAddFeedFormVisible,
+    addFeedInputMode,
+    addFeedStage,
+    addFeedProgressMessage,
     feedUrlInput,
+    bulkFeedUrlInput,
+    inlineDuplicateMessage,
     addFeedFolderIds,
     addFeedNewFolderNameInput,
+    discoveryCandidates,
+    selectedDiscoveryCandidateUrl,
+    bulkAddResultRows,
+    bulkAddSummary,
+    showAddAnotherAction,
     isAddingFeed,
     isRefreshingFeeds,
     isCreatingFolder,
@@ -123,11 +133,15 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
     renamingFolderId,
     infoMessage,
     errorMessage,
+    setAddFeedInputMode,
+    setBulkFeedUrlInput,
     setFeedUrlInput,
     toggleAddFeedFolder,
     setAddFeedNewFolderNameInput,
+    selectDiscoveryCandidate,
     createFolderFromAddFeed,
     createFolderFromSidebar,
+    handleAddAnother,
     showAddFeedForm,
     cancelAddFeedForm,
     clearStatusMessages,
@@ -141,6 +155,7 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
     handleDeleteFolder,
   } = useFeedsWorkspaceActions({
     allArticles,
+    feeds,
     folders,
     isMobile,
     router,
@@ -324,9 +339,19 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
             onSelectFolder={(folderId) => handleSelectScope({ type: "folder", folderId })}
             onSelectFeed={(feedId) => handleSelectScope({ type: "feed", feedId })}
             isAddFeedFormVisible={isAddFeedFormVisible}
+            addFeedInputMode={addFeedInputMode}
+            addFeedStage={addFeedStage}
+            addFeedProgressMessage={addFeedProgressMessage}
             feedUrlInput={feedUrlInput}
+            bulkFeedUrlInput={bulkFeedUrlInput}
+            inlineDuplicateMessage={inlineDuplicateMessage}
             addFeedFolderIds={addFeedFolderIds}
             addFeedNewFolderNameInput={addFeedNewFolderNameInput}
+            discoveryCandidates={discoveryCandidates}
+            selectedDiscoveryCandidateUrl={selectedDiscoveryCandidateUrl}
+            bulkAddResultRows={bulkAddResultRows}
+            bulkAddSummary={bulkAddSummary}
+            showAddAnotherAction={showAddAnotherAction}
             isAddingFeed={isAddingFeed}
             isRefreshingFeeds={isRefreshingFeeds}
             isCreatingFolder={isCreatingFolder}
@@ -335,12 +360,16 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
               void handleRefresh();
             }}
             onCancelAddFeed={cancelAddFeedForm}
+            onAddFeedInputModeChange={setAddFeedInputMode}
             onFeedUrlChange={setFeedUrlInput}
+            onBulkFeedUrlChange={setBulkFeedUrlInput}
             onToggleAddFeedFolder={toggleAddFeedFolder}
             onAddFeedNewFolderNameChange={setAddFeedNewFolderNameInput}
+            onSelectDiscoveryCandidate={selectDiscoveryCandidate}
             onCreateFolderFromAddFeed={() => {
               void createFolderFromAddFeed();
             }}
+            onAddAnother={handleAddAnother}
             onSubmitFeed={(event) => {
               void handleAddFeed(event);
             }}

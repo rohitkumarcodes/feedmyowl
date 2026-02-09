@@ -11,8 +11,12 @@ export function normalizeFeedUrl(rawUrl: unknown): string | null {
     return null;
   }
 
+  const candidateUrl = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
+
   try {
-    const parsed = new URL(trimmed);
+    const parsed = new URL(candidateUrl);
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
       return null;
     }

@@ -19,7 +19,10 @@ import { deleteAuthUser, requireAuth } from "@/lib/auth";
 import { handleApiRouteError } from "@/lib/api-errors";
 import { ensureUserRecord } from "@/lib/app-user";
 import { isMissingRelationError } from "@/lib/db-compat";
-import { discoverFeedCandidates } from "@/lib/feed-discovery";
+import {
+  discoverFeedCandidates,
+  type FeedDiscoveryMethod,
+} from "@/lib/feed-discovery";
 import { parseFeed, parseFeedXml, type ParsedFeed } from "@/lib/feed-parser";
 import { purgeOldFeedItemsForUser } from "@/lib/retention";
 import { normalizeFeedError } from "@/lib/feed-errors";
@@ -39,7 +42,35 @@ interface ApiError {
   code?: string;
 }
 
+type DiscoveryCandidateMethod = "direct" | FeedDiscoveryMethod;
+
+interface DiscoverCandidateResponse {
+  url: string;
+  title: string | null;
+  method: DiscoveryCandidateMethod;
+  duplicate: boolean;
+  existingFeedId: string | null;
+}
+
+interface ValidatedDiscoverCandidate extends DiscoverCandidateResponse {
+  parsedFeed: ParsedFeed;
+}
+
 const FEED_CANDIDATE_TIMEOUT_MS = 7_000;
+const NO_FEED_FOUND_MESSAGE =
+  "Error: We couldn't find any feed at this URL. Contact site owner and ask for the feed link.";
+
+function toDiscoverCandidateResponse(
+  candidate: ValidatedDiscoverCandidate
+): DiscoverCandidateResponse {
+  return {
+    url: candidate.url,
+    title: candidate.title,
+    method: candidate.method,
+    duplicate: candidate.duplicate,
+    existingFeedId: candidate.existingFeedId,
+  };
+}
 
 async function fetchFeedCandidateXml(url: string): Promise<string> {
   const response = await fetch(url, {
@@ -56,6 +87,48 @@ async function fetchFeedCandidateXml(url: string): Promise<string> {
   }
 
   return await response.text();
+}
+
+async function buildValidatedCandidateForUser(params: {
+  userId: string;
+  candidateUrl: string;
+  method: DiscoveryCandidateMethod;
+  parsedFeed: ParsedFeed;
+}): Promise<ValidatedDiscoverCandidate> {
+  const existingFeed = await findExistingFeedForUserByUrl(
+    params.userId,
+    params.candidateUrl
+  );
+
+  return {
+    url: params.candidateUrl,
+    title: params.parsedFeed.title ?? null,
+    method: params.method,
+    duplicate: Boolean(existingFeed),
+    existingFeedId: existingFeed?.id ?? null,
+    parsedFeed: params.parsedFeed,
+  };
+}
+
+async function validateCandidateXmlForUser(params: {
+  userId: string;
+  candidateUrl: string;
+  method: FeedDiscoveryMethod;
+}): Promise<ValidatedDiscoverCandidate | null> {
+  try {
+    const parsedFeed = await parseFeedXml(
+      await fetchFeedCandidateXml(params.candidateUrl)
+    );
+
+    return await buildValidatedCandidateForUser({
+      userId: params.userId,
+      candidateUrl: params.candidateUrl,
+      method: params.method,
+      parsedFeed,
+    });
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -271,6 +344,7 @@ export async function GET() {
  * POST /api/feeds
  *
  * Supported actions:
+ *   - feed.discover
  *   - feed.create (and legacy { url } payload)
  */
 export async function POST(request: NextRequest) {
@@ -297,13 +371,100 @@ export async function POST(request: NextRequest) {
           ? "feed.create"
           : null;
 
-    if (action !== "feed.create") {
+    if (action !== "feed.discover" && action !== "feed.create") {
       return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
     }
 
     const nextUrl = normalizeFeedUrl(payload.url);
-    const requestedFolderIds = parseFolderIdsPayload(payload);
 
+    if (!nextUrl) {
+      return NextResponse.json(
+        {
+          error: "This URL does not appear to be valid.",
+          code: "invalid_url",
+        } satisfies ApiError,
+        { status: 400 }
+      );
+    }
+
+    if (action === "feed.discover") {
+      const validatedCandidates: ValidatedDiscoverCandidate[] = [];
+      const seenCandidateUrls = new Set<string>();
+
+      try {
+        const parsedDirectFeed = await parseFeed(nextUrl);
+        const directCandidate = await buildValidatedCandidateForUser({
+          userId: appUser.id,
+          candidateUrl: nextUrl,
+          method: "direct",
+          parsedFeed: parsedDirectFeed,
+        });
+
+        validatedCandidates.push(directCandidate);
+        seenCandidateUrls.add(directCandidate.url);
+      } catch (error) {
+        const normalizedError = normalizeFeedError(error, "create");
+
+        if (normalizedError.code !== "invalid_xml") {
+          return NextResponse.json(
+            {
+              error: normalizedError.message,
+              code: normalizedError.code,
+            } satisfies ApiError,
+            { status: 400 }
+          );
+        }
+      }
+
+      const discovery = await discoverFeedCandidates(nextUrl);
+      for (const candidateUrl of discovery.candidates) {
+        if (seenCandidateUrls.has(candidateUrl)) {
+          continue;
+        }
+
+        const method = discovery.methodHints[candidateUrl] ?? "heuristic_path";
+        const validatedCandidate = await validateCandidateXmlForUser({
+          userId: appUser.id,
+          candidateUrl,
+          method,
+        });
+
+        if (!validatedCandidate) {
+          continue;
+        }
+
+        seenCandidateUrls.add(validatedCandidate.url);
+        validatedCandidates.push(validatedCandidate);
+      }
+
+      if (validatedCandidates.length === 0) {
+        return NextResponse.json(
+          {
+            error: NO_FEED_FOUND_MESSAGE,
+            code: "invalid_xml",
+          } satisfies ApiError,
+          { status: 400 }
+        );
+      }
+
+      const addableCandidates = validatedCandidates.filter(
+        (candidate) => !candidate.duplicate
+      );
+      const status =
+        addableCandidates.length === 0
+          ? "duplicate"
+          : addableCandidates.length === 1
+            ? "single"
+            : "multiple";
+
+      return NextResponse.json({
+        status,
+        normalizedInputUrl: nextUrl,
+        candidates: validatedCandidates.map(toDiscoverCandidateResponse),
+      });
+    }
+
+    const requestedFolderIds = parseFolderIdsPayload(payload);
     if (!requestedFolderIds) {
       return NextResponse.json(
         {
@@ -336,16 +497,6 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-    }
-
-    if (!nextUrl) {
-      return NextResponse.json(
-        {
-          error: "This URL does not appear to be valid.",
-          code: "invalid_url",
-        } satisfies ApiError,
-        { status: 400 }
-      );
     }
 
     const existingFeed = await findExistingFeedForUserByUrl(appUser.id, nextUrl);
@@ -422,8 +573,7 @@ export async function POST(request: NextRequest) {
       if (!parsedFeed) {
         return NextResponse.json(
           {
-            error:
-              "Could not find a valid RSS/Atom feed at this address. Try pasting the feed URL directly.",
+            error: NO_FEED_FOUND_MESSAGE,
             code: "invalid_xml",
           } satisfies ApiError,
           { status: 400 }
