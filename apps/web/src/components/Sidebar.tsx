@@ -193,7 +193,6 @@ function FolderRow({
           className={primitiveStyles.iconButton}
           onClick={() => setIsMenuOpen((previous) => !previous)}
           aria-label={`Open actions for folder ${folder.name}`}
-          aria-haspopup="menu"
           aria-expanded={isMenuOpen || isRenameOpen}
           disabled={isDeleting || isRenaming || isRenameOpen}
         >
@@ -252,11 +251,10 @@ function FolderRow({
         ) : null}
 
         {isMenuOpen ? (
-          <div className={primitiveStyles.menu} role="menu">
+          <div className={primitiveStyles.menu}>
             <button
               type="button"
               className={primitiveStyles.menuItem}
-              role="menuitem"
               onClick={() => {
                 setRenameValue(folder.name);
                 setIsMenuOpen(false);
@@ -269,7 +267,6 @@ function FolderRow({
             <button
               type="button"
               className={primitiveStyles.menuItem}
-              role="menuitem"
               onClick={() => {
                 setIsMenuOpen(false);
                 onPromptDeleteFolder();
@@ -521,11 +518,7 @@ export function Sidebar({
     });
 
   return (
-    <nav
-      className={`${styles.root} ${primitiveStyles.tokenScope}`}
-      aria-label="Feed list"
-      role="navigation"
-    >
+    <div className={`${styles.root} ${primitiveStyles.tokenScope}`}>
       <div className={styles.top}>
         {/* Compact horizontal toolbar: refresh and add actions */}
         <div className={styles.toolbar}>
@@ -559,7 +552,6 @@ export function Sidebar({
               className={`${primitiveStyles.toolbarButton} ${primitiveStyles.toolbarButtonSecondary}`}
               onClick={() => setIsAddMenuOpen((previous) => !previous)}
               aria-label="Add feed or folder"
-              aria-haspopup="menu"
               aria-expanded={isAddMenuOpen}
               disabled={isAddMenuDisabled}
             >
@@ -595,11 +587,10 @@ export function Sidebar({
                     aria-modal="true"
                     aria-label="Add feed or folder"
                   >
-                    <div className={styles.addMenuMobile} role="menu" aria-label="Add options">
+                    <div className={styles.addMenuMobile}>
                       <button
                         type="button"
                         className={primitiveStyles.menuItem}
-                        role="menuitem"
                         onClick={openAddFeedFlow}
                         disabled={isAddMenuDisabled}
                       >
@@ -608,7 +599,6 @@ export function Sidebar({
                       <button
                         type="button"
                         className={primitiveStyles.menuItem}
-                        role="menuitem"
                         onClick={openAddFolderFlow}
                         disabled={isAddMenuDisabled}
                       >
@@ -618,11 +608,10 @@ export function Sidebar({
                   </div>
                 </>
               ) : (
-                <div className={primitiveStyles.menu} role="menu" aria-label="Add options">
+                <div className={primitiveStyles.menu}>
                   <button
                     type="button"
                     className={primitiveStyles.menuItem}
-                    role="menuitem"
                     onClick={openAddFeedFlow}
                     disabled={isAddMenuDisabled}
                   >
@@ -631,7 +620,6 @@ export function Sidebar({
                   <button
                     type="button"
                     className={primitiveStyles.menuItem}
-                    role="menuitem"
                     onClick={openAddFolderFlow}
                     disabled={isAddMenuDisabled}
                   >
@@ -906,6 +894,6 @@ export function Sidebar({
           </div>
         </div>
       ) : null}
-    </nav>
+    </div>
   );
 }

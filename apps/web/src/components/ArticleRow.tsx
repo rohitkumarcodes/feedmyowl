@@ -31,7 +31,6 @@ export function ArticleRow({
       className={`${styles.row} ${isSelected ? styles.rowSelected : ""}`}
       data-article-id={article.id}
       onClick={onSelect}
-      aria-pressed={isOpen}
       aria-current={isOpen ? "true" : undefined}
     >
       <p className={`${styles.title} ${isRead ? styles.titleRead : ""}`}><span className={styles.dot}>●</span>{article.title}</p>

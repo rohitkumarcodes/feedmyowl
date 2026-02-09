@@ -32,8 +32,6 @@ export function ArticleList({
     <section
       className={styles.root}
       data-article-list-root
-      role="region"
-      aria-label="Article list"
       tabIndex={-1}
     >
       {statusMessage ? (

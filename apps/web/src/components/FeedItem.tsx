@@ -179,7 +179,6 @@ export function FeedItem({
           className={primitiveStyles.iconButton}
           onClick={() => setIsMenuOpen((previous) => !previous)}
           aria-label={`Open actions for ${label}`}
-          aria-haspopup="menu"
           aria-expanded={isMenuOpen || isRenameOpen || isFoldersOpen}
           disabled={isDeleting || isRenaming || isRenameOpen || isFoldersOpen}
         >
@@ -299,11 +298,10 @@ export function FeedItem({
         ) : null}
 
         {isMenuOpen ? (
-          <div className={primitiveStyles.menu} role="menu">
+          <div className={primitiveStyles.menu}>
             <button
               type="button"
               className={primitiveStyles.menuItem}
-              role="menuitem"
               onClick={handleOpenRename}
               disabled={isDeleting || isRenaming}
             >
@@ -312,7 +310,6 @@ export function FeedItem({
             <button
               type="button"
               className={primitiveStyles.menuItem}
-              role="menuitem"
               onClick={handleOpenFolders}
               disabled={isDeleting || isRenaming || isUpdatingFolders}
             >
@@ -321,7 +318,6 @@ export function FeedItem({
             <button
               type="button"
               className={primitiveStyles.menuItem}
-              role="menuitem"
               onClick={handleDelete}
               disabled={isDeleting || isRenaming || isUpdatingFolders}
             >
