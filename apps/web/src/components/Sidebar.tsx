@@ -89,6 +89,26 @@ interface FolderRowProps {
   onPromptDeleteFolder: () => void;
 }
 
+function FolderRowIcon() {
+  return (
+    <svg
+      className={styles.folderRowIcon}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M3 7.5H9L10.8 9.5H21V18.5H3V7.5Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="square"
+        strokeLinejoin="miter"
+      />
+    </svg>
+  );
+}
+
 function FolderRow({
   folder,
   isMobile,
@@ -181,7 +201,10 @@ function FolderRow({
         onClick={onSelectFolder}
         aria-current={isActive ? "true" : undefined}
       >
-        <span className={styles.folderLabel}>{folder.name}</span>
+        <span className={styles.folderNameWrap}>
+          <FolderRowIcon />
+          <span className={styles.folderLabel}>{folder.name}</span>
+        </span>
         <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
           {feedCount}
         </span>
@@ -794,7 +817,10 @@ export function Sidebar({
                 onClick={onSelectUncategorized}
                 aria-current={selectedScope.type === "uncategorized" ? "true" : undefined}
               >
-                <span className={styles.folderLabel}>Uncategorized</span>
+                <span className={styles.folderNameWrap}>
+                  <FolderRowIcon />
+                  <span className={styles.folderLabel}>Uncategorized</span>
+                </span>
                 <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
                   {uncategorizedFeeds.length}
                 </span>
