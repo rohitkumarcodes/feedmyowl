@@ -22,6 +22,10 @@
   padding: 8px 8px;
 }
 
+.toolbarButtonTopBorder {
+  border-top-width: 2px;
+}
+
 .toolbarAction {
   position: relative;
 }

@@ -702,7 +702,7 @@ export function Sidebar({
         <div className={styles.toolbar}>
           <button
             type="button"
-            className={`${primitiveStyles.toolbarButton} ${primitiveStyles.toolbarButtonPrimary}`}
+            className={`${primitiveStyles.toolbarButton} ${primitiveStyles.toolbarButtonPrimary} ${styles.toolbarButtonTopBorder}`}
             onClick={onRefresh}
             disabled={isRefreshingFeeds}
             aria-label={isRefreshingFeeds ? "Refreshing feeds" : "Refresh feeds"}
@@ -727,7 +727,7 @@ export function Sidebar({
           <div className={styles.toolbarAction} ref={addMenuRef}>
             <button
               type="button"
-              className={`${primitiveStyles.toolbarButton} ${primitiveStyles.toolbarButtonSecondary}`}
+              className={`${primitiveStyles.toolbarButton} ${primitiveStyles.toolbarButtonSecondary} ${styles.toolbarButtonTopBorder}`}
               onClick={() => setIsAddMenuOpen((previous) => !previous)}
               aria-label="Add feed or folder"
               aria-expanded={isAddMenuOpen}
