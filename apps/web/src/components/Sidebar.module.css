@@ -148,6 +148,11 @@
   position: relative;
 }
 
+.folderRowWrap:hover:not(.folderRowWrapActive) {
+  background: var(--lp-surface-hover);
+  transition: background-color 90ms ease;
+}
+
 .folderRowWrapActive {
   background: var(--lp-surface-active);
 }
