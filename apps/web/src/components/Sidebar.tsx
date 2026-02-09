@@ -2,7 +2,15 @@
  * Left sidebar showing global scopes, folder tree, and feed actions.
  */
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+  type TransitionEvent,
+} from "react";
 import { AddFeedForm } from "./AddFeedForm";
 import { FeedItem } from "./FeedItem";
 import type { FeedViewModel, FolderViewModel } from "./feeds-types";
@@ -87,6 +95,43 @@ interface FolderRowProps {
   onSelectFolder: () => void;
   onRenameFolder: (name: string) => Promise<boolean>;
   onPromptDeleteFolder: () => void;
+}
+
+interface ShutterFeedGroupProps {
+  expanded: boolean;
+  prefersReducedMotion: boolean;
+  children: ReactNode;
+}
+
+function usePrefersReducedMotion(): boolean {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return;
+    }
+
+    const mediaQueryList = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updatePreference = (event?: MediaQueryListEvent) => {
+      setPrefersReducedMotion(event ? event.matches : mediaQueryList.matches);
+    };
+
+    updatePreference();
+
+    if (typeof mediaQueryList.addEventListener === "function") {
+      mediaQueryList.addEventListener("change", updatePreference);
+      return () => {
+        mediaQueryList.removeEventListener("change", updatePreference);
+      };
+    }
+
+    mediaQueryList.addListener(updatePreference);
+    return () => {
+      mediaQueryList.removeListener(updatePreference);
+    };
+  }, []);
+
+  return prefersReducedMotion;
 }
 
 function FolderRowIcon() {
@@ -305,6 +350,110 @@ function FolderRow({
   );
 }
 
+function ShutterFeedGroup({
+  expanded,
+  prefersReducedMotion,
+  children,
+}: ShutterFeedGroupProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const [isRendered, setIsRendered] = useState(expanded);
+  const [heightPx, setHeightPx] = useState<string>(expanded ? "auto" : "0px");
+
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current !== null) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (animationFrameRef.current !== null) {
+      window.cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+
+    if (prefersReducedMotion) {
+      if (expanded) {
+        setIsRendered(true);
+        setHeightPx("auto");
+      } else {
+        setHeightPx("0px");
+        setIsRendered(false);
+      }
+      return;
+    }
+
+    if (expanded && !isRendered) {
+      setIsRendered(true);
+      setHeightPx("0px");
+      return;
+    }
+
+    if (!isRendered) {
+      return;
+    }
+
+    const container = containerRef.current;
+    const content = contentRef.current;
+    if (!container || !content) {
+      return;
+    }
+
+    const startHeight = container.getBoundingClientRect().height;
+    const endHeight = expanded ? content.scrollHeight : 0;
+
+    if (expanded && startHeight === endHeight) {
+      setHeightPx("auto");
+      return;
+    }
+
+    if (!expanded && startHeight === 0) {
+      setHeightPx("0px");
+      setIsRendered(false);
+      return;
+    }
+
+    setHeightPx(`${startHeight}px`);
+    animationFrameRef.current = window.requestAnimationFrame(() => {
+      setHeightPx(`${endHeight}px`);
+      animationFrameRef.current = null;
+    });
+  }, [expanded, isRendered, prefersReducedMotion]);
+
+  const handleTransitionEnd = (event: TransitionEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget || event.propertyName !== "height") {
+      return;
+    }
+
+    if (expanded) {
+      setHeightPx("auto");
+      return;
+    }
+
+    setHeightPx("0px");
+    setIsRendered(false);
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className={styles.folderFeedsShutter}
+      style={{ height: isRendered ? heightPx : "0px" }}
+      onTransitionEnd={handleTransitionEnd}
+      aria-hidden={!expanded}
+    >
+      {isRendered ? (
+        <div ref={contentRef} className={styles.folderFeeds}>
+          {children}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 /**
  * Renders folder-aware feed navigation and add-feed form.
  */
@@ -348,6 +497,7 @@ export function Sidebar({
   onRequestFolderDelete,
   onCollapse,
 }: SidebarProps) {
+  const prefersReducedMotion = usePrefersReducedMotion();
   const [expandedFolderIds, setExpandedFolderIds] = useState<Record<string, boolean>>({});
   const [isUncategorizedExpanded, setIsUncategorizedExpanded] = useState(false);
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
@@ -785,9 +935,12 @@ export function Sidebar({
                 }}
               />
 
-              {isExpanded ? (
-                <div className={styles.folderFeeds}>{renderFeedRows(folderFeeds)}</div>
-              ) : null}
+              <ShutterFeedGroup
+                expanded={isExpanded}
+                prefersReducedMotion={prefersReducedMotion}
+              >
+                {renderFeedRows(folderFeeds)}
+              </ShutterFeedGroup>
             </div>
           );
         })}
@@ -828,9 +981,12 @@ export function Sidebar({
               <div className={styles.folderActionsSpacer} aria-hidden="true" />
             </div>
 
-            {isUncategorizedExpanded ? (
-              <div className={styles.folderFeeds}>{renderFeedRows(uncategorizedFeeds)}</div>
-            ) : null}
+            <ShutterFeedGroup
+              expanded={isUncategorizedExpanded}
+              prefersReducedMotion={prefersReducedMotion}
+            >
+              {renderFeedRows(uncategorizedFeeds)}
+            </ShutterFeedGroup>
           </div>
         ) : null}
 

@@ -58,8 +58,8 @@
     animation: none;
   }
 
-  .folderFeeds {
-    animation: none;
+  .folderFeedsShutter {
+    transition: none;
   }
 }
 
@@ -137,22 +137,15 @@
   margin-top: 1px;
 }
 
-.folderFeeds {
-  animation: folderFeedsReveal 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  background: var(--lp-surface-1);
-  padding-left: 0;
+.folderFeedsShutter {
+  overflow: hidden;
+  transition: height 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: height;
 }
 
-@keyframes folderFeedsReveal {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.folderFeeds {
+  background: var(--lp-surface-1);
+  padding-left: 0;
 }
 
 .folderRowWrap {
