@@ -15,16 +15,29 @@
 }
 
 .brand {
+  align-items: center;
   color: var(--text-primary);
   display: inline-flex;
-  font-size: 1.3125rem;
+  flex-direction: column;
   font-weight: var(--weight-semibold);
+  gap: 2px;
   justify-content: center;
-  letter-spacing: 0.02em;
   max-width: calc(100% - 32px);
   padding: 6px 14px;
+  text-align: center;
   text-decoration: none;
   width: fit-content;
+}
+
+.brandText {
+  font-size: 1.3125rem;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+
+.brandOwl {
+  font-size: 2rem;
+  line-height: 1;
 }
 
 .brand:hover {

@@ -18,7 +18,8 @@ export default function AuthLayout({
     <div className={styles.shell}>
       <div className={styles.brandSlot}>
         <Link href="/feeds" className={styles.brand}>
-          Feed my owl 🦉
+          <span className={styles.brandText}>Feed my owl</span>
+          <span className={styles.brandOwl}>🦉</span>
         </Link>
       </div>
 
