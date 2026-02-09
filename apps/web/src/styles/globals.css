@@ -12,7 +12,7 @@
   /* Shared feeds-shell sizing so brand slot and sidebar reserve stay aligned. */
   --sidebar-pane-width: 240px;
   --sidebar-pane-width-compact: 220px;
-  --sidebar-header-reserve: 76px;
+  --sidebar-header-reserve: 96px;
 
   --font-serif: Charter, "Bitstream Charter", "Sitka Text", Cambria, serif;
   --font-sans: "Noto Sans", "Liberation Sans", "Segoe UI", Arial, sans-serif;

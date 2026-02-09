@@ -9,7 +9,7 @@
   justify-content: center;
   left: 0;
   position: fixed;
-  top: 14px;
+  top: 18px;
   width: var(--sidebar-pane-width);
   z-index: 40;
 }
@@ -17,12 +17,12 @@
 .brand {
   color: var(--text-primary);
   display: inline-flex;
-  font-size: var(--text-lg);
+  font-size: 1.3125rem;
   font-weight: var(--weight-semibold);
   justify-content: center;
   letter-spacing: 0.02em;
-  max-width: calc(100% - 16px);
-  padding: 0;
+  max-width: calc(100% - 32px);
+  padding: 6px 14px;
   text-decoration: none;
   width: fit-content;
 }
@@ -90,7 +90,7 @@
 
 @media (max-width: 900px) {
   .brandSlot {
-    top: 8px;
+    top: 12px;
   }
 
   .accountControls {
