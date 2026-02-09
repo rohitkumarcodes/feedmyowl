@@ -20,7 +20,7 @@
   display: inline-flex;
   flex-direction: column;
   font-weight: var(--weight-semibold);
-  gap: 2px;
+  gap: 8px;
   justify-content: center;
   max-width: calc(100% - 32px);
   padding: 6px 14px;
