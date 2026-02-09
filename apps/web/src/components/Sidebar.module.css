@@ -135,7 +135,7 @@
 
 .folderFeeds {
   background: var(--lp-surface-1);
-  padding-left: var(--sidebar-feed-indent);
+  padding-left: 0;
 }
 
 .folderRowWrap {
