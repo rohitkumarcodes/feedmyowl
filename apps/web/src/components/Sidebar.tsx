@@ -437,11 +437,16 @@ function ShutterFeedGroup({
     setIsRendered(false);
   };
 
+  const isFullyExpanded = expanded && isRendered && heightPx === "auto";
+
   return (
     <div
       ref={containerRef}
       className={styles.folderFeedsShutter}
-      style={{ height: isRendered ? heightPx : "0px" }}
+      style={{
+        height: isRendered ? heightPx : "0px",
+        overflow: isFullyExpanded ? "visible" : "hidden",
+      }}
       onTransitionEnd={handleTransitionEnd}
       aria-hidden={!expanded}
     >
