@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
-import { UserMenu } from "@/lib/auth";
+import { UserMenu } from "@/lib/auth-client";
 import styles from "./layout.module.css";
 
 /**

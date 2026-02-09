@@ -2,7 +2,7 @@
   display: grid;
   gap: 16px;
   margin: 0 auto;
-  max-width: 42rem;
+  max-width: 36rem;
   padding: 24px 16px;
 }
 
@@ -67,8 +67,10 @@
   text-decoration: none;
 }
 
-.linkButton:hover:enabled {
+a.linkButton:hover,
+button.linkButton:hover:enabled {
   background: var(--bg-tertiary);
+  transition: background-color 80ms ease;
 }
 
 .linkButton:focus-visible {
