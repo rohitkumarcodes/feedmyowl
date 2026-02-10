@@ -41,7 +41,7 @@ const clerkAppearance = {
 
 /** Page metadata — shown in browser tab and search results */
 export const metadata: Metadata = {
-  title: "Feed My Owl",
+  title: "Feed my owl",
   description:
     "A minimalist RSS/Atom feed reader that preserves your attention.",
   icons: {
