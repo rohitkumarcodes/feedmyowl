@@ -51,6 +51,11 @@ Three stacked views:
 - Settings delete entry point is text-first (`Delete account...`) before confirmation.
 - Article list keeps an always-visible global search input with fuzzy-ranked results.
 - Active search replaces scoped list content but keeps sidebar scope selection visible.
+- Search model defaults:
+  - Activates at 2+ characters.
+  - Ranks matches by relevance then recency.
+  - Displays top 50 matches.
+  - Highlights article-title and feed-title matches.
 
 ## 6. Keyboard model
 - Scope and availability:

@@ -111,7 +111,9 @@ This log records active product and technical decisions for the current app phas
   - `j/k` work in list and reader contexts.
   - Arrow keys and `Enter` are list-only.
   - `r` refreshes feeds workspace-wide when not typing.
-  - `?` opens an in-app shortcuts dialog; `Escape` closes it.
+  - `/` focuses article search.
+  - `?` opens an in-app shortcuts dialog.
+  - `Escape` closes the shortcuts dialog and clears the search input when focused.
   - A visible `Shortcuts (?)` button and one-time hint expose availability.
 
 ### D-2026-02-10-07
@@ -134,6 +136,19 @@ This log records active product and technical decisions for the current app phas
   - Dot marker remains.
   - Unread titles use stronger text tone.
   - Read titles use calmer tone and normal font weight.
+
+### D-2026-02-10-09
+- Date: 2026-02-10
+- Status: active
+- Decision: Feeds workspace adds global fuzzy article search in the article pane.
+- Why: Improve retrieval speed for already-loaded reading data without adding backend complexity.
+- Details:
+  - Search input is always visible at the top of the article list pane.
+  - Query activates fuzzy search at 2+ characters.
+  - Active search is global across loaded articles and ignores selected scope for results.
+  - Results are ranked by relevance, then recency, and capped to top 50.
+  - Title and feed-name matches are highlighted.
+  - Clearing search returns the list to the currently selected scope immediately.
 
 ## Superseded decisions
 

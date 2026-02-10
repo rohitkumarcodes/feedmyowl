@@ -48,7 +48,13 @@ Core loop:
   - `Refresh`
   - `Add feed/folder`
   - `Shortcuts (?)`
-- Article list pane includes an always-visible search input for global article search.
+- Article list pane includes an always-visible search input for global fuzzy article search.
+- Search behavior:
+  - Activates at 2+ characters.
+  - Runs globally across loaded articles (ignores selected scope for results).
+  - Ranks by relevance then recency.
+  - Shows top 50 results.
+  - Highlights title/feed text matches.
 - One-time shortcuts tip appears in the sidebar until dismissed/opened.
 - Authenticated chrome brand:
   - Fixed text `Feed my owl`.

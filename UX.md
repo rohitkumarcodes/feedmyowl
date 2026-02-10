@@ -76,6 +76,7 @@
   - Search input is always visible at the top of the article list pane.
   - Query length must be at least 2 characters to activate global fuzzy search.
   - Active search ignores selected scope for results, but scope selection stays visible.
+  - Changing scope while search is active keeps search active and keeps the current reader article open.
   - Results are ranked by relevance, then recency, and capped to top 50 matches.
   - Match highlighting appears in article title and feed title.
   - `Escape` in the search input clears the query; pressing again may blur.

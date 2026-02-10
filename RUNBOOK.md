@@ -148,3 +148,4 @@ From repo root:
 29. Search with a 2+ character query and confirm global ranked results are shown.
 30. Verify search row clear button and `Escape` both clear the active query.
 31. Press `/` from list and reader contexts and confirm focus moves to search input.
+32. While search is active, change sidebar scope and verify search results remain global and the open reader article stays open.

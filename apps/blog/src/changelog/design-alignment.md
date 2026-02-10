@@ -19,3 +19,6 @@ This release aligns both surfaces with the new typography-first design system.
 - Switched blog and changelog index pages to title-only streams.
 
 This change keeps both products visually related while preserving their different jobs.
+
+Follow-up: search and shortcut updates landed later in
+[global article search and updated keyboard shortcuts](/changelog/global-search-and-shortcuts/).

@@ -12,6 +12,7 @@ Most feed readers optimize for engagement. feedmyowl does not.
 
 - Fetches RSS and Atom feeds when you ask it to.
 - Shows articles in a clean interface designed for reading.
+- Lets you fuzzy-search loaded articles directly in the reading workspace.
 - Keeps controls and visual noise to a minimum.
 
 ## what feedmyowl avoids
