@@ -558,184 +558,189 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
         <p className={styles.muted}>Signed in as {email}</p>
       </header>
 
-      <section className={styles.panel}>
-        <h2>Feeds</h2>
-        <p className={styles.muted}>
-          Export your library or import feeds from OPML/XML or FeedMyOwl JSON.
-        </p>
-        <div className={styles.inlineActions}>
-          <button
-            type="button"
-            className={styles.linkButton}
-            onClick={() => handleExport("opml")}
-          >
-            Export OPML
-          </button>
-          <button
-            type="button"
-            className={styles.linkButton}
-            onClick={() => handleExport("json")}
-          >
-            Export JSON
-          </button>
-          <button
-            type="button"
-            className={styles.linkButton}
-            onClick={() => importFileInputRef.current?.click()}
-            disabled={isImportingFeeds}
-          >
-            {isImportingFeeds ? "Importing..." : "Import feeds"}
-          </button>
-        </div>
-        <input
-          ref={importFileInputRef}
-          className={styles.hiddenFileInput}
-          type="file"
-          accept=".opml,.xml,.json,application/xml,text/xml,application/json"
-          onChange={(event) => {
-            void handleImportFileChange(event);
-          }}
-        />
-        {importError ? <p className={styles.inlineMessage}>{importError}</p> : null}
-        {importSummary && importSummaryText ? (
-          <div className={styles.importSummary} role="status">
-            <p>{importSummaryText}</p>
-            <p className={styles.muted}>Source file: {importSummary.fileName}</p>
-            {importSummary.failedDetails.length > 0 ? (
-              <ul className={styles.importFailureList}>
-                {importSummary.failedDetails.map((detail) => (
-                  <li key={detail}>{detail}</li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
-        ) : null}
-      </section>
-
-      <section className={`${styles.panel} ${styles.owlPanel}`}>
-        <button
-          type="button"
-          className={styles.owlToggle}
-          aria-expanded={isOwlPanelExpanded}
-          aria-controls={owlOptionsPanelId}
-          onClick={() => {
-            setIsOwlPanelExpanded((previous) => !previous);
-          }}
-        >
-          <span className={styles.owlToggleCaret}>{isOwlPanelExpanded ? "▾" : "▸"}</span>
-          <span>Pick an owl to digest your feeds.</span>
-        </button>
-        <OwlOptionsShutter
-          expanded={isOwlPanelExpanded}
-          prefersReducedMotion={prefersReducedMotion}
-          contentId={owlOptionsPanelId}
-        >
-          <div
-            className={styles.owlOptionList}
-            role="radiogroup"
-            aria-label="Pick an owl to digest your feeds."
-          >
-            {OWL_ART_OPTIONS.map((option) => {
-              const isSelected = draftOwlAscii === option.ascii;
-
-              return (
-                <label
-                  key={option.ascii}
-                  className={`${styles.owlOption} ${
-                    isSelected ? styles.owlOptionSelected : ""
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="owl-ascii"
-                    value={option.ascii}
-                    checked={isSelected}
-                    onChange={() => {
-                      setDraftOwlAscii(option.ascii);
-                      setOwlSaveError(null);
-                      setOwlSaveMessage(null);
-                    }}
-                  />
-                  <span className={styles.owlOptionAscii}>{option.ascii}</span>
-                  <span className={styles.owlOptionText}>
-                    {option.name}:{" "}
-                    {option.emphasizeDescription ? (
-                      <em className={styles.owlOptionEmphasis}>{option.description}</em>
-                    ) : (
-                      option.description
-                    )}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
+      <div className={styles.settingsOptions}>
+        <section className={styles.panel}>
+          <h2>Feeds</h2>
+          <p className={styles.muted}>
+            Export your library or import feeds from OPML/XML or FeedMyOwl JSON.
+          </p>
           <div className={styles.inlineActions}>
             <button
               type="button"
-              className={`${styles.linkButton} ${styles.compactButton}`}
-              onClick={() => {
-                void handleSaveOwl();
-              }}
-              disabled={isSavingOwl || draftOwlAscii === savedOwlAscii}
+              className={styles.linkButton}
+              onClick={() => handleExport("opml")}
             >
-              {isSavingOwl ? "Saving..." : "Save owl"}
+              Export OPML
+            </button>
+            <button
+              type="button"
+              className={styles.linkButton}
+              onClick={() => handleExport("json")}
+            >
+              Export JSON
+            </button>
+            <button
+              type="button"
+              className={styles.linkButton}
+              onClick={() => importFileInputRef.current?.click()}
+              disabled={isImportingFeeds}
+            >
+              {isImportingFeeds ? "Importing..." : "Import feeds"}
             </button>
           </div>
-          {owlSaveMessage ? (
-            <p className={styles.inlineMessage} role="status">
-              {owlSaveMessage}
-            </p>
-          ) : null}
-          {owlSaveError ? <p className={styles.inlineMessage}>{owlSaveError}</p> : null}
-        </OwlOptionsShutter>
-      </section>
-
-      <section className={styles.panel}>
-        <h2>Delete account</h2>
-        {!showDeleteConfirm ? (
-          <button
-            type="button"
-            className={`${styles.linkButton} ${styles.compactButton}`}
-            onClick={() => setShowDeleteConfirm(true)}
-          >
-            <span className={styles.iconButtonContent}>
-              {trashIcon}
-              <span>Delete my account</span>
-            </span>
-          </button>
-        ) : (
-          <div className={styles.deleteConfirm}>
-            <p>This will permanently delete your account and all data. This cannot be undone.</p>
-            <div className={styles.inlineActions}>
-              <button
-                type="button"
-                className={`${styles.linkButton} ${styles.compactButton}`}
-                onClick={() => {
-                  void handleDeleteAccount();
-                }}
-                disabled={isDeletingAccount}
-              >
-                <span className={styles.iconButtonContent}>
-                  {trashIcon}
-                  <span>{isDeletingAccount ? "Deleting..." : "Yes, delete my account"}</span>
-                </span>
-              </button>
-              <button
-                type="button"
-                className={styles.linkButton}
-                onClick={() => {
-                  setShowDeleteConfirm(false);
-                  setDeleteError(null);
-                }}
-                disabled={isDeletingAccount}
-              >
-                Cancel
-              </button>
+          <input
+            ref={importFileInputRef}
+            className={styles.hiddenFileInput}
+            type="file"
+            accept=".opml,.xml,.json,application/xml,text/xml,application/json"
+            onChange={(event) => {
+              void handleImportFileChange(event);
+            }}
+          />
+          {importError ? <p className={styles.inlineMessage}>{importError}</p> : null}
+          {importSummary && importSummaryText ? (
+            <div className={styles.importSummary} role="status">
+              <p>{importSummaryText}</p>
+              <p className={styles.muted}>Source file: {importSummary.fileName}</p>
+              {importSummary.failedDetails.length > 0 ? (
+                <ul className={styles.importFailureList}>
+                  {importSummary.failedDetails.map((detail) => (
+                    <li key={detail}>{detail}</li>
+                  ))}
+                </ul>
+              ) : null}
             </div>
-            {deleteError ? <p className={styles.inlineMessage}>{deleteError}</p> : null}
+          ) : null}
+        </section>
+
+        <section className={styles.panel}>
+          <h2>Hoot hoot</h2>
+          <div className={styles.owlPickerControls}>
+            <button
+              type="button"
+              className={styles.owlToggle}
+              aria-expanded={isOwlPanelExpanded}
+              aria-controls={owlOptionsPanelId}
+              onClick={() => {
+                setIsOwlPanelExpanded((previous) => !previous);
+              }}
+            >
+              <span className={styles.owlToggleCaret}>{isOwlPanelExpanded ? "▾" : "▸"}</span>
+              <span>Choose an owl to digest your feeds.</span>
+            </button>
+            <OwlOptionsShutter
+              expanded={isOwlPanelExpanded}
+              prefersReducedMotion={prefersReducedMotion}
+              contentId={owlOptionsPanelId}
+            >
+              <div
+                className={styles.owlOptionList}
+                role="radiogroup"
+                aria-label="Choose an owl to digest your feeds."
+              >
+                {OWL_ART_OPTIONS.map((option) => {
+                  const isSelected = draftOwlAscii === option.ascii;
+
+                  return (
+                    <label
+                      key={option.ascii}
+                      className={`${styles.owlOption} ${
+                        isSelected ? styles.owlOptionSelected : ""
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="owl-ascii"
+                        value={option.ascii}
+                        checked={isSelected}
+                        onChange={() => {
+                          setDraftOwlAscii(option.ascii);
+                          setOwlSaveError(null);
+                          setOwlSaveMessage(null);
+                        }}
+                      />
+                      <span className={styles.owlOptionAscii}>{option.ascii}</span>
+                      <span className={styles.owlOptionText}>
+                        {option.name}:{" "}
+                        {option.emphasizeDescription ? (
+                          <em className={styles.owlOptionEmphasis}>{option.description}</em>
+                        ) : (
+                          option.description
+                        )}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+              <div className={styles.inlineActions}>
+                <button
+                  type="button"
+                  className={`${styles.linkButton} ${styles.compactButton}`}
+                  onClick={() => {
+                    void handleSaveOwl();
+                  }}
+                  disabled={isSavingOwl || draftOwlAscii === savedOwlAscii}
+                >
+                  {isSavingOwl ? "Saving..." : "Save owl"}
+                </button>
+              </div>
+              {owlSaveMessage ? (
+                <p className={styles.inlineMessage} role="status">
+                  {owlSaveMessage}
+                </p>
+              ) : null}
+              {owlSaveError ? <p className={styles.inlineMessage}>{owlSaveError}</p> : null}
+            </OwlOptionsShutter>
           </div>
-        )}
-      </section>
+        </section>
+
+        <section className={styles.panel}>
+          <h2>Delete account</h2>
+          {!showDeleteConfirm ? (
+            <button
+              type="button"
+              className={`${styles.linkButton} ${styles.compactButton}`}
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              <span className={styles.iconButtonContent}>
+                {trashIcon}
+                <span>Delete my account</span>
+              </span>
+            </button>
+          ) : (
+            <div className={styles.deleteConfirm}>
+              <p>This will permanently delete your account and all data. This cannot be undone.</p>
+              <div className={styles.inlineActions}>
+                <button
+                  type="button"
+                  className={`${styles.linkButton} ${styles.compactButton}`}
+                  onClick={() => {
+                    void handleDeleteAccount();
+                  }}
+                  disabled={isDeletingAccount}
+                >
+                  <span className={styles.iconButtonContent}>
+                    {trashIcon}
+                    <span>{isDeletingAccount ? "Deleting..." : "Yes, delete my account"}</span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className={styles.linkButton}
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setDeleteError(null);
+                  }}
+                  disabled={isDeletingAccount}
+                >
+                  Cancel
+                </button>
+              </div>
+              {deleteError ? <p className={styles.inlineMessage}>{deleteError}</p> : null}
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

@@ -26,16 +26,22 @@
   justify-content: space-between;
 }
 
+.settingsOptions {
+  display: grid;
+  gap: 20px;
+}
+
 .panel {
   display: grid;
   gap: 8px;
 }
 
-.owlPanel {
+.owlPickerControls {
+  display: grid;
   gap: 0;
 }
 
-.owlPanel .owlOptionsShutter[aria-hidden="false"] {
+.owlPickerControls .owlOptionsShutter[aria-hidden="false"] {
   margin-top: 8px;
 }
 
@@ -149,7 +155,6 @@ button.linkButton:hover:enabled {
   color: var(--text-primary);
   cursor: pointer;
   display: inline-flex;
-  font-weight: var(--weight-semibold);
   gap: 8px;
   justify-content: flex-start;
   min-height: 32px;
