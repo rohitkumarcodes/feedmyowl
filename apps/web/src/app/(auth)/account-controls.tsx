@@ -15,7 +15,9 @@ export function AccountControls() {
 
   return (
     <div className={styles.accountControls}>
-      <UserMenu afterSignOutUrl="/sign-in" />
+      <div className={styles.accountMenuFrame}>
+        <UserMenu afterSignOutUrl="/sign-in" />
+      </div>
       {showSettingsLink ? (
         <Link
           href="/settings"

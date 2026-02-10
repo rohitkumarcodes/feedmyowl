@@ -71,6 +71,17 @@
   z-index: 40;
 }
 
+.accountMenuFrame {
+  align-items: center;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  display: inline-flex;
+  justify-content: center;
+  min-height: 32px;
+  min-width: 32px;
+  padding: 0;
+}
+
 .settingsLink {
   align-items: center;
   background: var(--bg-primary);
@@ -95,6 +106,11 @@
 }
 
 .settingsLink:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.accountMenuFrame:focus-within {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
