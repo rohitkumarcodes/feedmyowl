@@ -240,13 +240,13 @@ button.linkButton:hover:enabled {
 
 .shortcutsPanelContent {
   display: grid;
-  gap: 20px;
-  padding: 10px 18px 18px;
+  gap: 16px;
+  padding: 6px 14px 14px;
 }
 
 .shortcutsPanelGroup {
   display: grid;
-  gap: 16px;
+  gap: 12px;
 }
 
 .shortcutsPanelGroup h3 {
@@ -258,20 +258,20 @@ button.linkButton:hover:enabled {
 
 .shortcutsPanelRows {
   display: grid;
-  gap: 14px;
+  gap: 10px;
 }
 
 .shortcutsPanelRow {
   align-items: center;
   display: grid;
-  gap: 18px;
+  gap: 14px;
   grid-template-columns: minmax(120px, auto) minmax(0, 1fr);
 }
 
 .shortcutsPanelKeys {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .shortcutsPanelKey {
@@ -282,14 +282,14 @@ button.linkButton:hover:enabled {
   font-size: var(--text-xs);
   line-height: 1;
   min-width: 24px;
-  padding: 6px 10px;
+  padding: 5px 8px;
   text-align: center;
 }
 
 .shortcutsPanelDescription {
   color: var(--text-secondary);
   font-size: var(--text-sm);
-  line-height: 1.55;
+  line-height: 1.45;
   margin: 0;
 }
 
@@ -412,7 +412,7 @@ button.linkButton:hover:enabled {
   }
 
   .shortcutsPanelRow {
-    gap: 10px;
+    gap: 8px;
     grid-template-columns: minmax(0, 1fr);
   }
 }
