@@ -15,10 +15,10 @@
   display: grid;
   gap: 12px;
   max-height: min(88vh, 640px);
-  max-width: 560px;
+  max-width: calc(100vw - 32px);
   overflow: auto;
   padding: 14px;
-  width: min(100%, 560px);
+  width: fit-content;
 }
 
 .header {
@@ -90,7 +90,7 @@
   align-items: center;
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(120px, auto) minmax(0, 1fr);
+  grid-template-columns: max-content max-content;
 }
 
 .keys {
@@ -114,12 +114,17 @@
 .rowDescription {
   color: var(--text-secondary);
   font-size: var(--text-sm);
+  white-space: nowrap;
 }
 
 @media (max-width: 560px) {
   .row {
     gap: 6px;
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rowDescription {
+    white-space: normal;
   }
 }
 
