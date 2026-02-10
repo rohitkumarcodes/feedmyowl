@@ -49,6 +49,8 @@ Three stacked views:
   - `error` is dismissible and shown with stronger contrast.
 - Settings import shows numeric progress while processing feed URLs.
 - Settings delete entry point is text-first (`Delete account...`) before confirmation.
+- Article list keeps an always-visible global search input with fuzzy-ranked results.
+- Active search replaces scoped list content but keeps sidebar scope selection visible.
 
 ## 6. Keyboard model
 - Scope and availability:
@@ -62,8 +64,9 @@ Three stacked views:
   - `ArrowUp`: previous article (list context only)
   - `Enter`: open selected article (list context only)
   - `r`: refresh feeds
+  - `/`: focus article search input
   - `?`: open shortcuts help modal
-  - `Escape`: close shortcuts help modal
+  - `Escape`: close shortcuts help modal or clear search input when focused
 - Discoverability:
   - Visible toolbar entry `Shortcuts (?)`
   - One-time tip shown on desktop/tablet until dismissed or modal opened
@@ -79,7 +82,6 @@ Three stacked views:
 
 ## 8. Constraints
 - No nested folders.
-- No new search UI.
 - No decorative folder colors/icons in this phase.
 - No drag-drop ordering in this phase.
 

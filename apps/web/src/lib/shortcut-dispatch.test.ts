@@ -70,6 +70,7 @@ describe("shortcut-dispatch", () => {
 
   it("maps workspace-wide actions when not typing", () => {
     expect(resolveShortcutAction(eventSnapshot("r"), baseContext)).toBe("feeds.refresh");
+    expect(resolveShortcutAction(eventSnapshot("/"), baseContext)).toBe("search.focus");
     expect(resolveShortcutAction(eventSnapshot("?"), baseContext)).toBe("shortcuts.open");
     expect(resolveShortcutAction(eventSnapshot("/", { shiftKey: true }), baseContext)).toBe(
       "shortcuts.open"
@@ -89,6 +90,13 @@ describe("shortcut-dispatch", () => {
       resolveShortcutAction(eventSnapshot("r", { metaKey: true }), {
         ...baseContext,
         isListContext: true,
+      })
+    ).toBeNull();
+
+    expect(
+      resolveShortcutAction(eventSnapshot("/"), {
+        ...baseContext,
+        isTypingTarget: true,
       })
     ).toBeNull();
   });

@@ -22,6 +22,7 @@ Core loop:
 - Many-to-many feed-folder assignment.
 - Manual refresh.
 - Article list and reader.
+- Global fuzzy article search in the article pane.
 - Read-state tracking.
 - Offline snapshot fallback for previously loaded data.
 - Offline-only connectivity status message in workspace.
@@ -33,7 +34,6 @@ Core loop:
 
 ## 4. Out of scope
 - Nested folders.
-- Search.
 - Tags/categories separate from folders.
 - Background refresh automation.
 - Folder colors/icons and drag-drop ordering.
@@ -48,6 +48,7 @@ Core loop:
   - `Refresh`
   - `Add feed/folder`
   - `Shortcuts (?)`
+- Article list pane includes an always-visible search input for global article search.
 - One-time shortcuts tip appears in the sidebar until dismissed/opened.
 - Authenticated chrome brand:
   - Fixed text `Feed my owl`.
@@ -105,8 +106,9 @@ Notes:
   - `j/k` work in list and reader contexts.
   - Arrow keys + `Enter` are list-only.
   - `r` refreshes feeds.
+  - `/` focuses article search.
   - `?` opens shortcuts help.
-  - `Escape` closes the shortcuts dialog.
+  - `Escape` closes the shortcuts dialog and clears the search input when focused.
 
 ## 10. Operational scripts
 From repo root:

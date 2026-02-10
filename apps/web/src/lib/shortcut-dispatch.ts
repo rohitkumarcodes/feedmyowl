@@ -82,12 +82,16 @@ export function resolveShortcutAction(
     return "article.open";
   }
 
-  if (key === "r") {
-    return "feeds.refresh";
-  }
-
   if (isQuestionMark(snapshot)) {
     return "shortcuts.open";
+  }
+
+  if (key === "/") {
+    return "search.focus";
+  }
+
+  if (key === "r") {
+    return "feeds.refresh";
   }
 
   return null;

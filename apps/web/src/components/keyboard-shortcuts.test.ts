@@ -33,6 +33,7 @@ describe("keyboard-shortcuts definitions", () => {
     expect(keys).toContain("ArrowUp");
     expect(keys).toContain("Enter");
     expect(keys).toContain("r");
+    expect(keys).toContain("/");
     expect(keys).toContain("?");
     expect(keys).toContain("Escape");
   });

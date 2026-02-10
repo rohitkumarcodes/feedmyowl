@@ -9,7 +9,8 @@
 3. Optionally assign one or more folders during add.
 4. Refresh feeds.
 5. Choose scope (`Read all`, `Uncategorized`, folder, or feed).
-6. Open and read an article.
+6. Optionally search all loaded articles from the article list pane.
+7. Open and read an article.
 
 ## 3. Sidebar behavior
 - Top controls:
@@ -71,6 +72,13 @@
 - `Uncategorized`: only feeds with no folder assignments.
 - Folder scope: union of feeds in that folder.
 - Feed scope: only that feed’s articles.
+- Global search behavior:
+  - Search input is always visible at the top of the article list pane.
+  - Query length must be at least 2 characters to activate global fuzzy search.
+  - Active search ignores selected scope for results, but scope selection stays visible.
+  - Results are ranked by relevance, then recency, and capped to top 50 matches.
+  - Match highlighting appears in article title and feed title.
+  - `Escape` in the search input clears the query; pressing again may blur.
 
 ## 7. Mobile UX
 - Keep stacked views: `Feeds -> Articles -> Reader`.
@@ -102,8 +110,9 @@
   - `ArrowUp`: previous article (list context only)
   - `Enter`: open selected article (list context only)
   - `r`: refresh feeds
+  - `/`: focus article search input
   - `?`: open shortcuts help modal
-  - `Escape`: close shortcuts modal
+  - `Escape`: close shortcuts modal and clear search input when focused
 - Discoverability:
   - Visible toolbar entry: `Shortcuts (?)`
   - One-time hint: `Tip: press ? to see shortcuts.`

@@ -1,12 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArticleList } from "./ArticleList";
 import { ArticleReader } from "./ArticleReader";
 import { KeyboardShortcutsModal } from "./KeyboardShortcutsModal";
 import { Layout } from "./Layout";
 import { Sidebar, SidebarScope } from "./Sidebar";
+import {
+  buildArticleSearchResults,
+  type ArticleSearchHighlights,
+} from "./article-search";
 import { buildSidebarNotices } from "./sidebar-messages";
 import type { FeedViewModel, FolderViewModel } from "./feeds-types";
 import {
@@ -43,6 +47,8 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [listCollapsed, setListCollapsed] = useState(false);
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setFeeds(initialFeeds);
@@ -86,10 +92,41 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
 
   const allArticles = useMemo(() => selectAllArticles(feeds), [feeds]);
 
-  const visibleArticles = useMemo(
+  const scopedArticles = useMemo(
     () => selectVisibleArticles(allArticles, selectedScope),
     [allArticles, selectedScope]
   );
+
+  const searchResults = useMemo(
+    () =>
+      buildArticleSearchResults(allArticles, searchQuery, {
+        minQueryLength: 2,
+        maxResults: 50,
+      }),
+    [allArticles, searchQuery]
+  );
+
+  const isSearchActive = searchResults.isActive;
+
+  const visibleArticles = useMemo(
+    () =>
+      isSearchActive
+        ? searchResults.results.map((result) => result.article)
+        : scopedArticles,
+    [isSearchActive, scopedArticles, searchResults.results]
+  );
+
+  const searchHighlightsByArticleId = useMemo(() => {
+    if (!isSearchActive) {
+      return {};
+    }
+
+    const highlights: Record<string, ArticleSearchHighlights> = {};
+    for (const result of searchResults.results) {
+      highlights[result.article.id] = result.highlights;
+    }
+    return highlights;
+  }, [isSearchActive, searchResults.results]);
 
   const openArticle = useMemo(
     () => selectOpenArticle(allArticles, openArticleId),
@@ -285,6 +322,16 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
     setIsShortcutsModalOpen(false);
   }, []);
 
+  const focusSearchInput = useCallback(() => {
+    const input = searchInputRef.current;
+    if (!input) {
+      return;
+    }
+
+    input.focus();
+    input.select();
+  }, []);
+
   useEffect(() => {
     if (!isMobile) {
       return;
@@ -337,14 +384,18 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
   const handleSelectScope = useCallback(
     (nextScope: SidebarScope) => {
       setSelectedScope(nextScope);
-      setOpenArticleId(null);
+
+      if (!isSearchActive) {
+        setOpenArticleId(null);
+      }
+
       focusArticleList();
 
       if (isMobile) {
         setMobileViewWithHistory("articles", true);
       }
     },
-    [focusArticleList, isMobile, setMobileViewWithHistory]
+    [focusArticleList, isMobile, isSearchActive, setMobileViewWithHistory]
   );
 
   const sidebarNotices = useMemo(
@@ -382,17 +433,39 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
     onRefreshFeeds: () => {
       void handleRefresh();
     },
+    onFocusSearch: focusSearchInput,
     onOpenShortcuts: openShortcutsModal,
     onCloseShortcuts: closeShortcutsModal,
   });
 
   useEffect(() => {
+    if (isSearchActive) {
+      if (searchResults.totalMatchCount === 0) {
+        setLiveMessage(`No results for "${searchResults.query}".`);
+        return;
+      }
+
+      const searchMessage = searchResults.isCapped
+        ? `Showing top ${searchResults.maxResults} of ${searchResults.totalMatchCount} search results for "${searchResults.query}".`
+        : `${searchResults.totalMatchCount} search result${searchResults.totalMatchCount === 1 ? "" : "s"} for "${searchResults.query}".`;
+      setLiveMessage(searchMessage);
+      return;
+    }
+
     const countMessage =
       visibleArticles.length === 0
         ? emptyStateMessage
         : `${visibleArticles.length} article${visibleArticles.length === 1 ? "" : "s"}`;
     setLiveMessage(countMessage);
-  }, [emptyStateMessage, visibleArticles.length]);
+  }, [
+    emptyStateMessage,
+    isSearchActive,
+    searchResults.isCapped,
+    searchResults.maxResults,
+    searchResults.query,
+    searchResults.totalMatchCount,
+    visibleArticles.length,
+  ]);
 
   return (
     <div className={styles.workspace}>
@@ -478,9 +551,17 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
             articles={visibleArticles}
             selectedArticleId={selectedArticleId}
             openArticleId={openArticleId}
-            statusMessage={listStatusMessage}
+            statusMessage={isSearchActive ? null : listStatusMessage}
             emptyStateMessage={emptyStateMessage}
-            showFeedTitle={selectedScope.type !== "feed"}
+            showFeedTitle={isSearchActive || selectedScope.type !== "feed"}
+            searchQuery={searchQuery}
+            searchIsActive={isSearchActive}
+            searchTotalMatchCount={searchResults.totalMatchCount}
+            searchMaxResults={searchResults.maxResults}
+            searchIsCapped={searchResults.isCapped}
+            searchHighlightsByArticleId={searchHighlightsByArticleId}
+            searchInputRef={searchInputRef}
+            onSearchQueryChange={setSearchQuery}
             onSelectArticle={(articleId) => {
               void openSelectedArticle(articleId);
             }}
@@ -494,7 +575,7 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
         onToggleList={() => setListCollapsed((prev) => !prev)}
         isMobile={isMobile}
         mobileView={mobileView}
-        mobileListTitle={selectedScopeLabel}
+        mobileListTitle={isSearchActive ? "Search results" : selectedScopeLabel}
         onMobileBackToFeeds={onMobileBackToFeeds}
         onMobileBackToArticles={onMobileBackToArticles}
       />

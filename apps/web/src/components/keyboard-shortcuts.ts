@@ -9,6 +9,7 @@ export type ShortcutActionId =
   | "article.previous.arrow"
   | "article.open"
   | "feeds.refresh"
+  | "search.focus"
   | "shortcuts.open"
   | "shortcuts.close";
 
@@ -75,6 +76,12 @@ export const SHORTCUT_DEFINITIONS: readonly ShortcutDefinition[] = [
     group: "app_actions",
     keys: ["r"],
     description: "Refresh feeds",
+  },
+  {
+    id: "search.focus",
+    group: "app_actions",
+    keys: ["/"],
+    description: "Focus article search",
   },
   {
     id: "shortcuts.open",

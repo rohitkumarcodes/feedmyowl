@@ -18,6 +18,7 @@ From repo root:
 - Bulk add feed/site URLs from sidebar add form.
 - Manual refresh.
 - Read articles.
+- Global fuzzy article search in article list pane (top 50 ranked results).
 - Offline-only workspace status message with cached-reading fallback copy.
 - Desktop/tablet keyboard shortcuts with in-app help modal (`?`) and visible toolbar entry.
 - One-time shortcuts hint in sidebar (dismissible, browser-local persistence).
@@ -76,7 +77,15 @@ From repo root:
 4. Verify scope behavior:
    - `j/k` should work in list and reader contexts.
    - Arrow keys and `Enter` should work only in list context.
-5. Press `?` to open shortcuts modal and validate key mapping list.
+5. Verify `/` focuses the article search input when not typing.
+6. Press `?` to open shortcuts modal and validate key mapping list.
+
+### Search behavior looks incorrect
+1. Confirm search input is visible at the top of the article list pane.
+2. Confirm query has at least 2 characters; 1-character query should not activate search.
+3. Confirm active search is global (ignores selected scope) and shows ranked results.
+4. If query returns many matches, confirm list caps at top 50 and shows cap notice.
+5. Press `Escape` in the search input to confirm query clears.
 
 ### Shortcut hint appears unexpectedly
 1. Confirm browser localStorage key: `feedmyowl.shortcuts_hint.dismissed.v1`.
@@ -135,3 +144,7 @@ From repo root:
 25. Verify article rows retain dot marker and show stronger unread vs read title tone.
 26. On settings page, verify `Keyboard shortcuts` section and docs link are present.
 27. On website pages, verify global nav includes `About` with correct active state on `/about/`.
+28. In article list, search with a 1-character query and confirm non-search hint is shown.
+29. Search with a 2+ character query and confirm global ranked results are shown.
+30. Verify search row clear button and `Escape` both clear the active query.
+31. Press `/` from list and reader contexts and confirm focus moves to search input.

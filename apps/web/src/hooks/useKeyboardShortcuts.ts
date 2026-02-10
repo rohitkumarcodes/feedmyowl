@@ -14,6 +14,7 @@ interface UseKeyboardShortcutsOptions {
   onPreviousArticle: () => void;
   onOpenArticle: () => void;
   onRefreshFeeds: () => void;
+  onFocusSearch: () => void;
   onOpenShortcuts: () => void;
   onCloseShortcuts: () => void;
 }
@@ -43,6 +44,7 @@ export function useKeyboardShortcuts({
   onPreviousArticle,
   onOpenArticle,
   onRefreshFeeds,
+  onFocusSearch,
   onOpenShortcuts,
   onCloseShortcuts,
 }: UseKeyboardShortcutsOptions) {
@@ -95,6 +97,11 @@ export function useKeyboardShortcuts({
         return;
       }
 
+      if (action === "search.focus") {
+        onFocusSearch();
+        return;
+      }
+
       if (action === "shortcuts.open") {
         onOpenShortcuts();
         return;
@@ -116,6 +123,7 @@ export function useKeyboardShortcuts({
     isReaderContextTarget,
     isShortcutsModalOpen,
     onCloseShortcuts,
+    onFocusSearch,
     onNextArticle,
     onOpenArticle,
     onOpenShortcuts,

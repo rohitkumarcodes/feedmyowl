@@ -50,3 +50,9 @@
   font-variant-numeric: tabular-nums;
   line-height: var(--leading-tight);
 }
+
+.match {
+  background: rgb(236 199 96 / 45%);
+  color: inherit;
+  padding: 0 1px;
+}
