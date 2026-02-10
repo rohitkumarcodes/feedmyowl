@@ -368,12 +368,38 @@ const trashIcon = (
   </svg>
 );
 
+const keyboardIcon = (
+  <svg
+    className={styles.buttonIcon}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <rect
+      x="3.5"
+      y="6.5"
+      width="17"
+      height="11"
+      rx="1.4"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    />
+    <path d="M7 10H8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    <path d="M10 10H11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    <path d="M13 10H14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    <path d="M16 10H17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    <path d="M7 13.5H17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+  </svg>
+);
+
 /**
  * Renders minimal account settings for the reading MVP.
  */
 export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
   const router = useRouter();
   const owlOptionsPanelId = useId();
+  const shortcutsPanelId = useId();
   const importFileInputRef = useRef<HTMLInputElement | null>(null);
   const owlWidthProbeRef = useRef<HTMLDivElement | null>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -391,6 +417,7 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
   const [owlSaveMessage, setOwlSaveMessage] = useState<string | null>(null);
   const [owlSaveError, setOwlSaveError] = useState<string | null>(null);
   const [isOwlPanelExpanded, setIsOwlPanelExpanded] = useState(false);
+  const [isShortcutsPanelExpanded, setIsShortcutsPanelExpanded] = useState(false);
   const [owlControlsWidthPx, setOwlControlsWidthPx] = useState<number | null>(null);
 
   const landingUrl =
@@ -684,22 +711,56 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
           <p className={styles.muted}>
             Shortcuts work in the feeds workspace on desktop and tablet.
           </p>
-          <div className={styles.shortcutsReference}>
-            {SHORTCUT_GROUPS.map((group) => (
-              <div key={group.id} className={styles.shortcutsGroup}>
-                <h3>{group.label}</h3>
-                <ul className={styles.shortcutsList}>
-                  {group.shortcuts.map((shortcut) => (
-                    <li key={shortcut.id}>
-                      <span className={styles.shortcutsKeys}>{shortcut.keys.join(" / ")}</span>
-                      <span className={styles.shortcutsDescription}>
-                        {shortcut.description}
-                      </span>
-                    </li>
+          <div className={styles.shortcutsControls}>
+            <button
+              type="button"
+              className={styles.shortcutsToggle}
+              aria-expanded={isShortcutsPanelExpanded}
+              aria-controls={shortcutsPanelId}
+              onClick={() => {
+                setIsShortcutsPanelExpanded((previous) => !previous);
+              }}
+            >
+              <span className={styles.owlToggleCaret}>
+                {isShortcutsPanelExpanded ? "▾" : "▸"}
+              </span>
+              {keyboardIcon}
+              <span>Show keyboard shortcuts</span>
+            </button>
+            <OwlOptionsShutter
+              expanded={isShortcutsPanelExpanded}
+              prefersReducedMotion={prefersReducedMotion}
+              contentId={shortcutsPanelId}
+            >
+              <div className={styles.shortcutsPanelBox}>
+                <div className={styles.shortcutsPanelGroups}>
+                  {SHORTCUT_GROUPS.map((group) => (
+                    <section key={group.id} className={styles.shortcutsPanelGroup}>
+                      <h3>{group.label}</h3>
+                      <div className={styles.shortcutsPanelRows}>
+                        {group.shortcuts.map((shortcut) => (
+                          <div key={shortcut.id} className={styles.shortcutsPanelRow}>
+                            <div className={styles.shortcutsPanelKeys}>
+                              {shortcut.keys.map((key) => (
+                                <kbd
+                                  key={`${shortcut.id}-${key}`}
+                                  className={styles.shortcutsPanelKey}
+                                >
+                                  {key}
+                                </kbd>
+                              ))}
+                            </div>
+                            <p className={styles.shortcutsPanelDescription}>
+                              {shortcut.description}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
                   ))}
-                </ul>
+                </div>
               </div>
-            ))}
+            </OwlOptionsShutter>
           </div>
           <a
             href={`${landingUrl}/docs/#keyboard-shortcuts`}

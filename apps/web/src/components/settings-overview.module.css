@@ -185,44 +185,103 @@ button.linkButton:hover:enabled {
   padding-left: 18px;
 }
 
-.shortcutsReference {
+.shortcutsControls {
   display: grid;
-  gap: 12px;
+  gap: 0;
+  max-width: min(100%, 560px);
+  width: 100%;
 }
 
-.shortcutsGroup {
-  display: grid;
-  gap: 6px;
+.shortcutsControls .owlOptionsShutter[aria-hidden="false"] {
+  margin-top: 8px;
 }
 
-.shortcutsGroup h3 {
+.shortcutsToggle {
+  align-items: center;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: inline-flex;
+  gap: 8px;
+  justify-content: flex-start;
+  min-height: 32px;
+  padding: 6px 10px;
+  text-align: left;
+  width: 100%;
+}
+
+.shortcutsToggle:hover {
+  background: var(--bg-tertiary);
+  transition: background-color 80ms ease;
+}
+
+.shortcutsToggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.shortcutsPanelBox {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  width: 100%;
+}
+
+.shortcutsPanelGroups {
+  display: grid;
+  gap: 10px;
+}
+
+.shortcutsPanelGroup {
+  border: 1px solid var(--border);
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.shortcutsPanelGroup h3 {
   color: var(--text-primary);
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
 }
 
-.shortcutsList {
-  color: var(--text-secondary);
+.shortcutsPanelRows {
   display: grid;
+  gap: 6px;
+}
+
+.shortcutsPanelRow {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(120px, auto) minmax(0, 1fr);
+}
+
+.shortcutsPanelKeys {
+  display: flex;
+  flex-wrap: wrap;
   gap: 4px;
-  margin: 0;
-  padding-left: 18px;
 }
 
-.shortcutsList li {
-  display: grid;
-  gap: 2px;
-}
-
-.shortcutsKeys {
+.shortcutsPanelKey {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
   color: var(--text-primary);
   font-family: var(--font-mono);
   font-size: var(--text-xs);
+  line-height: 1;
+  min-width: 24px;
+  padding: 4px 6px;
+  text-align: center;
 }
 
-.shortcutsDescription {
+.shortcutsPanelDescription {
   color: var(--text-secondary);
   font-size: var(--text-sm);
+  margin: 0;
 }
 
 .owlToggle {
@@ -337,5 +396,10 @@ button.linkButton:hover:enabled {
 
   .owlOptionText {
     grid-column: 1 / -1;
+  }
+
+  .shortcutsPanelRow {
+    gap: 6px;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
