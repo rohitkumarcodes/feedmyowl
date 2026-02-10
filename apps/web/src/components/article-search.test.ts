@@ -208,6 +208,54 @@ describe("article-search", () => {
     expect(result?.highlights.title).toEqual([{ start: 12, end: 16 }]);
   });
 
+  it("falls back for one-edit title typos and highlights the full matched token", () => {
+    const allArticles: ArticleViewModel[] = [
+      article({
+        id: "fallback-heart",
+        title: "Heart health weekly",
+        feedTitle: "Cardio Beat",
+      }),
+      article({
+        id: "fallback-noise",
+        title: "The Art of Animation",
+        feedTitle: "Culture Monthly",
+      }),
+    ];
+
+    const results = buildArticleSearchResults(allArticles, "heaet");
+    const resultIds = results.results.map((result) => result.article.id);
+
+    expect(resultIds).toContain("fallback-heart");
+    expect(resultIds).not.toContain("fallback-noise");
+
+    const typoResult = results.results.find((result) => result.article.id === "fallback-heart");
+    expect(typoResult?.highlights.title).toEqual([{ start: 0, end: 4 }]);
+    expect(typoResult?.highlights.feedTitle).toEqual([]);
+    expect(typoResult?.highlights.hiddenSources).toEqual([]);
+  });
+
+  it("keeps strict exact matches without adding fallback-only typo candidates", () => {
+    const allArticles: ArticleViewModel[] = [
+      article({
+        id: "strict-heart",
+        title: "Heart health weekly",
+        feedTitle: "Cardio Beat",
+      }),
+      article({
+        id: "strict-typo-only",
+        title: "Heaet health weekly",
+        feedTitle: "Cardio Beat",
+      }),
+    ];
+
+    const resultIds = buildArticleSearchResults(allArticles, "heart").results.map(
+      (result) => result.article.id
+    );
+
+    expect(resultIds).toContain("strict-heart");
+    expect(resultIds).not.toContain("strict-typo-only");
+  });
+
   it("records all hidden match sources when multiple hidden fields match", () => {
     const allArticles: ArticleViewModel[] = [
       article({
