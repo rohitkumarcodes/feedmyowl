@@ -296,7 +296,7 @@ function FolderRow({
       <div className={styles.folderActions} ref={actionsRef}>
         <button
           type="button"
-          className={primitiveStyles.iconButton}
+          className={`${primitiveStyles.iconButton} ${styles.folderActionsButton}`}
           onClick={() => setIsMenuOpen((previous) => !previous)}
           aria-label={`Open actions for folder ${folder.name}`}
           aria-expanded={isMenuOpen || isRenameOpen}

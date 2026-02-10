@@ -241,6 +241,11 @@
   transition: background-color 90ms ease;
 }
 
+.folderRowWrap:hover:not(.folderRowWrapActive) .folderToggle,
+.folderRowWrap:hover:not(.folderRowWrapActive) .folderActionsButton {
+  color: var(--lp-text-main);
+}
+
 .folderRowWrapActive {
   background: var(--lp-surface-active);
 }
@@ -262,6 +267,10 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--sidebar-tree-count-col);
   padding: var(--lp-pad-y) 8px var(--lp-pad-y) 2px;
+}
+
+.folderRow:hover {
+  background: transparent;
 }
 
 .folderLabel {
@@ -309,6 +318,18 @@
   min-width: var(--sidebar-tree-actions-col);
   position: relative;
   width: var(--sidebar-tree-actions-col);
+}
+
+.folderActionsButton {
+  border-color: transparent;
+  min-height: 100%;
+  min-width: 100%;
+  padding: 0;
+}
+
+.folderActionsButton:hover:enabled {
+  background: transparent;
+  border-color: transparent;
 }
 
 .folderActionsSpacer {
