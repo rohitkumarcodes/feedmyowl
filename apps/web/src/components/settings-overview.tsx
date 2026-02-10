@@ -3,6 +3,7 @@
 import {
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type ChangeEvent,
@@ -368,6 +369,7 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
   const router = useRouter();
   const owlOptionsPanelId = useId();
   const importFileInputRef = useRef<HTMLInputElement | null>(null);
+  const owlWidthProbeRef = useRef<HTMLDivElement | null>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -382,6 +384,7 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
   const [owlSaveMessage, setOwlSaveMessage] = useState<string | null>(null);
   const [owlSaveError, setOwlSaveError] = useState<string | null>(null);
   const [isOwlPanelExpanded, setIsOwlPanelExpanded] = useState(false);
+  const [owlControlsWidthPx, setOwlControlsWidthPx] = useState<number | null>(null);
 
   const landingUrl =
     process.env.NEXT_PUBLIC_LANDING_PAGE_URL || "https://feedmyowl.com";
@@ -390,6 +393,41 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
     setDraftOwlAscii(owlAscii);
     setSavedOwlAscii(owlAscii);
   }, [owlAscii]);
+
+  useLayoutEffect(() => {
+    const probe = owlWidthProbeRef.current;
+    if (!probe) {
+      return;
+    }
+
+    const measure = () => {
+      const measuredWidth = Math.ceil(probe.getBoundingClientRect().width);
+      if (measuredWidth <= 0) {
+        return;
+      }
+
+      setOwlControlsWidthPx((previousWidth) =>
+        previousWidth === measuredWidth ? previousWidth : measuredWidth
+      );
+    };
+
+    measure();
+    const animationFrame = window.requestAnimationFrame(measure);
+
+    const resizeObserver =
+      typeof ResizeObserver === "function"
+        ? new ResizeObserver(() => {
+            measure();
+          })
+        : null;
+
+    resizeObserver?.observe(probe);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      resizeObserver?.disconnect();
+    };
+  }, []);
 
   async function handleDeleteAccount() {
     setDeleteError(null);
@@ -615,7 +653,34 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
 
         <section className={styles.panel}>
           <h2>Hoot hoot</h2>
-          <div className={styles.owlPickerControls}>
+          <div ref={owlWidthProbeRef} className={styles.owlWidthProbe} aria-hidden="true">
+            <button type="button" className={styles.owlToggle} tabIndex={-1}>
+              <span className={styles.owlToggleCaret}>▸</span>
+              <span className={styles.owlWidthProbeText}>
+                Choose an owl to digest your feeds.
+              </span>
+            </button>
+            <div className={styles.owlWidthProbeOptions}>
+              {OWL_ART_OPTIONS.map((option) => (
+                <label key={`probe-${option.ascii}`} className={styles.owlOption}>
+                  <input type="radio" name="owl-ascii-probe" tabIndex={-1} />
+                  <span className={styles.owlOptionAscii}>{option.ascii}</span>
+                  <span className={`${styles.owlOptionText} ${styles.owlWidthProbeText}`}>
+                    {option.name}:{" "}
+                    {option.emphasizeDescription ? (
+                      <em className={styles.owlOptionEmphasis}>{option.description}</em>
+                    ) : (
+                      option.description
+                    )}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div
+            className={styles.owlPickerControls}
+            style={owlControlsWidthPx ? { width: `${owlControlsWidthPx}px` } : undefined}
+          >
             <button
               type="button"
               className={styles.owlToggle}

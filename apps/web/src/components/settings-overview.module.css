@@ -40,11 +40,29 @@
   display: grid;
   gap: 0;
   max-width: 100%;
-  width: max-content;
 }
 
 .owlPickerControls .owlOptionsShutter[aria-hidden="false"] {
   margin-top: 8px;
+}
+
+.owlWidthProbe {
+  left: -10000px;
+  pointer-events: none;
+  position: fixed;
+  top: -10000px;
+  visibility: hidden;
+  width: max-content;
+}
+
+.owlWidthProbeOptions {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.owlWidthProbeText {
+  white-space: nowrap;
 }
 
 .panel h2 {
