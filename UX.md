@@ -77,17 +77,26 @@
   - `j`, `k`, `Enter`, `r`.
 
 ## 9. Settings behavior
-- Settings includes a `Logo` panel above destructive account actions.
-- Panel prompt: `Pick an owl to digest your feeds.`
+- Settings includes three section groups with consistent spacing:
+  - `Feeds`
+  - `Hoot hoot`
+  - `Delete account`
+- Owl chooser prompt: `Choose an owl to digest your feeds.`
 - User selects one ASCII owl option:
   - `[o-o] Hooty Potter: The owl who lived (to read your feeds).`
   - `{O,O} Owlbert Einstein: Reading at the speed of light.`
   - `{o,o} Jane Owl-sten: "Pride and Prejudice and RSS."`
   - `{o,q} Sherlock Hoolmes: Solving the case of the unread items.`
   - `</o,o> The Devel-owl-per: while(awake) { read_feeds(); }`
+- Owl chooser width behavior:
+  - Chooser button and option rows share one pre-decided width.
+  - Width is based on the longest chooser/option text and does not change on expand/collapse.
 - Save model:
   - Explicit `Save owl` button.
   - Save button disabled while request is in flight or selection is unchanged.
   - On success, settings triggers route refresh so the in-app logo and browser-tab icon update.
+- Delete flow:
+  - Initial delete action is an icon-only button under `Delete account`.
+  - Deletion requires explicit second-step confirmation (`Yes, delete my account`).
 - Persistence:
   - Account-wide (stored on user record), so selection follows sign-in across sessions/devices.
