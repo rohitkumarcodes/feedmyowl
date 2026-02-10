@@ -612,7 +612,7 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
         ) : null}
       </section>
 
-      <section className={styles.panel}>
+      <section className={`${styles.panel} ${styles.owlPanel}`}>
         <button
           type="button"
           className={styles.owlToggle}
