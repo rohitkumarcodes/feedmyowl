@@ -55,3 +55,9 @@ Three stacked views:
 - No new search UI.
 - No decorative folder colors/icons in this phase.
 - No drag-drop ordering in this phase.
+
+## 9. Brand behavior
+- Authenticated layout brand keeps text fixed as `Feed my owl`.
+- Brand owl is rendered as monospaced ASCII art from user preference.
+- Default ASCII owl is `{o,o}` for users without a saved preference.
+- Settings provides explicit selection + save; favicon mirrors selected ASCII owl.

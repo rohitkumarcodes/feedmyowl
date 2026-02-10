@@ -8,6 +8,7 @@ import { AccountControls } from "./account-controls";
 import { requireAuth } from "@/lib/auth";
 import { ensureUserRecord } from "@/lib/app-user";
 import { db, eq, users } from "@/lib/database";
+import { isMissingColumnError } from "@/lib/db-compat";
 import {
   buildOwlFaviconDataUri,
   coerceOwlAscii,
@@ -28,6 +29,12 @@ async function getCurrentUserOwlAscii() {
     columns: {
       owlAscii: true,
     },
+  }).catch((error: unknown) => {
+    if (isMissingColumnError(error, "owl_ascii")) {
+      return null;
+    }
+
+    throw error;
   });
 
   return coerceOwlAscii(user?.owlAscii);

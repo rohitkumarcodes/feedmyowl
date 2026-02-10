@@ -168,6 +168,16 @@ export async function refreshFeedsForUser(
 
   const user = await db.query.users.findFirst({
     where: eq(users.id, userId),
+    columns: {
+      id: true,
+      clerkId: true,
+      email: true,
+      subscriptionTier: true,
+      stripeCustomerId: true,
+      stripeSubscriptionId: true,
+      createdAt: true,
+      updatedAt: true,
+    },
     with: { feeds: true },
   });
 

@@ -232,6 +232,16 @@ export async function GET() {
     try {
       user = (await db.query.users.findFirst({
         where: eq(users.id, appUser.id),
+        columns: {
+          id: true,
+          clerkId: true,
+          email: true,
+          subscriptionTier: true,
+          stripeCustomerId: true,
+          stripeSubscriptionId: true,
+          createdAt: true,
+          updatedAt: true,
+        },
         with: {
           folders: true,
           feeds: {
@@ -253,6 +263,16 @@ export async function GET() {
 
       user = (await db.query.users.findFirst({
         where: eq(users.id, appUser.id),
+        columns: {
+          id: true,
+          clerkId: true,
+          email: true,
+          subscriptionTier: true,
+          stripeCustomerId: true,
+          stripeSubscriptionId: true,
+          createdAt: true,
+          updatedAt: true,
+        },
         with: {
           folders: true,
           feeds: {

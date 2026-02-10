@@ -24,7 +24,7 @@ Core loop:
 - Article list and reader.
 - Read-state tracking.
 - Offline snapshot fallback for previously loaded data.
-- Account settings and account deletion.
+- Account settings (including configurable ASCII owl logo) and account deletion.
 
 ## 4. Out of scope
 - Nested folders.
@@ -39,6 +39,9 @@ Core loop:
   - Sidebar: global scopes + folder tree + feed rows.
   - Article list.
   - Reader.
+- Authenticated chrome brand:
+  - Fixed text `Feed my owl`.
+  - Per-user ASCII owl variant (default `{o,o}`), also used for favicon.
 
 ### Mobile
 - Stacked views:
@@ -57,6 +60,7 @@ Core loop:
 Notes:
 - `feed_folder_memberships` is the canonical many-to-many mapping.
 - Legacy `feeds.folder_id` remains in transition and is kept in sync.
+- `users.owl_ascii` stores the selected logo ASCII art per user and defaults to `{o,o}`.
 
 ## 7. API surface (active)
 - `GET /api/feeds` -> feeds + folders
@@ -68,6 +72,7 @@ Notes:
 - `PATCH /api/folders/[id]` -> rename folder
 - `DELETE /api/folders/[id]` -> delete folder by mode
 - `POST /api/refresh` -> manual refresh all user feeds
+- `PATCH /api/settings/logo` -> persist selected user ASCII owl logo
 
 ## 8. Reliability defaults
 - Feed refresh errors are tracked per feed with calm inline messaging.

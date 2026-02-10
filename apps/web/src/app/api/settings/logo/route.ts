@@ -3,6 +3,7 @@ import { requireAuth } from "@/lib/auth";
 import { ensureUserRecord } from "@/lib/app-user";
 import { db, eq, users } from "@/lib/database";
 import { handleApiRouteError } from "@/lib/api-errors";
+import { isMissingColumnError } from "@/lib/db-compat";
 import { isOwlAscii } from "@/lib/owl-brand";
 
 async function parseRequestJson(
@@ -41,6 +42,16 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ owlAscii });
   } catch (error) {
+    if (isMissingColumnError(error, "owl_ascii")) {
+      return NextResponse.json(
+        {
+          error:
+            "Logo settings are temporarily unavailable. Apply latest database migrations.",
+        },
+        { status: 503 }
+      );
+    }
+
     return handleApiRouteError(error, "api.settings.logo.patch");
   }
 }

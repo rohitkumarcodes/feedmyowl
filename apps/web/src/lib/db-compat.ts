@@ -26,3 +26,20 @@ export function isMissingRelationError(
   const message = candidate.message || "";
   return message.includes(`"${relationName}"`) || message.includes(relationName);
 }
+
+/**
+ * Detect "column does not exist" errors for one column.
+ */
+export function isMissingColumnError(error: unknown, columnName: string): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const candidate = error as DbErrorLike;
+  if (candidate.code !== "42703") {
+    return false;
+  }
+
+  const message = candidate.message || "";
+  return message.includes(`"${columnName}"`) || message.includes(columnName);
+}

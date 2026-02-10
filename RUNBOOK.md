@@ -1,7 +1,7 @@
 # FeedMyOwl Runbook
 
 ## 1. Purpose
-Operational guide for the reading-first app with folder organization.
+Operational guide for the reading-first app with folder organization and configurable ASCII owl branding.
 
 ## 2. Local development
 From repo root:
@@ -18,6 +18,7 @@ From repo root:
 - Bulk add feed/site URLs from sidebar add form.
 - Manual refresh.
 - Read articles.
+- Account logo selection (ASCII owl + favicon) from Settings.
 - Account deletion.
 
 ## 4. Active API routes
@@ -30,6 +31,7 @@ From repo root:
 - `PATCH /api/folders/[id]`
 - `DELETE /api/folders/[id]`
 - `POST /api/refresh`
+- `PATCH /api/settings/logo`
 
 ## 5. Common incidents
 
@@ -55,9 +57,17 @@ From repo root:
 2. Review `last_fetch_*` fields per feed.
 3. Confirm source feed still serves valid XML.
 
+### Logo selection save fails
+1. Confirm request payload contains a valid `owlAscii` value.
+2. Call `PATCH /api/settings/logo` while authenticated.
+3. Check for `400` (invalid selection), `404` (missing app user), `401` (auth), or `500` (server).
+4. Confirm `users.owl_ascii` value changed and `updated_at` advanced.
+5. Reload `/feeds` and verify both sidebar brand owl and favicon reflect saved value.
+
 ## 6. Data model notes
 - Canonical folder assignments: `feed_folder_memberships`.
 - Transitional compatibility field: `feeds.folder_id`.
+- User logo preference field: `users.owl_ascii` (default `{o,o}`).
 - On folder delete:
   - `remove_only` removes memberships.
   - `remove_and_unsubscribe_exclusive` unsubscribes exclusive feeds only.
@@ -74,3 +84,5 @@ From repo root:
 9. Open an article and verify read-state.
 10. Reassign feed folders via feed actions.
 11. Delete a folder in both modes and verify expected outcomes.
+12. Open Settings, change owl option, click `Save owl`, and verify sidebar brand + favicon update.
+13. Reload, sign in again, and confirm owl choice persists.

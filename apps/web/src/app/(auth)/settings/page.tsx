@@ -2,6 +2,7 @@ import { requireAuth } from "@/lib/auth";
 import { db, eq, users } from "@/lib/database";
 import { ensureUserRecord } from "@/lib/app-user";
 import { SettingsOverview } from "@/components/settings-overview";
+import { isMissingColumnError } from "@/lib/db-compat";
 import { coerceOwlAscii, DEFAULT_OWL_ASCII } from "@/lib/owl-brand";
 
 /**
@@ -17,16 +18,29 @@ export default async function SettingsPage() {
     return <SettingsOverview email="Unknown" owlAscii={DEFAULT_OWL_ASCII} />;
   }
 
-  const user = await db.query.users.findFirst({
-    where: eq(users.id, ensuredUser.id),
-  });
+  const user = await db.query.users
+    .findFirst({
+      where: eq(users.id, ensuredUser.id),
+      columns: {
+        email: true,
+        owlAscii: true,
+      },
+    })
+    .catch((error: unknown) => {
+      if (isMissingColumnError(error, "owl_ascii")) {
+        return null;
+      }
 
-  const safeUser = user ?? ensuredUser;
+      throw error;
+    });
+
+  const safeEmail = user?.email ?? ensuredUser.email;
+  const safeOwlAscii = user ? coerceOwlAscii(user.owlAscii) : DEFAULT_OWL_ASCII;
 
   return (
     <SettingsOverview
-      email={safeUser.email}
-      owlAscii={coerceOwlAscii(safeUser.owlAscii)}
+      email={safeEmail}
+      owlAscii={safeOwlAscii}
     />
   );
 }

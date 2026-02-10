@@ -22,6 +22,9 @@
   - Uncategorized feed rows
   - Folders section with collapsible folder rows
   - Feed rows under each folder (feeds may appear in multiple folders)
+- Brand slot:
+  - Shows fixed text `Feed my owl`.
+  - Shows selected ASCII owl (default `{o,o}`).
 
 ## 4. Folder behavior
 - Create folders from sidebar and add-feed form.
@@ -72,3 +75,19 @@
 - Overflow menus and dialogs dismiss with `Escape`.
 - Existing shortcuts remain:
   - `j`, `k`, `Enter`, `r`.
+
+## 9. Settings behavior
+- Settings includes a `Logo` panel above destructive account actions.
+- Panel prompt: `Pick an owl to digest your feeds.`
+- User selects one ASCII owl option:
+  - `[o-o] Hooty Potter: The owl who lived (to read your feeds).`
+  - `{O,O} Owlbert Einstein: Reading at the speed of light.`
+  - `{o,o} Jane Owl-sten: "Pride and Prejudice and RSS."`
+  - `{o,q} Sherlock Hoolmes: Solving the case of the unread items.`
+  - `</o,o> The Devel-owl-per: while(awake) { read_feeds(); }`
+- Save model:
+  - Explicit `Save owl` button.
+  - Save button disabled while request is in flight or selection is unchanged.
+  - On success, settings triggers route refresh so the in-app logo and browser-tab icon update.
+- Persistence:
+  - Account-wide (stored on user record), so selection follows sign-in across sessions/devices.
