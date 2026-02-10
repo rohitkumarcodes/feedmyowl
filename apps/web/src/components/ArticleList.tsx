@@ -71,37 +71,41 @@ export function ArticleList({
     >
       <div className={styles.searchBar}>
         <div className={styles.searchControls}>
-          <input
-            ref={searchInputRef}
-            id="article-search-input"
-            type="search"
-            className={styles.searchInput}
-            value={searchQuery}
-            aria-label="Search all articles"
-            placeholder="Search all articles..."
-            onChange={(event) => onSearchQueryChange(event.currentTarget.value)}
-            onKeyDown={(event) => {
-              if (event.key !== "Escape") {
-                return;
-              }
+          <div className={styles.searchInputWrap}>
+            <input
+              ref={searchInputRef}
+              id="article-search-input"
+              type="search"
+              className={styles.searchInput}
+              value={searchQuery}
+              aria-label="Search all articles"
+              placeholder="Search all articles..."
+              onChange={(event) => onSearchQueryChange(event.currentTarget.value)}
+              onKeyDown={(event) => {
+                if (event.key !== "Escape") {
+                  return;
+                }
 
-              if (searchQuery.length > 0) {
-                event.preventDefault();
-                onSearchQueryChange("");
-                return;
-              }
+                if (searchQuery.length > 0) {
+                  event.preventDefault();
+                  onSearchQueryChange("");
+                  return;
+                }
 
-              event.currentTarget.blur();
-            }}
-          />
-          <button
-            type="button"
-            className={styles.clearButton}
-            onClick={() => onSearchQueryChange("")}
-            disabled={searchQuery.length === 0}
-          >
-            Clear
-          </button>
+                event.currentTarget.blur();
+              }}
+            />
+            <button
+              type="button"
+              className={styles.clearButton}
+              onClick={() => onSearchQueryChange("")}
+              disabled={searchQuery.length === 0}
+              aria-label="Clear search"
+              title="Clear search"
+            >
+              ×
+            </button>
+          </div>
         </div>
 
         {showMinLengthHint ? (

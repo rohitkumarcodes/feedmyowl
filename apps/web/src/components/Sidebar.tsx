@@ -911,7 +911,31 @@ export function Sidebar({
               aria-haspopup="dialog"
               aria-expanded={isShortcutsModalOpen}
             >
-              <span>Shortcuts (?)</span>
+              <svg
+                className={styles.toolbarIcon}
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <rect
+                  x="3.5"
+                  y="6.5"
+                  width="17"
+                  height="11"
+                  rx="1.4"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                />
+                <path d="M7 10H8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                <path d="M10 10H11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                <path d="M13 10H14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                <path d="M16 10H17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                <path d="M7 13.5H17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+              <span>(?)</span>
             </button>
           ) : null}
         </div>
