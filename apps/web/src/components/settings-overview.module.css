@@ -339,7 +339,14 @@ button.linkButton:hover:enabled {
 .owlOptionsShutterContent {
   display: grid;
   gap: 8px;
+}
+
+.shortcutsControls .owlOptionsShutterContent {
   padding-top: 8px;
+}
+
+.owlPickerControls .owlOptionsShutterContent {
+  padding: 10px 0;
 }
 
 .owlOptionList {
@@ -392,10 +399,6 @@ button.linkButton:hover:enabled {
 .owlOptionsShutterContent > .inlineActions,
 .owlOptionsShutterContent > .inlineMessage {
   padding: 0 10px;
-}
-
-.owlOptionsShutterContent > .inlineMessage:last-child {
-  padding-bottom: 10px;
 }
 
 @media (prefers-reduced-motion: reduce) {
