@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ReactNode,
+  type TransitionEvent,
+} from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { normalizeFeedUrl } from "@/lib/feed-url";
@@ -20,6 +28,13 @@ interface ImportResponseBody {
 interface SaveOwlResponseBody {
   error?: string;
   owlAscii?: string;
+}
+
+interface OwlOptionsShutterProps {
+  expanded: boolean;
+  prefersReducedMotion: boolean;
+  contentId: string;
+  children: ReactNode;
 }
 
 interface ParsedImportFile {
@@ -47,6 +62,37 @@ async function parseResponseJson<T>(response: Response): Promise<T | null> {
   } catch {
     return null;
   }
+}
+
+function usePrefersReducedMotion(): boolean {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return;
+    }
+
+    const mediaQueryList = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updatePreference = (event?: MediaQueryListEvent) => {
+      setPrefersReducedMotion(event ? event.matches : mediaQueryList.matches);
+    };
+
+    updatePreference();
+
+    if (typeof mediaQueryList.addEventListener === "function") {
+      mediaQueryList.addEventListener("change", updatePreference);
+      return () => {
+        mediaQueryList.removeEventListener("change", updatePreference);
+      };
+    }
+
+    mediaQueryList.addListener(updatePreference);
+    return () => {
+      mediaQueryList.removeListener(updatePreference);
+    };
+  }, []);
+
+  return prefersReducedMotion;
 }
 
 /**
@@ -145,6 +191,117 @@ async function parseImportFile(file: File): Promise<ParsedImportFile> {
   throw new Error("Unsupported file type. Use .opml, .xml, or .json.");
 }
 
+function OwlOptionsShutter({
+  expanded,
+  prefersReducedMotion,
+  contentId,
+  children,
+}: OwlOptionsShutterProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const [isRendered, setIsRendered] = useState(expanded);
+  const [heightPx, setHeightPx] = useState<string>(expanded ? "auto" : "0px");
+
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current !== null) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (animationFrameRef.current !== null) {
+      window.cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+
+    if (prefersReducedMotion) {
+      if (expanded) {
+        setIsRendered(true);
+        setHeightPx("auto");
+      } else {
+        setHeightPx("0px");
+        setIsRendered(false);
+      }
+      return;
+    }
+
+    if (expanded && !isRendered) {
+      setIsRendered(true);
+      setHeightPx("0px");
+      return;
+    }
+
+    if (!isRendered) {
+      return;
+    }
+
+    const container = containerRef.current;
+    const content = contentRef.current;
+    if (!container || !content) {
+      return;
+    }
+
+    const startHeight = container.getBoundingClientRect().height;
+    const endHeight = expanded ? content.scrollHeight : 0;
+
+    if (expanded && startHeight === endHeight) {
+      setHeightPx("auto");
+      return;
+    }
+
+    if (!expanded && startHeight === 0) {
+      setHeightPx("0px");
+      setIsRendered(false);
+      return;
+    }
+
+    setHeightPx(`${startHeight}px`);
+    animationFrameRef.current = window.requestAnimationFrame(() => {
+      setHeightPx(`${endHeight}px`);
+      animationFrameRef.current = null;
+    });
+  }, [expanded, isRendered, prefersReducedMotion]);
+
+  const handleTransitionEnd = (event: TransitionEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget || event.propertyName !== "height") {
+      return;
+    }
+
+    if (expanded) {
+      setHeightPx("auto");
+      return;
+    }
+
+    setHeightPx("0px");
+    setIsRendered(false);
+  };
+
+  const isFullyExpanded = expanded && isRendered && heightPx === "auto";
+
+  return (
+    <div
+      id={contentId}
+      ref={containerRef}
+      className={styles.owlOptionsShutter}
+      style={{
+        height: isRendered ? heightPx : "0px",
+        overflow: isFullyExpanded ? "visible" : "hidden",
+      }}
+      onTransitionEnd={handleTransitionEnd}
+      aria-hidden={!expanded}
+    >
+      {isRendered ? (
+        <div ref={contentRef} className={styles.owlOptionsShutterContent}>
+          {children}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 const backIcon = (
   <svg
     className={styles.buttonIcon}
@@ -209,7 +366,9 @@ const trashIcon = (
  */
 export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
   const router = useRouter();
+  const owlOptionsPanelId = useId();
   const importFileInputRef = useRef<HTMLInputElement | null>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
@@ -222,6 +381,7 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
   const [isSavingOwl, setIsSavingOwl] = useState(false);
   const [owlSaveMessage, setOwlSaveMessage] = useState<string | null>(null);
   const [owlSaveError, setOwlSaveError] = useState<string | null>(null);
+  const [isOwlPanelExpanded, setIsOwlPanelExpanded] = useState(false);
 
   const landingUrl =
     process.env.NEXT_PUBLIC_LANDING_PAGE_URL || "https://feedmyowl.com";
@@ -453,60 +613,81 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
       </section>
 
       <section className={styles.panel}>
-        <h2>Logo</h2>
-        <p className={styles.muted}>Pick an owl to digest your feeds.</p>
-        <div
-          className={styles.owlOptionList}
-          role="radiogroup"
-          aria-label="Pick an owl to digest your feeds."
+        <button
+          type="button"
+          className={styles.owlToggle}
+          aria-expanded={isOwlPanelExpanded}
+          aria-controls={owlOptionsPanelId}
+          onClick={() => {
+            setIsOwlPanelExpanded((previous) => !previous);
+          }}
         >
-          {OWL_ART_OPTIONS.map((option) => {
-            const isSelected = draftOwlAscii === option.ascii;
-
-            return (
-              <label
-                key={option.ascii}
-                className={`${styles.owlOption} ${
-                  isSelected ? styles.owlOptionSelected : ""
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="owl-ascii"
-                  value={option.ascii}
-                  checked={isSelected}
-                  onChange={() => {
-                    setDraftOwlAscii(option.ascii);
-                    setOwlSaveError(null);
-                    setOwlSaveMessage(null);
-                  }}
-                />
-                <span className={styles.owlOptionAscii}>{option.ascii}</span>
-                <span className={styles.owlOptionText}>
-                  {option.name}: {option.description}
-                </span>
-              </label>
-            );
-          })}
-        </div>
-        <div className={styles.inlineActions}>
-          <button
-            type="button"
-            className={`${styles.linkButton} ${styles.compactButton}`}
-            onClick={() => {
-              void handleSaveOwl();
-            }}
-            disabled={isSavingOwl || draftOwlAscii === savedOwlAscii}
+          <span className={styles.owlToggleCaret}>{isOwlPanelExpanded ? "▾" : "▸"}</span>
+          <span>Pick an owl to digest your feeds.</span>
+        </button>
+        <OwlOptionsShutter
+          expanded={isOwlPanelExpanded}
+          prefersReducedMotion={prefersReducedMotion}
+          contentId={owlOptionsPanelId}
+        >
+          <div
+            className={styles.owlOptionList}
+            role="radiogroup"
+            aria-label="Pick an owl to digest your feeds."
           >
-            {isSavingOwl ? "Saving..." : "Save owl"}
-          </button>
-        </div>
-        {owlSaveMessage ? (
-          <p className={styles.inlineMessage} role="status">
-            {owlSaveMessage}
-          </p>
-        ) : null}
-        {owlSaveError ? <p className={styles.inlineMessage}>{owlSaveError}</p> : null}
+            {OWL_ART_OPTIONS.map((option) => {
+              const isSelected = draftOwlAscii === option.ascii;
+
+              return (
+                <label
+                  key={option.ascii}
+                  className={`${styles.owlOption} ${
+                    isSelected ? styles.owlOptionSelected : ""
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="owl-ascii"
+                    value={option.ascii}
+                    checked={isSelected}
+                    onChange={() => {
+                      setDraftOwlAscii(option.ascii);
+                      setOwlSaveError(null);
+                      setOwlSaveMessage(null);
+                    }}
+                  />
+                  <span className={styles.owlOptionAscii}>{option.ascii}</span>
+                  <span className={styles.owlOptionText}>
+                    {option.name}:{" "}
+                    {option.emphasizeDescription ? (
+                      <em className={styles.owlOptionEmphasis}>{option.description}</em>
+                    ) : (
+                      option.description
+                    )}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+          <div className={styles.inlineActions}>
+            <button
+              type="button"
+              className={`${styles.linkButton} ${styles.compactButton}`}
+              onClick={() => {
+                void handleSaveOwl();
+              }}
+              disabled={isSavingOwl || draftOwlAscii === savedOwlAscii}
+            >
+              {isSavingOwl ? "Saving..." : "Save owl"}
+            </button>
+          </div>
+          {owlSaveMessage ? (
+            <p className={styles.inlineMessage} role="status">
+              {owlSaveMessage}
+            </p>
+          ) : null}
+          {owlSaveError ? <p className={styles.inlineMessage}>{owlSaveError}</p> : null}
+        </OwlOptionsShutter>
       </section>
 
       <section className={styles.panel}>

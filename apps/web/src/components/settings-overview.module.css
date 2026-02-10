@@ -137,6 +137,50 @@ button.linkButton:hover:enabled {
   padding-left: 18px;
 }
 
+.owlToggle {
+  align-items: center;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: inline-flex;
+  gap: 8px;
+  justify-content: flex-start;
+  min-height: 32px;
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.owlToggle:hover {
+  background: var(--bg-tertiary);
+  transition: background-color 80ms ease;
+}
+
+.owlToggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.owlToggleCaret {
+  display: inline-block;
+  font-family: var(--font-mono);
+  line-height: 1;
+  text-align: center;
+  width: 1ch;
+}
+
+.owlOptionsShutter {
+  overflow: hidden;
+  transition: height 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: height;
+}
+
+.owlOptionsShutterContent {
+  display: grid;
+  gap: 8px;
+  padding-top: 8px;
+}
+
 .owlOptionList {
   display: grid;
   gap: 8px;
@@ -174,6 +218,16 @@ button.linkButton:hover:enabled {
 .owlOptionText {
   color: var(--text-secondary);
   font-size: var(--text-sm);
+}
+
+.owlOptionEmphasis {
+  font-style: italic;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .owlOptionsShutter {
+    transition: none;
+  }
 }
 
 @media (max-width: 640px) {
