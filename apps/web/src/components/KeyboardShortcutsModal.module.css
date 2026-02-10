@@ -35,13 +35,17 @@
 }
 
 .closeButton {
+  align-items: center;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   color: var(--text-primary);
   cursor: pointer;
+  display: inline-flex;
   font-size: var(--text-sm);
+  justify-content: center;
   min-height: 30px;
-  padding: 4px 10px;
+  min-width: 30px;
+  padding: 4px;
 }
 
 .closeButton:hover {
@@ -60,15 +64,15 @@
 }
 
 .groups {
+  border: 1px solid var(--border);
   display: grid;
-  gap: 10px;
+  gap: 12px;
+  padding: 12px;
 }
 
 .group {
-  border: 1px solid var(--border);
   display: grid;
   gap: 8px;
-  padding: 10px;
 }
 
 .groupTitle {

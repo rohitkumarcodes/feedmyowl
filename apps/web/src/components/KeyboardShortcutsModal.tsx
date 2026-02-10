@@ -111,7 +111,7 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
             onClick={onClose}
             aria-label="Close shortcuts dialog"
           >
-            Close
+            <span aria-hidden="true">x</span>
           </button>
         </div>
 
