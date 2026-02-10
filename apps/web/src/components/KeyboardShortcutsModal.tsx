@@ -22,7 +22,6 @@ function getFocusableElements(root: HTMLElement): HTMLElement[] {
 
 export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModalProps) {
   const titleId = useId();
-  const descriptionId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -100,7 +99,6 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        aria-describedby={descriptionId}
         onClick={(event) => event.stopPropagation()}
       >
         <div className={styles.header}>
@@ -116,10 +114,6 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
             Close
           </button>
         </div>
-
-        <p id={descriptionId} className={styles.description}>
-          Shortcuts work in the feeds workspace on desktop and tablet.
-        </p>
 
         <div className={styles.groups}>
           {SHORTCUT_GROUPS.map((group) => (

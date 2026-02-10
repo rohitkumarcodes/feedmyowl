@@ -49,6 +49,8 @@ Three stacked views:
   - `error` is dismissible and shown with stronger contrast.
 - Settings import shows numeric progress while processing feed URLs.
 - Settings delete entry point is text-first (`Delete account...`) before confirmation.
+- Settings keyboard shortcuts use a collapsed-by-default toggle (caret then keyboard icon)
+  that expands with shutter motion into a boxed grouped reference.
 - Article list keeps an always-visible global search input with fuzzy-ranked results.
 - Active search replaces scoped list content but keeps sidebar scope selection visible.
 - Search model defaults:

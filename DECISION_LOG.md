@@ -150,6 +150,18 @@ This log records active product and technical decisions for the current app phas
   - Title and feed-name matches are highlighted.
   - Clearing search returns the list to the currently selected scope immediately.
 
+### D-2026-02-10-10
+- Date: 2026-02-10
+- Status: active
+- Decision: Settings keyboard shortcuts use a collapsed disclosure panel.
+- Why: Reduce visual density in settings while keeping shortcut guidance discoverable.
+- Details:
+  - The toggle is collapsed by default.
+  - Toggle visual order is caret icon first, then keyboard icon.
+  - Expansion uses shutter motion aligned with existing settings motion patterns.
+  - Expanded content is a boxed grouped shortcuts reference matching feeds modal styling.
+  - Toggle button width matches the expanded panel width.
+
 ## Superseded decisions
 
 ### D-2026-02-07-05

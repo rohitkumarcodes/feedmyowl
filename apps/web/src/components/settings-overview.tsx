@@ -708,9 +708,6 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
 
         <section className={styles.panel}>
           <h2>Keyboard shortcuts</h2>
-          <p className={styles.muted}>
-            Shortcuts work in the feeds workspace on desktop and tablet.
-          </p>
           <div className={styles.shortcutsControls}>
             <button
               type="button"
@@ -762,14 +759,6 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
               </div>
             </OwlOptionsShutter>
           </div>
-          <a
-            href={`${landingUrl}/docs/#keyboard-shortcuts`}
-            target="_blank"
-            rel="noreferrer"
-            className={`${styles.linkButton} ${styles.compactButton}`}
-          >
-            Read full shortcuts docs
-          </a>
         </section>
 
         <section className={styles.panel}>

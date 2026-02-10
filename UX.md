@@ -128,7 +128,11 @@
   - Import button shows numeric progress while processing (`Importing (x/y)...`).
   - Inline status text shows processed progress during the active import.
 - Keyboard shortcuts settings section:
-  - Shows grouped shortcut reference (`Navigation`, `Reading actions`, `App actions`).
+  - Shows a toggle button under `Keyboard shortcuts` with caret then keyboard icon.
+  - Default state is collapsed.
+  - Expands with shutter motion into boxed grouped shortcut reference
+    (`Navigation`, `Reading actions`, `App actions`) styled like the feeds shortcuts modal.
+  - Toggle button width matches the opened shortcuts box width.
   - Includes docs link to `/docs/#keyboard-shortcuts`.
 - Owl chooser prompt: `Choose an owl to digest your feeds.`
 - User selects one ASCII owl option:

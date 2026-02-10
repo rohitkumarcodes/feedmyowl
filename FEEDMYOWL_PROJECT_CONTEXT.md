@@ -30,7 +30,7 @@ Core loop:
 - Feed import progress feedback in settings.
 - Desktop/tablet keyboard shortcuts with in-app help modal and one-time hint.
 - Semantic sidebar notices (`error`, `progress`, `offline`, `info`) with accessibility roles.
-- Settings keyboard shortcuts reference + docs link.
+- Settings keyboard shortcuts toggle panel (collapsed by default) + docs link.
 
 ## 4. Out of scope
 - Nested folders.

@@ -25,7 +25,7 @@ From repo root:
 - Semantic sidebar notices (`progress`, `offline`, `info`, `error`) with consistent behavior.
 - Account logo selection (ASCII owl + favicon) from Settings.
 - Settings feed import progress indicator (`Importing (x/y)...` + inline progress text).
-- Settings keyboard shortcuts reference section with docs link.
+- Settings keyboard shortcuts toggle panel (collapsed by default) with docs link.
 - Account deletion.
 
 ## 4. Active API routes
@@ -79,6 +79,14 @@ From repo root:
    - Arrow keys and `Enter` should work only in list context.
 5. Verify `/` focuses the article search input when not typing.
 6. Press `?` to open shortcuts modal and validate key mapping list.
+
+### Settings shortcuts panel looks wrong
+1. Open `/settings` and find the `Keyboard shortcuts` section.
+2. Confirm the panel is collapsed by default.
+3. Confirm toggle order is caret icon first, then keyboard icon.
+4. Expand and confirm shutter motion is used.
+5. Confirm opened panel width matches the toggle button width.
+6. Confirm grouped key rows are displayed and docs link is still present.
 
 ### Search behavior looks incorrect
 1. Confirm search input is visible at the top of the article list pane.
@@ -142,7 +150,7 @@ From repo root:
 23. Trigger actionable info message (`Add another`) and verify it does not auto-clear immediately.
 24. Trigger an error and verify assertive rendering/dismiss behavior.
 25. Verify article rows retain dot marker and show stronger unread vs read title tone.
-26. On settings page, verify `Keyboard shortcuts` section and docs link are present.
+26. On settings page, verify `Keyboard shortcuts` toggle is collapsed by default and docs link is present.
 27. On website pages, verify global nav includes `About` with correct active state on `/about/`.
 28. In article list, search with a 1-character query and confirm non-search hint is shown.
 29. Search with a 2+ character query and confirm global ranked results are shown.
