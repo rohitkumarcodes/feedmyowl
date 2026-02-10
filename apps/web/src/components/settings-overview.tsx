@@ -699,13 +699,11 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
           {!showDeleteConfirm ? (
             <button
               type="button"
-              className={`${styles.linkButton} ${styles.compactButton}`}
+              className={`${styles.linkButton} ${styles.compactButton} ${styles.iconOnlyButton}`}
+              aria-label="Delete account"
               onClick={() => setShowDeleteConfirm(true)}
             >
-              <span className={styles.iconButtonContent}>
-                {trashIcon}
-                <span>Delete my account</span>
-              </span>
+              {trashIcon}
             </button>
           ) : (
             <div className={styles.deleteConfirm}>

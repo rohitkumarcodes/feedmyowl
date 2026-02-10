@@ -28,7 +28,7 @@
 
 .settingsOptions {
   display: grid;
-  gap: 20px;
+  gap: 24px;
 }
 
 .panel {
@@ -46,7 +46,7 @@
 }
 
 .panel h2 {
-  font-size: var(--text-base);
+  font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
 }
 
@@ -97,6 +97,14 @@ button.linkButton:hover:enabled {
 .compactButton {
   justify-self: start;
   width: fit-content;
+}
+
+.iconOnlyButton {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  padding: 0;
+  width: 32px;
 }
 
 .headerTopRow .compactButton {
@@ -160,6 +168,7 @@ button.linkButton:hover:enabled {
   min-height: 32px;
   padding: 6px 10px;
   text-align: left;
+  width: 100%;
 }
 
 .owlToggle:hover {
@@ -195,6 +204,7 @@ button.linkButton:hover:enabled {
 .owlOptionList {
   display: grid;
   gap: 8px;
+  width: 100%;
 }
 
 .owlOption {
@@ -207,6 +217,7 @@ button.linkButton:hover:enabled {
   gap: 8px 10px;
   grid-template-columns: auto auto 1fr;
   padding: 8px 10px;
+  width: 100%;
 }
 
 .owlOptionSelected {
