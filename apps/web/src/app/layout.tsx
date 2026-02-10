@@ -14,6 +14,7 @@
  */
 
 import { AuthProvider } from "@/lib/auth";
+import { buildOwlFaviconDataUri, DEFAULT_OWL_ASCII } from "@/lib/owl-brand";
 import type { Metadata } from "next";
 import "@/styles/globals.css";
 
@@ -44,7 +45,7 @@ export const metadata: Metadata = {
   description:
     "A minimalist RSS/Atom feed reader that preserves your attention.",
   icons: {
-    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦉</text></svg>",
+    icon: buildOwlFaviconDataUri(DEFAULT_OWL_ASCII),
   },
 };
 

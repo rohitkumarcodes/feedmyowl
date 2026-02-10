@@ -1,17 +1,25 @@
 "use client";
 
-import { useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { normalizeFeedUrl } from "@/lib/feed-url";
+import { OWL_ART_OPTIONS, coerceOwlAscii, type OwlAscii } from "@/lib/owl-brand";
 import styles from "./settings-overview.module.css";
 
 interface SettingsOverviewProps {
   email: string;
+  owlAscii: OwlAscii;
 }
 
 interface ImportResponseBody {
   error?: string;
   duplicate?: boolean;
+}
+
+interface SaveOwlResponseBody {
+  error?: string;
+  owlAscii?: string;
 }
 
 interface ParsedImportFile {
@@ -199,7 +207,8 @@ const trashIcon = (
 /**
  * Renders minimal account settings for the reading MVP.
  */
-export function SettingsOverview({ email }: SettingsOverviewProps) {
+export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
+  const router = useRouter();
   const importFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -208,9 +217,19 @@ export function SettingsOverview({ email }: SettingsOverviewProps) {
   const [isImportingFeeds, setIsImportingFeeds] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [importSummary, setImportSummary] = useState<ImportSummary | null>(null);
+  const [draftOwlAscii, setDraftOwlAscii] = useState<OwlAscii>(owlAscii);
+  const [savedOwlAscii, setSavedOwlAscii] = useState<OwlAscii>(owlAscii);
+  const [isSavingOwl, setIsSavingOwl] = useState(false);
+  const [owlSaveMessage, setOwlSaveMessage] = useState<string | null>(null);
+  const [owlSaveError, setOwlSaveError] = useState<string | null>(null);
 
   const landingUrl =
     process.env.NEXT_PUBLIC_LANDING_PAGE_URL || "https://feedmyowl.com";
+
+  useEffect(() => {
+    setDraftOwlAscii(owlAscii);
+    setSavedOwlAscii(owlAscii);
+  }, [owlAscii]);
 
   async function handleDeleteAccount() {
     setDeleteError(null);
@@ -239,6 +258,40 @@ export function SettingsOverview({ email }: SettingsOverviewProps) {
 
   function handleExport(format: "opml" | "json") {
     window.location.assign(`/api/feeds/export?format=${format}`);
+  }
+
+  async function handleSaveOwl() {
+    setOwlSaveError(null);
+    setOwlSaveMessage(null);
+    setIsSavingOwl(true);
+
+    try {
+      const response = await fetch("/api/settings/logo", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ owlAscii: draftOwlAscii }),
+      });
+
+      const body = await parseResponseJson<SaveOwlResponseBody>(response);
+
+      if (!response.ok) {
+        setOwlSaveError(body?.error || "Could not save owl selection.");
+        return;
+      }
+
+      const persistedOwl = body?.owlAscii
+        ? coerceOwlAscii(body.owlAscii)
+        : draftOwlAscii;
+
+      setDraftOwlAscii(persistedOwl);
+      setSavedOwlAscii(persistedOwl);
+      setOwlSaveMessage("Owl updated.");
+      router.refresh();
+    } catch {
+      setOwlSaveError("Could not connect to the server.");
+    } finally {
+      setIsSavingOwl(false);
+    }
   }
 
   async function handleImportFileChange(event: ChangeEvent<HTMLInputElement>) {
@@ -397,6 +450,63 @@ export function SettingsOverview({ email }: SettingsOverviewProps) {
             ) : null}
           </div>
         ) : null}
+      </section>
+
+      <section className={styles.panel}>
+        <h2>Logo</h2>
+        <p className={styles.muted}>Pick an owl to digest your feeds.</p>
+        <div
+          className={styles.owlOptionList}
+          role="radiogroup"
+          aria-label="Pick an owl to digest your feeds."
+        >
+          {OWL_ART_OPTIONS.map((option) => {
+            const isSelected = draftOwlAscii === option.ascii;
+
+            return (
+              <label
+                key={option.ascii}
+                className={`${styles.owlOption} ${
+                  isSelected ? styles.owlOptionSelected : ""
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="owl-ascii"
+                  value={option.ascii}
+                  checked={isSelected}
+                  onChange={() => {
+                    setDraftOwlAscii(option.ascii);
+                    setOwlSaveError(null);
+                    setOwlSaveMessage(null);
+                  }}
+                />
+                <span className={styles.owlOptionAscii}>{option.ascii}</span>
+                <span className={styles.owlOptionText}>
+                  {option.name}: {option.description}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+        <div className={styles.inlineActions}>
+          <button
+            type="button"
+            className={`${styles.linkButton} ${styles.compactButton}`}
+            onClick={() => {
+              void handleSaveOwl();
+            }}
+            disabled={isSavingOwl || draftOwlAscii === savedOwlAscii}
+          >
+            {isSavingOwl ? "Saving..." : "Save owl"}
+          </button>
+        </div>
+        {owlSaveMessage ? (
+          <p className={styles.inlineMessage} role="status">
+            {owlSaveMessage}
+          </p>
+        ) : null}
+        {owlSaveError ? <p className={styles.inlineMessage}>{owlSaveError}</p> : null}
       </section>
 
       <section className={styles.panel}>

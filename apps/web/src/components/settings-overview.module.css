@@ -137,6 +137,45 @@ button.linkButton:hover:enabled {
   padding-left: 18px;
 }
 
+.owlOptionList {
+  display: grid;
+  gap: 8px;
+}
+
+.owlOption {
+  align-items: center;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: grid;
+  gap: 8px 10px;
+  grid-template-columns: auto auto 1fr;
+  padding: 8px 10px;
+}
+
+.owlOptionSelected {
+  background: var(--bg-selected);
+  border-color: var(--accent);
+}
+
+.owlOption input {
+  margin: 0;
+}
+
+.owlOptionAscii {
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.owlOptionText {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
 @media (max-width: 640px) {
   .headerTopRow {
     align-items: flex-start;
@@ -144,5 +183,17 @@ button.linkButton:hover:enabled {
 
   .headerTopRow .compactButton {
     margin-left: 0;
+  }
+
+  .owlOption {
+    grid-template-columns: auto 1fr;
+  }
+
+  .owlOptionAscii {
+    grid-column: 2;
+  }
+
+  .owlOptionText {
+    grid-column: 1 / -1;
   }
 }
