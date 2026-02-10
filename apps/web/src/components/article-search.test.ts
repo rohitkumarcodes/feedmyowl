@@ -172,6 +172,42 @@ describe("article-search", () => {
     expect(resultIds).not.toContain("art-noise");
   });
 
+  it("excludes fragmented heart matches with no significant contiguous range", () => {
+    const allArticles: ArticleViewModel[] = [
+      article({
+        id: "weak-fragment",
+        title: "The Art of Animation",
+        feedTitle: "Culture Monthly",
+      }),
+      article({
+        id: "strong-heart",
+        title: "Heart health weekly",
+        feedTitle: "Cardio Beat",
+      }),
+    ];
+
+    const resultIds = buildArticleSearchResults(allArticles, "heart").results.map(
+      (result) => result.article.id
+    );
+
+    expect(resultIds).toContain("strong-heart");
+    expect(resultIds).not.toContain("weak-fragment");
+  });
+
+  it("highlights only significant heart ranges in titles", () => {
+    const allArticles: ArticleViewModel[] = [
+      article({
+        id: "mixed-fragments",
+        title: "The Art and Heart of Animation",
+        feedTitle: "Cinema",
+      }),
+    ];
+
+    const result = buildArticleSearchResults(allArticles, "heart").results[0];
+    expect(result?.article.id).toBe("mixed-fragments");
+    expect(result?.highlights.title).toEqual([{ start: 12, end: 16 }]);
+  });
+
   it("records all hidden match sources when multiple hidden fields match", () => {
     const allArticles: ArticleViewModel[] = [
       article({

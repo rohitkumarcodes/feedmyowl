@@ -7,6 +7,7 @@ export interface MatchRange {
 }
 
 export type HiddenMatchSource = "snippet" | "author";
+type SearchMatchKey = "title" | "feedTitle" | "snippet" | "author";
 
 export interface ArticleSearchHighlights {
   title: MatchRange[];
@@ -89,7 +90,7 @@ function normalizeRanges(ranges: ReadonlyArray<readonly [number, number]>): Matc
 
 function collectRangesForKey(
   matches: ReadonlyArray<FuseResultMatch> | undefined,
-  key: "title" | "feedTitle"
+  key: SearchMatchKey
 ): MatchRange[] {
   if (!matches || matches.length === 0) {
     return [];
@@ -107,33 +108,43 @@ function collectRangesForKey(
   return normalizeRanges(ranges);
 }
 
-function collectHiddenMatchSources(
-  matches: ReadonlyArray<FuseResultMatch> | undefined
-): HiddenMatchSource[] {
-  if (!matches || matches.length === 0) {
+function rangeLength(range: MatchRange): number {
+  return range.end - range.start + 1;
+}
+
+function requiredRangeLength(queryLength: number, key: SearchMatchKey): number {
+  const baseRequired = Math.max(2, Math.floor(queryLength * 0.8));
+  if (key === "title" || key === "feedTitle") {
+    return baseRequired;
+  }
+
+  return Math.max(2, Math.min(4, baseRequired));
+}
+
+function collectSignificantRangesForKey(
+  matches: ReadonlyArray<FuseResultMatch> | undefined,
+  key: SearchMatchKey,
+  queryLength: number
+): MatchRange[] {
+  const ranges = collectRangesForKey(matches, key);
+  if (ranges.length === 0) {
     return [];
   }
 
-  let hasSnippetMatch = false;
-  let hasAuthorMatch = false;
+  const minLength = requiredRangeLength(queryLength, key);
+  return ranges.filter((range) => rangeLength(range) >= minLength);
+}
 
-  for (const match of matches) {
-    if (match.key === "snippet") {
-      hasSnippetMatch = true;
-      continue;
-    }
-
-    if (match.key === "author") {
-      hasAuthorMatch = true;
-    }
-  }
-
+function collectHiddenMatchSources(
+  snippetRanges: MatchRange[],
+  authorRanges: MatchRange[]
+): HiddenMatchSource[] {
   const hiddenSources: HiddenMatchSource[] = [];
-  if (hasSnippetMatch) {
+  if (snippetRanges.length > 0) {
     hiddenSources.push("snippet");
   }
 
-  if (hasAuthorMatch) {
+  if (authorRanges.length > 0) {
     hiddenSources.push("author");
   }
 
@@ -161,35 +172,75 @@ export function buildArticleSearchResults(
   }
 
   const fuse = new Fuse(allArticles, FUSE_OPTIONS);
+  const queryLength = normalizedQuery.length;
   const matchedResults = fuse.search(normalizedQuery);
+  const significantResults = matchedResults
+    .map((result) => {
+      const titleRanges = collectSignificantRangesForKey(
+        result.matches,
+        "title",
+        queryLength
+      );
+      const feedTitleRanges = collectSignificantRangesForKey(
+        result.matches,
+        "feedTitle",
+        queryLength
+      );
+      const snippetRanges = collectSignificantRangesForKey(
+        result.matches,
+        "snippet",
+        queryLength
+      );
+      const authorRanges = collectSignificantRangesForKey(
+        result.matches,
+        "author",
+        queryLength
+      );
 
-  matchedResults.sort((left, right) => {
-    const scoreDiff = (left.score ?? 1) - (right.score ?? 1);
+      const hasSignificantMatch =
+        titleRanges.length > 0 ||
+        feedTitleRanges.length > 0 ||
+        snippetRanges.length > 0 ||
+        authorRanges.length > 0;
+
+      if (!hasSignificantMatch) {
+        return null;
+      }
+
+      return {
+        result,
+        highlights: {
+          title: titleRanges,
+          feedTitle: feedTitleRanges,
+          hiddenSources: collectHiddenMatchSources(snippetRanges, authorRanges),
+        },
+      };
+    })
+    .filter((candidate): candidate is NonNullable<typeof candidate> => candidate !== null);
+
+  significantResults.sort((left, right) => {
+    const scoreDiff = (left.result.score ?? 1) - (right.result.score ?? 1);
     if (Math.abs(scoreDiff) > 1e-6) {
       return scoreDiff;
     }
 
-    const leftTime = toComparableTimestamp(left.item);
-    const rightTime = toComparableTimestamp(right.item);
+    const leftTime = toComparableTimestamp(left.result.item);
+    const rightTime = toComparableTimestamp(right.result.item);
     return rightTime - leftTime;
   });
 
-  const cappedResults = matchedResults.slice(0, maxResults).map((result) => ({
-    article: result.item,
-    score: result.score ?? 1,
-    highlights: {
-      title: collectRangesForKey(result.matches, "title"),
-      feedTitle: collectRangesForKey(result.matches, "feedTitle"),
-      hiddenSources: collectHiddenMatchSources(result.matches),
-    },
+  const cappedResults = significantResults.slice(0, maxResults).map((candidate) => ({
+    article: candidate.result.item,
+    score: candidate.result.score ?? 1,
+    highlights: candidate.highlights,
   }));
 
   return {
     query: normalizedQuery,
     isActive: true,
-    totalMatchCount: matchedResults.length,
+    totalMatchCount: significantResults.length,
     maxResults,
-    isCapped: matchedResults.length > maxResults,
+    isCapped: significantResults.length > maxResults,
     results: cappedResults,
   };
 }
