@@ -76,10 +76,34 @@
   background: var(--bg-primary);
   border: 1px solid var(--border);
   display: inline-flex;
+  height: 32px;
   justify-content: center;
-  min-height: 32px;
-  min-width: 32px;
+  overflow: hidden;
   padding: 0;
+  width: 32px;
+}
+
+.accountMenuTrigger {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  display: inline-flex;
+  height: 100%;
+  justify-content: center;
+  margin: 0;
+  padding: 4px;
+  width: 100%;
+}
+
+.accountMenuTrigger:hover {
+  background: var(--bg-tertiary);
+  transition: background-color 80ms ease;
+}
+
+.accountMenuAvatar {
+  height: 16px;
+  width: 16px;
 }
 
 .settingsLink {

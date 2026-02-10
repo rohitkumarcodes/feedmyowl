@@ -16,7 +16,15 @@ export function AccountControls() {
   return (
     <div className={styles.accountControls}>
       <div className={styles.accountMenuFrame}>
-        <UserMenu afterSignOutUrl="/sign-in" />
+        <UserMenu
+          afterSignOutUrl="/sign-in"
+          appearance={{
+            elements: {
+              userButtonTrigger: styles.accountMenuTrigger,
+              userButtonAvatarBox: styles.accountMenuAvatar,
+            },
+          }}
+        />
       </div>
       {showSettingsLink ? (
         <Link
