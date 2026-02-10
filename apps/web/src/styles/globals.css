@@ -49,6 +49,7 @@ body {
 
 html {
   font-size: 16px;
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -58,6 +59,12 @@ body {
   font-size: var(--text-base);
   font-weight: var(--weight-normal);
   line-height: var(--leading-normal);
+}
+
+@supports not (scrollbar-gutter: stable) {
+  html {
+    overflow-y: scroll;
+  }
 }
 
 h1,
