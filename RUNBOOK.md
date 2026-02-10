@@ -19,8 +19,12 @@ From repo root:
 - Manual refresh.
 - Read articles.
 - Offline-only workspace status message with cached-reading fallback copy.
+- Desktop/tablet keyboard shortcuts with in-app help modal (`?`) and visible toolbar entry.
+- One-time shortcuts hint in sidebar (dismissible, browser-local persistence).
+- Semantic sidebar notices (`progress`, `offline`, `info`, `error`) with consistent behavior.
 - Account logo selection (ASCII owl + favicon) from Settings.
 - Settings feed import progress indicator (`Importing (x/y)...` + inline progress text).
+- Settings keyboard shortcuts reference section with docs link.
 - Account deletion.
 
 ## 4. Active API routes
@@ -65,6 +69,29 @@ From repo root:
 3. Confirm previously loaded feeds/articles remain readable from snapshot.
 4. Reconnect network and verify banner clears without a separate online-status message.
 
+### Keyboard shortcuts do not work
+1. Confirm user is on `/feeds` workspace.
+2. Confirm viewport is desktop/tablet (shortcuts are disabled on mobile layout).
+3. Confirm focus is not in an editable field (`input`, `textarea`, `select`, contenteditable).
+4. Verify scope behavior:
+   - `j/k` should work in list and reader contexts.
+   - Arrow keys and `Enter` should work only in list context.
+5. Press `?` to open shortcuts modal and validate key mapping list.
+
+### Shortcut hint appears unexpectedly
+1. Confirm browser localStorage key: `feedmyowl.shortcuts_hint.dismissed.v1`.
+2. Expected hidden state is value `"true"`.
+3. Opening shortcuts modal should also set dismissal state.
+4. In private/incognito contexts, localStorage persistence may differ by browser policy.
+
+### Sidebar message timing/semantics look wrong
+1. Confirm message variant behavior:
+   - `error`: `role="alert"`, persists until dismissed/replaced.
+   - `offline`: `role="status"`, shown only while offline.
+   - `progress`: `role="status"`, non-dismissible while active.
+   - `info`: `role="status"`, auto-clears after ~8s unless actionable.
+2. For actionable info (for example `Add another`), confirm auto-clear is skipped.
+
 ### Logo selection save fails
 1. Confirm request payload contains a valid `owlAscii` value.
 2. Call `PATCH /api/settings/logo` while authenticated.
@@ -98,4 +125,13 @@ From repo root:
 15. On mobile viewport, verify in-app back transitions `Reader -> Articles -> Feeds`.
 16. On mobile viewport, verify top spacing is compact and fixed brand slot is hidden.
 17. On settings page, verify first-step delete action is text-labeled (`Delete account...`).
-18. On website pages, verify global nav includes `About` with correct active state on `/about/`.
+18. On desktop/tablet, verify `Shortcuts (?)` button is visible in sidebar toolbar.
+19. Press `?` and verify shortcuts modal opens, traps focus, and closes with `Escape`.
+20. Verify one-time shortcut hint appears before dismissal and stays hidden after dismissal/reload.
+21. Verify arrow keys move selection only in list context; reader keeps native arrow scrolling.
+22. Trigger success info message and verify auto-clear after ~8 seconds.
+23. Trigger actionable info message (`Add another`) and verify it does not auto-clear immediately.
+24. Trigger an error and verify assertive rendering/dismiss behavior.
+25. Verify article rows retain dot marker and show stronger unread vs read title tone.
+26. On settings page, verify `Keyboard shortcuts` section and docs link are present.
+27. On website pages, verify global nav includes `About` with correct active state on `/about/`.

@@ -45,12 +45,6 @@ This log records active product and technical decisions for the current app phas
   - `remove_only`: delete folder and remove membership links only.
   - `remove_and_unsubscribe_exclusive`: unsubscribe only feeds exclusive to that folder; keep cross-listed feeds.
 
-### D-2026-02-08-06
-- Date: 2026-02-08
-- Status: active
-- Decision: Existing keyboard shortcuts remain unchanged (`j`, `k`, `Enter`, `r`).
-- Why: Preserve reading interaction consistency.
-
 ### D-2026-02-09-01
 - Date: 2026-02-09
 - Status: active
@@ -108,6 +102,39 @@ This log records active product and technical decisions for the current app phas
 - Decision: Public website top navigation includes About.
 - Why: Improve findability of product mission/context content.
 
+### D-2026-02-10-06
+- Date: 2026-02-10
+- Status: active
+- Decision: Keyboard shortcuts are expanded into a focus-aware desktop/tablet model with explicit discoverability.
+- Why: Improve keyboard efficiency without hijacking default reading behavior.
+- Details:
+  - `j/k` work in list and reader contexts.
+  - Arrow keys and `Enter` are list-only.
+  - `r` refreshes feeds workspace-wide when not typing.
+  - `?` opens an in-app shortcuts dialog; `Escape` closes it.
+  - A visible `Shortcuts (?)` button and one-time hint expose availability.
+
+### D-2026-02-10-07
+- Date: 2026-02-10
+- Status: active
+- Decision: Sidebar messages use semantic variants with consistent accessibility roles and timing rules.
+- Why: Keep status feedback clear, calm, and screen-reader friendly.
+- Details:
+  - Variants: `error`, `progress`, `offline`, `info`.
+  - `error` uses assertive alert semantics and persists until dismissed/replaced.
+  - `offline` and `progress` are non-dismissible polite statuses.
+  - `info` auto-clears after 8 seconds unless it includes an explicit follow-up action.
+
+### D-2026-02-10-08
+- Date: 2026-02-10
+- Status: active
+- Decision: Article title tone differentiates unread and read states while preserving dot markers.
+- Why: Improve scanability with minimal visual churn.
+- Details:
+  - Dot marker remains.
+  - Unread titles use stronger text tone.
+  - Read titles use calmer tone and normal font weight.
+
 ## Superseded decisions
 
 ### D-2026-02-07-05
@@ -115,3 +142,9 @@ This log records active product and technical decisions for the current app phas
 - Status: superseded
 - Decision: Folder UX and folder API actions are removed.
 - Superseded by: D-2026-02-08-02 through D-2026-02-08-05.
+
+### D-2026-02-08-06
+- Date: 2026-02-08
+- Status: superseded
+- Decision: Existing keyboard shortcuts remain unchanged (`j`, `k`, `Enter`, `r`).
+- Superseded by: D-2026-02-10-06.

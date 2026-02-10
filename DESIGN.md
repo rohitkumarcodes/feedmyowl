@@ -21,7 +21,9 @@ Three stacked views:
 
 ## 3. Sidebar information hierarchy
 - Global scopes first (`Read all feeds`, `Uncategorized`)
-- Feed actions (`Refresh`, `Add feed`, `New folder`)
+- Toolbar actions (`Refresh`, `Add feed/folder`, `Shortcuts (?)` on desktop/tablet)
+- One-time shortcuts hint area (dismissible on desktop/tablet)
+- Sidebar message stack (progress/offline/info/error)
 - Folder groups with explicit expand/collapse controls
 - Feed rows nested under folders
 
@@ -41,20 +43,39 @@ Three stacked views:
   - Edit name
   - Delete (with mode dialog)
 - Workspace connectivity message appears only while offline and clears silently on reconnect.
+- Sidebar notices are semantic and consistent:
+  - `progress` and `offline` are non-dismissible status notices.
+  - `info` is dismissible and auto-clears after 8s unless actionable.
+  - `error` is dismissible and shown with stronger contrast.
 - Settings import shows numeric progress while processing feed URLs.
 - Settings delete entry point is text-first (`Delete account...`) before confirmation.
 
 ## 6. Keyboard model
-- Existing reading shortcuts unchanged:
-  - `j` / `ArrowDown`
-  - `k` / `ArrowUp`
-  - `Enter`
-  - `r`
+- Scope and availability:
+  - Active only on feeds workspace.
+  - Active only on desktop/tablet; disabled on mobile.
+  - Disabled while user is typing in editable targets.
+- Key map:
+  - `j`: next article (list + reader contexts)
+  - `k`: previous article (list + reader contexts)
+  - `ArrowDown`: next article (list context only)
+  - `ArrowUp`: previous article (list context only)
+  - `Enter`: open selected article (list context only)
+  - `r`: refresh feeds
+  - `?`: open shortcuts help modal
+  - `Escape`: close shortcuts help modal
+- Discoverability:
+  - Visible toolbar entry `Shortcuts (?)`
+  - One-time tip shown on desktop/tablet until dismissed or modal opened
 
 ## 7. Accessibility baseline
 - Folder toggles provide `aria-expanded`.
 - Menus and dialogs are keyboard reachable and close on `Escape`.
 - Focus-visible styles preserved for all interactive controls.
+- Shortcuts dialog traps focus while open and returns focus on close.
+- Message roles:
+  - `error` uses `role="alert"` (assertive live region).
+  - `progress`, `offline`, and `info` use `role="status"` (polite live region).
 
 ## 8. Constraints
 - No nested folders.
@@ -67,3 +88,8 @@ Three stacked views:
 - Brand owl is rendered as monospaced ASCII art from user preference.
 - Default ASCII owl is `{o,o}` for users without a saved preference.
 - Settings provides explicit selection + save; favicon mirrors selected ASCII owl.
+
+## 10. Title tone behavior
+- Article title dot marker remains unchanged.
+- Unread titles use `--text-primary`.
+- Read titles use `--text-secondary` with normal font weight.

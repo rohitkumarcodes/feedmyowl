@@ -13,15 +13,19 @@
 
 ## 3. Sidebar behavior
 - Top controls:
+  - `Refresh feeds`
+  - `Add feed/folder`
+  - `Shortcuts (?)` (desktop/tablet only)
+- Scope entries:
   - `Read all feeds`
   - `Uncategorized`
-  - `Refresh feeds`
-  - `Add a feed`
-  - `New folder`
+  - Folder rows (collapsible)
+  - Feed rows under each folder
 - Sections:
-  - Uncategorized feed rows
-  - Folders section with collapsible folder rows
-  - Feed rows under each folder (feeds may appear in multiple folders)
+  - Shortcut tip area (one-time dismissible hint on non-mobile)
+  - Add-feed and add-folder forms
+  - Status message stack
+  - Feed tree
 - Brand slot:
   - Shows fixed text `Feed my owl`.
   - Shows selected ASCII owl (default `{o,o}`).
@@ -82,17 +86,40 @@
 ## 8. Accessibility
 - Folder expand controls use `aria-expanded`.
 - Overflow menus and dialogs dismiss with `Escape`.
-- Existing shortcuts remain:
-  - `j`, `k`, `Enter`, `r`.
+- Keyboard shortcuts dialog is accessible (`role="dialog"`, focus trap, `Escape` close).
+- Message semantics and live regions:
+  - `error` uses `role="alert"` and assertive announcements.
+  - `info`, `offline`, and `progress` use `role="status"` and polite announcements.
 
-## 9. Settings behavior
-- Settings includes three section groups with consistent spacing:
+## 9. Keyboard shortcuts behavior
+- Enabled only in feeds workspace on desktop/tablet.
+- Disabled on mobile layout.
+- Disabled while typing in editable targets (`input`, `textarea`, `select`, `contenteditable`).
+- Key map:
+  - `j`: next article (list + reader context)
+  - `k`: previous article (list + reader context)
+  - `ArrowDown`: next article (list context only)
+  - `ArrowUp`: previous article (list context only)
+  - `Enter`: open selected article (list context only)
+  - `r`: refresh feeds
+  - `?`: open shortcuts help modal
+  - `Escape`: close shortcuts modal
+- Discoverability:
+  - Visible toolbar entry: `Shortcuts (?)`
+  - One-time hint: `Tip: press ? to see shortcuts.`
+
+## 10. Settings behavior
+- Settings includes four section groups with consistent spacing:
   - `Feeds`
+  - `Keyboard shortcuts`
   - `Hoot hoot`
   - `Delete account`
 - Feeds import:
   - Import button shows numeric progress while processing (`Importing (x/y)...`).
   - Inline status text shows processed progress during the active import.
+- Keyboard shortcuts settings section:
+  - Shows grouped shortcut reference (`Navigation`, `Reading actions`, `App actions`).
+  - Includes docs link to `/docs/#keyboard-shortcuts`.
 - Owl chooser prompt: `Choose an owl to digest your feeds.`
 - User selects one ASCII owl option:
   - `[o-o] Hooty Potter: The owl who lived (to read your feeds).`
@@ -112,3 +139,14 @@
   - Deletion requires explicit second-step confirmation (`Yes, delete my account`).
 - Persistence:
   - Account-wide (stored on user record), so selection follows sign-in across sessions/devices.
+
+## 11. Message semantics and title tone
+- Sidebar message variants:
+  - `progress`: non-dismissible, polite status, shown for in-flight add/import style work.
+  - `offline`: non-dismissible, polite status, shown only when offline.
+  - `info`: dismissible; auto-clears after 8 seconds unless it includes an explicit follow-up action.
+  - `error`: dismissible, stronger contrast, assertive announcement.
+- Article list title tone:
+  - Dot marker remains unchanged.
+  - Unread titles use stronger text tone (`--text-primary`).
+  - Read titles use calmer tone (`--text-secondary`) with normal font weight.

@@ -27,6 +27,9 @@ Core loop:
 - Offline-only connectivity status message in workspace.
 - Account settings (including configurable ASCII owl logo) and account deletion.
 - Feed import progress feedback in settings.
+- Desktop/tablet keyboard shortcuts with in-app help modal and one-time hint.
+- Semantic sidebar notices (`error`, `progress`, `offline`, `info`) with accessibility roles.
+- Settings keyboard shortcuts reference + docs link.
 
 ## 4. Out of scope
 - Nested folders.
@@ -41,6 +44,11 @@ Core loop:
   - Sidebar: global scopes + folder tree + feed rows.
   - Article list.
   - Reader.
+- Sidebar toolbar includes:
+  - `Refresh`
+  - `Add feed/folder`
+  - `Shortcuts (?)`
+- One-time shortcuts tip appears in the sidebar until dismissed/opened.
 - Authenticated chrome brand:
   - Fixed text `Feed my owl`.
   - Per-user ASCII owl variant (default `{o,o}`), also used for favicon.
@@ -85,8 +93,22 @@ Notes:
 - Offline snapshot keeps previously loaded data available during disconnects.
 - Offline message copy is fixed to: `You’re offline. You can still read cached articles.`
 - Reconnect clears the offline message silently (no separate online banner).
+- Message semantics:
+  - `error` notices are assertive alerts and persist until dismissed/replaced.
+  - `progress` and `offline` notices are polite non-dismissible statuses.
+  - `info` notices auto-clear after 8 seconds unless they include an action.
 
-## 9. Operational scripts
+## 9. Keyboard model defaults
+- Enabled only on `/feeds` and only on desktop/tablet.
+- Disabled while typing in editable fields.
+- Key behavior:
+  - `j/k` work in list and reader contexts.
+  - Arrow keys + `Enter` are list-only.
+  - `r` refreshes feeds.
+  - `?` opens shortcuts help.
+  - `Escape` closes the shortcuts dialog.
+
+## 10. Operational scripts
 From repo root:
 - `pnpm dev:web`
 - `pnpm test:web`
