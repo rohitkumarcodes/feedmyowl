@@ -27,11 +27,8 @@
 }
 
 .panel {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
   display: grid;
   gap: 8px;
-  padding: 12px;
 }
 
 .panel h2 {
