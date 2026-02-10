@@ -402,6 +402,7 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
   const shortcutsPanelId = useId();
   const importFileInputRef = useRef<HTMLInputElement | null>(null);
   const owlWidthProbeRef = useRef<HTMLDivElement | null>(null);
+  const shortcutsWidthProbeRef = useRef<HTMLDivElement | null>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -419,6 +420,9 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
   const [isOwlPanelExpanded, setIsOwlPanelExpanded] = useState(false);
   const [isShortcutsPanelExpanded, setIsShortcutsPanelExpanded] = useState(false);
   const [owlControlsWidthPx, setOwlControlsWidthPx] = useState<number | null>(null);
+  const [shortcutsControlsWidthPx, setShortcutsControlsWidthPx] = useState<number | null>(
+    null
+  );
 
   const landingUrl =
     process.env.NEXT_PUBLIC_LANDING_PAGE_URL || "https://feedmyowl.com";
@@ -441,6 +445,41 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
       }
 
       setOwlControlsWidthPx((previousWidth) =>
+        previousWidth === measuredWidth ? previousWidth : measuredWidth
+      );
+    };
+
+    measure();
+    const animationFrame = window.requestAnimationFrame(measure);
+
+    const resizeObserver =
+      typeof ResizeObserver === "function"
+        ? new ResizeObserver(() => {
+            measure();
+          })
+        : null;
+
+    resizeObserver?.observe(probe);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      resizeObserver?.disconnect();
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    const probe = shortcutsWidthProbeRef.current;
+    if (!probe) {
+      return;
+    }
+
+    const measure = () => {
+      const measuredWidth = Math.ceil(probe.getBoundingClientRect().width);
+      if (measuredWidth <= 0) {
+        return;
+      }
+
+      setShortcutsControlsWidthPx((previousWidth) =>
         previousWidth === measuredWidth ? previousWidth : measuredWidth
       );
     };
@@ -708,7 +747,49 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
 
         <section className={styles.panel}>
           <h2>Keyboard shortcuts</h2>
-          <div className={styles.shortcutsControls}>
+          <div
+            ref={shortcutsWidthProbeRef}
+            className={styles.shortcutsWidthProbe}
+            aria-hidden="true"
+          >
+            <button type="button" className={styles.shortcutsToggle} tabIndex={-1}>
+              <span className={styles.owlToggleCaret}>▸</span>
+              {keyboardIcon}
+              <span className={styles.shortcutsWidthProbeText}>Show keyboard shortcuts</span>
+            </button>
+            <div className={styles.shortcutsWidthProbeContent}>
+              {SHORTCUT_GROUPS.map((group) => (
+                <section key={`probe-${group.id}`} className={styles.shortcutsPanelGroup}>
+                  <h3 className={styles.shortcutsWidthProbeText}>{group.label}</h3>
+                  <div className={styles.shortcutsPanelRows}>
+                    {group.shortcuts.map((shortcut) => (
+                      <div key={`probe-${shortcut.id}`} className={styles.shortcutsPanelRow}>
+                        <div className={styles.shortcutsPanelKeys}>
+                          {shortcut.keys.map((key) => (
+                            <kbd
+                              key={`probe-${shortcut.id}-${key}`}
+                              className={styles.shortcutsPanelKey}
+                            >
+                              {key}
+                            </kbd>
+                          ))}
+                        </div>
+                        <p
+                          className={`${styles.shortcutsPanelDescription} ${styles.shortcutsWidthProbeText}`}
+                        >
+                          {shortcut.description}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </div>
+          <div
+            className={styles.shortcutsControls}
+            style={shortcutsControlsWidthPx ? { width: `${shortcutsControlsWidthPx}px` } : undefined}
+          >
             <button
               type="button"
               className={styles.shortcutsToggle}

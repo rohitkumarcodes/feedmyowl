@@ -65,6 +65,25 @@
   white-space: nowrap;
 }
 
+.shortcutsWidthProbe {
+  left: -10000px;
+  pointer-events: none;
+  position: fixed;
+  top: -10000px;
+  visibility: hidden;
+  width: max-content;
+}
+
+.shortcutsWidthProbeContent {
+  display: grid;
+  gap: 10px;
+  padding: 0 10px 10px;
+}
+
+.shortcutsWidthProbeText {
+  white-space: nowrap;
+}
+
 .panel h2 {
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
@@ -228,11 +247,6 @@ button.linkButton:hover:enabled {
 .shortcutsPanelGroup {
   display: grid;
   gap: 8px;
-}
-
-.shortcutsPanelGroup + .shortcutsPanelGroup {
-  border-top: 1px solid var(--border);
-  padding-top: 10px;
 }
 
 .shortcutsPanelGroup h3 {
