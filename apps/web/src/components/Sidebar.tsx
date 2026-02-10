@@ -1049,7 +1049,7 @@ export function Sidebar({
         ))}
       </div>
 
-      {/* Unified feed tree: All feeds → user folders → uncategorized */}
+      {/* Unified feed tree: All feeds → uncategorized → user folders */}
       <div className={styles.sections}>
         {/* "All feeds" scope — always first, always visible */}
         <div
@@ -1066,7 +1066,12 @@ export function Sidebar({
             onClick={onSelectAll}
             aria-current={selectedScope.type === "all" ? "true" : undefined}
           >
-            <span className={styles.folderLabel}>All feeds</span>
+            <span className={styles.folderNameWrap}>
+              <span className={styles.folderIconSpacer} aria-hidden="true">
+                <FolderRowIcon />
+              </span>
+              <span className={styles.folderLabel}>All feeds</span>
+            </span>
             <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
               {feeds.length}
             </span>
@@ -1074,50 +1079,7 @@ export function Sidebar({
           <div className={styles.folderActionsSpacer} aria-hidden="true" />
         </div>
 
-        {/* User-created folders — each with nested feeds */}
-        {sortedFolders.map((folder) => {
-          const folderFeeds = feedsByFolderId.get(folder.id) ?? [];
-          const isExpanded = expandedFolderIds[folder.id] ?? false;
-          const isFolderActive =
-            selectedScope.type === "folder" && selectedScope.folderId === folder.id;
-
-          return (
-            <div key={folder.id} className={styles.folderGroup}>
-              <FolderRow
-                folder={folder}
-                isMobile={isMobile}
-                feedCount={folderFeeds.length}
-                isActive={isFolderActive}
-                isExpanded={isExpanded}
-                isDeleting={deletingFolderId === folder.id}
-                isRenaming={renamingFolderId === folder.id}
-                onToggleExpand={() =>
-                  setExpandedFolderIds((previous) => ({
-                    ...previous,
-                    [folder.id]: !(previous[folder.id] ?? true),
-                  }))
-                }
-                onSelectFolder={() => onSelectFolder(folder.id)}
-                onRenameFolder={(name) =>
-                  Promise.resolve(onRequestFolderRename(folder.id, name))
-                }
-                onPromptDeleteFolder={() => {
-                  setPendingDeleteFolderId(folder.id);
-                  setIsDeletingWithUnsubscribe(false);
-                }}
-              />
-
-              <ShutterFeedGroup
-                expanded={isExpanded}
-                prefersReducedMotion={prefersReducedMotion}
-              >
-                {renderFeedRows(folderFeeds)}
-              </ShutterFeedGroup>
-            </div>
-          );
-        })}
-
-        {/* Uncategorized feeds — last, only when present */}
+        {/* Uncategorized feeds — directly after All feeds, only when present */}
         {uncategorizedFeeds.length > 0 ? (
           <div className={styles.folderGroup}>
             <div
@@ -1161,6 +1123,49 @@ export function Sidebar({
             </ShutterFeedGroup>
           </div>
         ) : null}
+
+        {/* User-created folders — after global scopes, each with nested feeds */}
+        {sortedFolders.map((folder) => {
+          const folderFeeds = feedsByFolderId.get(folder.id) ?? [];
+          const isExpanded = expandedFolderIds[folder.id] ?? false;
+          const isFolderActive =
+            selectedScope.type === "folder" && selectedScope.folderId === folder.id;
+
+          return (
+            <div key={folder.id} className={styles.folderGroup}>
+              <FolderRow
+                folder={folder}
+                isMobile={isMobile}
+                feedCount={folderFeeds.length}
+                isActive={isFolderActive}
+                isExpanded={isExpanded}
+                isDeleting={deletingFolderId === folder.id}
+                isRenaming={renamingFolderId === folder.id}
+                onToggleExpand={() =>
+                  setExpandedFolderIds((previous) => ({
+                    ...previous,
+                    [folder.id]: !(previous[folder.id] ?? true),
+                  }))
+                }
+                onSelectFolder={() => onSelectFolder(folder.id)}
+                onRenameFolder={(name) =>
+                  Promise.resolve(onRequestFolderRename(folder.id, name))
+                }
+                onPromptDeleteFolder={() => {
+                  setPendingDeleteFolderId(folder.id);
+                  setIsDeletingWithUnsubscribe(false);
+                }}
+              />
+
+              <ShutterFeedGroup
+                expanded={isExpanded}
+                prefersReducedMotion={prefersReducedMotion}
+              >
+                {renderFeedRows(folderFeeds)}
+              </ShutterFeedGroup>
+            </div>
+          );
+        })}
 
         {feeds.length === 0 && sortedFolders.length === 0 ? (
           <p className={styles.emptyLabel}>No feeds yet.</p>

@@ -1,7 +1,7 @@
 .rowWrap {
   border-bottom: 1px solid var(--lp-border);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) var(--sidebar-tree-actions-col);
   position: relative;
 }
 
@@ -42,10 +42,11 @@
 
 .actions {
   align-items: center;
-  display: inline-flex;
+  display: flex;
   justify-content: center;
-  padding-right: 6px;
+  min-width: var(--sidebar-tree-actions-col);
   position: relative;
+  width: var(--sidebar-tree-actions-col);
 }
 
 .renameForm {

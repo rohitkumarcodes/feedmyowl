@@ -285,6 +285,11 @@
   width: 13px;
 }
 
+.folderIconSpacer {
+  display: inline-flex;
+  visibility: hidden;
+}
+
 .folderNameWrap .folderLabel {
   display: block;
   min-width: 0;
