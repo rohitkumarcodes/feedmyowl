@@ -42,10 +42,6 @@
   max-width: 100%;
 }
 
-.owlPickerControls .owlOptionsShutter[aria-hidden="false"] {
-  margin-top: 8px;
-}
-
 .owlWidthProbe {
   left: -10000px;
   pointer-events: none;
@@ -327,12 +323,8 @@ button.linkButton:hover:enabled {
 
 .owlOptionsShutter {
   overflow: hidden;
-  transition: height 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: height 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
   will-change: height;
-}
-
-.owlOptionsShutter[aria-hidden="false"] {
-  transition-duration: 380ms;
 }
 
 .owlOptionsShutterContent {
@@ -343,28 +335,32 @@ button.linkButton:hover:enabled {
 
 .owlOptionList {
   display: grid;
-  gap: 8px;
+  gap: 12px;
+  padding: 0 10px;
 }
 
 .owlOption {
-  align-items: center;
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
+  align-items: flex-start;
+  background: transparent;
+  border: 0;
   color: var(--text-primary);
   cursor: pointer;
   display: grid;
   gap: 8px 10px;
   grid-template-columns: auto auto 1fr;
-  padding: 8px 10px;
+  padding: 0;
 }
 
 .owlOptionSelected {
-  background: var(--bg-selected);
-  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.owlOptionSelected .owlOptionAscii {
+  color: var(--accent);
 }
 
 .owlOption input {
-  margin: 0;
+  margin: 2px 0 0;
 }
 
 .owlOptionAscii {
@@ -382,6 +378,15 @@ button.linkButton:hover:enabled {
 
 .owlOptionEmphasis {
   font-style: italic;
+}
+
+.owlOptionsShutterContent > .inlineActions,
+.owlOptionsShutterContent > .inlineMessage {
+  padding: 0 10px;
+}
+
+.owlOptionsShutterContent > .inlineMessage:last-child {
+  padding-bottom: 10px;
 }
 
 @media (prefers-reduced-motion: reduce) {
