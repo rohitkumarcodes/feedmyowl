@@ -60,6 +60,21 @@ describe("article-search", () => {
       .toContain("author-hit");
     expect(buildArticleSearchResults(allArticles, "rendring").results.map((r) => r.article.id))
       .toContain("snippet-hit");
+
+    const authorResult = buildArticleSearchResults(allArticles, "martnez").results.find(
+      (result) => result.article.id === "author-hit"
+    );
+    expect(authorResult?.highlights.hiddenSources).toEqual(["author"]);
+
+    const snippetResult = buildArticleSearchResults(allArticles, "rendring").results.find(
+      (result) => result.article.id === "snippet-hit"
+    );
+    expect(snippetResult?.highlights.hiddenSources).toEqual(["snippet"]);
+
+    const titleResult = buildArticleSearchResults(allArticles, "typescrpt").results.find(
+      (result) => result.article.id === "title-hit"
+    );
+    expect(titleResult?.highlights.hiddenSources).toEqual([]);
   });
 
   it("sorts by relevance first, then recency for ties", () => {
@@ -119,6 +134,59 @@ describe("article-search", () => {
     expect(active.isActive).toBe(true);
   });
 
+  it("filters weak letter-scramble matches for stricter relevance", () => {
+    const allArticles: ArticleViewModel[] = [
+      article({
+        id: "earth-title",
+        title: "Earth systems briefing",
+        feedTitle: "Planet Desk",
+        snippet: "Global climate notes.",
+      }),
+      article({
+        id: "earth-snippet",
+        title: "Climate notes",
+        feedTitle: "Research Wire",
+        snippet: "Earth observations from orbit.",
+      }),
+      article({
+        id: "heart-noise",
+        title: "Heart health weekly",
+        feedTitle: "Cardio Beat",
+        snippet: "Nutrition and movement.",
+      }),
+      article({
+        id: "art-noise",
+        title: "The art of reading",
+        feedTitle: "Culture Monthly",
+        snippet: "Reviewing theater scripts.",
+      }),
+    ];
+
+    const resultIds = buildArticleSearchResults(allArticles, "earth").results.map(
+      (result) => result.article.id
+    );
+
+    expect(resultIds).toContain("earth-title");
+    expect(resultIds).toContain("earth-snippet");
+    expect(resultIds).not.toContain("heart-noise");
+    expect(resultIds).not.toContain("art-noise");
+  });
+
+  it("records all hidden match sources when multiple hidden fields match", () => {
+    const allArticles: ArticleViewModel[] = [
+      article({
+        id: "both-hidden",
+        title: "Daily briefing",
+        feedTitle: "World Desk",
+        author: "Earth Reporter",
+        snippet: "Earth satellites captured new imagery.",
+      }),
+    ];
+
+    const result = buildArticleSearchResults(allArticles, "earth");
+    expect(result.results[0]?.highlights.hiddenSources).toEqual(["snippet", "author"]);
+  });
+
   it("returns highlight ranges for title and feed title matches", () => {
     const allArticles: ArticleViewModel[] = [
       article({
@@ -131,8 +199,10 @@ describe("article-search", () => {
 
     const titleResult = buildArticleSearchResults(allArticles, "typescript");
     expect(titleResult.results[0]?.highlights.title.length).toBeGreaterThan(0);
+    expect(titleResult.results[0]?.highlights.hiddenSources).toEqual([]);
 
     const feedResult = buildArticleSearchResults(allArticles, "security");
     expect(feedResult.results[0]?.highlights.feedTitle.length).toBeGreaterThan(0);
+    expect(feedResult.results[0]?.highlights.hiddenSources).toEqual([]);
   });
 });

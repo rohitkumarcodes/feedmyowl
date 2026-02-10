@@ -51,6 +51,12 @@
   line-height: var(--leading-tight);
 }
 
+.matchSource {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-tight);
+}
+
 .match {
   background: rgb(236 199 96 / 45%);
   color: inherit;

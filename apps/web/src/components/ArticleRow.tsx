@@ -3,7 +3,11 @@
  */
 
 import type { ReactNode } from "react";
-import type { ArticleSearchHighlights, MatchRange } from "./article-search";
+import type {
+  ArticleSearchHighlights,
+  HiddenMatchSource,
+  MatchRange,
+} from "./article-search";
 import type { ArticleViewModel } from "./feeds-types";
 import styles from "./ArticleRow.module.css";
 
@@ -64,6 +68,22 @@ function renderHighlightedText(text: string, ranges: MatchRange[] | undefined): 
   return pieces;
 }
 
+function formatHiddenSourceLabel(
+  hiddenSources: HiddenMatchSource[] | undefined
+): string | null {
+  if (!hiddenSources || hiddenSources.length === 0) {
+    return null;
+  }
+
+  if (hiddenSources.length === 2) {
+    return "Matched in snippet and author";
+  }
+
+  return hiddenSources[0] === "snippet"
+    ? "Matched in snippet"
+    : "Matched in author";
+}
+
 /**
  * Renders a single article row — title only, with optional feed name.
  */
@@ -76,6 +96,7 @@ export function ArticleRow({
   onSelect,
 }: ArticleRowProps) {
   const isRead = Boolean(article.readAt);
+  const hiddenSourceLabel = formatHiddenSourceLabel(highlights?.hiddenSources);
 
   return (
     <button
@@ -92,6 +113,7 @@ export function ArticleRow({
       {showFeedTitle ? (
         <p className={styles.meta}>{renderHighlightedText(article.feedTitle, highlights?.feedTitle)}</p>
       ) : null}
+      {hiddenSourceLabel ? <p className={styles.matchSource}>{hiddenSourceLabel}</p> : null}
     </button>
   );
 }

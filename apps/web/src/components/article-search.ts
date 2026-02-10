@@ -6,9 +6,12 @@ export interface MatchRange {
   end: number;
 }
 
+export type HiddenMatchSource = "snippet" | "author";
+
 export interface ArticleSearchHighlights {
   title: MatchRange[];
   feedTitle: MatchRange[];
+  hiddenSources: HiddenMatchSource[];
 }
 
 export interface ArticleSearchResult {
@@ -38,12 +41,13 @@ const FUSE_OPTIONS: IFuseOptions<ArticleViewModel> = {
   includeMatches: true,
   includeScore: true,
   ignoreLocation: true,
-  threshold: 0.4,
+  threshold: 0.18,
+  minMatchCharLength: 2,
   keys: [
-    { name: "title", weight: 0.4 },
+    { name: "title", weight: 0.45 },
     { name: "feedTitle", weight: 0.3 },
     { name: "snippet", weight: 0.2 },
-    { name: "author", weight: 0.1 },
+    { name: "author", weight: 0.05 },
   ],
 };
 
@@ -103,6 +107,39 @@ function collectRangesForKey(
   return normalizeRanges(ranges);
 }
 
+function collectHiddenMatchSources(
+  matches: ReadonlyArray<FuseResultMatch> | undefined
+): HiddenMatchSource[] {
+  if (!matches || matches.length === 0) {
+    return [];
+  }
+
+  let hasSnippetMatch = false;
+  let hasAuthorMatch = false;
+
+  for (const match of matches) {
+    if (match.key === "snippet") {
+      hasSnippetMatch = true;
+      continue;
+    }
+
+    if (match.key === "author") {
+      hasAuthorMatch = true;
+    }
+  }
+
+  const hiddenSources: HiddenMatchSource[] = [];
+  if (hasSnippetMatch) {
+    hiddenSources.push("snippet");
+  }
+
+  if (hasAuthorMatch) {
+    hiddenSources.push("author");
+  }
+
+  return hiddenSources;
+}
+
 export function buildArticleSearchResults(
   allArticles: ArticleViewModel[],
   query: string,
@@ -143,6 +180,7 @@ export function buildArticleSearchResults(
     highlights: {
       title: collectRangesForKey(result.matches, "title"),
       feedTitle: collectRangesForKey(result.matches, "feedTitle"),
+      hiddenSources: collectHiddenMatchSources(result.matches),
     },
   }));
 
