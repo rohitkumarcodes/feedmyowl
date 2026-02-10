@@ -553,6 +553,7 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
             openArticleId={openArticleId}
             statusMessage={isSearchActive ? null : listStatusMessage}
             emptyStateMessage={emptyStateMessage}
+            isInitialScopeEmpty={selectedScope.type === "none" && !isSearchActive}
             showFeedTitle={isSearchActive || selectedScope.type !== "feed"}
             searchQuery={searchQuery}
             searchIsActive={isSearchActive}

@@ -14,6 +14,7 @@ interface ArticleListProps {
   openArticleId: string | null;
   statusMessage: string | null;
   emptyStateMessage: string;
+  isInitialScopeEmpty: boolean;
   showFeedTitle: boolean;
   searchQuery: string;
   searchIsActive: boolean;
@@ -35,6 +36,7 @@ export function ArticleList({
   openArticleId,
   statusMessage,
   emptyStateMessage,
+  isInitialScopeEmpty,
   showFeedTitle,
   searchQuery,
   searchIsActive,
@@ -68,9 +70,6 @@ export function ArticleList({
       tabIndex={-1}
     >
       <div className={styles.searchBar}>
-        <label className={styles.searchLabel} htmlFor="article-search-input">
-          Search all articles
-        </label>
         <div className={styles.searchControls}>
           <input
             ref={searchInputRef}
@@ -78,6 +77,7 @@ export function ArticleList({
             type="search"
             className={styles.searchInput}
             value={searchQuery}
+            aria-label="Search all articles"
             placeholder="Search all articles..."
             onChange={(event) => onSearchQueryChange(event.currentTarget.value)}
             onKeyDown={(event) => {
@@ -122,7 +122,9 @@ export function ArticleList({
       ) : null}
 
       {articles.length === 0 ? (
-        <div className={styles.emptyWrap}>
+        <div
+          className={`${styles.emptyWrap} ${isInitialScopeEmpty ? styles.emptyWrapInitial : ""}`}
+        >
           <p className={styles.empty}>{resolvedEmptyStateMessage}</p>
         </div>
       ) : (

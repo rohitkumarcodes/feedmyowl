@@ -15,12 +15,6 @@
   z-index: 2;
 }
 
-.searchLabel {
-  color: var(--text-secondary);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-semibold);
-}
-
 .searchControls {
   display: grid;
   gap: 8px;
@@ -90,7 +84,17 @@
   padding: 24px;
 }
 
+.emptyWrapInitial {
+  transform: translateY(-28px);
+}
+
 .empty {
   color: var(--text-muted);
   font-size: var(--text-base);
+}
+
+@media (min-width: 768px) {
+  :global(html[data-list-collapsed="false"]) .emptyWrapInitial {
+    transform: translateY(-52px);
+  }
 }
