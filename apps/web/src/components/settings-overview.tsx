@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { normalizeFeedUrl } from "@/lib/feed-url";
 import { OWL_ART_OPTIONS, coerceOwlAscii, type OwlAscii } from "@/lib/owl-brand";
+import { SHORTCUT_GROUPS } from "./keyboard-shortcuts";
 import styles from "./settings-overview.module.css";
 
 interface SettingsOverviewProps {
@@ -676,6 +677,38 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
               ) : null}
             </div>
           ) : null}
+        </section>
+
+        <section className={styles.panel}>
+          <h2>Keyboard shortcuts</h2>
+          <p className={styles.muted}>
+            Shortcuts work in the feeds workspace on desktop and tablet.
+          </p>
+          <div className={styles.shortcutsReference}>
+            {SHORTCUT_GROUPS.map((group) => (
+              <div key={group.id} className={styles.shortcutsGroup}>
+                <h3>{group.label}</h3>
+                <ul className={styles.shortcutsList}>
+                  {group.shortcuts.map((shortcut) => (
+                    <li key={shortcut.id}>
+                      <span className={styles.shortcutsKeys}>{shortcut.keys.join(" / ")}</span>
+                      <span className={styles.shortcutsDescription}>
+                        {shortcut.description}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <a
+            href={`${landingUrl}/docs/#keyboard-shortcuts`}
+            target="_blank"
+            rel="noreferrer"
+            className={`${styles.linkButton} ${styles.compactButton}`}
+          >
+            Read full shortcuts docs
+          </a>
         </section>
 
         <section className={styles.panel}>

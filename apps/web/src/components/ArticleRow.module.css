@@ -28,7 +28,7 @@
 }
 
 .title {
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-family: var(--font-serif);
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);

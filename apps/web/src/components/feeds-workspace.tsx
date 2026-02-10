@@ -4,8 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArticleList } from "./ArticleList";
 import { ArticleReader } from "./ArticleReader";
+import { KeyboardShortcutsModal } from "./KeyboardShortcutsModal";
 import { Layout } from "./Layout";
 import { Sidebar, SidebarScope } from "./Sidebar";
+import { buildSidebarNotices } from "./sidebar-messages";
 import type { FeedViewModel, FolderViewModel } from "./feeds-types";
 import {
   selectAllArticles,
@@ -40,6 +42,7 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
   const [liveMessage, setLiveMessage] = useState("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [listCollapsed, setListCollapsed] = useState(false);
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
 
   useEffect(() => {
     setFeeds(initialFeeds);
@@ -246,6 +249,50 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
     }, 0);
   }, []);
 
+  const isListContextTarget = useCallback((target: EventTarget | null): boolean => {
+    const listRoot = document.querySelector<HTMLElement>("[data-article-list-root]");
+    if (!listRoot) {
+      return false;
+    }
+
+    if (target instanceof Node && listRoot.contains(target)) {
+      return true;
+    }
+
+    const activeElement = document.activeElement;
+    return activeElement instanceof Node ? listRoot.contains(activeElement) : false;
+  }, []);
+
+  const isReaderContextTarget = useCallback((target: EventTarget | null): boolean => {
+    const readerRoot = document.querySelector<HTMLElement>("[data-article-reader-root]");
+    if (!readerRoot) {
+      return false;
+    }
+
+    if (target instanceof Node && readerRoot.contains(target)) {
+      return true;
+    }
+
+    const activeElement = document.activeElement;
+    return activeElement instanceof Node ? readerRoot.contains(activeElement) : false;
+  }, []);
+
+  const openShortcutsModal = useCallback(() => {
+    setIsShortcutsModalOpen(true);
+  }, []);
+
+  const closeShortcutsModal = useCallback(() => {
+    setIsShortcutsModalOpen(false);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobile) {
+      return;
+    }
+
+    setIsShortcutsModalOpen(false);
+  }, [isMobile]);
+
   const openSelectedArticle = useCallback(
     async (articleId: string) => {
       setSelectedArticleId(articleId);
@@ -300,7 +347,31 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
     [focusArticleList, isMobile, setMobileViewWithHistory]
   );
 
+  const sidebarNotices = useMemo(
+    () =>
+      buildSidebarNotices({
+        addFeedProgressMessage,
+        networkMessage,
+        infoMessage,
+        errorMessage,
+        showAddAnotherAction,
+        onAddAnother: handleAddAnother,
+      }),
+    [
+      addFeedProgressMessage,
+      errorMessage,
+      handleAddAnother,
+      infoMessage,
+      networkMessage,
+      showAddAnotherAction,
+    ]
+  );
+
   useKeyboardShortcuts({
+    enabled: !isMobile,
+    isShortcutsModalOpen,
+    isListContextTarget,
+    isReaderContextTarget,
     onNextArticle: () => moveSelectionBy(1),
     onPreviousArticle: () => moveSelectionBy(-1),
     onOpenArticle: () => {
@@ -311,6 +382,8 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
     onRefreshFeeds: () => {
       void handleRefresh();
     },
+    onOpenShortcuts: openShortcutsModal,
+    onCloseShortcuts: closeShortcutsModal,
   });
 
   useEffect(() => {
@@ -341,7 +414,6 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
             isAddFeedFormVisible={isAddFeedFormVisible}
             addFeedInputMode={addFeedInputMode}
             addFeedStage={addFeedStage}
-            addFeedProgressMessage={addFeedProgressMessage}
             feedUrlInput={feedUrlInput}
             bulkFeedUrlInput={bulkFeedUrlInput}
             inlineDuplicateMessage={inlineDuplicateMessage}
@@ -351,7 +423,6 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
             selectedDiscoveryCandidateUrl={selectedDiscoveryCandidateUrl}
             bulkAddResultRows={bulkAddResultRows}
             bulkAddSummary={bulkAddSummary}
-            showAddAnotherAction={showAddAnotherAction}
             isAddingFeed={isAddingFeed}
             isRefreshingFeeds={isRefreshingFeeds}
             isCreatingFolder={isCreatingFolder}
@@ -369,14 +440,13 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
             onCreateFolderFromAddFeed={() => {
               void createFolderFromAddFeed();
             }}
-            onAddAnother={handleAddAnother}
             onSubmitFeed={(event) => {
               void handleAddFeed(event);
             }}
-            infoMessage={infoMessage}
-            errorMessage={errorMessage}
-            networkMessage={networkMessage}
+            notices={sidebarNotices}
             onDismissMessage={clearStatusMessages}
+            isShortcutsModalOpen={isShortcutsModalOpen}
+            onOpenShortcuts={openShortcutsModal}
             deletingFeedId={deletingFeedId}
             renamingFeedId={renamingFeedId}
             updatingFeedFoldersId={updatingFeedFoldersId}
@@ -428,6 +498,8 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
         onMobileBackToFeeds={onMobileBackToFeeds}
         onMobileBackToArticles={onMobileBackToArticles}
       />
+
+      <KeyboardShortcutsModal open={isShortcutsModalOpen} onClose={closeShortcutsModal} />
     </div>
   );
 }

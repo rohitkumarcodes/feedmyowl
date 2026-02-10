@@ -16,6 +16,8 @@ import {
 import { normalizeFeedUrl } from "@/lib/feed-url";
 import { OFFLINE_CACHED_ARTICLES_MESSAGE } from "@/lib/network-messages";
 
+const INFO_MESSAGE_AUTO_CLEAR_MS = 8000;
+
 export type AddFeedStage =
   | "normalizing"
   | "discovering"
@@ -207,6 +209,22 @@ export function useFeedsWorkspaceActions({
 
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!infoMessage || showAddAnotherAction) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setInfoMessage((currentMessage) =>
+        currentMessage === infoMessage ? null : currentMessage
+      );
+    }, INFO_MESSAGE_AUTO_CLEAR_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [infoMessage, showAddAnotherAction]);
 
   useEffect(() => {
     const validFolderIds = new Set(folders.map((folder) => folder.id));

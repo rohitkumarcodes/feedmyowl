@@ -24,7 +24,9 @@ Core loop:
 - Article list and reader.
 - Read-state tracking.
 - Offline snapshot fallback for previously loaded data.
+- Offline-only connectivity status message in workspace.
 - Account settings (including configurable ASCII owl logo) and account deletion.
+- Feed import progress feedback in settings.
 
 ## 4. Out of scope
 - Nested folders.
@@ -49,6 +51,9 @@ Core loop:
   - Articles view.
   - Reader view.
 - Folder interactions use compact inline/dialog flows.
+- In-app back controls are deterministic (`Reader -> Articles -> Feeds`) and do not
+  depend on unrelated browser history entries.
+- Fixed brand slot is hidden on small screens to reduce top-of-screen crowding.
 
 ## 6. Data model
 - `users`
@@ -78,6 +83,8 @@ Notes:
 - Feed refresh errors are tracked per feed with calm inline messaging.
 - One failed feed must not block reading other feeds.
 - Offline snapshot keeps previously loaded data available during disconnects.
+- Offline message copy is fixed to: `You’re offline. You can still read cached articles.`
+- Reconnect clears the offline message silently (no separate online banner).
 
 ## 9. Operational scripts
 From repo root:

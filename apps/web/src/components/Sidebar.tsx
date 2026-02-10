@@ -3,6 +3,7 @@
  */
 
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -15,6 +16,7 @@ import { AddFeedForm } from "./AddFeedForm";
 import { FeedItem } from "./FeedItem";
 import type { FeedViewModel, FolderViewModel } from "./feeds-types";
 import { getFeedLabel } from "./feeds-workspace.selectors";
+import type { SidebarNotice } from "./sidebar-messages";
 import primitiveStyles from "./LeftPanePrimitives.module.css";
 import { PaneToggleIcon } from "./PaneToggleIcon";
 import styles from "./Sidebar.module.css";
@@ -28,6 +30,7 @@ export type SidebarScope =
 
 type FolderDeleteMode = "remove_only" | "remove_and_unsubscribe_exclusive";
 type AddFeedStage = "normalizing" | "discovering" | "awaiting_selection" | "creating";
+const SHORTCUT_HINT_DISMISSED_STORAGE_KEY = "feedmyowl.shortcuts_hint.dismissed.v1";
 
 interface SidebarDiscoveryCandidate {
   url: string;
@@ -64,7 +67,6 @@ interface SidebarProps {
   isAddFeedFormVisible: boolean;
   addFeedInputMode: "single" | "bulk";
   addFeedStage: AddFeedStage | null;
-  addFeedProgressMessage: string | null;
   feedUrlInput: string;
   bulkFeedUrlInput: string;
   inlineDuplicateMessage: string | null;
@@ -74,7 +76,6 @@ interface SidebarProps {
   selectedDiscoveryCandidateUrl: string;
   bulkAddResultRows: SidebarBulkAddResultRow[] | null;
   bulkAddSummary: SidebarBulkAddSummary | null;
-  showAddAnotherAction: boolean;
   isAddingFeed: boolean;
   isRefreshingFeeds: boolean;
   isCreatingFolder: boolean;
@@ -88,13 +89,12 @@ interface SidebarProps {
   onAddFeedNewFolderNameChange: (value: string) => void;
   onSelectDiscoveryCandidate: (url: string) => void;
   onCreateFolderFromAddFeed: () => void;
-  onAddAnother: () => void;
   onSubmitFeed: (event: FormEvent<HTMLFormElement>) => void;
 
-  infoMessage: string | null;
-  errorMessage: string | null;
-  networkMessage: string | null;
+  notices: SidebarNotice[];
   onDismissMessage: () => void;
+  isShortcutsModalOpen: boolean;
+  onOpenShortcuts: () => void;
 
   deletingFeedId: string | null;
   renamingFeedId: string | null;
@@ -512,7 +512,6 @@ export function Sidebar({
   isAddFeedFormVisible,
   addFeedInputMode,
   addFeedStage,
-  addFeedProgressMessage,
   feedUrlInput,
   bulkFeedUrlInput,
   inlineDuplicateMessage,
@@ -522,7 +521,6 @@ export function Sidebar({
   selectedDiscoveryCandidateUrl,
   bulkAddResultRows,
   bulkAddSummary,
-  showAddAnotherAction,
   isAddingFeed,
   isRefreshingFeeds,
   isCreatingFolder,
@@ -536,12 +534,11 @@ export function Sidebar({
   onAddFeedNewFolderNameChange,
   onSelectDiscoveryCandidate,
   onCreateFolderFromAddFeed,
-  onAddAnother,
   onSubmitFeed,
-  infoMessage,
-  errorMessage,
-  networkMessage,
+  notices,
   onDismissMessage,
+  isShortcutsModalOpen,
+  onOpenShortcuts,
   deletingFeedId,
   renamingFeedId,
   updatingFeedFoldersId,
@@ -563,6 +560,7 @@ export function Sidebar({
   const [sidebarFolderName, setSidebarFolderName] = useState("");
   const [pendingDeleteFolderId, setPendingDeleteFolderId] = useState<string | null>(null);
   const [isDeletingWithUnsubscribe, setIsDeletingWithUnsubscribe] = useState(false);
+  const [showShortcutsHint, setShowShortcutsHint] = useState(false);
   const addMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -602,6 +600,37 @@ export function Sidebar({
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isAddMenuOpen]);
+
+  useEffect(() => {
+    if (isMobile) {
+      setShowShortcutsHint(false);
+      return;
+    }
+
+    try {
+      const dismissed = window.localStorage.getItem(SHORTCUT_HINT_DISMISSED_STORAGE_KEY);
+      setShowShortcutsHint(dismissed !== "true");
+    } catch {
+      setShowShortcutsHint(true);
+    }
+  }, [isMobile]);
+
+  const dismissShortcutsHint = useCallback(() => {
+    setShowShortcutsHint(false);
+    try {
+      window.localStorage.setItem(SHORTCUT_HINT_DISMISSED_STORAGE_KEY, "true");
+    } catch {
+      // Ignore storage failures and keep working in-memory.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isShortcutsModalOpen) {
+      return;
+    }
+
+    dismissShortcutsHint();
+  }, [dismissShortcutsHint, isShortcutsModalOpen]);
 
   const sortedFolders = useMemo(
     () => [...folders].sort((a, b) => a.name.localeCompare(b.name)),
@@ -688,6 +717,11 @@ export function Sidebar({
 
   const isAddMenuDisabled = isAddingFeed || isCreatingFolder;
 
+  const handleOpenShortcuts = useCallback(() => {
+    dismissShortcutsHint();
+    onOpenShortcuts();
+  }, [dismissShortcutsHint, onOpenShortcuts]);
+
   const sidebarFolderForm = (
     <div className={`${styles.sidebarFolderForm} ${primitiveStyles.panel}`}>
       <input
@@ -747,6 +781,13 @@ export function Sidebar({
         />
       );
     });
+
+  const noticeKindClassNames: Record<SidebarNotice["kind"], string> = {
+    error: styles.sidebarMessageError,
+    progress: styles.sidebarMessageProgress,
+    offline: styles.sidebarMessageOffline,
+    info: styles.sidebarMessageInfo,
+  };
 
   return (
     <div className={`${styles.root} ${primitiveStyles.tokenScope}`}>
@@ -860,7 +901,45 @@ export function Sidebar({
               )
             ) : null}
           </div>
+
+          {!isMobile ? (
+            <button
+              type="button"
+              className={`${primitiveStyles.toolbarButton} ${primitiveStyles.toolbarButtonMuted}`}
+              onClick={handleOpenShortcuts}
+              aria-label="View keyboard shortcuts"
+              aria-haspopup="dialog"
+              aria-expanded={isShortcutsModalOpen}
+            >
+              <span>Shortcuts (?)</span>
+            </button>
+          ) : null}
         </div>
+
+        {!isMobile && showShortcutsHint ? (
+          <div className={styles.shortcutsHint} role="status" aria-live="polite">
+            <p className={styles.shortcutsHintText}>
+              Tip: press <kbd className={styles.shortcutsHintKey}>?</kbd> to see shortcuts.
+            </p>
+            <div className={styles.shortcutsHintActions}>
+              <button
+                type="button"
+                className={styles.shortcutsHintAction}
+                onClick={handleOpenShortcuts}
+              >
+                View shortcuts
+              </button>
+              <button
+                type="button"
+                className={styles.shortcutsHintDismiss}
+                onClick={dismissShortcutsHint}
+                aria-label="Dismiss shortcuts tip"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         {isSidebarFolderFormVisible ? (
           isMobile ? (
@@ -915,60 +994,35 @@ export function Sidebar({
           </div>
         ) : null}
 
-        {addFeedProgressMessage ? (
-          <div className={styles.sidebarMessage}>
-            <span className={styles.sidebarMessageText}>{addFeedProgressMessage}</span>
-          </div>
-        ) : null}
-
-        {networkMessage ? (
+        {notices.map((notice) => (
           <div
-            className={`${styles.sidebarMessage} ${styles.sidebarMessageOffline}`}
-            role="status"
-            aria-live="polite"
+            key={notice.id}
+            className={`${styles.sidebarMessage} ${noticeKindClassNames[notice.kind]}`}
+            role={notice.role}
+            aria-live={notice.ariaLive}
           >
-            <span className={styles.sidebarMessageText}>{networkMessage}</span>
-          </div>
-        ) : null}
-
-        {infoMessage ? (
-          <div className={styles.sidebarMessage}>
-            <span className={styles.sidebarMessageText}>{infoMessage}</span>
-            {showAddAnotherAction ? (
+            <span className={styles.sidebarMessageText}>{notice.text}</span>
+            {notice.action ? (
               <button
                 type="button"
                 className={styles.sidebarMessageAction}
-                onClick={onAddAnother}
+                onClick={notice.action.onAction}
               >
-                Add another
+                {notice.action.label}
               </button>
             ) : null}
-            <button
-              type="button"
-              className={styles.sidebarMessageDismiss}
-              onClick={onDismissMessage}
-              aria-label="Dismiss message"
-            >
-              x
-            </button>
+            {notice.dismissible ? (
+              <button
+                type="button"
+                className={styles.sidebarMessageDismiss}
+                onClick={onDismissMessage}
+                aria-label={`Dismiss ${notice.kind} message`}
+              >
+                x
+              </button>
+            ) : null}
           </div>
-        ) : null}
-
-        {errorMessage ? (
-          <div className={styles.sidebarMessage}>
-            <span className={`${styles.sidebarMessageText} ${styles.sidebarMessageError}`}>
-              {errorMessage}
-            </span>
-            <button
-              type="button"
-              className={styles.sidebarMessageDismiss}
-              onClick={onDismissMessage}
-              aria-label="Dismiss message"
-            >
-              x
-            </button>
-          </div>
-        ) : null}
+        ))}
       </div>
 
       {/* Unified feed tree: All feeds → user folders → uncategorized */}

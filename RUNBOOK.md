@@ -18,7 +18,9 @@ From repo root:
 - Bulk add feed/site URLs from sidebar add form.
 - Manual refresh.
 - Read articles.
+- Offline-only workspace status message with cached-reading fallback copy.
 - Account logo selection (ASCII owl + favicon) from Settings.
+- Settings feed import progress indicator (`Importing (x/y)...` + inline progress text).
 - Account deletion.
 
 ## 4. Active API routes
@@ -57,6 +59,12 @@ From repo root:
 2. Review `last_fetch_*` fields per feed.
 3. Confirm source feed still serves valid XML.
 
+### User reports offline banner behavior
+1. Confirm device/browser network status is offline.
+2. Expected copy is exactly: `You’re offline. You can still read cached articles.`
+3. Confirm previously loaded feeds/articles remain readable from snapshot.
+4. Reconnect network and verify banner clears without a separate online-status message.
+
 ### Logo selection save fails
 1. Confirm request payload contains a valid `owlAscii` value.
 2. Call `PATCH /api/settings/logo` while authenticated.
@@ -86,3 +94,8 @@ From repo root:
 11. Delete a folder in both modes and verify expected outcomes.
 12. Open Settings, change owl option, click `Save owl`, and verify sidebar brand + favicon update.
 13. Reload, sign in again, and confirm owl choice persists.
+14. Start a feed import from OPML/JSON and verify progress appears as numeric counts (`x/y`).
+15. On mobile viewport, verify in-app back transitions `Reader -> Articles -> Feeds`.
+16. On mobile viewport, verify top spacing is compact and fixed brand slot is hidden.
+17. On settings page, verify first-step delete action is text-labeled (`Delete account...`).
+18. On website pages, verify global nav includes `About` with correct active state on `/about/`.

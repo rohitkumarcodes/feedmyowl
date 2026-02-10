@@ -15,6 +15,9 @@ Three stacked views:
 1. Feeds
 2. Articles
 3. Reader
+- In-app back buttons use deterministic transitions (`Reader -> Articles -> Feeds`)
+  to avoid accidental exits caused by unrelated browser history.
+- Small-screen layout hides fixed brand chrome and uses a reduced sidebar top reserve.
 
 ## 3. Sidebar information hierarchy
 - Global scopes first (`Read all feeds`, `Uncategorized`)
@@ -37,6 +40,9 @@ Three stacked views:
 - Folder row menu supports:
   - Edit name
   - Delete (with mode dialog)
+- Workspace connectivity message appears only while offline and clears silently on reconnect.
+- Settings import shows numeric progress while processing feed URLs.
+- Settings delete entry point is text-first (`Delete account...`) before confirmation.
 
 ## 6. Keyboard model
 - Existing reading shortcuts unchanged:

@@ -124,14 +124,14 @@ export function ArticleReader({ article }: ArticleReaderProps) {
 
   if (!article) {
     return (
-      <div className={styles.emptyWrap}>
+      <div className={styles.emptyWrap} data-article-reader-root>
         <p className={styles.emptyText}>Select an article to read.</p>
       </div>
     );
   }
 
   return (
-    <div className={styles.root}>
+    <div className={styles.root} data-article-reader-root>
       <article className={styles.content}>
         <p className={styles.feedName}>{article.feedTitle}</p>
         {article.link ? (

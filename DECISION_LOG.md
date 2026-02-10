@@ -73,6 +73,41 @@ This log records active product and technical decisions for the current app phas
   - Selection is persisted account-wide in `users.owl_ascii`.
   - Browser tab icon (favicon) mirrors the selected owl.
 
+### D-2026-02-10-02
+- Date: 2026-02-10
+- Status: active
+- Decision: Workspace connectivity status is offline-only with fixed copy.
+- Why: Keep reliability feedback clear without introducing unnecessary status noise.
+- Details:
+  - Offline message copy is fixed to: `You’re offline. You can still read cached articles.`
+  - Message is shown only when offline.
+  - Reconnect clears status silently; there is no explicit online banner.
+
+### D-2026-02-10-03
+- Date: 2026-02-10
+- Status: active
+- Decision: Mobile in-app back is deterministic within the reading stack.
+- Why: Prevent accidental exits from app context caused by unrelated browser history.
+- Details:
+  - Reader back targets Articles.
+  - Articles back targets Feeds.
+  - In-app back controls are not gated by browser history length.
+
+### D-2026-02-10-04
+- Date: 2026-02-10
+- Status: active
+- Decision: Settings import and account deletion flows emphasize explicit progress and clarity.
+- Why: Improve trust and reduce ambiguity in long-running and destructive actions.
+- Details:
+  - Feed import shows numeric progress while processing.
+  - Initial account deletion entry point is text-labeled (`Delete account...`) before confirmation.
+
+### D-2026-02-10-05
+- Date: 2026-02-10
+- Status: active
+- Decision: Public website top navigation includes About.
+- Why: Improve findability of product mission/context content.
+
 ## Superseded decisions
 
 ### D-2026-02-07-05

@@ -25,6 +25,9 @@
 - Brand slot:
   - Shows fixed text `Feed my owl`.
   - Shows selected ASCII owl (default `{o,o}`).
+- Connectivity message:
+  - Show `You’re offline. You can still read cached articles.` only when offline.
+  - Do not show a separate "back online" status message.
 
 ## 4. Folder behavior
 - Create folders from sidebar and add-feed form.
@@ -69,6 +72,12 @@
 - Keep stacked views: `Feeds -> Articles -> Reader`.
 - Feeds view mirrors desktop information architecture, including folders.
 - Folder and feed selection enters article list view with scoped title.
+- In-app back controls are deterministic:
+  - Reader back goes to Articles.
+  - Articles back goes to Feeds.
+  - In-app back controls should not rely on unrelated browser history entries.
+- On small screens (`<= 767px`), hide fixed brand chrome and reduce top reserve spacing
+  in the sidebar so feed content starts higher.
 
 ## 8. Accessibility
 - Folder expand controls use `aria-expanded`.
@@ -81,6 +90,9 @@
   - `Feeds`
   - `Hoot hoot`
   - `Delete account`
+- Feeds import:
+  - Import button shows numeric progress while processing (`Importing (x/y)...`).
+  - Inline status text shows processed progress during the active import.
 - Owl chooser prompt: `Choose an owl to digest your feeds.`
 - User selects one ASCII owl option:
   - `[o-o] Hooty Potter: The owl who lived (to read your feeds).`
@@ -96,7 +108,7 @@
   - Save button disabled while request is in flight or selection is unchanged.
   - On success, settings triggers route refresh so the in-app logo and browser-tab icon update.
 - Delete flow:
-  - Initial delete action is an icon-only button under `Delete account`.
+  - Initial delete action is explicit text (`Delete account...`) under `Delete account`.
   - Deletion requires explicit second-step confirmation (`Yes, delete my account`).
 - Persistence:
   - Account-wide (stored on user record), so selection follows sign-in across sessions/devices.
