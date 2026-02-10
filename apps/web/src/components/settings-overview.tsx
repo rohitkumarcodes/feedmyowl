@@ -729,33 +729,31 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
               prefersReducedMotion={prefersReducedMotion}
               contentId={shortcutsPanelId}
             >
-              <div className={styles.shortcutsPanelBox}>
-                <div className={styles.shortcutsPanelGroups}>
-                  {SHORTCUT_GROUPS.map((group) => (
-                    <section key={group.id} className={styles.shortcutsPanelGroup}>
-                      <h3>{group.label}</h3>
-                      <div className={styles.shortcutsPanelRows}>
-                        {group.shortcuts.map((shortcut) => (
-                          <div key={shortcut.id} className={styles.shortcutsPanelRow}>
-                            <div className={styles.shortcutsPanelKeys}>
-                              {shortcut.keys.map((key) => (
-                                <kbd
-                                  key={`${shortcut.id}-${key}`}
-                                  className={styles.shortcutsPanelKey}
-                                >
-                                  {key}
-                                </kbd>
-                              ))}
-                            </div>
-                            <p className={styles.shortcutsPanelDescription}>
-                              {shortcut.description}
-                            </p>
+              <div className={styles.shortcutsPanelContent}>
+                {SHORTCUT_GROUPS.map((group) => (
+                  <section key={group.id} className={styles.shortcutsPanelGroup}>
+                    <h3>{group.label}</h3>
+                    <div className={styles.shortcutsPanelRows}>
+                      {group.shortcuts.map((shortcut) => (
+                        <div key={shortcut.id} className={styles.shortcutsPanelRow}>
+                          <div className={styles.shortcutsPanelKeys}>
+                            {shortcut.keys.map((key) => (
+                              <kbd
+                                key={`${shortcut.id}-${key}`}
+                                className={styles.shortcutsPanelKey}
+                              >
+                                {key}
+                              </kbd>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    </section>
-                  ))}
-                </div>
+                          <p className={styles.shortcutsPanelDescription}>
+                            {shortcut.description}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                ))}
               </div>
             </OwlOptionsShutter>
           </div>
