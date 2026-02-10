@@ -14,6 +14,7 @@ import {
   summarizeBulkAddRows,
 } from "@/lib/add-feed-bulk";
 import { normalizeFeedUrl } from "@/lib/feed-url";
+import { OFFLINE_CACHED_ARTICLES_MESSAGE } from "@/lib/network-messages";
 
 export type AddFeedStage =
   | "normalizing"
@@ -297,7 +298,7 @@ export function useFeedsWorkspaceActions({
     }
 
     if (!navigator.onLine) {
-      setNetworkMessage("You appear to be offline. This action requires an internet connection.");
+      setNetworkMessage(OFFLINE_CACHED_ARTICLES_MESSAGE);
       return;
     }
 
@@ -465,7 +466,7 @@ export function useFeedsWorkspaceActions({
       }
 
       if (!navigator.onLine) {
-        setNetworkMessage("You appear to be offline. This action requires an internet connection.");
+        setNetworkMessage(OFFLINE_CACHED_ARTICLES_MESSAGE);
         return;
       }
 

@@ -54,6 +54,11 @@ interface ImportSummary {
   failedDetails: string[];
 }
 
+interface ImportProgress {
+  processedCount: number;
+  totalCount: number;
+}
+
 /**
  * Safely parse JSON response bodies.
  */
@@ -376,6 +381,7 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isImportingFeeds, setIsImportingFeeds] = useState(false);
+  const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [importSummary, setImportSummary] = useState<ImportSummary | null>(null);
   const [draftOwlAscii, setDraftOwlAscii] = useState<OwlAscii>(owlAscii);
@@ -502,6 +508,7 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
 
     setImportError(null);
     setImportSummary(null);
+    setImportProgress(null);
     setIsImportingFeeds(true);
 
     try {
@@ -517,8 +524,10 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
       let duplicateCount = 0;
       let failedCount = 0;
       const failedDetails: string[] = [];
+      setImportProgress({ processedCount: 0, totalCount: normalizedUrls.length });
 
-      for (const url of normalizedUrls) {
+      for (let index = 0; index < normalizedUrls.length; index += 1) {
+        const url = normalizedUrls[index];
         try {
           const response = await fetch("/api/feeds", {
             method: "POST",
@@ -549,6 +558,11 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
           if (failedDetails.length < 5) {
             failedDetails.push(`${url} — Could not connect to the server.`);
           }
+        } finally {
+          setImportProgress({
+            processedCount: index + 1,
+            totalCount: normalizedUrls.length,
+          });
         }
       }
 
@@ -570,6 +584,7 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
       );
     } finally {
       setIsImportingFeeds(false);
+      setImportProgress(null);
     }
   }
 
@@ -580,6 +595,12 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
         importSummary.duplicateCount === 1 ? "" : "s"
       }, and failed ${importSummary.failedCount}.`
     : null;
+
+  const importButtonLabel = isImportingFeeds
+    ? importProgress
+      ? `Importing (${importProgress.processedCount}/${importProgress.totalCount})...`
+      : "Importing..."
+    : "Import feeds";
 
   return (
     <div className={styles.root}>
@@ -623,9 +644,15 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
               onClick={() => importFileInputRef.current?.click()}
               disabled={isImportingFeeds}
             >
-              {isImportingFeeds ? "Importing..." : "Import feeds"}
+              {importButtonLabel}
             </button>
           </div>
+          {isImportingFeeds && importProgress ? (
+            <p className={styles.importProgress} role="status" aria-live="polite">
+              Importing {importProgress.processedCount} of {importProgress.totalCount} feed URL
+              {importProgress.totalCount === 1 ? "" : "s"}...
+            </p>
+          ) : null}
           <input
             ref={importFileInputRef}
             className={styles.hiddenFileInput}
@@ -764,11 +791,13 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
           {!showDeleteConfirm ? (
             <button
               type="button"
-              className={`${styles.linkButton} ${styles.compactButton} ${styles.iconOnlyButton}`}
-              aria-label="Delete account"
+              className={`${styles.linkButton} ${styles.compactButton} ${styles.deleteAccountButton}`}
               onClick={() => setShowDeleteConfirm(true)}
             >
-              {trashIcon}
+              <span className={styles.iconButtonContent}>
+                {trashIcon}
+                <span>Delete account...</span>
+              </span>
             </button>
           ) : (
             <div className={styles.deleteConfirm}>

@@ -111,6 +111,10 @@
   font-size: var(--text-xs);
 }
 
+.sidebarMessageOffline {
+  background: var(--lp-surface-1);
+}
+
 .sidebarMessageError {
   color: var(--text-secondary);
 }
@@ -286,6 +290,10 @@
   .root {
     --sidebar-tree-count-col: 30px;
     --sidebar-tree-actions-col: 32px;
+  }
+
+  .top {
+    padding-top: var(--sidebar-header-reserve-mobile);
   }
 }
 

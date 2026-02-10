@@ -74,7 +74,7 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
     onMobileBackToArticles,
   } = useFeedsWorkspaceMobile();
 
-  const { setNetworkMessage } = useFeedsWorkspaceNetwork({
+  const { networkMessage, setNetworkMessage } = useFeedsWorkspaceNetwork({
     feeds,
     folders,
     setFeeds,
@@ -375,6 +375,7 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
             }}
             infoMessage={infoMessage}
             errorMessage={errorMessage}
+            networkMessage={networkMessage}
             onDismissMessage={clearStatusMessages}
             deletingFeedId={deletingFeedId}
             renamingFeedId={renamingFeedId}

@@ -93,6 +93,7 @@ interface SidebarProps {
 
   infoMessage: string | null;
   errorMessage: string | null;
+  networkMessage: string | null;
   onDismissMessage: () => void;
 
   deletingFeedId: string | null;
@@ -539,6 +540,7 @@ export function Sidebar({
   onSubmitFeed,
   infoMessage,
   errorMessage,
+  networkMessage,
   onDismissMessage,
   deletingFeedId,
   renamingFeedId,
@@ -916,6 +918,16 @@ export function Sidebar({
         {addFeedProgressMessage ? (
           <div className={styles.sidebarMessage}>
             <span className={styles.sidebarMessageText}>{addFeedProgressMessage}</span>
+          </div>
+        ) : null}
+
+        {networkMessage ? (
+          <div
+            className={`${styles.sidebarMessage} ${styles.sidebarMessageOffline}`}
+            role="status"
+            aria-live="polite"
+          >
+            <span className={styles.sidebarMessageText}>{networkMessage}</span>
           </div>
         ) : null}
 

@@ -115,3 +115,15 @@
     top: 8px;
   }
 }
+
+@media (max-width: 767px) {
+  .brandSlot {
+    display: none;
+  }
+
+  .accountControls {
+    gap: 6px;
+    right: max(12px, calc(env(safe-area-inset-right) + 8px));
+    top: max(8px, env(safe-area-inset-top));
+  }
+}

@@ -80,6 +80,11 @@
   font-size: var(--text-sm);
 }
 
+.importProgress {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
 .hiddenFileInput {
   display: none;
 }
@@ -125,6 +130,10 @@ button.linkButton:hover:enabled {
   justify-content: center;
   padding: 0;
   width: 32px;
+}
+
+.deleteAccountButton {
+  justify-self: start;
 }
 
 .headerTopRow .compactButton {

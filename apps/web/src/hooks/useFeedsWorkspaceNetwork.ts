@@ -3,6 +3,7 @@
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import type { FeedViewModel, FolderViewModel } from "@/components/feeds-types";
 import { loadWorkspaceSnapshot, saveWorkspaceSnapshot } from "@/lib/offline-cache";
+import { OFFLINE_CACHED_ARTICLES_MESSAGE } from "@/lib/network-messages";
 
 interface UseFeedsWorkspaceNetworkOptions {
   feeds: FeedViewModel[];
@@ -37,6 +38,8 @@ export function useFeedsWorkspaceNetwork({
       return;
     }
 
+    setNetworkMessage(OFFLINE_CACHED_ARTICLES_MESSAGE);
+
     void loadWorkspaceSnapshot()
       .then((snapshot) => {
         if (!snapshot) {
@@ -45,9 +48,6 @@ export function useFeedsWorkspaceNetwork({
 
         setFeeds(snapshot.feeds);
         setFolders(snapshot.folders ?? []);
-        setNetworkMessage(
-          "Could not connect to the server. Previously loaded articles are available."
-        );
       })
       .catch(() => {
         // If snapshot loading fails, the UI falls back to current in-memory data.
@@ -56,10 +56,7 @@ export function useFeedsWorkspaceNetwork({
 
   useEffect(() => {
     const onOnline = () => setNetworkMessage(null);
-    const onOffline = () =>
-      setNetworkMessage(
-        "Could not connect to the server. Previously loaded data remains available."
-      );
+    const onOffline = () => setNetworkMessage(OFFLINE_CACHED_ARTICLES_MESSAGE);
 
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);

@@ -13,6 +13,7 @@
   --sidebar-pane-width: 240px;
   --sidebar-pane-width-compact: 220px;
   --sidebar-header-reserve: 96px;
+  --sidebar-header-reserve-mobile: 56px;
 
   --font-serif: Charter, "Bitstream Charter", "Sitka Text", Cambria, serif;
   --font-sans: "Noto Sans", "Liberation Sans", "Segoe UI", Arial, sans-serif;

@@ -60,29 +60,22 @@ export function useFeedsWorkspaceMobile() {
 
       setMobileView(nextView);
 
+      const currentState = window.history.state || {};
       if (shouldPush) {
-        const currentState = window.history.state || {};
         window.history.pushState({ ...currentState, feedmyowlView: nextView }, "");
+        return;
       }
+
+      window.history.replaceState({ ...currentState, feedmyowlView: nextView }, "");
     },
     [isMobile]
   );
 
   const onMobileBackToFeeds = useCallback(() => {
-    if (window.history.length > 1) {
-      window.history.back();
-      return;
-    }
-
     setMobileViewWithHistory("feeds", false);
   }, [setMobileViewWithHistory]);
 
   const onMobileBackToArticles = useCallback(() => {
-    if (window.history.length > 1) {
-      window.history.back();
-      return;
-    }
-
     setMobileViewWithHistory("articles", false);
   }, [setMobileViewWithHistory]);
 
