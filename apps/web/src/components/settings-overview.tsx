@@ -401,6 +401,8 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
   const owlOptionsPanelId = useId();
   const shortcutsPanelId = useId();
   const importFileInputRef = useRef<HTMLInputElement | null>(null);
+  const owlControlsRef = useRef<HTMLDivElement | null>(null);
+  const shortcutsControlsRef = useRef<HTMLDivElement | null>(null);
   const owlWidthProbeRef = useRef<HTMLDivElement | null>(null);
   const shortcutsWidthProbeRef = useRef<HTMLDivElement | null>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -431,6 +433,36 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
     setDraftOwlAscii(owlAscii);
     setSavedOwlAscii(owlAscii);
   }, [owlAscii]);
+
+  useEffect(() => {
+    if (!isOwlPanelExpanded && !isShortcutsPanelExpanded) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      const clickedInsideOwl = owlControlsRef.current?.contains(target) ?? false;
+      const clickedInsideShortcuts =
+        shortcutsControlsRef.current?.contains(target) ?? false;
+
+      if (clickedInsideOwl || clickedInsideShortcuts) {
+        return;
+      }
+
+      setIsOwlPanelExpanded(false);
+      setIsShortcutsPanelExpanded(false);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [isOwlPanelExpanded, isShortcutsPanelExpanded]);
 
   useLayoutEffect(() => {
     const probe = owlWidthProbeRef.current;
@@ -787,6 +819,7 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
             </div>
           </div>
           <div
+            ref={shortcutsControlsRef}
             className={styles.shortcutsControls}
             style={shortcutsControlsWidthPx ? { width: `${shortcutsControlsWidthPx}px` } : undefined}
           >
@@ -867,6 +900,7 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
             </div>
           </div>
           <div
+            ref={owlControlsRef}
             className={styles.owlPickerControls}
             style={owlControlsWidthPx ? { width: `${owlControlsWidthPx}px` } : undefined}
           >
