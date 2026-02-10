@@ -325,8 +325,12 @@ button.linkButton:hover:enabled {
 
 .owlOptionsShutter {
   overflow: hidden;
-  transition: height 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: height 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
   will-change: height;
+}
+
+.owlOptionsShutter[aria-hidden="false"] {
+  transition-duration: 380ms;
 }
 
 .owlOptionsShutterContent {
