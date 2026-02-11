@@ -17,6 +17,7 @@ export function AccountControls() {
   const dialogId = useId();
   const dialogTitleId = useId();
   const showShortcutsAction = selectedSegment === "feeds";
+  const optionsToggleLabel = isOptionsOpen ? "Close options" : "Open options";
 
   useEffect(() => {
     if (!isOptionsOpen) {
@@ -72,13 +73,13 @@ export function AccountControls() {
         type="button"
         className={styles.optionsTrigger}
         onClick={() => setIsOptionsOpen((previous) => !previous)}
-        aria-label="Open options"
-        title="Open options"
+        aria-label={optionsToggleLabel}
+        title={optionsToggleLabel}
         aria-haspopup="dialog"
         aria-expanded={isOptionsOpen}
         aria-controls={dialogId}
       >
-        <span aria-hidden="true">⋯</span>
+        <span aria-hidden="true">{isOptionsOpen ? "x" : "⋯"}</span>
       </button>
 
       <div
@@ -93,14 +94,6 @@ export function AccountControls() {
           <h2 id={dialogTitleId} className={styles.optionsTitle}>
             <span>Options</span>
           </h2>
-          <button
-            type="button"
-            className={styles.optionsCloseButton}
-            onClick={() => setIsOptionsOpen(false)}
-            aria-label="Close options dialog"
-          >
-            <span aria-hidden="true">x</span>
-          </button>
         </div>
 
         <div className={styles.optionsActions}>
