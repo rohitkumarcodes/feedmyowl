@@ -182,11 +182,6 @@
   gap: 4px;
 }
 
-.optionsTitleIcon {
-  color: var(--text-secondary);
-  line-height: 1;
-}
-
 .optionsCloseButton {
   align-items: center;
   background: var(--bg-secondary);
@@ -220,7 +215,7 @@
 .optionsActionButton {
   align-items: center;
   background: var(--bg-primary);
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
@@ -240,11 +235,6 @@
   width: 14px;
 }
 
-.optionsActionButton:hover {
-  background: var(--bg-tertiary);
-  transition: background-color 90ms ease;
-}
-
 .optionsActionButton:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -253,7 +243,7 @@
 .optionsClerkButton {
   align-items: center;
   background: var(--bg-primary);
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
@@ -268,11 +258,12 @@
 
 .optionsClerkButton::after {
   color: var(--text-primary);
-  content: "Clerk admin";
+  content: "Admin";
   font-size: var(--text-sm);
   margin-left: 8px;
 }
 
+.optionsActionButton:hover,
 .optionsClerkButton:hover {
   background: var(--bg-tertiary);
   transition: background-color 90ms ease;

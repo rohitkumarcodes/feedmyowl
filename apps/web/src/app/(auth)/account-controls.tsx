@@ -91,9 +91,6 @@ export function AccountControls() {
       >
         <div className={styles.optionsHeader}>
           <h2 id={dialogTitleId} className={styles.optionsTitle}>
-            <span className={styles.optionsTitleIcon} aria-hidden="true">
-              ⋯
-            </span>
             <span>Options</span>
           </h2>
           <button
