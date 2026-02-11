@@ -13,10 +13,70 @@
  */
 
 import { defineConfig } from "drizzle-kit";
-import { loadEnvConfig } from "@next/env";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
 
-// Load .env.local/.env for CLI commands like drizzle-kit migrate.
-loadEnvConfig(process.cwd());
+function parseEnvValue(rawValue: string): string {
+  const trimmedValue = rawValue.trim();
+  const isDoubleQuoted =
+    trimmedValue.startsWith("\"") && trimmedValue.endsWith("\"");
+  const isSingleQuoted =
+    trimmedValue.startsWith("'") && trimmedValue.endsWith("'");
+
+  if (isDoubleQuoted || isSingleQuoted) {
+    return trimmedValue.slice(1, -1);
+  }
+
+  return trimmedValue;
+}
+
+/**
+ * drizzle-kit does not auto-load Next.js env files.
+ * Load DATABASE_URL from .env.local/.env so db:* commands work consistently.
+ */
+function ensureDatabaseUrlFromEnvFiles() {
+  if (process.env.DATABASE_URL) {
+    return;
+  }
+
+  const envFileNames = [".env.local", ".env"];
+
+  for (const envFileName of envFileNames) {
+    const envFilePath = path.join(process.cwd(), envFileName);
+    if (!existsSync(envFilePath)) {
+      continue;
+    }
+
+    const fileContents = readFileSync(envFilePath, "utf8");
+    const lines = fileContents.split(/\r?\n/u);
+
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (!trimmedLine || trimmedLine.startsWith("#")) {
+        continue;
+      }
+
+      const normalizedLine = trimmedLine.startsWith("export ")
+        ? trimmedLine.slice(7).trim()
+        : trimmedLine;
+
+      if (!normalizedLine.startsWith("DATABASE_URL=")) {
+        continue;
+      }
+
+      const parsedValue = parseEnvValue(
+        normalizedLine.slice("DATABASE_URL=".length)
+      );
+
+      if (parsedValue) {
+        process.env.DATABASE_URL = parsedValue;
+        return;
+      }
+    }
+  }
+}
+
+ensureDatabaseUrlFromEnvFiles();
 
 export default defineConfig({
   // Path to our Drizzle schema file (table definitions)
