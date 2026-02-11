@@ -138,24 +138,24 @@
   border: 1px solid var(--border);
   box-shadow: 0 8px 20px rgb(0 0 0 / 18%);
   display: grid;
-  gap: 8px;
+  gap: 0;
   max-width: calc(100vw - 24px);
   opacity: 0;
   overflow: auto;
-  padding: 10px;
-  padding-top: calc(var(--options-trigger-size) + 12px);
+  padding: 6px;
+  padding-top: calc(var(--options-trigger-size) + 6px);
   pointer-events: none;
   position: absolute;
   right: 0;
   top: 0;
-  transform: translateY(-4px);
+  transform: translateY(-2px);
   transform-origin: top right;
   transition:
     opacity 320ms ease,
     transform 320ms ease,
     visibility 320ms step-end;
   visibility: hidden;
-  width: min(236px, calc(100vw - 24px));
+  width: min(214px, calc(100vw - 24px));
   z-index: 1;
 }
 
@@ -170,23 +170,9 @@
   visibility: visible;
 }
 
-.optionsHeader {
-  align-items: center;
-  display: flex;
-  gap: 6px;
-}
-
-.optionsTitle {
-  align-items: center;
-  color: var(--text-primary);
-  display: inline-flex;
-  font-size: var(--text-base);
-  font-weight: var(--weight-semibold);
-}
-
 .optionsActions {
   display: grid;
-  gap: 4px;
+  gap: 2px;
 }
 
 .optionsActionButton,
@@ -222,6 +208,7 @@
   color: var(--text-primary);
   content: "Admin";
   font-size: var(--text-sm);
+  line-height: 1.2;
 }
 
 .optionsActionButton:focus-visible,
@@ -270,7 +257,7 @@
   }
 
   .optionsPopover {
-    width: min(236px, calc(100vw - 24px));
+    width: min(214px, calc(100vw - 24px));
   }
 }
 

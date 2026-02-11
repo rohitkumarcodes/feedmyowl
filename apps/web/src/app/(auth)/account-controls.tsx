@@ -15,7 +15,6 @@ export function AccountControls() {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const controlsRef = useRef<HTMLDivElement>(null);
   const dialogId = useId();
-  const dialogTitleId = useId();
   const showShortcutsAction = selectedSegment === "feeds";
   const optionsToggleLabel = isOptionsOpen ? "Close options" : "Open options";
 
@@ -88,14 +87,8 @@ export function AccountControls() {
         role="dialog"
         aria-modal="false"
         aria-hidden={!isOptionsOpen}
-        aria-labelledby={dialogTitleId}
+        aria-label="Options"
       >
-        <div className={styles.optionsHeader}>
-          <h2 id={dialogTitleId} className={styles.optionsTitle}>
-            <span>Options</span>
-          </h2>
-        </div>
-
         <div className={styles.optionsActions}>
           {showShortcutsAction ? (
             <button
