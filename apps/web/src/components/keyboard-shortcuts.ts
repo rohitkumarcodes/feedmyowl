@@ -46,13 +46,13 @@ export const SHORTCUT_DEFINITIONS: readonly ShortcutDefinition[] = [
     id: "article.next.vim",
     group: "navigation",
     keys: ["j"],
-    description: "Select next article (list or reader)",
+    description: "Open next article (list/reader, continues across feed lists)",
   },
   {
     id: "article.previous.vim",
     group: "navigation",
     keys: ["k"],
-    description: "Select previous article (list or reader)",
+    description: "Open previous article (list/reader, continues across feed lists)",
   },
   {
     id: "article.next.arrow",

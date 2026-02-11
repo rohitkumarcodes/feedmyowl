@@ -72,8 +72,11 @@ Three stacked views:
   - Active only on desktop/tablet; disabled on mobile.
   - Disabled while user is typing in editable targets.
 - Key map:
-  - `j`: next article (list + reader contexts)
-  - `k`: previous article (list + reader contexts)
+  - `j`: open next article (list + reader contexts)
+  - `k`: open previous article (list + reader contexts)
+  - In feed scope, `j/k` continue to adjacent feed lists at boundaries (with wrap-around).
+  - In `all`, `uncategorized`, and `folder` scopes, `j/k` stop at boundaries.
+  - While search is active, `j/k` stay within search results only.
   - `ArrowDown`: next article (list context only)
   - `ArrowUp`: previous article (list context only)
   - `Enter`: open selected article (list context only)

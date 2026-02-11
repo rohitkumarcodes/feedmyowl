@@ -75,7 +75,10 @@ From repo root:
 2. Confirm viewport is desktop/tablet (shortcuts are disabled on mobile layout).
 3. Confirm focus is not in an editable field (`input`, `textarea`, `select`, contenteditable).
 4. Verify scope behavior:
-   - `j/k` should work in list and reader contexts.
+   - `j/k` should open next/previous article in list and reader contexts.
+   - In feed scope, `j/k` should continue across adjacent feed lists at boundaries (with wrap-around).
+   - In `all`, `uncategorized`, and `folder` scopes, `j/k` should stop at boundaries.
+   - While search is active, `j/k` should stay within search results.
    - Arrow keys and `Enter` should work only in list context.
 5. Verify `f` cycles pane focus in order:
    - collapse sidebar -> collapse list -> expand list -> expand sidebar.
@@ -158,18 +161,19 @@ From repo root:
 21. Press `f` repeatedly on desktop/tablet and verify exact pane cycle order:
     collapse sidebar -> collapse list -> expand list -> expand sidebar.
 22. Press `r` and verify feed refresh still triggers.
-23. Verify arrow keys move selection only in list context; reader keeps native arrow scrolling.
-24. Trigger success info message and verify auto-clear after ~8 seconds.
-25. Trigger actionable info message (`Add another`) and verify it does not auto-clear immediately.
-26. Trigger an error and verify assertive rendering/dismiss behavior.
-27. Verify article rows retain dot marker and show stronger unread vs read title tone.
-28. On settings page, verify `Keyboard shortcuts` toggle is collapsed by default and docs link is present.
-29. On website pages, verify global nav includes `About` with correct active state on `/about/`.
-30. In article list, search with a 1-character query and confirm non-search hint is shown.
-31. Search with a 2+ character query and confirm global ranked results are shown.
-32. Verify search row clear button and `Escape` both clear the active query.
-33. Press `/` from list and reader contexts and confirm focus moves to search input.
-34. While search is active, change sidebar scope and verify search results remain global and the open reader article stays open.
-35. Search `heart` and confirm exact match appears with contiguous highlight.
-36. Search typo `heaet` and confirm typo fallback returns the `Heart` result.
-37. Confirm typo fallback results do not show fragmented highlight noise for unrelated titles.
+23. Verify `j/k` open next/previous articles in list and reader contexts, and in feed scope cross list boundaries with wrap-around.
+24. Verify arrow keys move selection only in list context; reader keeps native arrow scrolling.
+25. Trigger success info message and verify auto-clear after ~8 seconds.
+26. Trigger actionable info message (`Add another`) and verify it does not auto-clear immediately.
+27. Trigger an error and verify assertive rendering/dismiss behavior.
+28. Verify article rows retain dot marker and show stronger unread vs read title tone.
+29. On settings page, verify `Keyboard shortcuts` toggle is collapsed by default and docs link is present.
+30. On website pages, verify global nav includes `About` with correct active state on `/about/`.
+31. In article list, search with a 1-character query and confirm non-search hint is shown.
+32. Search with a 2+ character query and confirm global ranked results are shown.
+33. Verify search row clear button and `Escape` both clear the active query.
+34. Press `/` from list and reader contexts and confirm focus moves to search input.
+35. While search is active, change sidebar scope and verify search results remain global and the open reader article stays open.
+36. Search `heart` and confirm exact match appears with contiguous highlight.
+37. Search typo `heaet` and confirm typo fallback returns the `Heart` result.
+38. Confirm typo fallback results do not show fragmented highlight noise for unrelated titles.

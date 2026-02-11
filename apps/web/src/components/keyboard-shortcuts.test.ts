@@ -38,4 +38,16 @@ describe("keyboard-shortcuts definitions", () => {
     expect(keys).toContain("?");
     expect(keys).toContain("Escape");
   });
+
+  it("describes vim navigation as opening articles", () => {
+    const nextVim = SHORTCUT_DEFINITIONS.find(
+      (shortcut) => shortcut.id === "article.next.vim"
+    );
+    const previousVim = SHORTCUT_DEFINITIONS.find(
+      (shortcut) => shortcut.id === "article.previous.vim"
+    );
+
+    expect(nextVim?.description).toContain("Open next article");
+    expect(previousVim?.description).toContain("Open previous article");
+  });
 });

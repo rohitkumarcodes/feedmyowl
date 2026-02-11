@@ -110,8 +110,11 @@
 - Disabled on mobile layout.
 - Disabled while typing in editable targets (`input`, `textarea`, `select`, `contenteditable`).
 - Key map:
-  - `j`: next article (list + reader context)
-  - `k`: previous article (list + reader context)
+  - `j`: open next article (list + reader context)
+  - `k`: open previous article (list + reader context)
+  - In feed scope, `j/k` continue across adjacent feed lists at boundaries (with wrap-around).
+  - In `all`, `uncategorized`, and `folder` scopes, `j/k` stop at boundaries.
+  - While search is active, `j/k` stay within search results only.
   - `ArrowDown`: next article (list context only)
   - `ArrowUp`: previous article (list context only)
   - `Enter`: open selected article (list context only)

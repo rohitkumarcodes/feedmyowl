@@ -7,6 +7,7 @@ import { ArticleReader } from "./ArticleReader";
 import { KeyboardShortcutsModal } from "./KeyboardShortcutsModal";
 import { Layout } from "./Layout";
 import { Sidebar, SidebarScope } from "./Sidebar";
+import { resolveVimArticleNavigation } from "./article-keyboard-navigation";
 import {
   advancePaneFocusCycle,
   type PaneCyclePhase,
@@ -419,8 +420,8 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
     ]
   );
 
-  const moveSelectionBy = useCallback(
-    (step: number) => {
+  const moveSelectionByArrow = useCallback(
+    (step: 1 | -1) => {
       if (visibleArticles.length === 0) {
         setSelectedArticleId(null);
         return;
@@ -437,6 +438,47 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
       setSelectedArticleId(visibleArticles[nextIndex].id);
     },
     [selectedArticleId, visibleArticles]
+  );
+
+  const navigateAndOpenByVim = useCallback(
+    (step: 1 | -1) => {
+      const result = resolveVimArticleNavigation({
+        step,
+        selectedScope,
+        searchIsActive: isSearchActive,
+        feeds,
+        folders,
+        allArticles,
+        visibleArticles,
+        selectedArticleId,
+        openArticleId,
+      });
+
+      if (!result.didMove || !result.targetArticleId) {
+        return;
+      }
+
+      if (
+        result.targetScope &&
+        (selectedScope.type !== "feed" ||
+          selectedScope.feedId !== result.targetScope.feedId)
+      ) {
+        setSelectedScope(result.targetScope);
+      }
+
+      void openSelectedArticle(result.targetArticleId);
+    },
+    [
+      allArticles,
+      feeds,
+      folders,
+      isSearchActive,
+      openArticleId,
+      openSelectedArticle,
+      selectedArticleId,
+      selectedScope,
+      visibleArticles,
+    ]
   );
 
   const handleSelectScope = useCallback(
@@ -481,8 +523,10 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
     isShortcutsModalOpen,
     isListContextTarget,
     isReaderContextTarget,
-    onNextArticle: () => moveSelectionBy(1),
-    onPreviousArticle: () => moveSelectionBy(-1),
+    onNextArticleVim: () => navigateAndOpenByVim(1),
+    onPreviousArticleVim: () => navigateAndOpenByVim(-1),
+    onNextArticleArrow: () => moveSelectionByArrow(1),
+    onPreviousArticleArrow: () => moveSelectionByArrow(-1),
     onOpenArticle: () => {
       if (selectedArticleId) {
         void openSelectedArticle(selectedArticleId);

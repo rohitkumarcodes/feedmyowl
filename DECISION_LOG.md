@@ -108,7 +108,10 @@ This log records active product and technical decisions for the current app phas
 - Decision: Keyboard shortcuts are expanded into a focus-aware desktop/tablet model with explicit discoverability.
 - Why: Improve keyboard efficiency without hijacking default reading behavior.
 - Details:
-  - `j/k` work in list and reader contexts.
+  - `j/k` open next/previous articles in list and reader contexts.
+  - In feed scope, `j/k` continue across adjacent feed lists at boundaries (with wrap-around).
+  - In `all`, `uncategorized`, and `folder` scopes, `j/k` stop at boundaries.
+  - While search is active, `j/k` stay within search results.
   - Arrow keys and `Enter` are list-only.
   - `r` refreshes feeds workspace-wide when not typing.
   - `f` cycles pane focus in order: collapse sidebar -> collapse list -> expand list -> expand sidebar.

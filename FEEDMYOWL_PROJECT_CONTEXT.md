@@ -113,7 +113,10 @@ Notes:
 - Enabled only on `/feeds` and only on desktop/tablet.
 - Disabled while typing in editable fields.
 - Key behavior:
-  - `j/k` work in list and reader contexts.
+  - `j/k` open next/previous article in list and reader contexts.
+  - In feed scope, `j/k` continue to adjacent feed lists at boundaries (with wrap-around).
+  - In `all`, `uncategorized`, and `folder` scopes, `j/k` stop at list boundaries.
+  - While search is active, `j/k` stay within search results only.
   - Arrow keys + `Enter` are list-only.
   - `r` refreshes feeds.
   - `f` cycles pane focus in four steps: collapse sidebar -> collapse list -> expand list -> expand sidebar.

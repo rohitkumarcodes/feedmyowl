@@ -10,8 +10,10 @@ interface UseKeyboardShortcutsOptions {
   isShortcutsModalOpen: boolean;
   isListContextTarget: (target: EventTarget | null) => boolean;
   isReaderContextTarget: (target: EventTarget | null) => boolean;
-  onNextArticle: () => void;
-  onPreviousArticle: () => void;
+  onNextArticleVim: () => void;
+  onPreviousArticleVim: () => void;
+  onNextArticleArrow: () => void;
+  onPreviousArticleArrow: () => void;
   onOpenArticle: () => void;
   onRefreshFeeds: () => void;
   onCycleFocusPanes: () => void;
@@ -41,8 +43,10 @@ export function useKeyboardShortcuts({
   isShortcutsModalOpen,
   isListContextTarget,
   isReaderContextTarget,
-  onNextArticle,
-  onPreviousArticle,
+  onNextArticleVim,
+  onPreviousArticleVim,
+  onNextArticleArrow,
+  onPreviousArticleArrow,
   onOpenArticle,
   onRefreshFeeds,
   onCycleFocusPanes,
@@ -79,13 +83,23 @@ export function useKeyboardShortcuts({
 
       event.preventDefault();
 
-      if (action === "article.next.vim" || action === "article.next.arrow") {
-        onNextArticle();
+      if (action === "article.next.vim") {
+        onNextArticleVim();
         return;
       }
 
-      if (action === "article.previous.vim" || action === "article.previous.arrow") {
-        onPreviousArticle();
+      if (action === "article.previous.vim") {
+        onPreviousArticleVim();
+        return;
+      }
+
+      if (action === "article.next.arrow") {
+        onNextArticleArrow();
+        return;
+      }
+
+      if (action === "article.previous.arrow") {
+        onPreviousArticleArrow();
         return;
       }
 
@@ -129,13 +143,15 @@ export function useKeyboardShortcuts({
     isListContextTarget,
     isReaderContextTarget,
     isShortcutsModalOpen,
+    onNextArticleVim,
+    onPreviousArticleVim,
+    onNextArticleArrow,
+    onPreviousArticleArrow,
     onCloseShortcuts,
     onCycleFocusPanes,
     onFocusSearch,
-    onNextArticle,
     onOpenArticle,
     onOpenShortcuts,
-    onPreviousArticle,
     onRefreshFeeds,
   ]);
 }
