@@ -30,6 +30,7 @@ import { OWL_ART_OPTIONS, coerceOwlAscii, type OwlAscii } from "@/lib/owl-brand"
 import {
   applyThemeModeToDocument,
   coerceThemeMode,
+  subscribeToSystemThemeModeChanges,
   type ThemeMode,
 } from "@/lib/theme-mode";
 import { SHORTCUT_GROUPS } from "./keyboard-shortcuts";
@@ -73,6 +74,28 @@ interface ImportProgress {
   processedCount: number;
   totalCount: number;
 }
+
+const THEME_MODE_OPTIONS: Array<{
+  mode: ThemeMode;
+  label: string;
+  description: string;
+}> = [
+  {
+    mode: "light",
+    label: "Light",
+    description: "Bright workspace with high daylight contrast.",
+  },
+  {
+    mode: "dark",
+    label: "Dark",
+    description: "Dimmer workspace for low-light reading sessions.",
+  },
+  {
+    mode: "system",
+    label: "System",
+    description: "Matches your device appearance setting automatically.",
+  },
+];
 
 /**
  * Safely parse JSON response bodies.
@@ -316,11 +339,14 @@ const keyboardIcon = (
  */
 export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOverviewProps) {
   const router = useRouter();
+  const themeModePanelId = useId();
   const owlOptionsPanelId = useId();
   const shortcutsPanelId = useId();
   const importFileInputRef = useRef<HTMLInputElement | null>(null);
+  const themeControlsRef = useRef<HTMLDivElement | null>(null);
   const owlControlsRef = useRef<HTMLDivElement | null>(null);
   const shortcutsControlsRef = useRef<HTMLDivElement | null>(null);
+  const themeWidthProbeRef = useRef<HTMLDivElement | null>(null);
   const owlWidthProbeRef = useRef<HTMLDivElement | null>(null);
   const shortcutsWidthProbeRef = useRef<HTMLDivElement | null>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -342,8 +368,10 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
   const [isSavingTheme, setIsSavingTheme] = useState(false);
   const [themeSaveMessage, setThemeSaveMessage] = useState<string | null>(null);
   const [themeSaveError, setThemeSaveError] = useState<string | null>(null);
+  const [isThemePanelExpanded, setIsThemePanelExpanded] = useState(false);
   const [isOwlPanelExpanded, setIsOwlPanelExpanded] = useState(false);
   const [isShortcutsPanelExpanded, setIsShortcutsPanelExpanded] = useState(false);
+  const [themeControlsWidthPx, setThemeControlsWidthPx] = useState<number | null>(null);
   const [owlControlsWidthPx, setOwlControlsWidthPx] = useState<number | null>(null);
   const [shortcutsControlsWidthPx, setShortcutsControlsWidthPx] = useState<number | null>(
     null
@@ -363,7 +391,18 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
   }, [themeMode]);
 
   useEffect(() => {
-    if (!isOwlPanelExpanded && !isShortcutsPanelExpanded) {
+    if (draftThemeMode !== "system") {
+      return;
+    }
+
+    applyThemeModeToDocument("system");
+    return subscribeToSystemThemeModeChanges(() => {
+      applyThemeModeToDocument("system");
+    });
+  }, [draftThemeMode]);
+
+  useEffect(() => {
+    if (!isThemePanelExpanded && !isOwlPanelExpanded && !isShortcutsPanelExpanded) {
       return;
     }
 
@@ -373,14 +412,16 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
         return;
       }
 
+      const clickedInsideTheme = themeControlsRef.current?.contains(target) ?? false;
       const clickedInsideOwl = owlControlsRef.current?.contains(target) ?? false;
       const clickedInsideShortcuts =
         shortcutsControlsRef.current?.contains(target) ?? false;
 
-      if (clickedInsideOwl || clickedInsideShortcuts) {
+      if (clickedInsideTheme || clickedInsideOwl || clickedInsideShortcuts) {
         return;
       }
 
+      setIsThemePanelExpanded(false);
       setIsOwlPanelExpanded(false);
       setIsShortcutsPanelExpanded(false);
     };
@@ -390,7 +431,42 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [isOwlPanelExpanded, isShortcutsPanelExpanded]);
+  }, [isThemePanelExpanded, isOwlPanelExpanded, isShortcutsPanelExpanded]);
+
+  useLayoutEffect(() => {
+    const probe = themeWidthProbeRef.current;
+    if (!probe) {
+      return;
+    }
+
+    const measure = () => {
+      const measuredWidth = Math.ceil(probe.getBoundingClientRect().width);
+      if (measuredWidth <= 0) {
+        return;
+      }
+
+      setThemeControlsWidthPx((previousWidth) =>
+        previousWidth === measuredWidth ? previousWidth : measuredWidth
+      );
+    };
+
+    measure();
+    const animationFrame = window.requestAnimationFrame(measure);
+
+    const resizeObserver =
+      typeof ResizeObserver === "function"
+        ? new ResizeObserver(() => {
+            measure();
+          })
+        : null;
+
+    resizeObserver?.observe(probe);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      resizeObserver?.disconnect();
+    };
+  }, []);
 
   useLayoutEffect(() => {
     const probe = owlWidthProbeRef.current;
@@ -558,6 +634,7 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
       setSavedThemeMode(persistedThemeMode);
       applyThemeModeToDocument(persistedThemeMode);
       setThemeSaveMessage("Theme updated.");
+      router.refresh();
     } catch {
       setDraftThemeMode(previousThemeMode);
       applyThemeModeToDocument(previousThemeMode);
@@ -737,64 +814,96 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
       <div className={styles.settingsOptions}>
         <section className={styles.panel}>
           <h2>Appearance</h2>
-          <p className={styles.muted}>Choose your reading mode.</p>
-          <div
-            className={styles.themeModeGroup}
-            role="radiogroup"
-            aria-label="Choose appearance mode"
-          >
-            <label
-              className={`${styles.themeModeOption} ${
-                draftThemeMode === "light" ? styles.themeModeOptionSelected : ""
-              }`}
-            >
-              <input
-                type="radio"
-                name="theme-mode"
-                value="light"
-                checked={draftThemeMode === "light"}
-                onChange={() => {
-                  void handleThemeModeChange("light");
-                }}
-                disabled={isSavingTheme}
-              />
-              <span className={styles.themeModeOptionLabel}>Light</span>
-              <span className={styles.themeModeOptionDescription}>
-                Bright workspace with high daylight contrast.
-              </span>
-            </label>
-            <label
-              className={`${styles.themeModeOption} ${
-                draftThemeMode === "dark" ? styles.themeModeOptionSelected : ""
-              }`}
-            >
-              <input
-                type="radio"
-                name="theme-mode"
-                value="dark"
-                checked={draftThemeMode === "dark"}
-                onChange={() => {
-                  void handleThemeModeChange("dark");
-                }}
-                disabled={isSavingTheme}
-              />
-              <span className={styles.themeModeOptionLabel}>Dark</span>
-              <span className={styles.themeModeOptionDescription}>
-                Dimmer workspace for low-light reading sessions.
-              </span>
-            </label>
+          <div ref={themeWidthProbeRef} className={styles.owlWidthProbe} aria-hidden="true">
+            <button type="button" className={styles.owlToggle} tabIndex={-1}>
+              <span className={styles.owlToggleCaret}>▸</span>
+              <span className={styles.owlWidthProbeText}>Choose your reading mode.</span>
+            </button>
+            <div className={styles.owlWidthProbeOptions}>
+              {THEME_MODE_OPTIONS.map((option) => (
+                <label key={`probe-theme-${option.mode}`} className={styles.themeModeOption}>
+                  <input type="radio" name="theme-mode-probe" tabIndex={-1} />
+                  <span className={styles.themeModeOptionLabel}>{option.label}</span>
+                  <span
+                    className={`${styles.themeModeOptionDescription} ${styles.owlWidthProbeText}`}
+                  >
+                    {option.description}
+                  </span>
+                </label>
+              ))}
+            </div>
           </div>
-          {isSavingTheme ? (
-            <p className={styles.inlineMessage} role="status">
-              Saving theme...
-            </p>
-          ) : null}
-          {themeSaveMessage ? (
-            <p className={styles.inlineMessage} role="status">
-              {themeSaveMessage}
-            </p>
-          ) : null}
-          {themeSaveError ? <p className={styles.inlineMessage}>{themeSaveError}</p> : null}
+          <div
+            ref={themeControlsRef}
+            className={styles.owlPickerControls}
+            style={themeControlsWidthPx ? { width: `${themeControlsWidthPx}px` } : undefined}
+          >
+            <button
+              type="button"
+              className={styles.owlToggle}
+              aria-expanded={isThemePanelExpanded}
+              aria-controls={themeModePanelId}
+              disabled={isSavingTheme}
+              onClick={() => {
+                setIsThemePanelExpanded((previous) => !previous);
+              }}
+            >
+              <span className={styles.owlToggleCaret}>{isThemePanelExpanded ? "▾" : "▸"}</span>
+              <span>Choose your reading mode.</span>
+            </button>
+            <OwlOptionsShutter
+              expanded={isThemePanelExpanded}
+              prefersReducedMotion={prefersReducedMotion}
+              contentId={themeModePanelId}
+            >
+              <div
+                className={styles.themeModeGroup}
+                role="radiogroup"
+                aria-label="Choose appearance mode"
+              >
+                {THEME_MODE_OPTIONS.map((option) => {
+                  const isSelected = draftThemeMode === option.mode;
+
+                  return (
+                    <label
+                      key={option.mode}
+                      className={`${styles.themeModeOption} ${
+                        isSelected ? styles.themeModeOptionSelected : ""
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="theme-mode"
+                        value={option.mode}
+                        checked={isSelected}
+                        onChange={() => {
+                          void handleThemeModeChange(option.mode);
+                        }}
+                        disabled={isSavingTheme}
+                      />
+                      <span className={styles.themeModeOptionLabel}>{option.label}</span>
+                      <span className={styles.themeModeOptionDescription}>
+                        {option.description}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+              {isSavingTheme ? (
+                <p className={styles.inlineMessage} role="status">
+                  Saving theme...
+                </p>
+              ) : null}
+              {themeSaveMessage ? (
+                <p className={styles.inlineMessage} role="status">
+                  {themeSaveMessage}
+                </p>
+              ) : null}
+              {themeSaveError ? (
+                <p className={styles.inlineMessage}>{themeSaveError}</p>
+              ) : null}
+            </OwlOptionsShutter>
+          </div>
         </section>
 
         <section className={styles.panel}>

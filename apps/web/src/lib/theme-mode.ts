@@ -1,6 +1,7 @@
-export const THEME_MODE_VALUES = ["light", "dark"] as const;
+export const THEME_MODE_VALUES = ["light", "dark", "system"] as const;
 
 export type ThemeMode = (typeof THEME_MODE_VALUES)[number];
+export type ResolvedThemeMode = Exclude<ThemeMode, "system">;
 
 export const DEFAULT_THEME_MODE: ThemeMode = "light";
 
@@ -18,6 +19,22 @@ export function coerceThemeMode(value: unknown): ThemeMode {
   return DEFAULT_THEME_MODE;
 }
 
+function getSystemThemeMode(): ResolvedThemeMode {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return "light";
+  }
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+export function resolveThemeMode(mode: ThemeMode): ResolvedThemeMode {
+  if (mode === "system") {
+    return getSystemThemeMode();
+  }
+
+  return mode;
+}
+
 /**
  * Apply the selected theme to the top-level document root.
  */
@@ -26,7 +43,7 @@ export function applyThemeModeToDocument(mode: ThemeMode): void {
     return;
   }
 
-  document.documentElement.dataset.theme = mode;
+  document.documentElement.dataset.theme = resolveThemeMode(mode);
 }
 
 /**
@@ -38,4 +55,32 @@ export function clearThemeModeFromDocument(): void {
   }
 
   delete document.documentElement.dataset.theme;
+}
+
+/**
+ * Subscribe to system appearance changes (light/dark).
+ */
+export function subscribeToSystemThemeModeChanges(
+  onChange: (mode: ResolvedThemeMode) => void
+): () => void {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return () => {};
+  }
+
+  const mediaQueryList = window.matchMedia("(prefers-color-scheme: dark)");
+  const handleChange = () => {
+    onChange(mediaQueryList.matches ? "dark" : "light");
+  };
+
+  if (typeof mediaQueryList.addEventListener === "function") {
+    mediaQueryList.addEventListener("change", handleChange);
+    return () => {
+      mediaQueryList.removeEventListener("change", handleChange);
+    };
+  }
+
+  mediaQueryList.addListener(handleChange);
+  return () => {
+    mediaQueryList.removeListener(handleChange);
+  };
 }

@@ -13,6 +13,10 @@
  */
 
 import { defineConfig } from "drizzle-kit";
+import { loadEnvConfig } from "@next/env";
+
+// Load .env.local/.env for CLI commands like drizzle-kit migrate.
+loadEnvConfig(process.cwd());
 
 export default defineConfig({
   // Path to our Drizzle schema file (table definitions)

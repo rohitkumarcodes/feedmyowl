@@ -4,6 +4,7 @@ import { useLayoutEffect } from "react";
 import {
   applyThemeModeToDocument,
   clearThemeModeFromDocument,
+  subscribeToSystemThemeModeChanges,
   type ThemeMode,
 } from "@/lib/theme-mode";
 
@@ -17,8 +18,15 @@ interface AuthThemeBootstrapProps {
 export function AuthThemeBootstrap({ initialThemeMode }: AuthThemeBootstrapProps) {
   useLayoutEffect(() => {
     applyThemeModeToDocument(initialThemeMode);
+    const stopSystemSync =
+      initialThemeMode === "system"
+        ? subscribeToSystemThemeModeChanges(() => {
+            applyThemeModeToDocument("system");
+          })
+        : null;
 
     return () => {
+      stopSystemSync?.();
       clearThemeModeFromDocument();
     };
   }, [initialThemeMode]);

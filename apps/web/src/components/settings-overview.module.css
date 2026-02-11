@@ -39,7 +39,7 @@
 .themeModeGroup {
   display: grid;
   gap: 8px;
-  max-width: min(100%, 560px);
+  padding: 0 10px;
 }
 
 .themeModeOption {
@@ -51,6 +51,7 @@
   gap: 4px 10px;
   grid-template-columns: auto 1fr;
   padding: 8px 10px;
+  width: 100%;
 }
 
 .themeModeOption:hover {
@@ -362,6 +363,15 @@ button.linkButton:hover:enabled {
 .owlToggle:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+.owlToggle:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.owlToggle:disabled:hover {
+  background: var(--bg-primary);
 }
 
 .owlToggleCaret {

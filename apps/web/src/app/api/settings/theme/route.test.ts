@@ -76,8 +76,20 @@ describe("PATCH /api/settings/theme", () => {
     expect(mocks.dbUpdateSetWhere).toHaveBeenCalledWith("where-clause");
   });
 
-  it("returns 400 for invalid theme selection", async () => {
+  it("accepts system theme mode", async () => {
     const response = await PATCH(createPatchRequest({ themeMode: "system" }));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.themeMode).toBe("system");
+    expect(mocks.dbUpdateSet).toHaveBeenCalledWith({
+      themeMode: "system",
+      updatedAt: expect.any(Date),
+    });
+  });
+
+  it("returns 400 for invalid theme selection", async () => {
+    const response = await PATCH(createPatchRequest({ themeMode: "night" }));
     const body = await response.json();
 
     expect(response.status).toBe(400);
