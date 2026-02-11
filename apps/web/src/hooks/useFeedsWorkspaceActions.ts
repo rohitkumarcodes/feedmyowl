@@ -61,6 +61,7 @@ interface RefreshResult {
 
 interface RefreshResponse {
   results?: RefreshResult[];
+  /** Number of rows pruned by retention cap enforcement during refresh. */
   retentionDeletedCount?: number;
 }
 

@@ -65,6 +65,13 @@ From repo root:
 2. Review `last_fetch_*` fields per feed.
 3. Confirm source feed still serves valid XML.
 
+### Feed shows unexpected article count
+1. Retention policy is count-based, not time-based: max 50 items per feed.
+2. Trigger enforcement by loading `/feeds`, calling `GET /api/feeds`, or running `POST /api/refresh`.
+3. Validate with SQL:
+   `SELECT feed_id, COUNT(*) FROM feed_items GROUP BY feed_id HAVING COUNT(*) > 50;`
+4. Expected result set is empty after enforcement paths run.
+
 ### User reports offline banner behavior
 1. Confirm device/browser network status is offline.
 2. Expected copy is exactly: `You’re offline. You can still read cached articles.`

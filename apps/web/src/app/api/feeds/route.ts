@@ -224,7 +224,7 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Keep retention policy enforced even during read-heavy sessions.
+    // Keep 50-items-per-feed cap enforced even during read-heavy sessions.
     await purgeOldFeedItemsForUser(appUser.id);
 
     let user: Record<string, unknown> | null = null;

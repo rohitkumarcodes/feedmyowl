@@ -65,7 +65,7 @@ export default async function FeedsPage() {
     );
   }
 
-  // Enforce 90-day retention during normal feed workspace loads.
+  // Enforce 50-items-per-feed cap during normal feed workspace loads.
   await purgeOldFeedItemsForUser(ensuredUser.id);
 
   let user: Record<string, unknown> | null = null;

@@ -102,6 +102,8 @@ Notes:
 ## 8. Reliability defaults
 - Feed refresh errors are tracked per feed with calm inline messaging.
 - One failed feed must not block reading other feeds.
+- Article retention is count-based: keep at most 50 items per feed, ranked by
+  `COALESCE(published_at, created_at) DESC, id DESC`.
 - Offline snapshot keeps previously loaded data available during disconnects.
 - Offline message copy is fixed to: `You’re offline. You can still read cached articles.`
 - Reconnect clears the offline message silently (no separate online banner).

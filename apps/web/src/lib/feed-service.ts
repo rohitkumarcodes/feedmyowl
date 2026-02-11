@@ -14,7 +14,7 @@ import { captureError } from "@/lib/error-tracking";
 import { normalizeFeedError } from "@/lib/feed-errors";
 import { parseFeed, type ParsedFeed } from "@/lib/feed-parser";
 import { normalizeFolderIds } from "@/lib/folder-memberships";
-import { purgeOldFeedItemsForUser } from "@/lib/retention";
+import { purgeOldFeedItemsForFeed, purgeOldFeedItemsForUser } from "@/lib/retention";
 
 export interface RefreshResult {
   feedId: string;
@@ -78,6 +78,8 @@ export async function createFeedWithInitialItems(
       }))
     );
   }
+
+  await purgeOldFeedItemsForFeed({ userId, feedId: newFeed.id });
 
   if (normalizedFolderIds.length > 0) {
     try {
@@ -153,6 +155,7 @@ export type RefreshFeedsForUserResult =
   | { status: "user_not_found"; retentionDeletedCount: number }
   | {
       status: "ok";
+      /** Rows pruned by count-cap retention during this refresh flow. */
       retentionDeletedCount: number;
       message?: string;
       results: RefreshResult[];
@@ -164,7 +167,7 @@ export type RefreshFeedsForUserResult =
 export async function refreshFeedsForUser(
   userId: string
 ): Promise<RefreshFeedsForUserResult> {
-  const retentionDeletedCount = await purgeOldFeedItemsForUser(userId);
+  let retentionDeletedCount = await purgeOldFeedItemsForUser(userId);
 
   const user = await db.query.users.findFirst({
     where: eq(users.id, userId),
@@ -198,10 +201,11 @@ export async function refreshFeedsForUser(
   }
 
   const settledResults = await Promise.allSettled(
-    user.feeds.map(async (feed): Promise<RefreshResult> => {
-      try {
-        const parsed = await parseFeed(feed.url);
-        const now = new Date();
+    user.feeds.map(
+      async (feed): Promise<{ result: RefreshResult; prunedCount: number }> => {
+        try {
+          const parsed = await parseFeed(feed.url);
+          const now = new Date();
 
         await db
           .update(feeds)
@@ -228,6 +232,8 @@ export async function refreshFeedsForUser(
           (item) => item.guid && !existingGuids.has(item.guid)
         );
 
+        let prunedCount = 0;
+
         if (insertableItems.length > 0) {
           await db.insert(feedItems).values(
             insertableItems.map((item) => ({
@@ -240,13 +246,21 @@ export async function refreshFeedsForUser(
               publishedAt: item.publishedAt,
             }))
           );
+
+          prunedCount = await purgeOldFeedItemsForFeed({
+            userId,
+            feedId: feed.id,
+          });
         }
 
         return {
-          feedId: feed.id,
-          feedUrl: feed.url,
-          newItemCount: insertableItems.length,
-          status: "success",
+          result: {
+            feedId: feed.id,
+            feedUrl: feed.url,
+            newItemCount: insertableItems.length,
+            status: "success",
+          },
+          prunedCount,
         };
       } catch (error) {
         const normalizedError = normalizeFeedError(error, "refresh");
@@ -270,29 +284,35 @@ export async function refreshFeedsForUser(
         });
 
         return {
-          feedId: feed.id,
-          feedUrl: feed.url,
-          newItemCount: 0,
-          status: "error",
-          errorCode: normalizedError.code,
-          errorMessage: normalizedError.message,
+          result: {
+            feedId: feed.id,
+            feedUrl: feed.url,
+            newItemCount: 0,
+            status: "error",
+            errorCode: normalizedError.code,
+            errorMessage: normalizedError.message,
+          },
+          prunedCount: 0,
         };
       }
     })
   );
 
-  const refreshResults: RefreshResult[] = settledResults.map((result) =>
-    result.status === "fulfilled"
-      ? result.value
-      : {
-          feedId: "unknown",
-          feedUrl: "unknown",
-          newItemCount: 0,
-          status: "error",
-          errorCode: "refresh_failed",
-          errorMessage: "Feed refresh failed.",
-        }
-  );
+  const refreshResults: RefreshResult[] = settledResults.map((result) => {
+    if (result.status === "fulfilled") {
+      retentionDeletedCount += result.value.prunedCount;
+      return result.value.result;
+    }
+
+    return {
+      feedId: "unknown",
+      feedUrl: "unknown",
+      newItemCount: 0,
+      status: "error",
+      errorCode: "refresh_failed",
+      errorMessage: "Feed refresh failed.",
+    };
+  });
 
   return {
     status: "ok",

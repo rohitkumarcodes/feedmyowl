@@ -179,6 +179,16 @@ This log records active product and technical decisions for the current app phas
   - Typo fallback highlights the full matched title/feed token.
   - Significant snippet/author matches surface source labels (`Matched in ...`).
 
+### D-2026-02-11-02
+- Date: 2026-02-11
+- Status: active
+- Decision: Article retention is count-based with a hard cap of 50 items per feed.
+- Why: Keep storage bounded while preserving recent reading context without deleting by age.
+- Details:
+  - Keep newest 50 rows per feed by `COALESCE(published_at, created_at) DESC, id DESC`.
+  - Remove time-based retention windows from enforcement logic.
+  - Enforce during write paths (create/import/refresh) and via existing read-path safety sweeps.
+
 ## Superseded decisions
 
 ### D-2026-02-07-05
