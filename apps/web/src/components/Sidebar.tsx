@@ -3,7 +3,6 @@
  */
 
 import {
-  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -31,7 +30,6 @@ export type SidebarScope =
 
 type FolderDeleteMode = "remove_only" | "remove_and_unsubscribe_exclusive";
 type AddFeedStage = "normalizing" | "discovering" | "awaiting_selection" | "creating";
-const SHORTCUT_HINT_DISMISSED_STORAGE_KEY = "feedmyowl.shortcuts_hint.dismissed.v1";
 
 interface SidebarDiscoveryCandidate {
   url: string;
@@ -94,8 +92,6 @@ interface SidebarProps {
 
   notices: SidebarNotice[];
   onDismissMessage: () => void;
-  isShortcutsModalOpen: boolean;
-  onOpenShortcuts: () => void;
 
   deletingFeedId: string | null;
   renamingFeedId: string | null;
@@ -507,8 +503,6 @@ export function Sidebar({
   onSubmitFeed,
   notices,
   onDismissMessage,
-  isShortcutsModalOpen,
-  onOpenShortcuts,
   deletingFeedId,
   renamingFeedId,
   updatingFeedFoldersId,
@@ -530,7 +524,6 @@ export function Sidebar({
   const [sidebarFolderName, setSidebarFolderName] = useState("");
   const [pendingDeleteFolderId, setPendingDeleteFolderId] = useState<string | null>(null);
   const [isDeletingWithUnsubscribe, setIsDeletingWithUnsubscribe] = useState(false);
-  const [showShortcutsHint, setShowShortcutsHint] = useState(false);
   const addMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -570,37 +563,6 @@ export function Sidebar({
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isAddMenuOpen]);
-
-  useEffect(() => {
-    if (isMobile) {
-      setShowShortcutsHint(false);
-      return;
-    }
-
-    try {
-      const dismissed = window.localStorage.getItem(SHORTCUT_HINT_DISMISSED_STORAGE_KEY);
-      setShowShortcutsHint(dismissed !== "true");
-    } catch {
-      setShowShortcutsHint(true);
-    }
-  }, [isMobile]);
-
-  const dismissShortcutsHint = useCallback(() => {
-    setShowShortcutsHint(false);
-    try {
-      window.localStorage.setItem(SHORTCUT_HINT_DISMISSED_STORAGE_KEY, "true");
-    } catch {
-      // Ignore storage failures and keep working in-memory.
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!isShortcutsModalOpen) {
-      return;
-    }
-
-    dismissShortcutsHint();
-  }, [dismissShortcutsHint, isShortcutsModalOpen]);
 
   const sortedFolders = useMemo(
     () => [...folders].sort((a, b) => a.name.localeCompare(b.name)),
@@ -686,11 +648,6 @@ export function Sidebar({
   };
 
   const isAddMenuDisabled = isAddingFeed || isCreatingFolder;
-
-  const handleOpenShortcuts = useCallback(() => {
-    dismissShortcutsHint();
-    onOpenShortcuts();
-  }, [dismissShortcutsHint, onOpenShortcuts]);
 
   const sidebarFolderForm = (
     <div className={`${styles.sidebarFolderForm} ${primitiveStyles.panel}`}>
@@ -871,69 +828,7 @@ export function Sidebar({
               )
             ) : null}
           </div>
-
-          {!isMobile ? (
-            <button
-              type="button"
-              className={`${primitiveStyles.toolbarButton} ${primitiveStyles.toolbarButtonMuted}`}
-              onClick={handleOpenShortcuts}
-              aria-label="View keyboard shortcuts"
-              aria-haspopup="dialog"
-              aria-expanded={isShortcutsModalOpen}
-            >
-              <svg
-                className={styles.toolbarIcon}
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden="true"
-              >
-                <rect
-                  x="3.5"
-                  y="6.5"
-                  width="17"
-                  height="11"
-                  rx="1.4"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                />
-                <path d="M7 10H8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                <path d="M10 10H11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                <path d="M13 10H14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                <path d="M16 10H17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                <path d="M7 13.5H17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-              <span>(?)</span>
-            </button>
-          ) : null}
         </div>
-
-        {!isMobile && showShortcutsHint ? (
-          <div className={styles.shortcutsHint} role="status" aria-live="polite">
-            <p className={styles.shortcutsHintText}>
-              Tip: press <kbd className={styles.shortcutsHintKey}>?</kbd> to see shortcuts.
-            </p>
-            <div className={styles.shortcutsHintActions}>
-              <button
-                type="button"
-                className={styles.shortcutsHintAction}
-                onClick={handleOpenShortcuts}
-              >
-                View shortcuts
-              </button>
-              <button
-                type="button"
-                className={styles.shortcutsHintDismiss}
-                onClick={dismissShortcutsHint}
-                aria-label="Dismiss shortcuts tip"
-              >
-                Dismiss
-              </button>
-            </div>
-          </div>
-        ) : null}
 
         {isSidebarFolderFormVisible ? (
           isMobile ? (

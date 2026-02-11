@@ -48,6 +48,7 @@ import {
   type ArticleScope,
 } from "@/lib/article-pagination";
 import { OFFLINE_CACHED_ARTICLES_MESSAGE } from "@/lib/network-messages";
+import { OPEN_SHORTCUTS_DIALOG_EVENT } from "@/lib/shortcuts-dialog-events";
 import styles from "./feeds-workspace.module.css";
 
 interface FeedsWorkspaceProps {
@@ -426,6 +427,21 @@ export function FeedsWorkspace({
   const closeShortcutsModal = useCallback(() => {
     setIsShortcutsModalOpen(false);
   }, []);
+
+  useEffect(() => {
+    const handleOpenShortcutsDialog = () => {
+      openShortcutsModal();
+    };
+
+    window.addEventListener(OPEN_SHORTCUTS_DIALOG_EVENT, handleOpenShortcutsDialog);
+
+    return () => {
+      window.removeEventListener(
+        OPEN_SHORTCUTS_DIALOG_EVENT,
+        handleOpenShortcutsDialog
+      );
+    };
+  }, [openShortcutsModal]);
 
   const focusSearchInput = useCallback(() => {
     const input = searchInputRef.current;
@@ -807,8 +823,6 @@ export function FeedsWorkspace({
             }}
             notices={sidebarNotices}
             onDismissMessage={clearStatusMessages}
-            isShortcutsModalOpen={isShortcutsModalOpen}
-            onOpenShortcuts={openShortcutsModal}
             deletingFeedId={deletingFeedId}
             renamingFeedId={renamingFeedId}
             updatingFeedFoldersId={updatingFeedFoldersId}

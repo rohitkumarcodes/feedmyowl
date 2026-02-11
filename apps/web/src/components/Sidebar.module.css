@@ -47,54 +47,6 @@
   animation: toolbarSpin 700ms linear infinite;
 }
 
-.shortcutsHint {
-  align-items: flex-start;
-  border-top: 1px solid var(--lp-border);
-  display: grid;
-  gap: 6px;
-  margin-top: 8px;
-  padding: 6px 12px 0;
-}
-
-.shortcutsHintText {
-  color: var(--lp-text-main);
-  font-size: var(--text-xs);
-}
-
-.shortcutsHintKey {
-  background: var(--lp-surface-1);
-  border: 1px solid var(--lp-border);
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  padding: 0 4px;
-}
-
-.shortcutsHintActions {
-  display: inline-flex;
-  gap: 6px;
-}
-
-.shortcutsHintAction,
-.shortcutsHintDismiss {
-  background: transparent;
-  border: 1px solid var(--lp-border);
-  color: var(--lp-text-main);
-  cursor: pointer;
-  font-size: var(--text-xs);
-  padding: 2px 6px;
-}
-
-.shortcutsHintAction:hover,
-.shortcutsHintDismiss:hover {
-  border-color: var(--lp-focus);
-}
-
-.shortcutsHintAction:focus-visible,
-.shortcutsHintDismiss:focus-visible {
-  outline: 2px solid var(--lp-focus);
-  outline-offset: 2px;
-}
-
 @keyframes toolbarSpin {
   to {
     transform: rotate(360deg);

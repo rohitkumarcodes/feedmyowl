@@ -106,72 +106,156 @@
   z-index: 40;
 }
 
-.accountMenuFrame {
+.optionsTrigger {
   align-items: center;
   background: var(--bg-primary);
   border: 1px solid var(--border);
+  color: var(--text-primary);
+  cursor: pointer;
   display: inline-flex;
   height: 32px;
   justify-content: center;
-  overflow: hidden;
   padding: 0;
   width: 32px;
 }
 
-.accountMenuTrigger {
+.optionsTrigger:hover {
+  background: var(--bg-tertiary);
+  transition: background-color 80ms ease;
+}
+
+.optionsTrigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.optionsBackdrop {
   align-items: center;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  display: inline-flex;
-  height: 100%;
+  background: rgb(0 0 0 / 48%);
+  display: flex;
+  inset: 0;
   justify-content: center;
-  margin: 0;
+  padding: 16px;
+  position: fixed;
+  z-index: 80;
+}
+
+.optionsDialog {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  display: grid;
+  gap: 12px;
+  max-height: min(88vh, 640px);
+  max-width: calc(100vw - 32px);
+  overflow: auto;
+  padding: 14px;
+  width: min(320px, calc(100vw - 32px));
+}
+
+.optionsHeader {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.optionsTitle {
+  color: var(--text-primary);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.optionsCloseButton {
+  align-items: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: var(--text-sm);
+  justify-content: center;
+  min-height: 30px;
+  min-width: 30px;
   padding: 4px;
+}
+
+.optionsCloseButton:hover {
+  background: var(--bg-tertiary);
+  transition: background-color 90ms ease;
+}
+
+.optionsCloseButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.optionsActions {
+  border: 1px solid var(--border);
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.optionsActionButton {
+  align-items: center;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: var(--text-sm);
+  justify-content: flex-start;
+  min-height: 32px;
+  padding: 6px 10px;
+  text-decoration: none;
   width: 100%;
 }
 
-.accountMenuTrigger:hover {
+.optionsActionButton:hover {
   background: var(--bg-tertiary);
-  transition: background-color 80ms ease;
+  transition: background-color 90ms ease;
+}
+
+.optionsActionButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.optionsClerkButton {
+  align-items: center;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: var(--text-sm);
+  justify-content: flex-start;
+  margin: 0;
+  min-height: 32px;
+  padding: 6px 10px;
+  width: 100%;
+}
+
+.optionsClerkButton::after {
+  color: var(--text-primary);
+  content: "Clerk admin";
+  font-size: var(--text-sm);
+  margin-left: 8px;
+}
+
+.optionsClerkButton:hover {
+  background: var(--bg-tertiary);
+  transition: background-color 90ms ease;
+}
+
+.optionsClerkButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .accountMenuAvatar {
   height: 16px;
   width: 16px;
-}
-
-.settingsLink {
-  align-items: center;
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-  display: inline-flex;
-  justify-content: center;
-  min-height: 32px;
-  padding: 0;
-  text-decoration: none;
-  width: 32px;
-}
-
-.settingsIcon {
-  flex: 0 0 auto;
-  height: 16px;
-  width: 16px;
-}
-
-.settingsLink:hover {
-  background: var(--bg-tertiary);
-}
-
-.settingsLink:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.accountMenuFrame:focus-within {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
 }
 
 @media (max-width: 1120px) {
@@ -200,5 +284,18 @@
     gap: 6px;
     right: max(12px, calc(env(safe-area-inset-right) + 8px));
     top: max(8px, env(safe-area-inset-top));
+  }
+
+  .optionsDialog {
+    width: calc(100vw - 24px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .optionsTrigger:hover,
+  .optionsCloseButton:hover,
+  .optionsActionButton:hover,
+  .optionsClerkButton:hover {
+    transition: none;
   }
 }
