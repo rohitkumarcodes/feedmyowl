@@ -2,10 +2,11 @@
  * Right-pane reader rendering selected article content with sanitized HTML.
  */
 
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import DOMPurify from "dompurify";
 import { toRenderableHtml } from "@/utils/articleText";
 import type { ArticleViewModel } from "./feeds-types";
+import { shouldFocusReaderRoot } from "./article-reader-focus";
 import styles from "./ArticleReader.module.css";
 
 interface ArticleReaderProps {
@@ -48,6 +49,7 @@ function isTrustedEmbedSource(url: string): boolean {
  * Renders either a placeholder or the selected article reader view.
  */
 export function ArticleReader({ article }: ArticleReaderProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
 
   const sanitizedHtml = useMemo(() => {
@@ -122,16 +124,39 @@ export function ArticleReader({ article }: ArticleReaderProps) {
     };
   }, [sanitizedHtml]);
 
+  const handlePointerDownCapture = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (!shouldFocusReaderRoot(event.target)) {
+        return;
+      }
+
+      rootRef.current?.focus();
+    },
+    []
+  );
+
   if (!article) {
     return (
-      <div className={styles.emptyWrap} data-article-reader-root>
+      <div
+        ref={rootRef}
+        className={styles.emptyWrap}
+        data-article-reader-root
+        tabIndex={-1}
+        onPointerDownCapture={handlePointerDownCapture}
+      >
         <p className={styles.emptyText}>Select an article to read.</p>
       </div>
     );
   }
 
   return (
-    <div className={styles.root} data-article-reader-root>
+    <div
+      ref={rootRef}
+      className={styles.root}
+      data-article-reader-root
+      tabIndex={-1}
+      onPointerDownCapture={handlePointerDownCapture}
+    >
       <article className={styles.content}>
         <p className={styles.feedName}>{article.feedTitle}</p>
         {article.link ? (
