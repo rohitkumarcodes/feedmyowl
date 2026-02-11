@@ -94,5 +94,9 @@ export function resolveShortcutAction(
     return "feeds.refresh";
   }
 
+  if (key === "f") {
+    return "workspace.focusCycle";
+  }
+
   return null;
 }

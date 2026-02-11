@@ -8,6 +8,10 @@ import { KeyboardShortcutsModal } from "./KeyboardShortcutsModal";
 import { Layout } from "./Layout";
 import { Sidebar, SidebarScope } from "./Sidebar";
 import {
+  advancePaneFocusCycle,
+  type PaneCyclePhase,
+} from "./pane-focus-cycle";
+import {
   buildArticleSearchResults,
   type ArticleSearchHighlights,
 } from "./article-search";
@@ -46,8 +50,11 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
   const [liveMessage, setLiveMessage] = useState("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [listCollapsed, setListCollapsed] = useState(false);
+  const [, setPaneCyclePhase] = useState<PaneCyclePhase>(0);
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const sidebarCollapsedRef = useRef(sidebarCollapsed);
+  const listCollapsedRef = useRef(listCollapsed);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -62,6 +69,7 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
      fixed-position brand logo (rendered in the server-side auth layout)
      can be hidden via a pure CSS selector. */
   useEffect(() => {
+    sidebarCollapsedRef.current = sidebarCollapsed;
     document.documentElement.setAttribute(
       "data-sidebar-collapsed",
       String(sidebarCollapsed)
@@ -69,6 +77,7 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
   }, [sidebarCollapsed]);
 
   useEffect(() => {
+    listCollapsedRef.current = listCollapsed;
     document.documentElement.setAttribute(
       "data-list-collapsed",
       String(listCollapsed)
@@ -332,6 +341,55 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
     input.select();
   }, []);
 
+  const handleSidebarCollapse = useCallback(() => {
+    setSidebarCollapsed(true);
+    sidebarCollapsedRef.current = true;
+    setPaneCyclePhase(0);
+  }, []);
+
+  const handleToggleSidebar = useCallback(() => {
+    setSidebarCollapsed((previous) => {
+      const next = !previous;
+      sidebarCollapsedRef.current = next;
+      return next;
+    });
+    setPaneCyclePhase(0);
+  }, []);
+
+  const handleCollapseList = useCallback(() => {
+    setListCollapsed(true);
+    listCollapsedRef.current = true;
+    setPaneCyclePhase(0);
+  }, []);
+
+  const handleToggleList = useCallback(() => {
+    setListCollapsed((previous) => {
+      const next = !previous;
+      listCollapsedRef.current = next;
+      return next;
+    });
+    setPaneCyclePhase(0);
+  }, []);
+
+  const handleCycleFocusPanes = useCallback(() => {
+    setPaneCyclePhase((currentPhase) => {
+      const result = advancePaneFocusCycle(
+        {
+          sidebarCollapsed: sidebarCollapsedRef.current,
+          listCollapsed: listCollapsedRef.current,
+        },
+        currentPhase
+      );
+
+      setSidebarCollapsed(result.nextPaneState.sidebarCollapsed);
+      setListCollapsed(result.nextPaneState.listCollapsed);
+      sidebarCollapsedRef.current = result.nextPaneState.sidebarCollapsed;
+      listCollapsedRef.current = result.nextPaneState.listCollapsed;
+
+      return result.nextPhase;
+    });
+  }, []);
+
   useEffect(() => {
     if (!isMobile) {
       return;
@@ -433,6 +491,7 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
     onRefreshFeeds: () => {
       void handleRefresh();
     },
+    onCycleFocusPanes: handleCycleFocusPanes,
     onFocusSearch: focusSearchInput,
     onOpenShortcuts: openShortcutsModal,
     onCloseShortcuts: closeShortcutsModal,
@@ -543,7 +602,7 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
             onRequestFolderDelete={(folderId, mode) => {
               return handleDeleteFolder(folderId, mode);
             }}
-            onCollapse={() => setSidebarCollapsed(true)}
+            onCollapse={handleSidebarCollapse}
           />
         }
         articleList={
@@ -570,10 +629,10 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
         }
         articleReader={<ArticleReader article={openArticle} />}
         sidebarCollapsed={sidebarCollapsed}
-        onToggleSidebar={() => setSidebarCollapsed((prev) => !prev)}
+        onToggleSidebar={handleToggleSidebar}
         listCollapsed={listCollapsed}
-        onCollapseList={() => setListCollapsed(true)}
-        onToggleList={() => setListCollapsed((prev) => !prev)}
+        onCollapseList={handleCollapseList}
+        onToggleList={handleToggleList}
         isMobile={isMobile}
         mobileView={mobileView}
         mobileListTitle={isSearchActive ? "Search results" : selectedScopeLabel}

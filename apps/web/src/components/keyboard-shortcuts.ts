@@ -9,6 +9,7 @@ export type ShortcutActionId =
   | "article.previous.arrow"
   | "article.open"
   | "feeds.refresh"
+  | "workspace.focusCycle"
   | "search.focus"
   | "shortcuts.open"
   | "shortcuts.close";
@@ -76,6 +77,12 @@ export const SHORTCUT_DEFINITIONS: readonly ShortcutDefinition[] = [
     group: "app_actions",
     keys: ["r"],
     description: "Refresh feeds",
+  },
+  {
+    id: "workspace.focusCycle",
+    group: "app_actions",
+    keys: ["f"],
+    description: "Cycle pane focus (sidebar -> list -> reader -> all panes)",
   },
   {
     id: "search.focus",

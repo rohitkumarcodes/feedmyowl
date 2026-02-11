@@ -116,6 +116,7 @@ Notes:
   - `j/k` work in list and reader contexts.
   - Arrow keys + `Enter` are list-only.
   - `r` refreshes feeds.
+  - `f` cycles pane focus in four steps: collapse sidebar -> collapse list -> expand list -> expand sidebar.
   - `/` focuses article search.
   - `?` opens shortcuts help.
   - `Escape` closes the shortcuts dialog and clears the search input when focused.

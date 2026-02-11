@@ -78,6 +78,7 @@ Three stacked views:
   - `ArrowUp`: previous article (list context only)
   - `Enter`: open selected article (list context only)
   - `r`: refresh feeds
+  - `f`: cycle pane focus (`sidebar -> list -> reader -> all panes`)
   - `/`: focus article search input
   - `?`: open shortcuts help modal
   - `Escape`: close shortcuts help modal or clear search input when focused

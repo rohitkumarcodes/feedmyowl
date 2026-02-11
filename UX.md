@@ -116,6 +116,7 @@
   - `ArrowUp`: previous article (list context only)
   - `Enter`: open selected article (list context only)
   - `r`: refresh feeds
+  - `f`: cycle pane focus (`sidebar -> list -> reader -> all panes`)
   - `/`: focus article search input
   - `?`: open shortcuts help modal
   - `Escape`: close shortcuts modal and clear search input when focused

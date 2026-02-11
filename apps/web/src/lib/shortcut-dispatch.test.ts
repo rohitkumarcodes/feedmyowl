@@ -70,6 +70,9 @@ describe("shortcut-dispatch", () => {
 
   it("maps workspace-wide actions when not typing", () => {
     expect(resolveShortcutAction(eventSnapshot("r"), baseContext)).toBe("feeds.refresh");
+    expect(resolveShortcutAction(eventSnapshot("f"), baseContext)).toBe(
+      "workspace.focusCycle"
+    );
     expect(resolveShortcutAction(eventSnapshot("/"), baseContext)).toBe("search.focus");
     expect(resolveShortcutAction(eventSnapshot("?"), baseContext)).toBe("shortcuts.open");
     expect(resolveShortcutAction(eventSnapshot("/", { shiftKey: true }), baseContext)).toBe(
@@ -94,6 +97,13 @@ describe("shortcut-dispatch", () => {
     ).toBeNull();
 
     expect(
+      resolveShortcutAction(eventSnapshot("f"), {
+        ...baseContext,
+        isTypingTarget: true,
+      })
+    ).toBeNull();
+
+    expect(
       resolveShortcutAction(eventSnapshot("/"), {
         ...baseContext,
         isTypingTarget: true,
@@ -113,6 +123,20 @@ describe("shortcut-dispatch", () => {
       resolveShortcutAction(eventSnapshot("j"), {
         ...baseContext,
         isListContext: true,
+        isShortcutsModalOpen: true,
+      })
+    ).toBeNull();
+
+    expect(
+      resolveShortcutAction(eventSnapshot("f"), {
+        ...baseContext,
+        isShortcutsModalOpen: true,
+      })
+    ).toBeNull();
+
+    expect(
+      resolveShortcutAction(eventSnapshot("r"), {
+        ...baseContext,
         isShortcutsModalOpen: true,
       })
     ).toBeNull();

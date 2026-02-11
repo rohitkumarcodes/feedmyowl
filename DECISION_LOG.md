@@ -111,6 +111,7 @@ This log records active product and technical decisions for the current app phas
   - `j/k` work in list and reader contexts.
   - Arrow keys and `Enter` are list-only.
   - `r` refreshes feeds workspace-wide when not typing.
+  - `f` cycles pane focus in order: collapse sidebar -> collapse list -> expand list -> expand sidebar.
   - `/` focuses article search.
   - `?` opens an in-app shortcuts dialog.
   - `Escape` closes the shortcuts dialog and clears the search input when focused.

@@ -14,6 +14,7 @@ interface UseKeyboardShortcutsOptions {
   onPreviousArticle: () => void;
   onOpenArticle: () => void;
   onRefreshFeeds: () => void;
+  onCycleFocusPanes: () => void;
   onFocusSearch: () => void;
   onOpenShortcuts: () => void;
   onCloseShortcuts: () => void;
@@ -44,6 +45,7 @@ export function useKeyboardShortcuts({
   onPreviousArticle,
   onOpenArticle,
   onRefreshFeeds,
+  onCycleFocusPanes,
   onFocusSearch,
   onOpenShortcuts,
   onCloseShortcuts,
@@ -97,6 +99,11 @@ export function useKeyboardShortcuts({
         return;
       }
 
+      if (action === "workspace.focusCycle") {
+        onCycleFocusPanes();
+        return;
+      }
+
       if (action === "search.focus") {
         onFocusSearch();
         return;
@@ -123,6 +130,7 @@ export function useKeyboardShortcuts({
     isReaderContextTarget,
     isShortcutsModalOpen,
     onCloseShortcuts,
+    onCycleFocusPanes,
     onFocusSearch,
     onNextArticle,
     onOpenArticle,

@@ -45,7 +45,7 @@ function resolveTargetElement(target: EventTarget | null): (EventTarget & Elemen
     return null;
   }
 
-  const parent = target.parentElement ?? null;
+  const parent: EventTarget | null = target.parentElement ?? null;
   return isElementLike(parent) ? parent : null;
 }
 
@@ -110,7 +110,7 @@ export function shouldFocusReaderRoot(target: EventTarget | null): boolean {
       return false;
     }
 
-    const parent = current.parentElement ?? null;
+    const parent: EventTarget | null = current.parentElement ?? null;
     current = isElementLike(parent) ? parent : null;
   }
 
