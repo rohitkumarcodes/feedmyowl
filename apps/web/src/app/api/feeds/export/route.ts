@@ -1,9 +1,10 @@
 /**
  * API Route: /api/feeds/export
  *
- * Supports two export formats:
+ * Supported formats:
  *   - ?format=opml (default)
- *   - ?format=json (full portable account data)
+ *   - ?format=json (portable v2 by default)
+ *   - ?format=json&version=1 (legacy verbose export shape)
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -13,6 +14,48 @@ import { handleApiRouteError } from "@/lib/api-errors";
 import { ensureUserRecord } from "@/lib/app-user";
 import { isMissingRelationError } from "@/lib/db-compat";
 import { resolveFeedFolderIds } from "@/lib/folder-memberships";
+
+interface FolderRow {
+  id: string;
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface FeedItemRow {
+  id: string;
+  guid: string | null;
+  title: string | null;
+  link: string | null;
+  author: string | null;
+  publishedAt: Date | null;
+  readAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface FeedRow {
+  id: string;
+  url: string;
+  title: string | null;
+  customTitle: string | null;
+  description: string | null;
+  folderId: string | null;
+  lastFetchedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  items?: FeedItemRow[];
+  folderMemberships?: Array<{ folderId: string }>;
+}
+
+interface ExportUserRecord {
+  id: string;
+  clerkId: string;
+  email: string;
+  createdAt: Date;
+  folders?: FolderRow[];
+  feeds?: FeedRow[];
+}
 
 /**
  * Escape XML-sensitive characters for OPML output.
@@ -26,13 +69,19 @@ function escapeXml(value: string): string {
     .replace(/'/g, "&apos;");
 }
 
-function getMembershipFolderIds(feed: unknown): string[] {
-  const candidate = feed as { folderMemberships?: Array<{ folderId: string }> };
-  if (!Array.isArray(candidate.folderMemberships)) {
+function getMembershipFolderIds(feed: FeedRow): string[] {
+  if (!Array.isArray(feed.folderMemberships)) {
     return [];
   }
 
-  return candidate.folderMemberships.map((membership) => membership.folderId);
+  return feed.folderMemberships.map((membership) => membership.folderId);
+}
+
+function toResolvedFeedFolderIds(feed: FeedRow): string[] {
+  return resolveFeedFolderIds({
+    legacyFolderId: feed.folderId,
+    membershipFolderIds: getMembershipFolderIds(feed),
+  });
 }
 
 /**
@@ -120,6 +169,102 @@ ${bodyLines}
 `;
 }
 
+async function queryExportUser(
+  userId: string,
+  includeItems: boolean
+): Promise<ExportUserRecord | null> {
+  const userColumns = {
+    id: true,
+    clerkId: true,
+    email: true,
+    createdAt: true,
+  } as const;
+
+  const feedColumns = {
+    id: true,
+    url: true,
+    title: true,
+    customTitle: true,
+    description: true,
+    folderId: true,
+    lastFetchedAt: true,
+    createdAt: true,
+    updatedAt: true,
+  } as const;
+
+  try {
+    if (includeItems) {
+      return (await db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: userColumns,
+        with: {
+          folders: true,
+          feeds: {
+            columns: feedColumns,
+            with: {
+              items: true,
+              folderMemberships: {
+                columns: {
+                  folderId: true,
+                },
+              },
+            },
+          },
+        },
+      })) as ExportUserRecord | null;
+    }
+
+    return (await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: userColumns,
+      with: {
+        folders: true,
+        feeds: {
+          columns: feedColumns,
+          with: {
+            folderMemberships: {
+              columns: {
+                folderId: true,
+              },
+            },
+          },
+        },
+      },
+    })) as ExportUserRecord | null;
+  } catch (error) {
+    if (!isMissingRelationError(error, "feed_folder_memberships")) {
+      throw error;
+    }
+
+    if (includeItems) {
+      return (await db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: userColumns,
+        with: {
+          folders: true,
+          feeds: {
+            columns: feedColumns,
+            with: {
+              items: true,
+            },
+          },
+        },
+      })) as ExportUserRecord | null;
+    }
+
+    return (await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: userColumns,
+      with: {
+        folders: true,
+        feeds: {
+          columns: feedColumns,
+        },
+      },
+    })) as ExportUserRecord | null;
+  }
+}
+
 /**
  * GET /api/feeds/export
  * Returns OPML or JSON portable data for the authenticated user.
@@ -133,105 +278,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    let user: Record<string, unknown> | null = null;
+    const format = request.nextUrl.searchParams.get("format") || "opml";
+    const jsonVersion = request.nextUrl.searchParams.get("version") || "2";
+    const includeLegacyItems = format === "json" && jsonVersion === "1";
 
-    try {
-      user = (await db.query.users.findFirst({
-        where: eq(users.id, ensuredUser.id),
-        columns: {
-          id: true,
-          clerkId: true,
-          email: true,
-          subscriptionTier: true,
-          stripeCustomerId: true,
-          stripeSubscriptionId: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-        with: {
-          folders: true,
-          feeds: {
-            with: {
-              items: true,
-              folderMemberships: {
-                columns: {
-                  folderId: true,
-                },
-              },
-            },
-          },
-        },
-      })) as Record<string, unknown> | null;
-    } catch (error) {
-      if (!isMissingRelationError(error, "feed_folder_memberships")) {
-        throw error;
-      }
-
-      user = (await db.query.users.findFirst({
-        where: eq(users.id, ensuredUser.id),
-        columns: {
-          id: true,
-          clerkId: true,
-          email: true,
-          subscriptionTier: true,
-          stripeCustomerId: true,
-          stripeSubscriptionId: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-        with: {
-          folders: true,
-          feeds: {
-            with: {
-              items: true,
-            },
-          },
-        },
-      })) as Record<string, unknown> | null;
+    if (format === "json" && jsonVersion !== "1" && jsonVersion !== "2") {
+      return NextResponse.json(
+        { error: "Unsupported JSON export version" },
+        { status: 400 }
+      );
     }
+
+    const user = await queryExportUser(ensuredUser.id, includeLegacyItems);
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const folderRows =
-      (user.folders as
-        | Array<{
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-          }>
-        | undefined) ?? [];
-
-    const feedRows =
-      (user.feeds as
-        | Array<{
-            id: string;
-            url: string;
-            title: string | null;
-            customTitle: string | null;
-            description: string | null;
-            folderId: string | null;
-            lastFetchedAt: Date | null;
-            createdAt: Date;
-            updatedAt: Date;
-            items: Array<{
-              id: string;
-              guid: string | null;
-              title: string | null;
-              link: string | null;
-              author: string | null;
-              publishedAt: Date | null;
-              readAt: Date | null;
-              createdAt: Date;
-              updatedAt: Date;
-            }>;
-            folderMemberships?: Array<{ folderId: string }>;
-          }>
-        | undefined) ?? [];
-
-    const format = request.nextUrl.searchParams.get("format") || "opml";
+    const folderRows = user.folders ?? [];
+    const feedRows = user.feeds ?? [];
+    const folderNameById = new Map(folderRows.map((folder) => [folder.id, folder.name]));
     const nowIso = new Date().toISOString();
     const filenameDate = nowIso.slice(0, 10);
 
@@ -246,10 +312,7 @@ export async function GET(request: NextRequest) {
           url: feed.url,
           title: feed.title,
           customTitle: feed.customTitle,
-          folderIds: resolveFeedFolderIds({
-            legacyFolderId: feed.folderId,
-            membershipFolderIds: getMembershipFolderIds(feed),
-          }),
+          folderIds: toResolvedFeedFolderIds(feed),
         })),
       });
 
@@ -263,14 +326,49 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    if (format === "json") {
-      const exportedData = {
+    if (format === "json" && jsonVersion === "2") {
+      const portableExport = {
+        version: 2 as const,
+        exportedAt: nowIso,
+        sourceApp: "FeedMyOwl" as const,
+        feeds: feedRows
+          .map((feed) => {
+            const folderNames = toResolvedFeedFolderIds(feed)
+              .map((folderId) => folderNameById.get(folderId))
+              .filter((name): name is string => Boolean(name))
+              .sort((a, b) => a.localeCompare(b));
+
+            return {
+              url: feed.url,
+              customTitle: feed.customTitle,
+              folders: folderNames,
+            };
+          })
+          .sort((a, b) => {
+            const aLabel = a.customTitle || a.url;
+            const bLabel = b.customTitle || b.url;
+            return aLabel.localeCompare(bLabel);
+          }),
+      };
+
+      return new NextResponse(JSON.stringify(portableExport, null, 2), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          "Content-Disposition": `attachment; filename="feedmyowl-data-v2-${filenameDate}.json"`,
+          "Cache-Control": "no-store",
+        },
+      });
+    }
+
+    if (format === "json" && jsonVersion === "1") {
+      const legacyExport = {
         exportedAt: nowIso,
         user: {
-          id: (user.id as string) || "",
-          clerkId: (user.clerkId as string) || "",
-          email: (user.email as string) || "",
-          createdAt: (user.createdAt as Date).toISOString(),
+          id: user.id || "",
+          clerkId: user.clerkId || "",
+          email: user.email || "",
+          createdAt: user.createdAt.toISOString(),
         },
         folders: folderRows
           .map((folder) => ({
@@ -287,16 +385,12 @@ export async function GET(request: NextRequest) {
             title: feed.title,
             customTitle: feed.customTitle,
             description: feed.description,
-            folderIds: resolveFeedFolderIds({
-              legacyFolderId: feed.folderId,
-              membershipFolderIds: getMembershipFolderIds(feed),
-            }),
-            // Transitional compatibility for older imports.
+            folderIds: toResolvedFeedFolderIds(feed),
             folderId: feed.folderId,
             lastFetchedAt: feed.lastFetchedAt?.toISOString() || null,
             createdAt: feed.createdAt.toISOString(),
             updatedAt: feed.updatedAt.toISOString(),
-            items: feed.items.map((item) => ({
+            items: (feed.items || []).map((item) => ({
               id: item.id,
               guid: item.guid,
               title: item.title,
@@ -315,11 +409,11 @@ export async function GET(request: NextRequest) {
           }),
       };
 
-      return new NextResponse(JSON.stringify(exportedData, null, 2), {
+      return new NextResponse(JSON.stringify(legacyExport, null, 2), {
         status: 200,
         headers: {
           "Content-Type": "application/json; charset=utf-8",
-          "Content-Disposition": `attachment; filename="feedmyowl-data-${filenameDate}.json"`,
+          "Content-Disposition": `attachment; filename="feedmyowl-data-v1-${filenameDate}.json"`,
           "Cache-Control": "no-store",
         },
       });

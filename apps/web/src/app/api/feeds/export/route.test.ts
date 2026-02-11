@@ -1,0 +1,171 @@
+import { NextRequest } from "next/server";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const mocks = vi.hoisted(() => ({
+  requireAuth: vi.fn(),
+  ensureUserRecord: vi.fn(),
+  dbQueryUsersFindFirst: vi.fn(),
+}));
+
+vi.mock("@/lib/auth", () => ({
+  requireAuth: mocks.requireAuth,
+  isAuthRequiredError: vi.fn(() => false),
+}));
+
+vi.mock("@/lib/app-user", () => ({
+  ensureUserRecord: mocks.ensureUserRecord,
+}));
+
+vi.mock("@/lib/database", () => ({
+  db: {
+    query: {
+      users: {
+        findFirst: mocks.dbQueryUsersFindFirst,
+      },
+    },
+  },
+  eq: vi.fn(() => ({})),
+  users: {},
+}));
+
+import { GET } from "@/app/api/feeds/export/route";
+
+function createRequest(url: string): NextRequest {
+  return new NextRequest(url, { method: "GET" });
+}
+
+function createMockUserRecord() {
+  const now = new Date("2026-02-11T00:00:00.000Z");
+
+  return {
+    id: "user_123",
+    clerkId: "clerk_123",
+    email: "user@example.com",
+    createdAt: now,
+    folders: [
+      {
+        id: "folder_1",
+        name: "Tech",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: "folder_2",
+        name: "News",
+        createdAt: now,
+        updatedAt: now,
+      },
+    ],
+    feeds: [
+      {
+        id: "feed_1",
+        url: "https://example.com/feed.xml",
+        title: "Example Feed",
+        customTitle: "Custom Feed",
+        description: "Example description",
+        folderId: "folder_1",
+        lastFetchedAt: now,
+        createdAt: now,
+        updatedAt: now,
+        folderMemberships: [{ folderId: "folder_1" }, { folderId: "folder_2" }],
+        items: [
+          {
+            id: "item_1",
+            guid: "guid_1",
+            title: "Item one",
+            link: "https://example.com/item-1",
+            author: "Example Author",
+            publishedAt: now,
+            readAt: null,
+            createdAt: now,
+            updatedAt: now,
+          },
+        ],
+      },
+    ],
+  };
+}
+
+describe("GET /api/feeds/export", () => {
+  beforeEach(() => {
+    mocks.requireAuth.mockResolvedValue({ clerkId: "clerk_123" });
+    mocks.ensureUserRecord.mockResolvedValue({ id: "user_123", clerkId: "clerk_123" });
+    mocks.dbQueryUsersFindFirst.mockResolvedValue(createMockUserRecord());
+  });
+
+  it("returns OPML export grouped by folders", async () => {
+    const response = await GET(
+      createRequest("https://app.feedmyowl.test/api/feeds/export?format=opml")
+    );
+    const body = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/x-opml");
+    expect(body).toContain("<opml version=\"2.0\">");
+    expect(body).toContain("xmlUrl=\"https://example.com/feed.xml\"");
+    expect(body).toContain("outline text=\"Tech\"");
+  });
+
+  it("returns portable JSON v2 by default", async () => {
+    const response = await GET(
+      createRequest("https://app.feedmyowl.test/api/feeds/export?format=json")
+    );
+    const body = (await response.json()) as {
+      version: number;
+      sourceApp: string;
+      feeds: Array<{
+        url: string;
+        customTitle: string | null;
+        folders: string[];
+      }>;
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.version).toBe(2);
+    expect(body.sourceApp).toBe("FeedMyOwl");
+    expect(body.feeds).toEqual([
+      {
+        url: "https://example.com/feed.xml",
+        customTitle: "Custom Feed",
+        folders: ["News", "Tech"],
+      },
+    ]);
+  });
+
+  it("returns legacy JSON export when version=1 is requested", async () => {
+    const response = await GET(
+      createRequest("https://app.feedmyowl.test/api/feeds/export?format=json&version=1")
+    );
+    const body = (await response.json()) as {
+      user: { id: string };
+      feeds: Array<{ id: string; items: Array<{ id: string }> }>;
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.user.id).toBe("user_123");
+    expect(body.feeds[0].id).toBe("feed_1");
+    expect(body.feeds[0].items).toEqual([
+      expect.objectContaining({ id: "item_1" }),
+    ]);
+  });
+
+  it("returns 400 for unsupported JSON export version", async () => {
+    const response = await GET(
+      createRequest("https://app.feedmyowl.test/api/feeds/export?format=json&version=3")
+    );
+    const body = (await response.json()) as { error?: string };
+
+    expect(response.status).toBe(400);
+    expect(body.error).toBe("Unsupported JSON export version");
+  });
+
+  it("returns 400 for unsupported export format", async () => {
+    const response = await GET(
+      createRequest("https://app.feedmyowl.test/api/feeds/export?format=csv")
+    );
+    const body = (await response.json()) as { error?: string };
+
+    expect(response.status).toBe(400);
+    expect(body.error).toBe("Unsupported export format");
+  });
+});

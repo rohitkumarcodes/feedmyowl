@@ -12,7 +12,20 @@ import {
 } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { normalizeFeedUrl } from "@/lib/feed-url";
+import {
+  chunkImportEntries,
+  normalizeAndMergeImportEntries,
+  parseImportFileContents,
+  summarizeImportRows,
+  type FeedImportRowSummary,
+} from "@/lib/feed-import-file";
+import {
+  FEED_IMPORT_CLIENT_CHUNK_SIZE,
+  FEED_IMPORT_MAX_TOTAL_ENTRIES,
+  type FeedImportResponse,
+  type FeedImportRowResult,
+  type FeedImportSourceType,
+} from "@/lib/feed-import-types";
 import { OWL_ART_OPTIONS, coerceOwlAscii, type OwlAscii } from "@/lib/owl-brand";
 import { SHORTCUT_GROUPS } from "./keyboard-shortcuts";
 import styles from "./settings-overview.module.css";
@@ -22,9 +35,8 @@ interface SettingsOverviewProps {
   owlAscii: OwlAscii;
 }
 
-interface ImportResponseBody {
+interface ImportRequestErrorBody {
   error?: string;
-  duplicate?: boolean;
 }
 
 interface SaveOwlResponseBody {
@@ -39,20 +51,11 @@ interface OwlOptionsShutterProps {
   children: ReactNode;
 }
 
-interface ParsedImportFile {
-  urls: string[];
-  sourceType: "OPML" | "JSON";
-}
-
 interface ImportSummary {
   fileName: string;
-  sourceType: "OPML" | "JSON";
+  sourceType: FeedImportSourceType;
   discoveredCount: number;
-  processedCount: number;
-  importedCount: number;
-  duplicateCount: number;
-  failedCount: number;
-  failedDetails: string[];
+  summary: FeedImportRowSummary;
 }
 
 interface ImportProgress {
@@ -100,102 +103,6 @@ function usePrefersReducedMotion(): boolean {
   }, []);
 
   return prefersReducedMotion;
-}
-
-/**
- * Parse feed URLs from OPML/XML outline nodes.
- */
-function parseOpmlFeedUrls(contents: string): string[] {
-  const xmlDoc = new DOMParser().parseFromString(contents, "text/xml");
-
-  if (xmlDoc.querySelector("parsererror")) {
-    throw new Error("This OPML/XML file could not be parsed.");
-  }
-
-  return Array.from(xmlDoc.querySelectorAll("outline"))
-    .map(
-      (outline) =>
-        outline.getAttribute("xmlUrl") || outline.getAttribute("xmlurl") || ""
-    )
-    .map((value) => value.trim())
-    .filter((value) => value.length > 0);
-}
-
-/**
- * Parse feed URLs from FeedMyOwl exported JSON.
- */
-function parseJsonFeedUrls(contents: string): string[] {
-  let parsed: unknown;
-
-  try {
-    parsed = JSON.parse(contents);
-  } catch {
-    throw new Error("This JSON file could not be parsed.");
-  }
-
-  if (!parsed || typeof parsed !== "object") {
-    throw new Error("This JSON file does not contain feed export data.");
-  }
-
-  const feedsValue = (parsed as { feeds?: unknown }).feeds;
-  if (!Array.isArray(feedsValue)) {
-    throw new Error("This JSON file does not contain a valid feeds array.");
-  }
-
-  return feedsValue
-    .map((feed) => {
-      if (!feed || typeof feed !== "object") {
-        return "";
-      }
-
-      const url = (feed as { url?: unknown }).url;
-      return typeof url === "string" ? url.trim() : "";
-    })
-    .filter((value) => value.length > 0);
-}
-
-/**
- * Normalize and deduplicate imported URLs.
- */
-function normalizeAndDedupeUrls(urls: string[]): string[] {
-  const seen = new Set<string>();
-  const normalizedUrls: string[] = [];
-
-  for (const url of urls) {
-    const normalized = normalizeFeedUrl(url);
-    if (!normalized || seen.has(normalized)) {
-      continue;
-    }
-
-    seen.add(normalized);
-    normalizedUrls.push(normalized);
-  }
-
-  return normalizedUrls;
-}
-
-/**
- * Parse one selected import file into feed URLs.
- */
-async function parseImportFile(file: File): Promise<ParsedImportFile> {
-  const fileName = file.name.toLowerCase();
-  const contents = await file.text();
-
-  if (fileName.endsWith(".json")) {
-    return {
-      urls: parseJsonFeedUrls(contents),
-      sourceType: "JSON",
-    };
-  }
-
-  if (fileName.endsWith(".opml") || fileName.endsWith(".xml")) {
-    return {
-      urls: parseOpmlFeedUrls(contents),
-      sourceType: "OPML",
-    };
-  }
-
-  throw new Error("Unsupported file type. Use .opml, .xml, or .json.");
 }
 
 function OwlOptionsShutter({
@@ -611,70 +518,110 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
     setIsImportingFeeds(true);
 
     try {
-      const parsedFile = await parseImportFile(selectedFile);
-      const normalizedUrls = normalizeAndDedupeUrls(parsedFile.urls);
+      const parsedFile = parseImportFileContents(
+        selectedFile.name,
+        await selectedFile.text()
+      );
+      const normalizedEntries = normalizeAndMergeImportEntries(parsedFile.entries);
 
-      if (normalizedUrls.length === 0) {
+      if (normalizedEntries.length === 0) {
         setImportError("No valid feed URLs were found in the selected file.");
         return;
       }
 
-      let importedCount = 0;
-      let duplicateCount = 0;
-      let failedCount = 0;
-      const failedDetails: string[] = [];
-      setImportProgress({ processedCount: 0, totalCount: normalizedUrls.length });
+      if (normalizedEntries.length > FEED_IMPORT_MAX_TOTAL_ENTRIES) {
+        setImportError(
+          `This file contains ${normalizedEntries.length} unique valid URLs. Import up to ${FEED_IMPORT_MAX_TOTAL_ENTRIES} at a time.`
+        );
+        return;
+      }
 
-      for (let index = 0; index < normalizedUrls.length; index += 1) {
-        const url = normalizedUrls[index];
+      const chunks = chunkImportEntries(
+        normalizedEntries,
+        FEED_IMPORT_CLIENT_CHUNK_SIZE
+      );
+      const allRows: FeedImportRowResult[] = [];
+      let processedCount = 0;
+
+      setImportProgress({ processedCount: 0, totalCount: normalizedEntries.length });
+
+      for (const chunk of chunks) {
+        const fallbackRows = chunk.map(
+          (entry): FeedImportRowResult => ({
+            url: entry.url,
+            status: "failed",
+            code: "unknown",
+            message: "Could not import.",
+          })
+        );
+
         try {
-          const response = await fetch("/api/feeds", {
+          const response = await fetch("/api/feeds/import", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              action: "feed.create",
-              url,
+              sourceType: parsedFile.sourceType,
+              entries: chunk,
+              options: { skipMultiCandidate: true },
             }),
           });
 
-          const body = await parseResponseJson<ImportResponseBody>(response);
+          const body = await parseResponseJson<
+            FeedImportResponse & ImportRequestErrorBody
+          >(response);
 
-          if (!response.ok) {
-            failedCount += 1;
-            if (failedDetails.length < 5) {
-              failedDetails.push(`${url} — ${body?.error || "Could not import."}`);
-            }
-            continue;
-          }
-
-          if (body?.duplicate) {
-            duplicateCount += 1;
+          if (!response.ok || !body || !Array.isArray(body.rows)) {
+            const requestErrorMessage = body?.error || "Could not import this chunk.";
+            allRows.push(
+              ...fallbackRows.map((row) => ({
+                ...row,
+                message: requestErrorMessage,
+              }))
+            );
           } else {
-            importedCount += 1;
+            const parsedRows = body.rows.filter(
+              (row): row is FeedImportRowResult =>
+                Boolean(
+                  row &&
+                    typeof row === "object" &&
+                    typeof row.url === "string" &&
+                    typeof row.status === "string"
+                )
+            );
+
+            allRows.push(...parsedRows);
+
+            if (parsedRows.length < chunk.length) {
+              allRows.push(...fallbackRows.slice(parsedRows.length));
+            }
           }
         } catch {
-          failedCount += 1;
-          if (failedDetails.length < 5) {
-            failedDetails.push(`${url} — Could not connect to the server.`);
-          }
-        } finally {
-          setImportProgress({
-            processedCount: index + 1,
-            totalCount: normalizedUrls.length,
-          });
+          allRows.push(
+            ...fallbackRows.map((row) => ({
+              ...row,
+              message: "Could not connect to the server.",
+            }))
+          );
         }
+
+        processedCount += chunk.length;
+        setImportProgress({
+          processedCount,
+          totalCount: normalizedEntries.length,
+        });
       }
 
+      const summary = summarizeImportRows(allRows);
       setImportSummary({
         fileName: selectedFile.name,
         sourceType: parsedFile.sourceType,
-        discoveredCount: parsedFile.urls.length,
-        processedCount: normalizedUrls.length,
-        importedCount,
-        duplicateCount,
-        failedCount,
-        failedDetails,
+        discoveredCount: parsedFile.entries.length,
+        summary,
       });
+
+      if (summary.importedCount > 0 || summary.mergedCount > 0) {
+        router.refresh();
+      }
     } catch (error) {
       setImportError(
         error instanceof Error
@@ -688,11 +635,19 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
   }
 
   const importSummaryText = importSummary
-    ? `Processed ${importSummary.processedCount} unique valid URL${
-        importSummary.processedCount === 1 ? "" : "s"
-      } from ${importSummary.sourceType} import (${importSummary.discoveredCount} discovered). Imported ${importSummary.importedCount}, skipped ${importSummary.duplicateCount} duplicate${
-        importSummary.duplicateCount === 1 ? "" : "s"
-      }, and failed ${importSummary.failedCount}.`
+    ? `Processed ${importSummary.summary.processedCount} unique valid URL${
+        importSummary.summary.processedCount === 1 ? "" : "s"
+      } from ${importSummary.sourceType} import (${importSummary.discoveredCount} discovered). Imported ${importSummary.summary.importedCount}, merged ${importSummary.summary.mergedCount} duplicate folder assignment${
+        importSummary.summary.mergedCount === 1 ? "" : "s"
+      }, kept ${
+        importSummary.summary.duplicateCount - importSummary.summary.mergedCount
+      } duplicate${importSummary.summary.duplicateCount - importSummary.summary.mergedCount === 1 ? "" : "s"} unchanged, and failed ${importSummary.summary.failedCount}.${
+        importSummary.summary.skippedMultipleCount > 0
+          ? ` ${importSummary.summary.skippedMultipleCount} entr${
+              importSummary.summary.skippedMultipleCount === 1 ? "y" : "ies"
+            } require manual feed selection.`
+          : ""
+      }`
     : null;
 
   const importButtonLabel = isImportingFeeds
@@ -766,9 +721,9 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
             <div className={styles.importSummary} role="status">
               <p>{importSummaryText}</p>
               <p className={styles.muted}>Source file: {importSummary.fileName}</p>
-              {importSummary.failedDetails.length > 0 ? (
+              {importSummary.summary.failedDetails.length > 0 ? (
                 <ul className={styles.importFailureList}>
-                  {importSummary.failedDetails.map((detail) => (
+                  {importSummary.summary.failedDetails.map((detail) => (
                     <li key={detail}>{detail}</li>
                   ))}
                 </ul>
