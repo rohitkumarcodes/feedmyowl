@@ -39,17 +39,36 @@ From repo root:
 - `PATCH /api/folders/[id]`
 - `DELETE /api/folders/[id]`
 - `POST /api/refresh`
+- `POST /api/feeds/import`
+- `GET /api/feeds/export`
 - `PATCH /api/settings/logo`
 - `PATCH /api/settings/theme`
 
-## 5. Common incidents
+## 5. Security and reliability defaults (2026-02-11)
+- Manual refresh only (background jobs deferred).
+- CSRF same-origin checks on mutating non-webhook routes.
+- Rate limits enforced with Redis/Upstash; fail-open if Redis unavailable.
+- Feed fetch hardening: SSRF blocking, redirect revalidation, timeout + retries.
+- Conditional fetch support: ETag / Last-Modified.
+- Reliable dedupe: GUID + content fingerprint with DB uniqueness.
+- Mutating routes can return:
+  - `403` with `code: "csrf_validation_failed"`
+  - `429` with `code: "rate_limited"` and `Retry-After`
+- Refresh responses can include additive `fetchState` values:
+  - `"updated"`
+  - `"not_modified"`
+
+## 6. Common incidents
 
 ### Feed cannot be added
 1. Validate URL format.
 2. For interactive add flow, check `POST /api/feeds` action `feed.discover`.
 3. If discovery status is `multiple`, user must select one candidate before `feed.create`.
 4. If discovery returns `invalid_xml`, expected message is: `Error: We couldn't find any feed at this URL. Contact site owner and ask for the feed link.`
-5. Check parser/network errors in logs.
+5. If request is rejected with `csrf_validation_failed`, verify `Origin`/`Referer` uses a trusted app origin.
+6. If request is rejected with `rate_limited`, inspect `Retry-After` and confirm user/IP request burst behavior.
+7. For SSRF block events, inspect logs for `feed.fetch.blocked` (blocked host/private IP/metadata endpoint).
+8. Check parser/network errors in logs.
 
 ### Folder operation fails
 1. Validate folder name length and uniqueness.
@@ -61,10 +80,48 @@ From repo root:
 2. Confirm all submitted folder IDs belong to the same user.
 3. Check membership table constraints.
 
+### Imported feeds are not in expected folders
+1. Confirm source file format is supported (`.opml`, `.xml`, `.json`).
+2. For OPML files, verify whether folder data is stored in nested `<outline>` structure or in `category` attributes.
+3. Expected mapping in current product model:
+   - Nested path `Tech > Web` becomes folder label `Tech / Web`.
+   - Category path `/Tech/Web` also becomes `Tech / Web`.
+4. If one feed has multiple category paths, confirm multiple folder assignments are created.
+5. Verify import response rows for duplicate handling:
+   - `duplicate_merged` means folder assignments were merged into an existing feed.
+   - `duplicate_unchanged` means no new folder assignment was added.
+
 ### Refresh fails for one or more feeds
 1. Call `POST /api/refresh` while authenticated.
 2. Review `last_fetch_*` fields per feed.
 3. Confirm source feed still serves valid XML.
+4. If refresh response includes `fetchState: "updated"`, content changed and item writes were attempted.
+5. If refresh response includes `fetchState: "not_modified"`, this is expected from HTTP validator caching (ETag/Last-Modified).
+6. If response is `429`, honor `Retry-After` and reduce burst refresh attempts.
+7. If response is `403` with `csrf_validation_failed`, verify same-origin request headers.
+
+### Rate limit rejection
+1. Affected routes in this phase:
+   - `POST /api/feeds`
+   - `POST /api/feeds/import`
+   - `POST /api/refresh`
+2. Confirm response shape: status `429`, header `Retry-After`, body `code="rate_limited"`.
+3. Validate user-level and IP-level request rates over the previous minute.
+4. If limits are being hit unexpectedly, inspect edge/proxy IP forwarding headers.
+
+### CSRF rejection on mutating routes
+1. Confirm response status `403` with `code="csrf_validation_failed"`.
+2. Ensure browser/API client sends `Origin`; `Referer` fallback is accepted.
+3. Confirm origin is one of trusted app origins (prod app URL, local dev origins, configured env origin).
+4. Webhooks are excluded from CSRF checks; do not apply browser-origin assumptions there.
+
+### Duplicate articles still appear
+1. Confirm migration `0010_feed_security_hardening` has been applied.
+2. Verify indexes exist:
+   - `feed_items_feed_id_guid_unique`
+   - `feed_items_feed_id_content_fingerprint_unique`
+3. Confirm duplicate rows are not violating `guid`/`content_fingerprint` uniqueness by feed.
+4. Check insertion path uses conflict-safe inserts (`ON CONFLICT DO NOTHING`).
 
 ### Feed shows unexpected article count
 1. Retention policy is count-based, not time-based: max 50 items per feed.
@@ -156,15 +213,23 @@ From repo root:
 4. Confirm `users.owl_ascii` value changed and `updated_at` advanced.
 5. Reload `/feeds` and verify both sidebar brand owl and favicon reflect saved value.
 
-## 6. Data model notes
+## 7. Data model notes
 - Canonical folder assignments: `feed_folder_memberships`.
 - Transitional compatibility field: `feeds.folder_id`.
 - User logo preference field: `users.owl_ascii` (default `{o,o}`).
+- Feed HTTP cache validators:
+  - `feeds.http_etag`
+  - `feeds.http_last_modified`
+- Feed-item dedupe fallback key:
+  - `feed_items.content_fingerprint`
+- Feed-item dedupe unique indexes:
+  - `(feed_id, guid)` where `guid IS NOT NULL`
+  - `(feed_id, content_fingerprint)` where `guid IS NULL AND content_fingerprint IS NOT NULL`
 - On folder delete:
   - `remove_only` removes memberships.
   - `remove_and_unsubscribe_exclusive` unsubscribes exclusive feeds only.
 
-## 7. Smoke test after deploy
+## 8. Smoke test after deploy
 1. Sign in.
 2. Create a folder.
 3. Add a single feed with a scheme-less URL (`example.com`) and confirm it resolves.
@@ -206,3 +271,15 @@ From repo root:
 38. Confirm typo fallback results do not show fragmented highlight noise for unrelated titles.
 39. In `Read all feeds`, scroll repeatedly and confirm additional pages auto-load until `You’re all caught up.`
 40. Switch between `all`, `uncategorized`, one folder, and one feed; confirm each scope initializes its own cursor paging and remains stable when returning to a previous scope.
+
+## 9. Import/export roadmap (beginner-friendly)
+- Import preview before apply:
+  - Display detected feeds, folder mapping, duplicates, and failures before write.
+- Selective export:
+  - Export full library or only selected folders/feeds.
+- Duplicate conflict policy controls:
+  - Let users choose skip/merge/overwrite behavior during import.
+- Portable JSON v3:
+  - Keep current portability and optionally include reading-state metadata.
+- Scheduled backups:
+  - Support periodic automatic exports, retention limits, and guided restore.

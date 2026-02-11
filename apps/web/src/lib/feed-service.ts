@@ -10,9 +10,10 @@ import {
   users,
 } from "@/lib/database";
 import { isMissingRelationError } from "@/lib/db-compat";
+import { computeFeedItemFingerprint } from "@/lib/feed-item-fingerprint";
 import { captureError } from "@/lib/error-tracking";
 import { normalizeFeedError } from "@/lib/feed-errors";
-import { parseFeed, type ParsedFeed } from "@/lib/feed-parser";
+import { parseFeedWithCache, type ParsedFeed } from "@/lib/feed-parser";
 import { normalizeFolderIds } from "@/lib/folder-memberships";
 import { purgeOldFeedItemsForFeed, purgeOldFeedItemsForUser } from "@/lib/retention";
 
@@ -21,8 +22,55 @@ export interface RefreshResult {
   feedUrl: string;
   newItemCount: number;
   status: "success" | "error";
+  fetchState?: "updated" | "not_modified";
   errorCode?: string;
   errorMessage?: string;
+}
+
+interface FeedHttpValidators {
+  etag?: string | null;
+  lastModified?: string | null;
+}
+
+function toInsertableFeedItemRows(feedId: string, parsedFeed: ParsedFeed) {
+  return parsedFeed.items.map((item) => {
+    const guid = item.guid ?? null;
+
+    return {
+      feedId,
+      guid,
+      title: item.title,
+      link: item.link,
+      content: item.content,
+      author: item.author,
+      publishedAt: item.publishedAt,
+      contentFingerprint: guid
+        ? null
+        : computeFeedItemFingerprint({
+            link: item.link,
+            title: item.title,
+            content: item.content,
+            author: item.author,
+            publishedAt: item.publishedAt,
+          }),
+    };
+  });
+}
+
+async function insertParsedFeedItems(feedId: string, parsedFeed: ParsedFeed): Promise<number> {
+  const rows = toInsertableFeedItemRows(feedId, parsedFeed);
+
+  if (rows.length === 0) {
+    return 0;
+  }
+
+  const insertedRows = await db
+    .insert(feedItems)
+    .values(rows)
+    .onConflictDoNothing()
+    .returning({ id: feedItems.id });
+
+  return insertedRows.length;
 }
 
 /**
@@ -41,7 +89,8 @@ export async function createFeedWithInitialItems(
   userId: string,
   url: string,
   parsedFeed: ParsedFeed,
-  folderIds: string[] = []
+  folderIds: string[] = [],
+  httpValidators: FeedHttpValidators = {}
 ) {
   const now = new Date();
   const normalizedFolderIds = normalizeFolderIds(folderIds);
@@ -59,25 +108,13 @@ export async function createFeedWithInitialItems(
       lastFetchErrorCode: null,
       lastFetchErrorMessage: null,
       lastFetchErrorAt: null,
+      httpEtag: httpValidators.etag ?? null,
+      httpLastModified: httpValidators.lastModified ?? null,
       updatedAt: now,
     })
     .returning();
 
-  const insertableItems = parsedFeed.items.filter((item) => item.guid);
-
-  if (insertableItems.length > 0) {
-    await db.insert(feedItems).values(
-      insertableItems.map((item) => ({
-        feedId: newFeed.id,
-        guid: item.guid,
-        title: item.title,
-        link: item.link,
-        content: item.content,
-        author: item.author,
-        publishedAt: item.publishedAt,
-      }))
-    );
-  }
+  const insertedItems = await insertParsedFeedItems(newFeed.id, parsedFeed);
 
   await purgeOldFeedItemsForFeed({ userId, feedId: newFeed.id });
 
@@ -99,7 +136,7 @@ export async function createFeedWithInitialItems(
     }
   }
 
-  return { feed: newFeed, insertedItems: insertableItems.length };
+  return { feed: newFeed, insertedItems };
 }
 
 export type MarkItemReadResult =
@@ -204,98 +241,113 @@ export async function refreshFeedsForUser(
     user.feeds.map(
       async (feed): Promise<{ result: RefreshResult; prunedCount: number }> => {
         try {
-          const parsed = await parseFeed(feed.url);
+          const parsedResult = await parseFeedWithCache(feed.url, {
+            etag: feed.httpEtag,
+            lastModified: feed.httpLastModified,
+          });
           const now = new Date();
 
-        await db
-          .update(feeds)
-          .set({
-            title: parsed.title || feed.title,
-            description: parsed.description || feed.description,
-            lastFetchedAt: now,
-            lastFetchStatus: "success",
-            lastFetchErrorCode: null,
-            lastFetchErrorMessage: null,
-            lastFetchErrorAt: null,
-            updatedAt: now,
-          })
-          .where(eq(feeds.id, feed.id));
+          if (parsedResult.status === "not_modified") {
+            await db
+              .update(feeds)
+              .set({
+                lastFetchedAt: now,
+                lastFetchStatus: "success",
+                lastFetchErrorCode: null,
+                lastFetchErrorMessage: null,
+                lastFetchErrorAt: null,
+                httpEtag: parsedResult.etag ?? feed.httpEtag,
+                httpLastModified: parsedResult.lastModified ?? feed.httpLastModified,
+                updatedAt: now,
+              })
+              .where(eq(feeds.id, feed.id));
 
-        const existingItems = await db.query.feedItems.findMany({
-          where: eq(feedItems.feedId, feed.id),
-          columns: { guid: true },
-        });
+            return {
+              result: {
+                feedId: feed.id,
+                feedUrl: feed.url,
+                newItemCount: 0,
+                status: "success",
+                fetchState: "not_modified",
+              },
+              prunedCount: 0,
+            };
+          }
 
-        const existingGuids = new Set(existingItems.map((item) => item.guid));
+          await db
+            .update(feeds)
+            .set({
+              title: parsedResult.parsedFeed.title || feed.title,
+              description: parsedResult.parsedFeed.description || feed.description,
+              lastFetchedAt: now,
+              lastFetchStatus: "success",
+              lastFetchErrorCode: null,
+              lastFetchErrorMessage: null,
+              lastFetchErrorAt: null,
+              httpEtag: parsedResult.etag,
+              httpLastModified: parsedResult.lastModified,
+              updatedAt: now,
+            })
+            .where(eq(feeds.id, feed.id));
 
-        const insertableItems = parsed.items.filter(
-          (item) => item.guid && !existingGuids.has(item.guid)
-        );
-
-        let prunedCount = 0;
-
-        if (insertableItems.length > 0) {
-          await db.insert(feedItems).values(
-            insertableItems.map((item) => ({
-              feedId: feed.id,
-              guid: item.guid,
-              title: item.title,
-              link: item.link,
-              content: item.content,
-              author: item.author,
-              publishedAt: item.publishedAt,
-            }))
+          const insertedItemCount = await insertParsedFeedItems(
+            feed.id,
+            parsedResult.parsedFeed
           );
 
-          prunedCount = await purgeOldFeedItemsForFeed({
-            userId,
+          let prunedCount = 0;
+          if (insertedItemCount > 0) {
+            prunedCount = await purgeOldFeedItemsForFeed({
+              userId,
+              feedId: feed.id,
+            });
+          }
+
+          return {
+            result: {
+              feedId: feed.id,
+              feedUrl: feed.url,
+              newItemCount: insertedItemCount,
+              status: "success",
+              fetchState: "updated",
+            },
+            prunedCount,
+          };
+        } catch (error) {
+          const normalizedError = normalizeFeedError(error, "refresh");
+          const now = new Date();
+
+          await db
+            .update(feeds)
+            .set({
+              lastFetchStatus: "error",
+              lastFetchErrorCode: normalizedError.code,
+              lastFetchErrorMessage: normalizedError.message,
+              lastFetchErrorAt: now,
+              updatedAt: now,
+            })
+            .where(eq(feeds.id, feed.id));
+
+          captureError(error, {
             feedId: feed.id,
+            feedUrl: feed.url,
+            code: normalizedError.code,
           });
+
+          return {
+            result: {
+              feedId: feed.id,
+              feedUrl: feed.url,
+              newItemCount: 0,
+              status: "error",
+              errorCode: normalizedError.code,
+              errorMessage: normalizedError.message,
+            },
+            prunedCount: 0,
+          };
         }
-
-        return {
-          result: {
-            feedId: feed.id,
-            feedUrl: feed.url,
-            newItemCount: insertableItems.length,
-            status: "success",
-          },
-          prunedCount,
-        };
-      } catch (error) {
-        const normalizedError = normalizeFeedError(error, "refresh");
-        const now = new Date();
-
-        await db
-          .update(feeds)
-          .set({
-            lastFetchStatus: "error",
-            lastFetchErrorCode: normalizedError.code,
-            lastFetchErrorMessage: normalizedError.message,
-            lastFetchErrorAt: now,
-            updatedAt: now,
-          })
-          .where(eq(feeds.id, feed.id));
-
-        captureError(error, {
-          feedId: feed.id,
-          feedUrl: feed.url,
-          code: normalizedError.code,
-        });
-
-        return {
-          result: {
-            feedId: feed.id,
-            feedUrl: feed.url,
-            newItemCount: 0,
-            status: "error",
-            errorCode: normalizedError.code,
-            errorMessage: normalizedError.message,
-          },
-          prunedCount: 0,
-        };
       }
-    })
+    )
   );
 
   const refreshResults: RefreshResult[] = settledResults.map((result) => {

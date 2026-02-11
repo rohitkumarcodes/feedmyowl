@@ -18,3 +18,7 @@ This release adds global fuzzy search to the feeds workspace and updates keyboar
 
 - Updated markdown product docs (`FEEDMYOWL_PROJECT_CONTEXT`, `DESIGN`, `UX`, `RUNBOOK`, `DECISION_LOG`) to reflect new search behavior and shortcut map.
 - Updated public `/docs/` keyboard guidance and added a dedicated article-search section.
+
+Follow-up (2026-02-11): platform hardening for feed writes/fetches is now in place, including Manual refresh only (background jobs deferred), CSRF same-origin checks on mutating non-webhook routes, rate limits enforced with Redis/Upstash (fail-open if Redis unavailable), feed fetch hardening (SSRF blocking, redirect revalidation, timeout + retries), conditional fetch support (ETag / Last-Modified), and reliable dedupe with DB uniqueness.
+
+Docs follow-up (2026-02-11): import/export docs now use beginner-friendly language and cover OPML folder behavior clearly, including flat folder mapping for category paths and the planned roadmap for safer migration features.

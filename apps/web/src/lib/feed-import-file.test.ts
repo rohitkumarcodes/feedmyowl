@@ -45,6 +45,81 @@ describe("feed import file helpers", () => {
     ]);
   });
 
+  it("parses OPML category-only folder assignments", () => {
+    const opml = `<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <body>
+    <outline
+      text="Category Feed"
+      xmlUrl="https://example.com/category.xml"
+      category="/Tech/Web, /News, /Tech/Web/"
+    />
+  </body>
+</opml>`;
+
+    const entries = parseOpmlImportEntries(opml);
+
+    expect(entries).toEqual([
+      {
+        url: "https://example.com/category.xml",
+        folderNames: ["Tech / Web", "News"],
+        customTitle: "Category Feed",
+      },
+    ]);
+  });
+
+  it("preserves parent folder context for non-self-closing feed outlines", () => {
+    const opml = `<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <body>
+    <outline text="Tech">
+      <outline text="First Feed" xmlUrl="https://example.com/first.xml"></outline>
+      <outline text="Second Feed" xmlUrl="https://example.com/second.xml"></outline>
+    </outline>
+  </body>
+</opml>`;
+
+    const entries = parseOpmlImportEntries(opml);
+
+    expect(entries).toEqual([
+      {
+        url: "https://example.com/first.xml",
+        folderNames: ["Tech"],
+        customTitle: "First Feed",
+      },
+      {
+        url: "https://example.com/second.xml",
+        folderNames: ["Tech"],
+        customTitle: "Second Feed",
+      },
+    ]);
+  });
+
+  it("merges nested and category folder assignments without duplicates", () => {
+    const opml = `<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <body>
+    <outline text="Tech">
+      <outline
+        text="Web Feed"
+        xmlUrl="https://example.com/web.xml"
+        category="/Tech/Web, /Productivity"
+      />
+    </outline>
+  </body>
+</opml>`;
+
+    const entries = parseOpmlImportEntries(opml);
+
+    expect(entries).toEqual([
+      {
+        url: "https://example.com/web.xml",
+        folderNames: ["Tech", "Tech / Web", "Productivity"],
+        customTitle: "Web Feed",
+      },
+    ]);
+  });
+
   it("parses legacy and portable JSON exports", () => {
     const legacy = parseJsonImportEntries(
       JSON.stringify({

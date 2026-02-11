@@ -1,4 +1,5 @@
 import { normalizeFeedUrl } from "@/lib/feed-url";
+import { fetchRemoteText } from "@/lib/feed-fetcher";
 
 export type FeedDiscoveryMethod = "html_alternate" | "heuristic_path";
 
@@ -109,20 +110,18 @@ function addCandidate(
 
 async function fetchHtml(inputUrl: string): Promise<string | null> {
   try {
-    const response = await fetch(inputUrl, {
-      method: "GET",
-      headers: {
-        Accept: "text/html,application/xhtml+xml;q=0.9,text/plain;q=0.8,*/*;q=0.1",
-      },
-      redirect: "follow",
-      signal: AbortSignal.timeout(DISCOVERY_TIMEOUT_MS),
+    const response = await fetchRemoteText(inputUrl, {
+      timeoutMs: DISCOVERY_TIMEOUT_MS,
+      retries: 0,
+      maxRedirects: 5,
+      accept: "text/html,application/xhtml+xml;q=0.9,text/plain;q=0.8,*/*;q=0.1",
     });
 
-    if (!response.ok) {
+    if (response.status !== "ok") {
       return null;
     }
 
-    return await response.text();
+    return response.text ?? null;
   } catch {
     return null;
   }

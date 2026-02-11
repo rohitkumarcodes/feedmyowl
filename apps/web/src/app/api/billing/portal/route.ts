@@ -1,11 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { handleApiRouteError } from "@/lib/api-errors";
 import { ensureUserRecord } from "@/lib/app-user";
+import { assertTrustedWriteOrigin } from "@/lib/csrf";
 import { createPortalSession } from "@/lib/payments";
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    const csrfFailure = assertTrustedWriteOrigin(request, "api.billing.portal.post");
+    if (csrfFailure) {
+      return csrfFailure;
+    }
+
     const { clerkId } = await requireAuth();
     const user = await ensureUserRecord(clerkId);
 

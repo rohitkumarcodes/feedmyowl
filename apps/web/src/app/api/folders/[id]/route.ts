@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { handleApiRouteError } from "@/lib/api-errors";
 import { ensureUserRecord } from "@/lib/app-user";
+import { assertTrustedWriteOrigin } from "@/lib/csrf";
 import {
   deleteFolderForUser,
   FOLDER_NAME_MAX_LENGTH,
@@ -37,6 +38,11 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const csrfFailure = assertTrustedWriteOrigin(request, "api.folders.id.patch");
+    if (csrfFailure) {
+      return csrfFailure;
+    }
+
     const { clerkId } = await requireAuth();
     const user = await ensureUserRecord(clerkId);
     const { id } = await params;
@@ -97,6 +103,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const csrfFailure = assertTrustedWriteOrigin(request, "api.folders.id.delete");
+    if (csrfFailure) {
+      return csrfFailure;
+    }
+
     const { clerkId } = await requireAuth();
     const user = await ensureUserRecord(clerkId);
     const { id } = await params;

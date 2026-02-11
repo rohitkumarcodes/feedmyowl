@@ -1,12 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { handleApiRouteError } from "@/lib/api-errors";
 import { db, eq, users } from "@/lib/database";
 import { ensureUserRecord } from "@/lib/app-user";
+import { assertTrustedWriteOrigin } from "@/lib/csrf";
 import { createCheckoutSession, createStripeCustomer } from "@/lib/payments";
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    const csrfFailure = assertTrustedWriteOrigin(request, "api.billing.checkout.post");
+    if (csrfFailure) {
+      return csrfFailure;
+    }
+
     const { clerkId } = await requireAuth();
     const priceId = process.env.STRIPE_PRICE_ID;
 

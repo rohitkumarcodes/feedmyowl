@@ -200,6 +200,47 @@ This log records active product and technical decisions for the current app phas
   - Authenticated routes apply the chosen mode; public/auth-entry pages remain light.
   - Clerk account surfaces follow the selected mode via shared appearance variables.
 
+### D-2026-02-11-04
+- Date: 2026-02-11
+- Status: active
+- Decision: Feed fetch and write paths are hardened while keeping user-triggered refresh behavior.
+- Why: Security and reliability controls are required to keep feed ingestion trustworthy and predictable at scale.
+- Details:
+  - Manual refresh only (background jobs deferred).
+  - CSRF same-origin checks on mutating non-webhook routes.
+  - Rate limits enforced with Redis/Upstash; fail-open if Redis unavailable.
+  - Feed fetch hardening: SSRF blocking, redirect revalidation, timeout + retries.
+  - Conditional fetch support: ETag / Last-Modified.
+  - Reliable dedupe: GUID + content fingerprint with DB uniqueness.
+  - Mutating routes can return `403` with `code: "csrf_validation_failed"`.
+  - Mutating routes can return `429` with `code: "rate_limited"` and `Retry-After`.
+  - Refresh results can include additive `fetchState` values: `"updated"` or `"not_modified"`.
+  - Data model additions: `feeds.http_etag`, `feeds.http_last_modified`,
+    `feed_items.content_fingerprint`, and unique dedupe indexes by feed.
+
+### D-2026-02-11-05
+- Date: 2026-02-11
+- Status: active
+- Decision: OPML import keeps folder segregation for both nested outlines and OPML `category` paths.
+- Why: Many feed tools store folder context differently, and users should not lose organization during migration.
+- Details:
+  - FeedMyOwl remains single-level folders only (no true nested folder tree).
+  - Nested OPML paths are flattened into one folder label (example: `Tech / Web`).
+  - OPML `category` values are parsed, split, normalized, and mapped into folder labels.
+  - One feed can map to multiple folders when multiple category paths are present.
+
+### D-2026-02-11-06
+- Date: 2026-02-11
+- Status: active
+- Decision: Import/export improvements are tracked as a beginner-friendly roadmap.
+- Why: New users need safer migration flows and clearer recovery options.
+- Roadmap:
+  - Import preview mode before writing changes.
+  - Selective export by folder/feed instead of full-library only.
+  - Explicit duplicate-conflict choices during import.
+  - Portable JSON v3 with optional reading-state metadata.
+  - Scheduled automatic backups with retention and guided restore.
+
 ## Superseded decisions
 
 ### D-2026-02-07-05

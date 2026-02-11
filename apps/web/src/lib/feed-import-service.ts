@@ -18,7 +18,7 @@ import {
   renameFeedForUser,
   setFeedFoldersForUser,
 } from "@/lib/feed-service";
-import { parseFeed, type ParsedFeed } from "@/lib/feed-parser";
+import { parseFeedWithMetadata, type ParsedFeed } from "@/lib/feed-parser";
 import type {
   FeedImportEntry,
   FeedImportRowResult,
@@ -37,6 +37,8 @@ const CUSTOM_TITLE_MAX_LENGTH = 255;
 interface ImportCandidate {
   url: string;
   parsedFeed: ParsedFeed;
+  etag: string | null;
+  lastModified: string | null;
   existingFeed:
     | NonNullable<Awaited<ReturnType<typeof findExistingFeedForUserByUrl>>>
     | null;
@@ -338,19 +340,28 @@ async function resolveImportCandidate(params: {
           description: undefined,
           items: [],
         },
+        etag: null,
+        lastModified: null,
         existingFeed: directExistingFeed,
       },
     };
   }
 
   try {
-    const parsedDirectFeed = await parseFeed(params.normalizedInputUrl);
+    const parsedDirectFeed = await parseFeedWithMetadata(params.normalizedInputUrl);
+    const resolvedExistingFeed = await findExistingFeedForUserByUrl(
+      params.userId,
+      parsedDirectFeed.resolvedUrl
+    );
+
     return {
       status: "candidate",
       candidate: {
-        url: params.normalizedInputUrl,
-        parsedFeed: parsedDirectFeed,
-        existingFeed: null,
+        url: parsedDirectFeed.resolvedUrl,
+        parsedFeed: parsedDirectFeed.parsedFeed,
+        etag: parsedDirectFeed.etag,
+        lastModified: parsedDirectFeed.lastModified,
+        existingFeed: resolvedExistingFeed ?? null,
       },
     };
   } catch (error) {
@@ -370,15 +381,17 @@ async function resolveImportCandidate(params: {
 
   for (const discoveredUrl of discovery.candidates) {
     try {
-      const parsedCandidateFeed = await parseFeed(discoveredUrl);
+      const parsedCandidateFeed = await parseFeedWithMetadata(discoveredUrl);
       const existingFeed = await findExistingFeedForUserByUrl(
         params.userId,
-        discoveredUrl
+        parsedCandidateFeed.resolvedUrl
       );
 
       validatedCandidates.push({
-        url: discoveredUrl,
-        parsedFeed: parsedCandidateFeed,
+        url: parsedCandidateFeed.resolvedUrl,
+        parsedFeed: parsedCandidateFeed.parsedFeed,
+        etag: parsedCandidateFeed.etag,
+        lastModified: parsedCandidateFeed.lastModified,
         existingFeed: existingFeed ?? null,
       });
     } catch {
@@ -501,7 +514,11 @@ async function importOneFeedEntry(params: {
       params.userId,
       candidate.url,
       candidate.parsedFeed,
-      resolvedFolderIds
+      resolvedFolderIds,
+      {
+        etag: candidate.etag,
+        lastModified: candidate.lastModified,
+      }
     );
 
     const customTitle = sanitizeCustomTitle(params.entry.customTitle);

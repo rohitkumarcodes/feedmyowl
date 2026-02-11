@@ -18,3 +18,7 @@ This release improves article search trust while restoring typo recovery for com
 
 - Keyboard shortcuts modal width on desktop/tablet now adapts to the longest shortcut row
   while remaining capped to viewport width.
+
+Follow-up (2026-02-11): the feed pipeline now runs with hardened reliability/security defaults: Manual refresh only (background jobs deferred), CSRF same-origin checks on mutating non-webhook routes, rate limits enforced with Redis/Upstash (fail-open if Redis unavailable), feed fetch hardening (SSRF blocking, redirect revalidation, timeout + retries), conditional fetch support (ETag / Last-Modified), and reliable dedupe with DB-backed GUID/fingerprint uniqueness.
+
+Docs follow-up (2026-02-11): import/export documentation is updated in beginner-friendly language, including how OPML folder/category paths map into FeedMyOwl's single-level folder labels and what migration features are planned next.

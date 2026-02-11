@@ -16,6 +16,7 @@
  */
 
 import Parser from "rss-parser";
+import { fetchFeedXml, type FetchRemoteTextOptions } from "@/lib/feed-fetcher";
 
 /**
  * rss-parser instance. We create one and reuse it for all parsing.
@@ -53,7 +54,7 @@ function normalizeParsedFeed(feed: RawParsedFeed): ParsedFeed {
     title: feed.title,
     description: feed.description,
     items: feed.items.map((item) => ({
-      guid: item.guid || item.id || item.link,
+      guid: item.guid || item.id,
       title: item.title,
       link: item.link,
       content: item["content:encoded"] || item.content || item.summary,
@@ -70,10 +71,74 @@ function normalizeParsedFeed(feed: RawParsedFeed): ParsedFeed {
  * @returns A normalized ParsedFeed object with feed metadata and items
  * @throws Error if the URL is unreachable or the response is not a valid feed
  */
-export async function parseFeed(url: string): Promise<ParsedFeed> {
-  const feed = await parser.parseURL(url);
+export interface ParseFeedWithCacheResultOk {
+  status: "ok";
+  parsedFeed: ParsedFeed;
+  etag: string | null;
+  lastModified: string | null;
+  resolvedUrl: string;
+}
 
-  return normalizeParsedFeed(feed);
+export interface ParseFeedWithCacheResultNotModified {
+  status: "not_modified";
+  etag: string | null;
+  lastModified: string | null;
+  resolvedUrl: string;
+}
+
+export type ParseFeedWithCacheResult =
+  | ParseFeedWithCacheResultOk
+  | ParseFeedWithCacheResultNotModified;
+
+export async function parseFeedWithCache(
+  url: string,
+  options: Omit<FetchRemoteTextOptions, "accept"> = {}
+): Promise<ParseFeedWithCacheResult> {
+  const fetched = await fetchFeedXml(url, options);
+
+  if (fetched.status === "not_modified") {
+    return {
+      status: "not_modified",
+      etag: fetched.etag,
+      lastModified: fetched.lastModified,
+      resolvedUrl: fetched.finalUrl,
+    };
+  }
+
+  const parsedFeed = await parseFeedXml(fetched.text ?? "");
+
+  return {
+    status: "ok",
+    parsedFeed,
+    etag: fetched.etag,
+    lastModified: fetched.lastModified,
+    resolvedUrl: fetched.finalUrl,
+  };
+}
+
+export async function parseFeedWithMetadata(url: string): Promise<{
+  parsedFeed: ParsedFeed;
+  etag: string | null;
+  lastModified: string | null;
+  resolvedUrl: string;
+}> {
+  const result = await parseFeedWithCache(url);
+
+  if (result.status === "not_modified") {
+    throw new Error("Unexpected 304 response while fetching feed without validators");
+  }
+
+  return {
+    parsedFeed: result.parsedFeed,
+    etag: result.etag,
+    lastModified: result.lastModified,
+    resolvedUrl: result.resolvedUrl,
+  };
+}
+
+export async function parseFeed(url: string): Promise<ParsedFeed> {
+  const result = await parseFeedWithMetadata(url);
+  return result.parsedFeed;
 }
 
 /**

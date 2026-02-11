@@ -19,14 +19,22 @@ import { deleteAuthUser, requireAuth } from "@/lib/auth";
 import { handleApiRouteError } from "@/lib/api-errors";
 import { ensureUserRecord } from "@/lib/app-user";
 import { isMissingRelationError } from "@/lib/db-compat";
+import { assertTrustedWriteOrigin } from "@/lib/csrf";
 import {
   discoverFeedCandidates,
   type FeedDiscoveryMethod,
 } from "@/lib/feed-discovery";
-import { parseFeed, parseFeedXml, type ParsedFeed } from "@/lib/feed-parser";
+import {
+  parseFeed,
+  parseFeedWithMetadata,
+  parseFeedXml,
+  type ParsedFeed,
+} from "@/lib/feed-parser";
+import { fetchFeedXml } from "@/lib/feed-fetcher";
 import { purgeOldFeedItemsForUser } from "@/lib/retention";
 import { normalizeFeedError } from "@/lib/feed-errors";
 import { normalizeFeedUrl } from "@/lib/feed-url";
+import { applyRouteRateLimit } from "@/lib/rate-limit";
 import {
   normalizeFolderIds,
   resolveFeedFolderIds,
@@ -56,6 +64,13 @@ interface ValidatedDiscoverCandidate extends DiscoverCandidateResponse {
   parsedFeed: ParsedFeed;
 }
 
+interface CandidateXmlFetchResult {
+  xml: string;
+  etag: string | null;
+  lastModified: string | null;
+  finalUrl: string;
+}
+
 const FEED_CANDIDATE_TIMEOUT_MS = 7_000;
 const NO_FEED_FOUND_MESSAGE =
   "Error: We couldn't find any feed at this URL. Contact site owner and ask for the feed link.";
@@ -72,21 +87,23 @@ function toDiscoverCandidateResponse(
   };
 }
 
-async function fetchFeedCandidateXml(url: string): Promise<string> {
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      Accept: "application/rss+xml,application/atom+xml,application/xml,text/xml;q=0.9,*/*;q=0.1",
-    },
-    redirect: "follow",
-    signal: AbortSignal.timeout(FEED_CANDIDATE_TIMEOUT_MS),
+async function fetchFeedCandidateXml(url: string): Promise<CandidateXmlFetchResult> {
+  const response = await fetchFeedXml(url, {
+    timeoutMs: FEED_CANDIDATE_TIMEOUT_MS,
+    retries: 0,
+    maxRedirects: 5,
   });
 
-  if (!response.ok) {
-    throw new Error(`Feed candidate request failed with status ${response.status}`);
+  if (response.status !== "ok") {
+    throw new Error("Feed candidate request unexpectedly returned not-modified");
   }
 
-  return await response.text();
+  return {
+    xml: response.text ?? "",
+    etag: response.etag,
+    lastModified: response.lastModified,
+    finalUrl: response.finalUrl,
+  };
 }
 
 async function buildValidatedCandidateForUser(params: {
@@ -116,13 +133,12 @@ async function validateCandidateXmlForUser(params: {
   method: FeedDiscoveryMethod;
 }): Promise<ValidatedDiscoverCandidate | null> {
   try {
-    const parsedFeed = await parseFeedXml(
-      await fetchFeedCandidateXml(params.candidateUrl)
-    );
+    const candidateResponse = await fetchFeedCandidateXml(params.candidateUrl);
+    const parsedFeed = await parseFeedXml(candidateResponse.xml);
 
     return await buildValidatedCandidateForUser({
       userId: params.userId,
-      candidateUrl: params.candidateUrl,
+      candidateUrl: candidateResponse.finalUrl,
       method: params.method,
       parsedFeed,
     });
@@ -369,10 +385,27 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   try {
+    const csrfFailure = assertTrustedWriteOrigin(request, "api.feeds.post");
+    if (csrfFailure) {
+      return csrfFailure;
+    }
+
     const appUser = await getAppUser();
 
     if (!appUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const rateLimit = await applyRouteRateLimit({
+      request,
+      routeKey: "api_feeds_post",
+      userId: appUser.id,
+      userLimitPerMinute: 20,
+      ipLimitPerMinute: 60,
+    });
+
+    if (!rateLimit.allowed) {
+      return rateLimit.response;
     }
 
     const payload = await parseRequestJson(request);
@@ -540,10 +573,16 @@ export async function POST(request: NextRequest) {
 
     let parsedFeed: ParsedFeed | null = null;
     let resolvedUrl = nextUrl;
+    let resolvedEtag: string | null = null;
+    let resolvedLastModified: string | null = null;
     let discoveredFromSiteUrl = false;
 
     try {
-      parsedFeed = await parseFeed(nextUrl);
+      const parsedDirect = await parseFeedWithMetadata(nextUrl);
+      parsedFeed = parsedDirect.parsedFeed;
+      resolvedEtag = parsedDirect.etag;
+      resolvedLastModified = parsedDirect.lastModified;
+      resolvedUrl = parsedDirect.resolvedUrl;
     } catch (error) {
       const normalizedError = normalizeFeedError(error, "create");
 
@@ -580,10 +619,35 @@ export async function POST(request: NextRequest) {
         }
 
         try {
-          const candidateXml = await fetchFeedCandidateXml(candidateUrl);
-          parsedFeed = await parseFeedXml(candidateXml);
-          resolvedUrl = candidateUrl;
+          const candidateResponse = await fetchFeedCandidateXml(candidateUrl);
+          parsedFeed = await parseFeedXml(candidateResponse.xml);
+          resolvedUrl = candidateResponse.finalUrl;
+          resolvedEtag = candidateResponse.etag;
+          resolvedLastModified = candidateResponse.lastModified;
           discoveredFromSiteUrl = true;
+
+          const resolvedDuplicate = await findExistingFeedForUserByUrl(
+            appUser.id,
+            resolvedUrl
+          );
+
+          if (resolvedDuplicate) {
+            const duplicateFeedFolderIds = await getFeedFolderIds({
+              userId: appUser.id,
+              feedId: resolvedDuplicate.id,
+              legacyFolderId: resolvedDuplicate.folderId,
+            });
+
+            return NextResponse.json({
+              feed: {
+                ...resolvedDuplicate,
+                folderIds: duplicateFeedFolderIds,
+              },
+              duplicate: true,
+              message: "This feed is already in your library.",
+            });
+          }
+
           break;
         } catch {
           // Keep trying additional candidates.
@@ -614,7 +678,11 @@ export async function POST(request: NextRequest) {
         appUser.id,
         resolvedUrl,
         parsedFeed,
-        requestedFolderIds
+        requestedFolderIds,
+        {
+          etag: resolvedEtag,
+          lastModified: resolvedLastModified,
+        }
       );
     } catch {
       const raceExistingFeed = await findExistingFeedForUserByUrl(appUser.id, resolvedUrl);
@@ -683,6 +751,11 @@ export async function POST(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
   try {
+    const csrfFailure = assertTrustedWriteOrigin(request, "api.feeds.patch");
+    if (csrfFailure) {
+      return csrfFailure;
+    }
+
     const appUser = await getAppUser();
 
     if (!appUser) {

@@ -3,6 +3,7 @@ import { requireAuth } from "@/lib/auth";
 import { ensureUserRecord } from "@/lib/app-user";
 import { db, eq, users } from "@/lib/database";
 import { handleApiRouteError } from "@/lib/api-errors";
+import { assertTrustedWriteOrigin } from "@/lib/csrf";
 import { isMissingColumnError } from "@/lib/db-compat";
 import { isOwlAscii } from "@/lib/owl-brand";
 
@@ -18,6 +19,11 @@ async function parseRequestJson(
 
 export async function PATCH(request: NextRequest) {
   try {
+    const csrfFailure = assertTrustedWriteOrigin(request, "api.settings.logo.patch");
+    if (csrfFailure) {
+      return csrfFailure;
+    }
+
     const { clerkId } = await requireAuth();
     const user = await ensureUserRecord(clerkId);
 

@@ -65,12 +65,43 @@ function sanitizeCustomTitle(value: unknown): string | null {
   return trimmed.slice(0, 255);
 }
 
+function normalizeOpmlFolderPath(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  const stripped = trimmed.replace(/^\/+|\/+$/g, "");
+  if (!stripped) {
+    return "";
+  }
+
+  const segments = stripped
+    .split("/")
+    .map((segment) => segment.trim())
+    .filter((segment) => segment.length > 0);
+
+  if (segments.length === 0) {
+    return "";
+  }
+
+  return segments.join(" / ");
+}
+
+function parseOpmlCategoryFolderNames(value: string): string[] {
+  return value
+    .split(",")
+    .map((category) => normalizeOpmlFolderPath(category))
+    .filter((category) => category.length > 0);
+}
+
 /**
  * Parse feed entries from OPML/XML while preserving parent folder context.
  */
 export function parseOpmlImportEntries(contents: string): FeedImportEntry[] {
   const entries: FeedImportEntry[] = [];
   const folderStack: string[] = [];
+  const outlineContextStack: boolean[] = [];
   const outlineTagPattern = /<\/?outline\b[^>]*>/gi;
 
   for (const token of contents.matchAll(outlineTagPattern)) {
@@ -78,7 +109,8 @@ export function parseOpmlImportEntries(contents: string): FeedImportEntry[] {
     const lowerTag = tag.toLowerCase();
 
     if (lowerTag.startsWith("</outline")) {
-      if (folderStack.length > 0) {
+      const openedFolderContext = outlineContextStack.pop();
+      if (openedFolderContext && folderStack.length > 0) {
         folderStack.pop();
       }
       continue;
@@ -90,20 +122,43 @@ export function parseOpmlImportEntries(contents: string): FeedImportEntry[] {
     const isSelfClosing = /\/\s*>$/.test(tag);
 
     if (xmlUrl) {
+      const folderNames = new Set<string>();
+
+      if (folderStack.length > 0) {
+        folderNames.add(folderStack.join(" / "));
+      }
+
+      const categoryValue = sanitizeFolderName(attributes.category);
+      if (categoryValue) {
+        for (const categoryFolderName of parseOpmlCategoryFolderNames(categoryValue)) {
+          folderNames.add(categoryFolderName);
+        }
+      }
+
       entries.push({
         url: xmlUrl,
-        folderNames: folderStack.length > 0 ? [folderStack.join(" / ")] : [],
+        folderNames: [...folderNames],
         customTitle: sanitizeCustomTitle(label),
       });
+
+      if (!isSelfClosing) {
+        outlineContextStack.push(false);
+      }
+
       continue;
     }
 
     if (!label) {
+      if (!isSelfClosing) {
+        outlineContextStack.push(false);
+      }
       continue;
     }
 
     folderStack.push(label);
-    if (isSelfClosing) {
+    if (!isSelfClosing) {
+      outlineContextStack.push(true);
+    } else {
       folderStack.pop();
     }
   }

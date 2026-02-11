@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   dbQueryFoldersFindMany: vi.fn(),
   dbQueryFeedFolderMembershipsFindMany: vi.fn(),
   discoverFeedCandidates: vi.fn(),
-  parseFeed: vi.fn(),
+  parseFeedWithMetadata: vi.fn(),
   normalizeFeedError: vi.fn(),
   createFeedWithInitialItems: vi.fn(),
   findExistingFeedForUserByUrl: vi.fn(),
@@ -15,6 +15,8 @@ const mocks = vi.hoisted(() => ({
   setFeedFoldersForUser: vi.fn(),
   createFolderForUser: vi.fn(),
   captureMessage: vi.fn(),
+  assertTrustedWriteOrigin: vi.fn(),
+  applyRouteRateLimit: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({
@@ -48,7 +50,7 @@ vi.mock("@/lib/feed-discovery", () => ({
 }));
 
 vi.mock("@/lib/feed-parser", () => ({
-  parseFeed: mocks.parseFeed,
+  parseFeedWithMetadata: mocks.parseFeedWithMetadata,
 }));
 
 vi.mock("@/lib/feed-errors", () => ({
@@ -69,6 +71,14 @@ vi.mock("@/lib/folder-service", () => ({
 
 vi.mock("@/lib/error-tracking", () => ({
   captureMessage: mocks.captureMessage,
+}));
+
+vi.mock("@/lib/csrf", () => ({
+  assertTrustedWriteOrigin: mocks.assertTrustedWriteOrigin,
+}));
+
+vi.mock("@/lib/rate-limit", () => ({
+  applyRouteRateLimit: mocks.applyRouteRateLimit,
 }));
 
 import { POST } from "@/app/api/feeds/import/route";
@@ -94,6 +104,16 @@ describe("POST /api/feeds/import", () => {
       code: "invalid_xml",
       message: "This URL does not appear to be a valid RSS or Atom feed.",
     });
+    mocks.parseFeedWithMetadata.mockResolvedValue({
+      parsedFeed: {
+        title: "Parsed Feed",
+        description: "Parsed",
+        items: [],
+      },
+      etag: null,
+      lastModified: null,
+      resolvedUrl: "https://new.example.com/feed.xml",
+    });
     mocks.findExistingFeedForUserByUrl.mockResolvedValue(null);
     mocks.createFeedWithInitialItems.mockResolvedValue({
       feed: { id: "feed_123", folderId: null },
@@ -110,6 +130,8 @@ describe("POST /api/feeds/import", () => {
         updatedAt: new Date("2026-02-11T00:00:00.000Z"),
       },
     });
+    mocks.assertTrustedWriteOrigin.mockReturnValue(null);
+    mocks.applyRouteRateLimit.mockResolvedValue({ allowed: true });
   });
 
   it("imports valid feed entries and applies custom title only to newly created feeds", async () => {
@@ -121,10 +143,15 @@ describe("POST /api/feeds/import", () => {
           } as never)
         : null
     );
-    mocks.parseFeed.mockResolvedValue({
-      title: "Parsed Feed",
-      description: "Parsed",
-      items: [],
+    mocks.parseFeedWithMetadata.mockResolvedValue({
+      parsedFeed: {
+        title: "Parsed Feed",
+        description: "Parsed",
+        items: [],
+      },
+      etag: null,
+      lastModified: null,
+      resolvedUrl: "https://new.example.com/feed.xml",
     });
     mocks.createFeedWithInitialItems.mockResolvedValue({
       feed: { id: "feed_new", folderId: null },
@@ -265,14 +292,19 @@ describe("POST /api/feeds/import", () => {
   });
 
   it("skips entries with multiple addable discovery candidates", async () => {
-    mocks.parseFeed.mockImplementation(async (url: string) => {
+    mocks.parseFeedWithMetadata.mockImplementation(async (url: string) => {
       if (url === "https://example.com/") {
         throw new Error("Input URL is not valid RSS/Atom");
       }
       return {
-        title: "Candidate",
-        description: "Candidate",
-        items: [],
+        parsedFeed: {
+          title: "Candidate",
+          description: "Candidate",
+          items: [],
+        },
+        etag: null,
+        lastModified: null,
+        resolvedUrl: url,
       };
     });
     mocks.normalizeFeedError.mockReturnValue({
@@ -308,11 +340,16 @@ describe("POST /api/feeds/import", () => {
 
   it("creates one folder and reuses it across multiple entries in one request", async () => {
     mocks.findExistingFeedForUserByUrl.mockResolvedValue(null);
-    mocks.parseFeed.mockResolvedValue({
-      title: "Parsed Feed",
-      description: "Parsed",
-      items: [],
-    });
+    mocks.parseFeedWithMetadata.mockImplementation(async (url: string) => ({
+      parsedFeed: {
+        title: "Parsed Feed",
+        description: "Parsed",
+        items: [],
+      },
+      etag: null,
+      lastModified: null,
+      resolvedUrl: url,
+    }));
     mocks.createFeedWithInitialItems.mockImplementation(
       async (_userId: string, url: string, _parsedFeed: unknown, folderIds: string[]) => ({
         feed: {
@@ -359,14 +396,52 @@ describe("POST /api/feeds/import", () => {
       "user_123",
       "https://one.example.com/feed.xml",
       expect.any(Object),
-      ["folder_shared"]
+      ["folder_shared"],
+      {
+        etag: null,
+        lastModified: null,
+      }
     );
     expect(mocks.createFeedWithInitialItems).toHaveBeenNthCalledWith(
       2,
       "user_123",
       "https://two.example.com/feed.xml",
       expect.any(Object),
-      ["folder_shared"]
+      ["folder_shared"],
+      {
+        etag: null,
+        lastModified: null,
+      }
     );
+  });
+
+  it("returns 429 when rate limit is exceeded", async () => {
+    mocks.applyRouteRateLimit.mockResolvedValue({
+      allowed: false,
+      response: Response.json(
+        {
+          error: "Rate limit exceeded. Please wait before trying again.",
+          code: "rate_limited",
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": "5",
+          },
+        }
+      ),
+    });
+
+    const response = await POST(
+      createImportRequest({
+        sourceType: "JSON",
+        entries: [{ url: "https://one.example.com/feed.xml", folderNames: [], customTitle: null }],
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("5");
+    expect(body.code).toBe("rate_limited");
   });
 });

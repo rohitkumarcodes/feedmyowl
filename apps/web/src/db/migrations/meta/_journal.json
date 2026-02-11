@@ -71,6 +71,13 @@
       "when": 1770843600000,
       "tag": "0009_theme_mode_system_default",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1771002000000,
+      "tag": "0010_feed_security_hardening",
+      "breakpoints": true
     }
   ]
 }

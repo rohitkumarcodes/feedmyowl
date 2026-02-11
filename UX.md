@@ -12,6 +12,8 @@
 6. Optionally search all loaded articles from the article list pane.
 7. Open and read an article.
 
+Manual refresh only (background jobs deferred).
+
 ## 3. Sidebar behavior
 - Top controls:
   - `Refresh feeds`
@@ -52,6 +54,7 @@
 - URL handling:
   - Missing scheme auto-normalizes to `https://`.
   - Do not auto-add `www` or infer TLDs.
+  - Feed fetch hardening: SSRF blocking, redirect revalidation, timeout + retries.
 - Discovery flow:
   - Single add runs `discover` then `create`.
   - If exactly one addable feed is found, add proceeds automatically.
@@ -61,6 +64,8 @@
   - Stage messages: normalizing, discovering, awaiting selection, creating.
   - Inline duplicate hint disables submit for exact URL duplicates.
   - Successful single add closes form by default and offers `Add another`.
+  - Cross-site request rejection shows `403` with `code: "csrf_validation_failed"`.
+  - Rate-limit rejection shows `429` with `code: "rate_limited"` and `Retry-After`.
 - Bulk behavior:
   - Rows are processed sequentially.
   - Rows with multiple discovered feeds fail with: `Multiple feeds found; add this URL individually to choose one.`
@@ -138,6 +143,10 @@
 - Feeds import:
   - Import button shows numeric progress while processing (`Importing (x/y)...`).
   - Inline status text shows processed progress during the active import.
+  - OPML folders are preserved from:
+    - Nested outlines (flattened into one folder label, example `Tech / Web`).
+    - OPML `category` paths (example `/Tech/Web` -> `Tech / Web`).
+  - If one OPML feed has multiple categories, FeedMyOwl assigns that feed to multiple folders.
 - Keyboard shortcuts settings section:
   - Shows a toggle button under `Keyboard shortcuts` with caret then keyboard icon.
   - Default state is collapsed.
@@ -175,3 +184,26 @@
   - Dot marker remains unchanged.
   - Unread titles use stronger text tone (`--text-primary`).
   - Read titles use calmer tone (`--text-secondary`) with normal font weight.
+
+## 12. Security and reliability defaults (2026-02-11)
+- Manual refresh only (background jobs deferred).
+- CSRF same-origin checks on mutating non-webhook routes.
+- Rate limits enforced with Redis/Upstash; fail-open if Redis unavailable.
+- Feed fetch hardening: SSRF blocking, redirect revalidation, timeout + retries.
+- Conditional fetch support: ETag / Last-Modified.
+- Reliable dedupe: GUID + content fingerprint with DB uniqueness.
+- Refresh results can include additive `fetchState`:
+  - `"updated"` when content changed and writes were attempted.
+  - `"not_modified"` when ETag/Last-Modified validators match and no new items are inserted.
+
+## 13. Import/export improvements (beginner-friendly roadmap)
+- Import preview before apply:
+  - Show exactly what will be imported and where it will be placed before changing account data.
+- Export selection controls:
+  - Export all feeds or only selected folders/feeds when users want smaller or focused exports.
+- Duplicate handling choices:
+  - Let users choose how duplicates are treated, instead of one fixed behavior.
+- Portable JSON v3:
+  - Keep portability, and optionally include reading-state metadata for migrations.
+- Automatic backups:
+  - Offer scheduled exports with retention and an easy restore entry point.

@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { handleApiRouteError } from "@/lib/api-errors";
 import { ensureUserRecord } from "@/lib/app-user";
+import { assertTrustedWriteOrigin } from "@/lib/csrf";
 import {
   deleteFeedForUser,
   renameFeedForUser,
@@ -38,6 +39,11 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const csrfFailure = assertTrustedWriteOrigin(request, "api.feeds.id.patch");
+    if (csrfFailure) {
+      return csrfFailure;
+    }
+
     const { clerkId } = await requireAuth();
     const { id } = await params;
     const user = await ensureUserRecord(clerkId);
@@ -123,10 +129,15 @@ export async function PATCH(
  * Unsubscribe from a feed. Only the feed owner can delete it.
  */
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const csrfFailure = assertTrustedWriteOrigin(request, "api.feeds.id.delete");
+    if (csrfFailure) {
+      return csrfFailure;
+    }
+
     const { clerkId } = await requireAuth();
     const { id } = await params;
 

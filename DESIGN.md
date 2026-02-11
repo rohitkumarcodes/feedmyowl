@@ -100,18 +100,52 @@ Three stacked views:
   - `error` uses `role="alert"` (assertive live region).
   - `progress`, `offline`, and `info` use `role="status"` (polite live region).
 
-## 8. Constraints
+## 8. Security and reliability boundaries (2026-02-11)
+- Manual refresh only (background jobs deferred).
+- CSRF same-origin checks on mutating non-webhook routes.
+- Rate limits enforced with Redis/Upstash; fail-open if Redis unavailable.
+- Feed fetch hardening: SSRF blocking, redirect revalidation, timeout + retries.
+- Conditional fetch support: ETag / Last-Modified.
+- Reliable dedupe: GUID + content fingerprint with DB uniqueness.
+- Mutating routes may return:
+  - `403` with `code: "csrf_validation_failed"`
+  - `429` with `code: "rate_limited"` and `Retry-After`
+- `POST /api/refresh` may include additive per-feed `fetchState`:
+  - `"updated"` when content changed and insert/upsert work ran.
+  - `"not_modified"` when HTTP validators match and parsing/inserts are skipped.
+
+## 9. Constraints
 - No nested folders.
 - No decorative folder colors/icons in this phase.
 - No drag-drop ordering in this phase.
 
-## 9. Brand behavior
+## 10. Brand behavior
 - Authenticated layout brand keeps text fixed as `Feed my owl`.
 - Brand owl is rendered as monospaced ASCII art from user preference.
 - Default ASCII owl is `{o,o}` for users without a saved preference.
 - Settings provides explicit selection + save; favicon mirrors selected ASCII owl.
 
-## 10. Title tone behavior
+## 11. Title tone behavior
 - Article title dot marker remains unchanged.
 - Unread titles use `--text-primary`.
 - Read titles use `--text-secondary` with normal font weight.
+
+## 12. Import/export behavior
+- Import accepts OPML/XML and FeedMyOwl JSON.
+- OPML folder mapping supports:
+  - Nested outline context (flattened to one folder label such as `Tech / Web`).
+  - `category` path values (for example `/Tech/Web`) mapped to the same flat folder label model.
+- If one OPML feed lists multiple category paths, the feed is assigned to multiple folders.
+- This remains compatible with the current single-level folder UI and many-to-many feed-folder model.
+
+## 13. Import/export roadmap (beginner-friendly)
+- Import dry-run preview:
+  - Show detected feeds, folder mapping, duplicates, and failures before writing.
+- Selective export:
+  - Let users export all data, one folder, or selected feeds.
+- Import conflict controls:
+  - Let users choose to skip, merge folder assignments, or overwrite selected metadata.
+- Portable JSON v3:
+  - Keep subscriptions portable and optionally include reading-state metadata.
+- Scheduled backups:
+  - Automatic JSON exports with retention and clear restore flow.

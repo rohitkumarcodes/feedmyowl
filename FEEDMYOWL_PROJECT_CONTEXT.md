@@ -20,7 +20,12 @@ Core loop:
 - Feed subscription create, rename, delete.
 - Folder create, rename, delete.
 - Many-to-many feed-folder assignment.
-- Manual refresh.
+- Manual refresh only (background jobs deferred).
+- CSRF same-origin checks on mutating non-webhook routes.
+- Rate limits enforced with Redis/Upstash; fail-open if Redis unavailable.
+- Feed fetch hardening: SSRF blocking, redirect revalidation, timeout + retries.
+- Conditional fetch support: ETag / Last-Modified.
+- Reliable dedupe: GUID + content fingerprint with DB uniqueness.
 - Article list and reader.
 - Global strict-first article search in the article pane with typo fallback.
 - Read-state tracking.
@@ -86,6 +91,12 @@ Notes:
 - `feed_folder_memberships` is the canonical many-to-many mapping.
 - Legacy `feeds.folder_id` remains in transition and is kept in sync.
 - `users.owl_ascii` stores the selected logo ASCII art per user and defaults to `{o,o}`.
+- `feeds.http_etag` stores feed-level ETag validator values.
+- `feeds.http_last_modified` stores feed-level Last-Modified validator values.
+- `feed_items.content_fingerprint` stores fallback dedupe hashes when GUID is absent.
+- Dedupe constraints are enforced in DB with partial unique indexes:
+  - `(feed_id, guid)` when `guid IS NOT NULL`
+  - `(feed_id, content_fingerprint)` when `guid IS NULL AND content_fingerprint IS NOT NULL`
 
 ## 7. API surface (active)
 - `GET /api/feeds` -> feeds + folders
@@ -98,12 +109,32 @@ Notes:
 - `PATCH /api/folders/[id]` -> rename folder
 - `DELETE /api/folders/[id]` -> delete folder by mode
 - `POST /api/refresh` -> manual refresh all user feeds
+- `POST /api/feeds/import` -> chunked feed import from OPML/XML/JSON entries
+- `GET /api/feeds/export` -> OPML export or JSON export
 - `PATCH /api/settings/logo` -> persist selected user ASCII owl logo
 - `PATCH /api/settings/theme` -> persist selected authenticated appearance mode
+
+Behavior notes:
+- Mutating non-webhook routes enforce same-origin checks and can return
+  `403` with `code: "csrf_validation_failed"`.
+- Rate-limited write routes can return `429` with `code: "rate_limited"` and
+  `Retry-After`.
+- `POST /api/refresh` may include additive `fetchState` per feed result:
+  `"updated"` or `"not_modified"`.
+- OPML import folder mapping keeps organization in a single-level model:
+  - Nested outlines flatten to one folder label (example: `Tech / Web`).
+  - OPML `category` paths also map to flat folder labels.
+  - Multiple category paths on one feed create multiple folder assignments.
 
 ## 8. Reliability defaults
 - Feed refresh errors are tracked per feed with calm inline messaging.
 - One failed feed must not block reading other feeds.
+- Manual refresh only (background jobs deferred).
+- CSRF same-origin checks on mutating non-webhook routes.
+- Rate limits enforced with Redis/Upstash; fail-open if Redis unavailable.
+- Feed fetch hardening: SSRF blocking, redirect revalidation, timeout + retries.
+- Conditional fetch support: ETag / Last-Modified.
+- Reliable dedupe: GUID + content fingerprint with DB uniqueness.
 - Article retention is count-based: keep at most 50 items per feed, ranked by
   `COALESCE(published_at, created_at) DESC, id DESC`.
 - Authenticated routes support account-synced appearance mode (`light` / `dark`).
@@ -137,3 +168,10 @@ From repo root:
 - `pnpm test:web`
 - `pnpm lint:web`
 - `pnpm build:web`
+
+## 11. Import/export roadmap (beginner-friendly)
+- Import dry-run preview so users can validate folder mapping and duplicates before writing.
+- Selective export so users can export all feeds or only chosen folders/feeds.
+- Duplicate-conflict options so users can pick skip/merge/overwrite behavior.
+- Portable JSON v3 with optional reading-state metadata for richer migrations.
+- Scheduled backup exports with retention and a guided restore workflow.

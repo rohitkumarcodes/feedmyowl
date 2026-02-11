@@ -1,31 +1,40 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const mocks = vi.hoisted(() => ({
+  fetchRemoteText: vi.fn(),
+}));
+
+vi.mock("@/lib/feed-fetcher", () => ({
+  fetchRemoteText: mocks.fetchRemoteText,
+}));
+
 import { discoverFeedCandidates } from "@/lib/feed-discovery";
 
 describe("discoverFeedCandidates", () => {
-  const fetchMock = vi.fn();
-
   beforeEach(() => {
-    vi.stubGlobal("fetch", fetchMock);
+    mocks.fetchRemoteText.mockReset();
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
   it("extracts an alternate feed URL and filters comment feeds", async () => {
-    fetchMock.mockResolvedValue(
-      new Response(
-        `
-          <html>
-            <head>
-              <link rel="alternate" type="application/rss+xml" title="Main Feed" href="/feed.xml" />
-              <link rel="alternate" type="application/rss+xml" title="Comments Feed" href="/comments/feed.xml" />
-            </head>
-          </html>
-        `,
-        { status: 200, headers: { "content-type": "text/html" } }
-      )
-    );
+    mocks.fetchRemoteText.mockResolvedValue({
+      status: "ok",
+      text: `
+        <html>
+          <head>
+            <link rel="alternate" type="application/rss+xml" title="Main Feed" href="/feed.xml" />
+            <link rel="alternate" type="application/rss+xml" title="Comments Feed" href="/comments/feed.xml" />
+          </head>
+        </html>
+      `,
+      etag: null,
+      lastModified: null,
+      finalUrl: "https://news.example.com/blog",
+      statusCode: 200,
+    });
 
     const result = await discoverFeedCandidates("https://news.example.com/blog");
 
@@ -36,12 +45,14 @@ describe("discoverFeedCandidates", () => {
   });
 
   it("falls back to heuristic feed paths when no alternates are present", async () => {
-    fetchMock.mockResolvedValue(
-      new Response("<html><head></head><body>No feeds listed</body></html>", {
-        status: 200,
-        headers: { "content-type": "text/html" },
-      })
-    );
+    mocks.fetchRemoteText.mockResolvedValue({
+      status: "ok",
+      text: "<html><head></head><body>No feeds listed</body></html>",
+      etag: null,
+      lastModified: null,
+      finalUrl: "https://site.example.com/some/path",
+      statusCode: 200,
+    });
 
     const result = await discoverFeedCandidates("https://site.example.com/some/path");
 
@@ -59,18 +70,20 @@ describe("discoverFeedCandidates", () => {
   });
 
   it("dedupes alternates and keeps the first discovery method hint", async () => {
-    fetchMock.mockResolvedValue(
-      new Response(
-        `
-          <html>
-            <head>
-              <link rel="alternate" type="application/rss+xml" title="Main feed" href="/feed" />
-            </head>
-          </html>
-        `,
-        { status: 200, headers: { "content-type": "text/html" } }
-      )
-    );
+    mocks.fetchRemoteText.mockResolvedValue({
+      status: "ok",
+      text: `
+        <html>
+          <head>
+            <link rel="alternate" type="application/rss+xml" title="Main feed" href="/feed" />
+          </head>
+        </html>
+      `,
+      etag: null,
+      lastModified: null,
+      finalUrl: "https://site.example.com/blog",
+      statusCode: 200,
+    });
 
     const result = await discoverFeedCandidates("https://site.example.com/blog");
 

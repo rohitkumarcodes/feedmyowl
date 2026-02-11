@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { ensureUserRecord } from "@/lib/app-user";
 import { handleApiRouteError } from "@/lib/api-errors";
+import { assertTrustedWriteOrigin } from "@/lib/csrf";
 import { captureMessage } from "@/lib/error-tracking";
 import { importFeedEntriesForUser } from "@/lib/feed-import-service";
+import { applyRouteRateLimit } from "@/lib/rate-limit";
 import type {
   FeedImportEntry,
   FeedImportRequest,
@@ -74,11 +76,28 @@ function parseImportEntries(value: unknown): FeedImportEntry[] | null {
  */
 export async function POST(request: NextRequest) {
   try {
+    const csrfFailure = assertTrustedWriteOrigin(request, "api.feeds.import.post");
+    if (csrfFailure) {
+      return csrfFailure;
+    }
+
     const { clerkId } = await requireAuth();
     const appUser = await ensureUserRecord(clerkId);
 
     if (!appUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const rateLimit = await applyRouteRateLimit({
+      request,
+      routeKey: "api_feeds_import_post",
+      userId: appUser.id,
+      userLimitPerMinute: 3,
+      ipLimitPerMinute: 20,
+    });
+
+    if (!rateLimit.allowed) {
+      return rateLimit.response;
     }
 
     const payload = await parseRequestJson(request);

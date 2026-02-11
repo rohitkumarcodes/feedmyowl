@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   dbUpdateSetWhere: vi.fn(),
   eq: vi.fn(),
   handleApiRouteError: vi.fn(),
+  assertTrustedWriteOrigin: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({
@@ -33,6 +34,10 @@ vi.mock("@/lib/api-errors", () => ({
   handleApiRouteError: mocks.handleApiRouteError,
 }));
 
+vi.mock("@/lib/csrf", () => ({
+  assertTrustedWriteOrigin: mocks.assertTrustedWriteOrigin,
+}));
+
 import { PATCH } from "@/app/api/settings/theme/route";
 
 function createPatchRequest(body: unknown): NextRequest {
@@ -47,6 +52,7 @@ describe("PATCH /api/settings/theme", () => {
   beforeEach(() => {
     mocks.requireAuth.mockResolvedValue({ clerkId: "clerk_123" });
     mocks.ensureUserRecord.mockResolvedValue({ id: "user_123" });
+    mocks.assertTrustedWriteOrigin.mockReturnValue(null);
 
     mocks.dbUpdateSetWhere.mockResolvedValue(undefined);
     mocks.dbUpdateSet.mockReturnValue({

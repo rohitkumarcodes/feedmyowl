@@ -6,13 +6,17 @@ const mocks = vi.hoisted(() => ({
   ensureUserRecord: vi.fn(),
   dbQueryFeedFolderMembershipsFindMany: vi.fn(),
   discoverFeedCandidates: vi.fn(),
+  fetchFeedXml: vi.fn(),
   parseFeed: vi.fn(),
+  parseFeedWithMetadata: vi.fn(),
   parseFeedXml: vi.fn(),
   normalizeFeedError: vi.fn(),
   createFeedWithInitialItems: vi.fn(),
   findExistingFeedForUserByUrl: vi.fn(),
   markFeedItemReadForUser: vi.fn(),
   purgeOldFeedItemsForUser: vi.fn(),
+  assertTrustedWriteOrigin: vi.fn(),
+  applyRouteRateLimit: vi.fn(),
 }));
 
 vi.mock("@/lib/database", () => ({
@@ -46,11 +50,16 @@ vi.mock("@/lib/feed-discovery", () => ({
 
 vi.mock("@/lib/feed-parser", () => ({
   parseFeed: mocks.parseFeed,
+  parseFeedWithMetadata: mocks.parseFeedWithMetadata,
   parseFeedXml: mocks.parseFeedXml,
 }));
 
 vi.mock("@/lib/feed-errors", () => ({
   normalizeFeedError: mocks.normalizeFeedError,
+}));
+
+vi.mock("@/lib/feed-fetcher", () => ({
+  fetchFeedXml: mocks.fetchFeedXml,
 }));
 
 vi.mock("@/lib/feed-service", () => ({
@@ -61,6 +70,14 @@ vi.mock("@/lib/feed-service", () => ({
 
 vi.mock("@/lib/retention", () => ({
   purgeOldFeedItemsForUser: mocks.purgeOldFeedItemsForUser,
+}));
+
+vi.mock("@/lib/csrf", () => ({
+  assertTrustedWriteOrigin: mocks.assertTrustedWriteOrigin,
+}));
+
+vi.mock("@/lib/rate-limit", () => ({
+  applyRouteRateLimit: mocks.applyRouteRateLimit,
 }));
 
 import { POST } from "@/app/api/feeds/route";
@@ -77,16 +94,14 @@ function createDiscoverRequest(url: string): NextRequest {
 }
 
 describe("POST /api/feeds feed.discover", () => {
-  const fetchMock = vi.fn();
-
   beforeEach(() => {
-    vi.stubGlobal("fetch", fetchMock);
-
     mocks.parseFeed.mockReset();
+    mocks.parseFeedWithMetadata.mockReset();
     mocks.parseFeedXml.mockReset();
     mocks.normalizeFeedError.mockReset();
     mocks.discoverFeedCandidates.mockReset();
     mocks.findExistingFeedForUserByUrl.mockReset();
+    mocks.fetchFeedXml.mockReset();
 
     mocks.requireAuth.mockResolvedValue({ clerkId: "clerk_123" });
     mocks.ensureUserRecord.mockResolvedValue({ id: "user_123", clerkId: "clerk_123" });
@@ -96,10 +111,12 @@ describe("POST /api/feeds feed.discover", () => {
       candidates: [],
       methodHints: {},
     });
+    mocks.assertTrustedWriteOrigin.mockReturnValue(null);
+    mocks.applyRouteRateLimit.mockResolvedValue({ allowed: true });
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
   it("returns single when one addable candidate is found", async () => {
@@ -139,12 +156,14 @@ describe("POST /api/feeds feed.discover", () => {
         "https://example.com/rss.xml": "heuristic_path",
       },
     });
-    fetchMock.mockImplementation(async () => {
-      return new Response("<rss><channel><title>Example</title></channel></rss>", {
-        status: 200,
-        headers: { "content-type": "application/rss+xml" },
-      });
-    });
+    mocks.fetchFeedXml.mockImplementation(async (url: string) => ({
+      status: "ok",
+      text: "<rss><channel><title>Example</title></channel></rss>",
+      etag: null,
+      lastModified: null,
+      finalUrl: url,
+      statusCode: 200,
+    }));
     mocks.parseFeedXml
       .mockResolvedValueOnce({
         title: "Main feed",
@@ -224,11 +243,13 @@ describe("POST /api/feeds feed.discover", () => {
         "https://example.com/rss.xml": "heuristic_path",
       },
     });
-    fetchMock.mockImplementation(async () => {
-      return new Response("<html><body>not a feed</body></html>", {
-        status: 200,
-        headers: { "content-type": "text/html" },
-      });
+    mocks.fetchFeedXml.mockResolvedValue({
+      status: "ok",
+      text: "<html><body>not a feed</body></html>",
+      etag: null,
+      lastModified: null,
+      finalUrl: "https://example.com/feed.xml",
+      statusCode: 200,
     });
     mocks.parseFeedXml.mockRejectedValue(new Error("Invalid feed XML"));
 
@@ -240,5 +261,30 @@ describe("POST /api/feeds feed.discover", () => {
     expect(body.error).toBe(
       "Error: We couldn't find any feed at this URL. Contact site owner and ask for the feed link."
     );
+  });
+
+  it("returns 429 when route-level rate limit is exceeded", async () => {
+    mocks.applyRouteRateLimit.mockResolvedValue({
+      allowed: false,
+      response: Response.json(
+        {
+          error: "Rate limit exceeded. Please wait before trying again.",
+          code: "rate_limited",
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": "2",
+          },
+        }
+      ),
+    });
+
+    const response = await POST(createDiscoverRequest("https://example.com/feed.xml"));
+    const body = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("2");
+    expect(body.code).toBe("rate_limited");
   });
 });

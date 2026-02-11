@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { handleApiRouteError } from "@/lib/api-errors";
 import { ensureUserRecord } from "@/lib/app-user";
+import { assertTrustedWriteOrigin } from "@/lib/csrf";
 import {
   createFolderForUser,
   FOLDER_NAME_MAX_LENGTH,
@@ -32,6 +33,11 @@ async function parseRequestJson(
  */
 export async function POST(request: NextRequest) {
   try {
+    const csrfFailure = assertTrustedWriteOrigin(request, "api.folders.post");
+    if (csrfFailure) {
+      return csrfFailure;
+    }
+
     const { clerkId } = await requireAuth();
     const user = await ensureUserRecord(clerkId);
 

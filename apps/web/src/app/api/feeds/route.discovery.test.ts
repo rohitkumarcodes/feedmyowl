@@ -7,13 +7,17 @@ const mocks = vi.hoisted(() => ({
   dbQueryFoldersFindMany: vi.fn(),
   dbQueryFeedFolderMembershipsFindMany: vi.fn(),
   discoverFeedCandidates: vi.fn(),
+  fetchFeedXml: vi.fn(),
   parseFeed: vi.fn(),
+  parseFeedWithMetadata: vi.fn(),
   parseFeedXml: vi.fn(),
   normalizeFeedError: vi.fn(),
   createFeedWithInitialItems: vi.fn(),
   findExistingFeedForUserByUrl: vi.fn(),
   markFeedItemReadForUser: vi.fn(),
   purgeOldFeedItemsForUser: vi.fn(),
+  assertTrustedWriteOrigin: vi.fn(),
+  applyRouteRateLimit: vi.fn(),
 }));
 
 vi.mock("@/lib/database", () => ({
@@ -50,11 +54,16 @@ vi.mock("@/lib/feed-discovery", () => ({
 
 vi.mock("@/lib/feed-parser", () => ({
   parseFeed: mocks.parseFeed,
+  parseFeedWithMetadata: mocks.parseFeedWithMetadata,
   parseFeedXml: mocks.parseFeedXml,
 }));
 
 vi.mock("@/lib/feed-errors", () => ({
   normalizeFeedError: mocks.normalizeFeedError,
+}));
+
+vi.mock("@/lib/feed-fetcher", () => ({
+  fetchFeedXml: mocks.fetchFeedXml,
 }));
 
 vi.mock("@/lib/feed-service", () => ({
@@ -65,6 +74,14 @@ vi.mock("@/lib/feed-service", () => ({
 
 vi.mock("@/lib/retention", () => ({
   purgeOldFeedItemsForUser: mocks.purgeOldFeedItemsForUser,
+}));
+
+vi.mock("@/lib/csrf", () => ({
+  assertTrustedWriteOrigin: mocks.assertTrustedWriteOrigin,
+}));
+
+vi.mock("@/lib/rate-limit", () => ({
+  applyRouteRateLimit: mocks.applyRouteRateLimit,
 }));
 
 import { POST } from "@/app/api/feeds/route";
@@ -91,11 +108,7 @@ function createLegacyFeedCreateRequest(url: string): NextRequest {
 }
 
 describe("POST /api/feeds discovery fallback", () => {
-  const fetchMock = vi.fn();
-
   beforeEach(() => {
-    vi.stubGlobal("fetch", fetchMock);
-
     mocks.requireAuth.mockResolvedValue({ clerkId: "clerk_123" });
     mocks.ensureUserRecord.mockResolvedValue({ id: "user_123", clerkId: "clerk_123" });
     mocks.dbQueryFoldersFindMany.mockResolvedValue([]);
@@ -103,14 +116,19 @@ describe("POST /api/feeds discovery fallback", () => {
     mocks.findExistingFeedForUserByUrl.mockResolvedValue(null);
 
     mocks.parseFeed.mockRejectedValue(new Error("Input URL is not valid RSS/Atom"));
+    mocks.parseFeedWithMetadata.mockRejectedValue(
+      new Error("Input URL is not valid RSS/Atom")
+    );
     mocks.normalizeFeedError.mockReturnValue({
       code: "invalid_xml",
       message: "This URL does not appear to be a valid RSS or Atom feed.",
     });
+    mocks.assertTrustedWriteOrigin.mockReturnValue(null);
+    mocks.applyRouteRateLimit.mockResolvedValue({ allowed: true });
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
   it("adds a feed when alternate-link discovery finds a valid candidate", async () => {
@@ -123,12 +141,14 @@ describe("POST /api/feeds discovery fallback", () => {
       },
     });
 
-    fetchMock.mockResolvedValue(
-      new Response("<rss><channel><title>Example</title></channel></rss>", {
-        status: 200,
-        headers: { "content-type": "application/rss+xml" },
-      })
-    );
+    mocks.fetchFeedXml.mockResolvedValue({
+      status: "ok",
+      text: "<rss><channel><title>Example</title></channel></rss>",
+      etag: null,
+      lastModified: null,
+      finalUrl: discoveredCandidate,
+      statusCode: 200,
+    });
 
     mocks.parseFeedXml.mockResolvedValue({
       title: "Example Feed",
@@ -154,7 +174,11 @@ describe("POST /api/feeds discovery fallback", () => {
       "user_123",
       discoveredCandidate,
       expect.any(Object),
-      []
+      [],
+      {
+        etag: null,
+        lastModified: null,
+      }
     );
   });
 
@@ -168,12 +192,14 @@ describe("POST /api/feeds discovery fallback", () => {
       },
     });
 
-    fetchMock.mockResolvedValue(
-      new Response("<rss><channel><title>Example</title></channel></rss>", {
-        status: 200,
-        headers: { "content-type": "application/rss+xml" },
-      })
-    );
+    mocks.fetchFeedXml.mockResolvedValue({
+      status: "ok",
+      text: "<rss><channel><title>Example</title></channel></rss>",
+      etag: null,
+      lastModified: null,
+      finalUrl: discoveredCandidate,
+      statusCode: 200,
+    });
 
     mocks.parseFeedXml.mockResolvedValue({
       title: "Example Feed",
@@ -199,7 +225,11 @@ describe("POST /api/feeds discovery fallback", () => {
       "user_123",
       discoveredCandidate,
       expect.any(Object),
-      []
+      [],
+      {
+        etag: null,
+        lastModified: null,
+      }
     );
   });
 
@@ -212,11 +242,13 @@ describe("POST /api/feeds discovery fallback", () => {
       },
     });
 
-    fetchMock.mockImplementation(async () => {
-      return new Response("<html><body>not a feed</body></html>", {
-        status: 200,
-        headers: { "content-type": "text/html" },
-      });
+    mocks.fetchFeedXml.mockResolvedValue({
+      status: "ok",
+      text: "<html><body>not a feed</body></html>",
+      etag: null,
+      lastModified: null,
+      finalUrl: "https://example.com/feed.xml",
+      statusCode: 200,
     });
 
     mocks.parseFeedXml.mockRejectedValue(new Error("Invalid feed XML"));
@@ -230,14 +262,19 @@ describe("POST /api/feeds discovery fallback", () => {
       "Error: We couldn't find any feed at this URL. Contact site owner and ask for the feed link."
     );
     expect(mocks.createFeedWithInitialItems).not.toHaveBeenCalled();
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(mocks.fetchFeedXml).toHaveBeenCalledTimes(2);
   });
 
   it("keeps legacy feed.create compatibility when action is omitted", async () => {
-    mocks.parseFeed.mockResolvedValue({
-      title: "Example Feed",
-      description: "Example description",
-      items: [],
+    mocks.parseFeedWithMetadata.mockResolvedValue({
+      parsedFeed: {
+        title: "Example Feed",
+        description: "Example description",
+        items: [],
+      },
+      etag: "\"etag-1\"",
+      lastModified: "Wed, 11 Feb 2026 00:00:00 GMT",
+      resolvedUrl: "https://example.com/feed.xml",
     });
 
     mocks.createFeedWithInitialItems.mockResolvedValue({
@@ -258,7 +295,11 @@ describe("POST /api/feeds discovery fallback", () => {
       "user_123",
       "https://example.com/feed.xml",
       expect.any(Object),
-      []
+      [],
+      {
+        etag: "\"etag-1\"",
+        lastModified: "Wed, 11 Feb 2026 00:00:00 GMT",
+      }
     );
   });
 });

@@ -24,7 +24,7 @@
  * Docs: https://orm.drizzle.team/docs/sql-schema-declaration
  */
 
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   pgTable,
   text,
@@ -162,6 +162,12 @@ export const feeds = pgTable(
     /** When the last fetch error was recorded */
     lastFetchErrorAt: timestamp("last_fetch_error_at"),
 
+    /** Latest ETag seen from the feed endpoint for conditional requests */
+    httpEtag: text("http_etag"),
+
+    /** Latest Last-Modified seen from the feed endpoint for conditional requests */
+    httpLastModified: text("http_last_modified"),
+
     /** When this subscription was created */
     createdAt: timestamp("created_at").defaultNow().notNull(),
 
@@ -260,6 +266,9 @@ export const feedItems = pgTable("feed_items", {
   /** Author name */
   author: varchar("author", { length: 255 }),
 
+  /** Deterministic fallback dedupe key for items without stable GUIDs */
+  contentFingerprint: text("content_fingerprint"),
+
   /** When the article was published (from the feed, not when we fetched it) */
   publishedAt: timestamp("published_at"),
 
@@ -271,7 +280,26 @@ export const feedItems = pgTable("feed_items", {
 
   /** When this row was last updated */
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+},
+  (table) => ({
+    /**
+     * Canonical dedupe for GUID-backed items.
+     * Partial index avoids conflicting with rows where guid is null.
+     */
+    feedGuidUniqueIdx: uniqueIndex("feed_items_feed_id_guid_unique")
+      .on(table.feedId, table.guid)
+      .where(sql`${table.guid} is not null`),
+
+    /**
+     * Fallback dedupe when no GUID is available.
+     */
+    feedFingerprintUniqueIdx: uniqueIndex(
+      "feed_items_feed_id_content_fingerprint_unique"
+    )
+      .on(table.feedId, table.contentFingerprint)
+      .where(sql`${table.guid} is null and ${table.contentFingerprint} is not null`),
+  })
+);
 
 // =============================================================================
 // RELATIONS (for Drizzle's relational query API)

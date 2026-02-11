@@ -4,6 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import DOMPurify from "dompurify";
+import { ARTICLE_SANITIZE_CONFIG } from "@/lib/article-sanitize-config";
 import { toRenderableHtml } from "@/utils/articleText";
 import type { ArticleViewModel } from "./feeds-types";
 import { shouldFocusReaderRoot } from "./article-reader-focus";
@@ -57,10 +58,7 @@ export function ArticleReader({ article }: ArticleReaderProps) {
       return "";
     }
 
-    return DOMPurify.sanitize(toRenderableHtml(article.content), {
-      FORBID_TAGS: ["script", "style"],
-      FORBID_ATTR: ["style", "onerror", "onload", "onclick", "onmouseover"],
-    });
+    return DOMPurify.sanitize(toRenderableHtml(article.content), ARTICLE_SANITIZE_CONFIG);
   }, [article]);
 
   useEffect(() => {
