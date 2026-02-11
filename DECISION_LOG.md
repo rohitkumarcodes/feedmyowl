@@ -149,6 +149,7 @@ This log records active product and technical decisions for the current app phas
   - Results are ranked by relevance, then recency, and capped to top 50.
   - Title and feed-name matches are highlighted.
   - Clearing search returns the list to the currently selected scope immediately.
+  - Follow-up matching/typo behavior refinements are defined in D-2026-02-11-01.
 
 ### D-2026-02-10-10
 - Date: 2026-02-10
@@ -161,6 +162,18 @@ This log records active product and technical decisions for the current app phas
   - Expansion uses shutter motion aligned with existing settings motion patterns.
   - Expanded content is a boxed grouped shortcuts reference matching feeds modal styling.
   - Toggle button width matches the expanded panel width.
+
+### D-2026-02-11-01
+- Date: 2026-02-11
+- Status: active
+- Decision: Feeds search uses a strict-first pass plus typo fallback and significant-only highlight ranges.
+- Why: Preserve precision/trust while restoring expected typo recovery for short reading queries.
+- Details:
+  - Strict global search remains primary and uses significant contiguous ranges.
+  - If strict returns zero matches and query length is 4+ characters, fallback allows
+    one-edit token matches on title/feed-title.
+  - Typo fallback highlights the full matched title/feed token.
+  - Significant snippet/author matches surface source labels (`Matched in ...`).
 
 ## Superseded decisions
 

@@ -18,7 +18,7 @@ From repo root:
 - Bulk add feed/site URLs from sidebar add form.
 - Manual refresh.
 - Read articles.
-- Global fuzzy article search in article list pane (top 50 ranked results).
+- Global strict-first article search in article list pane with typo fallback (top 50 results).
 - Offline-only workspace status message with cached-reading fallback copy.
 - Desktop/tablet keyboard shortcuts with in-app help modal (`?`) and visible toolbar entry.
 - One-time shortcuts hint in sidebar (dismissible, browser-local persistence).
@@ -91,9 +91,16 @@ From repo root:
 ### Search behavior looks incorrect
 1. Confirm search input is visible at the top of the article list pane.
 2. Confirm query has at least 2 characters; 1-character query should not activate search.
-3. Confirm active search is global (ignores selected scope) and shows ranked results.
-4. If query returns many matches, confirm list caps at top 50 and shows cap notice.
-5. Press `Escape` in the search input to confirm query clears.
+3. Confirm strict search is global (ignores selected scope) and shows ranked results.
+4. Confirm significant-only highlight behavior (no tiny fragment highlights such as
+   `The`/`at` from unrelated words).
+5. For 4+ character typo query (example: `heaet`), confirm fallback finds expected
+   title/feed token (`Heart`).
+6. Confirm typo fallback does not surface weak fragmented title-only noise (example:
+   `The Art of Animation` for `heaet`).
+7. If query returns many matches, confirm list caps at top 50 and shows cap notice.
+8. Confirm snippet/author-driven results show `Matched in ...` source labels.
+9. Press `Escape` in the search input to confirm query clears.
 
 ### Shortcut hint appears unexpectedly
 1. Confirm browser localStorage key: `feedmyowl.shortcuts_hint.dismissed.v1`.
@@ -157,3 +164,6 @@ From repo root:
 30. Verify search row clear button and `Escape` both clear the active query.
 31. Press `/` from list and reader contexts and confirm focus moves to search input.
 32. While search is active, change sidebar scope and verify search results remain global and the open reader article stays open.
+33. Search `heart` and confirm exact match appears with contiguous highlight.
+34. Search typo `heaet` and confirm typo fallback returns the `Heart` result.
+35. Confirm typo fallback results do not show fragmented highlight noise for unrelated titles.

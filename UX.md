@@ -75,10 +75,15 @@
 - Global search behavior:
   - Search input is always visible at the top of the article list pane.
   - Query length must be at least 2 characters to activate global fuzzy search.
+  - Strict search pass runs first and requires significant contiguous matches.
+  - If strict search returns no matches and query length is 4+ characters, fallback
+    search runs one-edit typo matching on title and feed title tokens.
   - Active search ignores selected scope for results, but scope selection stays visible.
   - Changing scope while search is active keeps search active and keeps the current reader article open.
   - Results are ranked by relevance, then recency, and capped to top 50 matches.
-  - Match highlighting appears in article title and feed title.
+  - Match highlighting appears in article title and feed title using significant contiguous ranges only.
+  - Typo fallback highlights the full matching title/feed token.
+  - Significant hidden-field hits display source labels (`Matched in snippet` / `Matched in author`).
   - `Escape` in the search input clears the query; pressing again may blur.
 
 ## 7. Mobile UX
@@ -117,6 +122,8 @@
 - Discoverability:
   - Visible toolbar entry: `Shortcuts (?)`
   - One-time hint: `Tip: press ? to see shortcuts.`
+  - Shortcuts modal width on desktop/tablet is content-driven by the longest row and
+    remains viewport-capped.
 
 ## 10. Settings behavior
 - Settings includes four section groups with consistent spacing:

@@ -22,7 +22,7 @@ Core loop:
 - Many-to-many feed-folder assignment.
 - Manual refresh.
 - Article list and reader.
-- Global fuzzy article search in the article pane.
+- Global strict-first article search in the article pane with typo fallback.
 - Read-state tracking.
 - Offline snapshot fallback for previously loaded data.
 - Offline-only connectivity status message in workspace.
@@ -48,13 +48,17 @@ Core loop:
   - `Refresh`
   - `Add feed/folder`
   - `Shortcuts (?)`
-- Article list pane includes an always-visible search input for global fuzzy article search.
+- Article list pane includes an always-visible search input for global strict-first article search.
 - Search behavior:
   - Activates at 2+ characters.
+  - Strict pass runs first with significant contiguous match filtering.
+  - If strict returns no matches and query is 4+ characters, fallback checks one-edit
+    typos on title/feed-title tokens.
   - Runs globally across loaded articles (ignores selected scope for results).
   - Ranks by relevance then recency.
   - Shows top 50 results.
-  - Highlights title/feed text matches.
+  - Highlights significant title/feed text matches only.
+  - Significant snippet/author matches add source labels (`Matched in ...`).
 - One-time shortcuts tip appears in the sidebar until dismissed/opened.
 - Authenticated chrome brand:
   - Fixed text `Feed my owl`.
@@ -115,6 +119,7 @@ Notes:
   - `/` focuses article search.
   - `?` opens shortcuts help.
   - `Escape` closes the shortcuts dialog and clears the search input when focused.
+  - Shortcuts dialog width on desktop/tablet is content-driven (longest row) and viewport-capped.
 
 ## 10. Operational scripts
 From repo root:

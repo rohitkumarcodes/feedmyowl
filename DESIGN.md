@@ -51,13 +51,20 @@ Three stacked views:
 - Settings delete entry point is text-first (`Delete account...`) before confirmation.
 - Settings keyboard shortcuts use a collapsed-by-default toggle (caret then keyboard icon)
   that expands with shutter motion into a boxed grouped reference.
-- Article list keeps an always-visible global search input with fuzzy-ranked results.
+- Article list keeps an always-visible global search input with strict-first fuzzy results.
 - Active search replaces scoped list content but keeps sidebar scope selection visible.
 - Search model defaults:
   - Activates at 2+ characters.
-  - Ranks matches by relevance then recency.
+  - Strict pass runs first across title, feed title, snippet, and author.
+  - Strict pass keeps only significant contiguous matches to reduce noisy fragment hits.
+  - If strict pass returns no matches and query length is 4+ characters, typo fallback
+    checks one-edit matches on title/feed-title tokens.
+  - Ranks strict results by relevance then recency.
+  - Ranks typo-fallback results by edit distance, then score, then recency.
   - Displays top 50 matches.
-  - Highlights article-title and feed-title matches.
+  - Highlights only significant contiguous article-title/feed-title ranges.
+  - Typo fallback highlights the full matched title/feed token.
+  - Significant snippet/author matches surface a source label (`Matched in ...`).
 
 ## 6. Keyboard model
 - Scope and availability:
@@ -77,6 +84,8 @@ Three stacked views:
 - Discoverability:
   - Visible toolbar entry `Shortcuts (?)`
   - One-time tip shown on desktop/tablet until dismissed or modal opened
+  - Shortcuts modal width fits the longest shortcut row on desktop/tablet and remains
+    capped to viewport width.
 
 ## 7. Accessibility baseline
 - Folder toggles provide `aria-expanded`.
