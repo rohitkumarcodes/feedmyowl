@@ -81,6 +81,11 @@ const THEME_MODE_OPTIONS: Array<{
   description: string;
 }> = [
   {
+    mode: "system",
+    label: "System",
+    description: "Matches your device appearance setting automatically.",
+  },
+  {
     mode: "light",
     label: "Light",
     description: "Bright workspace with high daylight contrast.",
@@ -89,11 +94,6 @@ const THEME_MODE_OPTIONS: Array<{
     mode: "dark",
     label: "Dark",
     description: "Dimmer workspace for low-light reading sessions.",
-  },
-  {
-    mode: "system",
-    label: "System",
-    description: "Matches your device appearance setting automatically.",
   },
 ];
 

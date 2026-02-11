@@ -64,6 +64,13 @@
       "when": 1770809742000,
       "tag": "0008_user_theme_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1770843600000,
+      "tag": "0009_theme_mode_system_default",
+      "breakpoints": true
     }
   ]
 }

@@ -3,7 +3,7 @@ export const THEME_MODE_VALUES = ["light", "dark", "system"] as const;
 export type ThemeMode = (typeof THEME_MODE_VALUES)[number];
 export type ResolvedThemeMode = Exclude<ThemeMode, "system">;
 
-export const DEFAULT_THEME_MODE: ThemeMode = "light";
+export const DEFAULT_THEME_MODE: ThemeMode = "system";
 
 const themeModeSet = new Set<string>(THEME_MODE_VALUES);
 
