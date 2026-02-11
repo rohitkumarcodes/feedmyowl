@@ -136,7 +136,6 @@
 .optionsPopover {
   background: var(--bg-primary);
   border: 1px solid var(--border);
-  box-shadow: 0 8px 20px rgb(0 0 0 / 18%);
   display: grid;
   gap: 0;
   max-width: calc(100vw - 24px);
@@ -175,6 +174,10 @@
   gap: 2px;
 }
 
+.optionsActionSlot {
+  width: 100%;
+}
+
 .optionsActionButton,
 .optionsClerkButton {
   align-items: center;
@@ -201,6 +204,7 @@
 }
 
 .optionsClerkButton {
+  box-sizing: border-box;
   margin: 0;
 }
 
