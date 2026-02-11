@@ -27,12 +27,18 @@ import {
   type FeedImportSourceType,
 } from "@/lib/feed-import-types";
 import { OWL_ART_OPTIONS, coerceOwlAscii, type OwlAscii } from "@/lib/owl-brand";
+import {
+  applyThemeModeToDocument,
+  coerceThemeMode,
+  type ThemeMode,
+} from "@/lib/theme-mode";
 import { SHORTCUT_GROUPS } from "./keyboard-shortcuts";
 import styles from "./settings-overview.module.css";
 
 interface SettingsOverviewProps {
   email: string;
   owlAscii: OwlAscii;
+  themeMode: ThemeMode;
 }
 
 interface ImportRequestErrorBody {
@@ -42,6 +48,11 @@ interface ImportRequestErrorBody {
 interface SaveOwlResponseBody {
   error?: string;
   owlAscii?: string;
+}
+
+interface SaveThemeResponseBody {
+  error?: string;
+  themeMode?: string;
 }
 
 interface OwlOptionsShutterProps {
@@ -303,7 +314,7 @@ const keyboardIcon = (
 /**
  * Renders minimal account settings for the reading MVP.
  */
-export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
+export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOverviewProps) {
   const router = useRouter();
   const owlOptionsPanelId = useId();
   const shortcutsPanelId = useId();
@@ -326,6 +337,11 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
   const [isSavingOwl, setIsSavingOwl] = useState(false);
   const [owlSaveMessage, setOwlSaveMessage] = useState<string | null>(null);
   const [owlSaveError, setOwlSaveError] = useState<string | null>(null);
+  const [draftThemeMode, setDraftThemeMode] = useState<ThemeMode>(themeMode);
+  const [savedThemeMode, setSavedThemeMode] = useState<ThemeMode>(themeMode);
+  const [isSavingTheme, setIsSavingTheme] = useState(false);
+  const [themeSaveMessage, setThemeSaveMessage] = useState<string | null>(null);
+  const [themeSaveError, setThemeSaveError] = useState<string | null>(null);
   const [isOwlPanelExpanded, setIsOwlPanelExpanded] = useState(false);
   const [isShortcutsPanelExpanded, setIsShortcutsPanelExpanded] = useState(false);
   const [owlControlsWidthPx, setOwlControlsWidthPx] = useState<number | null>(null);
@@ -340,6 +356,11 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
     setDraftOwlAscii(owlAscii);
     setSavedOwlAscii(owlAscii);
   }, [owlAscii]);
+
+  useEffect(() => {
+    setDraftThemeMode(themeMode);
+    setSavedThemeMode(themeMode);
+  }, [themeMode]);
 
   useEffect(() => {
     if (!isOwlPanelExpanded && !isShortcutsPanelExpanded) {
@@ -501,6 +522,48 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
       setOwlSaveError("Could not connect to the server.");
     } finally {
       setIsSavingOwl(false);
+    }
+  }
+
+  async function handleThemeModeChange(nextThemeMode: ThemeMode) {
+    if (isSavingTheme || nextThemeMode === draftThemeMode) {
+      return;
+    }
+
+    const previousThemeMode = savedThemeMode;
+    setDraftThemeMode(nextThemeMode);
+    setThemeSaveError(null);
+    setThemeSaveMessage(null);
+    setIsSavingTheme(true);
+    applyThemeModeToDocument(nextThemeMode);
+
+    try {
+      const response = await fetch("/api/settings/theme", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ themeMode: nextThemeMode }),
+      });
+
+      const body = await parseResponseJson<SaveThemeResponseBody>(response);
+
+      if (!response.ok) {
+        setDraftThemeMode(previousThemeMode);
+        applyThemeModeToDocument(previousThemeMode);
+        setThemeSaveError(body?.error || "Could not save theme selection.");
+        return;
+      }
+
+      const persistedThemeMode = coerceThemeMode(body?.themeMode ?? nextThemeMode);
+      setDraftThemeMode(persistedThemeMode);
+      setSavedThemeMode(persistedThemeMode);
+      applyThemeModeToDocument(persistedThemeMode);
+      setThemeSaveMessage("Theme updated.");
+    } catch {
+      setDraftThemeMode(previousThemeMode);
+      applyThemeModeToDocument(previousThemeMode);
+      setThemeSaveError("Could not connect to the server.");
+    } finally {
+      setIsSavingTheme(false);
     }
   }
 
@@ -672,6 +735,68 @@ export function SettingsOverview({ email, owlAscii }: SettingsOverviewProps) {
       </header>
 
       <div className={styles.settingsOptions}>
+        <section className={styles.panel}>
+          <h2>Appearance</h2>
+          <p className={styles.muted}>Choose your reading mode.</p>
+          <div
+            className={styles.themeModeGroup}
+            role="radiogroup"
+            aria-label="Choose appearance mode"
+          >
+            <label
+              className={`${styles.themeModeOption} ${
+                draftThemeMode === "light" ? styles.themeModeOptionSelected : ""
+              }`}
+            >
+              <input
+                type="radio"
+                name="theme-mode"
+                value="light"
+                checked={draftThemeMode === "light"}
+                onChange={() => {
+                  void handleThemeModeChange("light");
+                }}
+                disabled={isSavingTheme}
+              />
+              <span className={styles.themeModeOptionLabel}>Light</span>
+              <span className={styles.themeModeOptionDescription}>
+                Bright workspace with high daylight contrast.
+              </span>
+            </label>
+            <label
+              className={`${styles.themeModeOption} ${
+                draftThemeMode === "dark" ? styles.themeModeOptionSelected : ""
+              }`}
+            >
+              <input
+                type="radio"
+                name="theme-mode"
+                value="dark"
+                checked={draftThemeMode === "dark"}
+                onChange={() => {
+                  void handleThemeModeChange("dark");
+                }}
+                disabled={isSavingTheme}
+              />
+              <span className={styles.themeModeOptionLabel}>Dark</span>
+              <span className={styles.themeModeOptionDescription}>
+                Dimmer workspace for low-light reading sessions.
+              </span>
+            </label>
+          </div>
+          {isSavingTheme ? (
+            <p className={styles.inlineMessage} role="status">
+              Saving theme...
+            </p>
+          ) : null}
+          {themeSaveMessage ? (
+            <p className={styles.inlineMessage} role="status">
+              {themeSaveMessage}
+            </p>
+          ) : null}
+          {themeSaveError ? <p className={styles.inlineMessage}>{themeSaveError}</p> : null}
+        </section>
+
         <section className={styles.panel}>
           <h2>Feeds</h2>
           <p className={styles.muted}>

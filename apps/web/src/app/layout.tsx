@@ -20,14 +20,14 @@ import "@/styles/globals.css";
 
 const clerkAppearance = {
   variables: {
-    colorPrimary: "#005fd7",
-    colorBackground: "#f7f7f8",
-    colorForeground: "#1f2328",
-    colorMutedForeground: "#5f6670",
-    colorInput: "#f7f7f8",
-    colorInputForeground: "#1f2328",
-    colorBorder: "#c7cdd4",
-    fontFamily: '"Noto Sans", "Liberation Sans", "Segoe UI", Arial, sans-serif',
+    colorPrimary: "var(--accent)",
+    colorBackground: "var(--bg-primary)",
+    colorForeground: "var(--text-primary)",
+    colorMutedForeground: "var(--text-secondary)",
+    colorInput: "var(--bg-primary)",
+    colorInputForeground: "var(--text-primary)",
+    colorBorder: "var(--border)",
+    fontFamily: "var(--font-sans)",
     fontSize: "0.9375rem",
     borderRadius: "0px",
   },

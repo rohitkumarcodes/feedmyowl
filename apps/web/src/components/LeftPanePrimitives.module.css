@@ -222,8 +222,8 @@
 }
 
 .buttonDanger {
-  border-color: #8d2f2f;
-  color: #8d2f2f;
+  border-color: var(--danger-border);
+  color: var(--danger-text);
 }
 
 .menu {

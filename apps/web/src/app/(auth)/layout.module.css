@@ -3,6 +3,22 @@
   position: relative;
 }
 
+.shell[data-theme-mode="dark"] {
+  --bg-primary: #16181b;
+  --bg-secondary: #1d2024;
+  --bg-tertiary: #2a2f36;
+  --bg-selected: #24344d;
+  --text-primary: #e6e9ed;
+  --text-secondary: #c1c8d0;
+  --text-muted: #9aa3ae;
+  --border: #3b434d;
+  --accent: #6aa8ff;
+  --danger-bg: rgb(220 88 88 / 20%);
+  --danger-border: #d27575;
+  --danger-text: #f2b7b7;
+  color-scheme: dark;
+}
+
 .brandSlot {
   /* Fixed brand slot; sidebar header reserve uses --sidebar-header-reserve to clear this block. */
   display: flex;

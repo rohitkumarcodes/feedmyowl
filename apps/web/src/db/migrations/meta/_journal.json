@@ -57,6 +57,13 @@
       "when": 1770800363000,
       "tag": "0007_article_cursor_index",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1770809742000,
+      "tag": "0008_user_theme_mode",
+      "breakpoints": true
     }
   ]
 }

@@ -9,11 +9,13 @@ import { requireAuth } from "@/lib/auth";
 import { ensureUserRecord } from "@/lib/app-user";
 import { db, eq, users } from "@/lib/database";
 import { isMissingColumnError } from "@/lib/db-compat";
+import { AuthThemeBootstrap } from "@/components/auth-theme-bootstrap";
 import {
   buildOwlFaviconDataUri,
   coerceOwlAscii,
   DEFAULT_OWL_ASCII,
 } from "@/lib/owl-brand";
+import { coerceThemeMode, DEFAULT_THEME_MODE } from "@/lib/theme-mode";
 import styles from "./layout.module.css";
 
 async function getCurrentUserOwlAscii() {
@@ -40,6 +42,32 @@ async function getCurrentUserOwlAscii() {
   return coerceOwlAscii(user?.owlAscii);
 }
 
+async function getCurrentUserThemeMode() {
+  const { clerkId } = await requireAuth();
+  const ensuredUser = await ensureUserRecord(clerkId);
+
+  if (!ensuredUser) {
+    return DEFAULT_THEME_MODE;
+  }
+
+  const user = await db.query.users
+    .findFirst({
+      where: eq(users.id, ensuredUser.id),
+      columns: {
+        themeMode: true,
+      },
+    })
+    .catch((error: unknown) => {
+      if (isMissingColumnError(error, "theme_mode")) {
+        return null;
+      }
+
+      throw error;
+    });
+
+  return coerceThemeMode(user?.themeMode);
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const owlAscii = await getCurrentUserOwlAscii();
 
@@ -59,9 +87,11 @@ export default async function AuthLayout({
   children: React.ReactNode;
 }) {
   const owlAscii = await getCurrentUserOwlAscii();
+  const initialThemeMode = await getCurrentUserThemeMode();
 
   return (
-    <div className={styles.shell}>
+    <div className={styles.shell} data-theme-mode={initialThemeMode}>
+      <AuthThemeBootstrap initialThemeMode={initialThemeMode} />
       <div className={styles.brandSlot}>
         <Link href="/feeds" className={styles.brand}>
           <span className={styles.brandText}>Feed my owl</span>

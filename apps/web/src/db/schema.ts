@@ -59,6 +59,9 @@ export const users = pgTable("users", {
   /** Selected ASCII owl logo shown in app chrome and favicon */
   owlAscii: varchar("owl_ascii", { length: 20 }).default("{o,o}").notNull(),
 
+  /** Selected app appearance mode (`light` or `dark`) */
+  themeMode: varchar("theme_mode", { length: 10 }).default("light").notNull(),
+
   /** Subscription tier: "free" (default) or "paid" */
   subscriptionTier: varchar("subscription_tier", { length: 50 })
     .default("free")

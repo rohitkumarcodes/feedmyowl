@@ -27,6 +27,7 @@ Core loop:
 - Offline snapshot fallback for previously loaded data.
 - Offline-only connectivity status message in workspace.
 - Account settings (including configurable ASCII owl logo) and account deletion.
+- Account appearance mode toggle (`light` / `dark`) for authenticated routes.
 - Feed import progress feedback in settings.
 - Desktop/tablet keyboard shortcuts with in-app help modal and one-time hint.
 - Semantic sidebar notices (`error`, `progress`, `offline`, `info`) with accessibility roles.
@@ -98,12 +99,14 @@ Notes:
 - `DELETE /api/folders/[id]` -> delete folder by mode
 - `POST /api/refresh` -> manual refresh all user feeds
 - `PATCH /api/settings/logo` -> persist selected user ASCII owl logo
+- `PATCH /api/settings/theme` -> persist selected authenticated appearance mode
 
 ## 8. Reliability defaults
 - Feed refresh errors are tracked per feed with calm inline messaging.
 - One failed feed must not block reading other feeds.
 - Article retention is count-based: keep at most 50 items per feed, ranked by
   `COALESCE(published_at, created_at) DESC, id DESC`.
+- Authenticated routes support account-synced appearance mode (`light` / `dark`).
 - Offline snapshot keeps previously loaded data available during disconnects.
 - Offline message copy is fixed to: `You’re offline. You can still read cached articles.`
 - Reconnect clears the offline message silently (no separate online banner).

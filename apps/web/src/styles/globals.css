@@ -8,6 +8,9 @@
   --text-muted: #77808a;
   --border: #c7cdd4;
   --accent: #005fd7;
+  --danger-bg: rgb(177 44 44 / 8%);
+  --danger-border: #a34d4d;
+  --danger-text: #7a2f2f;
 
   /* Shared feeds-shell sizing so brand slot and sidebar reserve stay aligned. */
   --sidebar-pane-width: 240px;
@@ -48,8 +51,25 @@ body {
 }
 
 html {
+  color-scheme: light;
   font-size: 16px;
   scrollbar-gutter: stable;
+}
+
+html[data-theme="dark"] {
+  --bg-primary: #16181b;
+  --bg-secondary: #1d2024;
+  --bg-tertiary: #2a2f36;
+  --bg-selected: #24344d;
+  --text-primary: #e6e9ed;
+  --text-secondary: #c1c8d0;
+  --text-muted: #9aa3ae;
+  --border: #3b434d;
+  --accent: #6aa8ff;
+  --danger-bg: rgb(220 88 88 / 20%);
+  --danger-border: #d27575;
+  --danger-text: #f2b7b7;
+  color-scheme: dark;
 }
 
 body {

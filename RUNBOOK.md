@@ -40,6 +40,7 @@ From repo root:
 - `DELETE /api/folders/[id]`
 - `POST /api/refresh`
 - `PATCH /api/settings/logo`
+- `PATCH /api/settings/theme`
 
 ## 5. Common incidents
 
@@ -71,6 +72,12 @@ From repo root:
 3. Validate with SQL:
    `SELECT feed_id, COUNT(*) FROM feed_items GROUP BY feed_id HAVING COUNT(*) > 50;`
 4. Expected result set is empty after enforcement paths run.
+
+### Theme mode does not save or apply
+1. Confirm `PATCH /api/settings/theme` returns `200` with `themeMode`.
+2. If API returns `503`, apply latest DB migrations to add `users.theme_mode`.
+3. Verify authenticated routes set `data-theme` on `<html>` while mounted.
+4. Confirm non-auth pages (`/sign-in`, `/sign-up`) remain light after leaving auth routes.
 
 ### User reports offline banner behavior
 1. Confirm device/browser network status is offline.

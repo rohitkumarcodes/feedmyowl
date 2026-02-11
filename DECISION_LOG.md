@@ -189,6 +189,17 @@ This log records active product and technical decisions for the current app phas
   - Remove time-based retention windows from enforcement logic.
   - Enforce during write paths (create/import/refresh) and via existing read-path safety sweeps.
 
+### D-2026-02-11-03
+- Date: 2026-02-11
+- Status: active
+- Decision: Authenticated routes support an account-synced `light` / `dark` appearance mode.
+- Why: Let users adjust reading comfort while keeping preference consistent across devices.
+- Details:
+  - Theme is persisted in `users.theme_mode`.
+  - Settings toggles theme with instant apply + auto-save.
+  - Authenticated routes apply the chosen mode; public/auth-entry pages remain light.
+  - Clerk account surfaces follow the selected mode via shared appearance variables.
+
 ## Superseded decisions
 
 ### D-2026-02-07-05
