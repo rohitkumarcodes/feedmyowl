@@ -16,6 +16,17 @@ import {
   buildArticleSearchResults,
   type ArticleSearchHighlights,
 } from "./article-search";
+import {
+  appendPageItemsToFeeds,
+  createUninitializedScopePaginationState,
+  getScopePaginationState,
+  mergeServerFeedsWithLoadedItems,
+  resetPaginationForServerRefresh,
+  setScopePaginationError,
+  setScopePaginationLoading,
+  setScopePaginationSuccess,
+  type PaginationByScopeKey,
+} from "./article-pagination-state";
 import { buildSidebarNotices } from "./sidebar-messages";
 import type { FeedViewModel, FolderViewModel } from "./feeds-types";
 import {
@@ -30,21 +41,68 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useFeedsWorkspaceActions } from "@/hooks/useFeedsWorkspaceActions";
 import { useFeedsWorkspaceMobile } from "@/hooks/useFeedsWorkspaceMobile";
 import { useFeedsWorkspaceNetwork } from "@/hooks/useFeedsWorkspaceNetwork";
+import {
+  DEFAULT_ARTICLE_PAGE_LIMIT,
+  scopeToKey,
+  type ArticlePageResponseBody,
+  type ArticleScope,
+} from "@/lib/article-pagination";
+import { OFFLINE_CACHED_ARTICLES_MESSAGE } from "@/lib/network-messages";
 import styles from "./feeds-workspace.module.css";
 
 interface FeedsWorkspaceProps {
   initialFeeds: FeedViewModel[];
   initialFolders: FolderViewModel[];
+  initialPaginationByScopeKey: PaginationByScopeKey;
+}
+
+interface ApiErrorResponse {
+  error?: string;
+}
+
+async function parseResponseJson<T>(response: Response): Promise<T | null> {
+  try {
+    return (await response.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
+function toArticleScope(scope: SidebarScope): ArticleScope | null {
+  if (scope.type === "all") {
+    return { type: "all" };
+  }
+
+  if (scope.type === "uncategorized") {
+    return { type: "uncategorized" };
+  }
+
+  if (scope.type === "folder") {
+    return { type: "folder", id: scope.folderId };
+  }
+
+  if (scope.type === "feed") {
+    return { type: "feed", id: scope.feedId };
+  }
+
+  return null;
 }
 
 /**
  * Client orchestrator for feed subscriptions, article list state, and reader state.
  */
-export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceProps) {
+export function FeedsWorkspace({
+  initialFeeds,
+  initialFolders,
+  initialPaginationByScopeKey,
+}: FeedsWorkspaceProps) {
   const router = useRouter();
 
   const [feeds, setFeeds] = useState<FeedViewModel[]>(initialFeeds);
   const [folders, setFolders] = useState<FolderViewModel[]>(initialFolders);
+  const [paginationByScopeKey, setPaginationByScopeKey] = useState<PaginationByScopeKey>(
+    initialPaginationByScopeKey
+  );
   const [selectedScope, setSelectedScope] = useState<SidebarScope>({ type: "none" });
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
   const [openArticleId, setOpenArticleId] = useState<string | null>(null);
@@ -59,8 +117,29 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setFeeds(initialFeeds);
+    setFeeds((previousFeeds) =>
+      mergeServerFeedsWithLoadedItems(previousFeeds, initialFeeds)
+    );
   }, [initialFeeds]);
+
+  useEffect(() => {
+    const allScopeKey = scopeToKey({ type: "all" });
+    const initialAllScope = initialPaginationByScopeKey[allScopeKey] ?? {
+      initialized: true,
+      isLoading: false,
+      error: null,
+      nextCursor: null,
+      hasMore: false,
+    };
+
+    setPaginationByScopeKey((previous) =>
+      resetPaginationForServerRefresh(previous, {
+        allScopeKey,
+        nextCursor: initialAllScope.nextCursor,
+        hasMore: initialAllScope.hasMore,
+      })
+    );
+  }, [initialPaginationByScopeKey]);
 
   useEffect(() => {
     setFolders(initialFolders);
@@ -157,6 +236,22 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
     () => selectEmptyStateMessage(feeds.length, selectedScope),
     [feeds.length, selectedScope]
   );
+
+  const selectedArticleScope = useMemo(
+    () => toArticleScope(selectedScope),
+    [selectedScope]
+  );
+
+  const selectedScopePagination = useMemo(() => {
+    if (!selectedArticleScope) {
+      return createUninitializedScopePaginationState();
+    }
+
+    return getScopePaginationState(
+      paginationByScopeKey,
+      scopeToKey(selectedArticleScope)
+    );
+  }, [paginationByScopeKey, selectedArticleScope]);
 
   const {
     isAddFeedFormVisible,
@@ -420,6 +515,97 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
     ]
   );
 
+  const loadNextPage = useCallback(
+    async (scope: ArticleScope) => {
+      const scopeKey = scopeToKey(scope);
+      const currentScopePagination = getScopePaginationState(
+        paginationByScopeKey,
+        scopeKey
+      );
+
+      if (
+        currentScopePagination.isLoading ||
+        (currentScopePagination.initialized && !currentScopePagination.hasMore)
+      ) {
+        return;
+      }
+
+      if (!navigator.onLine) {
+        setNetworkMessage(OFFLINE_CACHED_ARTICLES_MESSAGE);
+        return;
+      }
+
+      setPaginationByScopeKey((previous) =>
+        setScopePaginationLoading(previous, scopeKey)
+      );
+
+      const searchParams = new URLSearchParams({
+        scopeType: scope.type,
+        limit: String(DEFAULT_ARTICLE_PAGE_LIMIT),
+      });
+
+      if (scope.type === "feed" || scope.type === "folder") {
+        searchParams.set("scopeId", scope.id);
+      }
+
+      if (currentScopePagination.nextCursor) {
+        searchParams.set("cursor", currentScopePagination.nextCursor);
+      }
+
+      try {
+        const response = await fetch(`/api/articles?${searchParams.toString()}`);
+        const body = await parseResponseJson<ArticlePageResponseBody & ApiErrorResponse>(
+          response
+        );
+
+        if (!response.ok || !body) {
+          setPaginationByScopeKey((previous) =>
+            setScopePaginationError(
+              previous,
+              scopeKey,
+              body?.error || "Could not load more articles."
+            )
+          );
+          return;
+        }
+
+        setFeeds((previousFeeds) =>
+          appendPageItemsToFeeds(previousFeeds, body.items)
+        );
+        setPaginationByScopeKey((previous) =>
+          setScopePaginationSuccess(previous, scopeKey, {
+            nextCursor: body.nextCursor,
+            hasMore: body.hasMore,
+          })
+        );
+      } catch {
+        setPaginationByScopeKey((previous) =>
+          setScopePaginationError(previous, scopeKey, "Could not load more articles.")
+        );
+      }
+    },
+    [paginationByScopeKey, setNetworkMessage]
+  );
+
+  useEffect(() => {
+    if (!selectedArticleScope || isSearchActive) {
+      return;
+    }
+
+    const scopeKey = scopeToKey(selectedArticleScope);
+    const scopePagination = getScopePaginationState(paginationByScopeKey, scopeKey);
+    if (scopePagination.initialized || scopePagination.isLoading || scopePagination.error) {
+      return;
+    }
+
+    void loadNextPage(selectedArticleScope);
+  }, [
+    isSearchActive,
+    loadNextPage,
+    paginationByScopeKey,
+    selectedArticleScope,
+  ]);
+
   const moveSelectionByArrow = useCallback(
     (step: 1 | -1) => {
       if (visibleArticles.length === 0) {
@@ -664,8 +850,35 @@ export function FeedsWorkspace({ initialFeeds, initialFolders }: FeedsWorkspaceP
             searchMaxResults={searchResults.maxResults}
             searchIsCapped={searchResults.isCapped}
             searchHighlightsByArticleId={searchHighlightsByArticleId}
+            paginationInitialized={
+              selectedScope.type !== "none" && !isSearchActive
+                ? selectedScopePagination.initialized
+                : false
+            }
+            paginationIsLoading={
+              selectedScope.type !== "none" && !isSearchActive
+                ? selectedScopePagination.isLoading
+                : false
+            }
+            paginationHasMore={
+              selectedScope.type !== "none" && !isSearchActive
+                ? selectedScopePagination.hasMore
+                : false
+            }
+            paginationError={
+              selectedScope.type !== "none" && !isSearchActive
+                ? selectedScopePagination.error
+                : null
+            }
             searchInputRef={searchInputRef}
             onSearchQueryChange={setSearchQuery}
+            onRequestLoadMore={() => {
+              if (!selectedArticleScope || isSearchActive) {
+                return;
+              }
+
+              void loadNextPage(selectedArticleScope);
+            }}
             onSelectArticle={(articleId) => {
               void openSelectedArticle(articleId);
             }}

@@ -6,14 +6,21 @@ import { requireAuth } from "@/lib/auth";
 import { db, eq, users } from "@/lib/database";
 import { ensureUserRecord } from "@/lib/app-user";
 import { FeedsWorkspace } from "@/components/feeds-workspace";
+import { createInitialPaginationByScopeKey } from "@/components/article-pagination-state";
 import type {
   FeedViewModel,
   FeedItemViewModel,
   FolderViewModel,
 } from "@/components/feeds-types";
+import {
+  DEFAULT_ARTICLE_PAGE_LIMIT,
+  scopeToKey,
+  type ArticleScope,
+} from "@/lib/article-pagination";
 import { isMissingRelationError } from "@/lib/db-compat";
 import { resolveFeedFolderIds } from "@/lib/folder-memberships";
 import { purgeOldFeedItemsForUser } from "@/lib/retention";
+import { listArticlePageForUser } from "@/lib/article-service";
 
 /**
  * This page reads per-user data at request time — never statically prerender.
@@ -33,6 +40,14 @@ function getMembershipFolderIds(feed: unknown): string[] {
   return candidate.folderMemberships.map((membership) => membership.folderId);
 }
 
+function createEmptyInitialPaginationByScopeKey() {
+  return createInitialPaginationByScopeKey({
+    scopeKey: scopeToKey({ type: "all" }),
+    nextCursor: null,
+    hasMore: false,
+  });
+}
+
 /**
  * Loads authenticated feed data and renders the interactive workspace.
  */
@@ -41,7 +56,13 @@ export default async function FeedsPage() {
   const ensuredUser = await ensureUserRecord(clerkId);
 
   if (!ensuredUser) {
-    return <FeedsWorkspace initialFeeds={[]} initialFolders={[]} />;
+    return (
+      <FeedsWorkspace
+        initialFeeds={[]}
+        initialFolders={[]}
+        initialPaginationByScopeKey={createEmptyInitialPaginationByScopeKey()}
+      />
+    );
   }
 
   // Enforce 90-day retention during normal feed workspace loads.
@@ -66,7 +87,6 @@ export default async function FeedsPage() {
         folders: true,
         feeds: {
           with: {
-            items: true,
             folderMemberships: {
               columns: {
                 folderId: true,
@@ -95,17 +115,37 @@ export default async function FeedsPage() {
       },
       with: {
         folders: true,
-        feeds: {
-          with: {
-            items: true,
-          },
-        },
+        feeds: true,
       },
     })) as Record<string, unknown> | null;
   }
 
   if (!user) {
-    return <FeedsWorkspace initialFeeds={[]} initialFolders={[]} />;
+    return (
+      <FeedsWorkspace
+        initialFeeds={[]}
+        initialFolders={[]}
+        initialPaginationByScopeKey={createEmptyInitialPaginationByScopeKey()}
+      />
+    );
+  }
+
+  const allScope: ArticleScope = { type: "all" };
+  const initialArticlePage = await listArticlePageForUser({
+    userId: ensuredUser.id,
+    scope: allScope,
+    cursor: null,
+    limit: DEFAULT_ARTICLE_PAGE_LIMIT,
+  });
+
+  const initialPageItems =
+    initialArticlePage.status === "ok" ? initialArticlePage.items : [];
+
+  const initialItemsByFeedId = new Map<string, typeof initialPageItems>();
+  for (const item of initialPageItems) {
+    const existing = initialItemsByFeedId.get(item.feedId) ?? [];
+    existing.push(item);
+    initialItemsByFeedId.set(item.feedId, existing);
   }
 
   const folderRows =
@@ -133,16 +173,6 @@ export default async function FeedsPage() {
           lastFetchErrorMessage: string | null;
           lastFetchErrorAt: Date | null;
           createdAt: Date;
-          items: Array<{
-            id: string;
-            title: string | null;
-            link: string | null;
-            content: string | null;
-            author: string | null;
-            publishedAt: Date | null;
-            readAt: Date | null;
-            createdAt: Date;
-          }>;
           folderMemberships?: Array<{ folderId: string }>;
         }>
       | undefined) ?? [];
@@ -160,7 +190,7 @@ export default async function FeedsPage() {
   const feeds: FeedViewModel[] =
     feedRows
       .map((feed) => {
-        const items = [...feed.items]
+        const scopedInitialItems = [...(initialItemsByFeedId.get(feed.id) ?? [])]
           .sort((a, b) => {
             const aDate = a.publishedAt?.valueOf() ?? a.createdAt.valueOf();
             const bDate = b.publishedAt?.valueOf() ?? b.createdAt.valueOf();
@@ -195,7 +225,7 @@ export default async function FeedsPage() {
           lastFetchErrorMessage: feed.lastFetchErrorMessage,
           lastFetchErrorAt: toIsoString(feed.lastFetchErrorAt),
           createdAt: feed.createdAt.toISOString(),
-          items,
+          items: scopedInitialItems,
         };
       })
       .sort((a, b) => {
@@ -204,5 +234,17 @@ export default async function FeedsPage() {
         return bDate - aDate;
       });
 
-  return <FeedsWorkspace initialFeeds={feeds} initialFolders={folders} />;
+  const initialPaginationByScopeKey = createInitialPaginationByScopeKey({
+    scopeKey: scopeToKey(allScope),
+    nextCursor: initialArticlePage.status === "ok" ? initialArticlePage.nextCursor : null,
+    hasMore: initialArticlePage.status === "ok" ? initialArticlePage.hasMore : false,
+  });
+
+  return (
+    <FeedsWorkspace
+      initialFeeds={feeds}
+      initialFolders={folders}
+      initialPaginationByScopeKey={initialPaginationByScopeKey}
+    />
+  );
 }

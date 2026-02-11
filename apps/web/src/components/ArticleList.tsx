@@ -2,7 +2,7 @@
  * Middle-pane list showing filtered articles for the current sidebar scope.
  */
 
-import type { RefObject } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import { ArticleRow } from "./ArticleRow";
 import type { ArticleSearchHighlights } from "./article-search";
 import type { ArticleViewModel } from "./feeds-types";
@@ -22,8 +22,13 @@ interface ArticleListProps {
   searchMaxResults: number;
   searchIsCapped: boolean;
   searchHighlightsByArticleId: Record<string, ArticleSearchHighlights>;
+  paginationInitialized: boolean;
+  paginationIsLoading: boolean;
+  paginationHasMore: boolean;
+  paginationError: string | null;
   searchInputRef: RefObject<HTMLInputElement | null>;
   onSearchQueryChange: (value: string) => void;
+  onRequestLoadMore: () => void;
   onSelectArticle: (articleId: string) => void;
 }
 
@@ -44,10 +49,17 @@ export function ArticleList({
   searchMaxResults,
   searchIsCapped,
   searchHighlightsByArticleId,
+  paginationInitialized,
+  paginationIsLoading,
+  paginationHasMore,
+  paginationError,
   searchInputRef,
   onSearchQueryChange,
+  onRequestLoadMore,
   onSelectArticle,
 }: ArticleListProps) {
+  const listRootRef = useRef<HTMLElement>(null);
+  const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
   const normalizedQuery = searchQuery.trim();
   const hasQuery = normalizedQuery.length > 0;
   const showMinLengthHint = hasQuery && !searchIsActive;
@@ -63,11 +75,58 @@ export function ArticleList({
     ? `No results for "${normalizedQuery}".`
     : emptyStateMessage;
 
+  useEffect(() => {
+    if (
+      searchIsActive ||
+      !paginationHasMore ||
+      paginationIsLoading ||
+      Boolean(paginationError)
+    ) {
+      return;
+    }
+
+    const root = listRootRef.current;
+    const target = loadMoreSentinelRef.current;
+    if (!root || !target) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          onRequestLoadMore();
+        }
+      },
+      {
+        root,
+        rootMargin: "180px 0px 240px 0px",
+      }
+    );
+
+    observer.observe(target);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [
+    onRequestLoadMore,
+    paginationError,
+    paginationHasMore,
+    paginationIsLoading,
+    searchIsActive,
+  ]);
+
+  const shouldShowPaginationStatus =
+    !searchIsActive &&
+    paginationInitialized &&
+    (paginationIsLoading || Boolean(paginationError) || paginationHasMore || articles.length > 0);
+
   return (
     <section
       className={styles.root}
       data-article-list-root
       tabIndex={-1}
+      ref={listRootRef}
     >
       <div className={styles.searchBar}>
         <div className={styles.searchControls}>
@@ -144,6 +203,38 @@ export function ArticleList({
           />
         ))
       )}
+
+      {shouldShowPaginationStatus ? (
+        <div className={styles.paginationStatus}>
+          {paginationError ? (
+            <div className={styles.paginationError} role="status" aria-live="polite">
+              <p>{paginationError}</p>
+              <button
+                type="button"
+                className={styles.paginationRetry}
+                onClick={onRequestLoadMore}
+                disabled={paginationIsLoading}
+              >
+                Retry
+              </button>
+            </div>
+          ) : paginationIsLoading ? (
+            <p className={styles.paginationHint} role="status" aria-live="polite">
+              Loading more articles...
+            </p>
+          ) : paginationHasMore ? (
+            <div
+              ref={loadMoreSentinelRef}
+              className={styles.paginationSentinel}
+              aria-hidden="true"
+            >
+              Scroll to load more articles.
+            </div>
+          ) : articles.length > 0 ? (
+            <p className={styles.paginationHint}>You&apos;re all caught up.</p>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   );
 }

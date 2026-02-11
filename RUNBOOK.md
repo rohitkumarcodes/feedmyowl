@@ -30,6 +30,7 @@ From repo root:
 
 ## 4. Active API routes
 - `GET /api/feeds`
+- `GET /api/articles`
 - `POST /api/feeds`
 - `PATCH /api/feeds`
 - `PATCH /api/feeds/[id]`
@@ -108,6 +109,18 @@ From repo root:
 8. Confirm snippet/author-driven results show `Matched in ...` source labels.
 9. Press `Escape` in the search input to confirm query clears.
 
+### Infinite scroll paging looks wrong
+1. Confirm request shape to `GET /api/articles`:
+   - `scopeType=all|uncategorized|folder|feed`
+   - `scopeId` only for `folder` and `feed`
+   - optional `cursor`, optional `limit`
+2. Confirm first `/feeds` render includes only the first article page (not full history).
+3. Scroll near the end of the article list and confirm another `/api/articles` request is sent.
+4. Confirm `nextCursor` changes after successful page loads while `hasMore=true`.
+5. Confirm duplicate article IDs are not rendered when switching scopes and paging.
+6. While search is active, confirm auto-load does not continue paging.
+7. If paging fails, confirm inline retry appears and retry loads the next page.
+
 ### Shortcut hint appears unexpectedly
 1. Confirm browser localStorage key: `feedmyowl.shortcuts_hint.dismissed.v1`.
 2. Expected hidden state is value `"true"`.
@@ -177,3 +190,5 @@ From repo root:
 36. Search `heart` and confirm exact match appears with contiguous highlight.
 37. Search typo `heaet` and confirm typo fallback returns the `Heart` result.
 38. Confirm typo fallback results do not show fragmented highlight noise for unrelated titles.
+39. In `Read all feeds`, scroll repeatedly and confirm additional pages auto-load until `You’re all caught up.`
+40. Switch between `all`, `uncategorized`, one folder, and one feed; confirm each scope initializes its own cursor paging and remains stable when returning to a previous scope.

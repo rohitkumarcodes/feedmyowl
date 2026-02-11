@@ -88,6 +88,7 @@ Notes:
 
 ## 7. API surface (active)
 - `GET /api/feeds` -> feeds + folders
+- `GET /api/articles` -> cursor-paginated article page for one scope
 - `POST /api/feeds` -> create feed (supports folderIds)
 - `PATCH /api/feeds` -> `item.markRead`, `account.delete`
 - `PATCH /api/feeds/[id]` -> rename feed or set folders
