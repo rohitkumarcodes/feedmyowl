@@ -89,7 +89,7 @@ Core loop:
 
 Notes:
 - `feed_folder_memberships` is the canonical many-to-many mapping.
-- Legacy `feeds.folder_id` remains in transition and is kept in sync.
+- `feeds.folder_id` has been removed; folder assignment is membership-only.
 - `users.owl_ascii` stores the selected logo ASCII art per user and defaults to `{o,o}`.
 - `feeds.http_etag` stores feed-level ETag validator values.
 - `feeds.http_last_modified` stores feed-level Last-Modified validator values.
@@ -101,7 +101,7 @@ Notes:
 ## 7. API surface (active)
 - `GET /api/feeds` -> feeds + folders
 - `GET /api/articles` -> cursor-paginated article page for one scope
-- `POST /api/feeds` -> create feed (supports folderIds)
+- `POST /api/feeds` -> action-based feed operations (`feed.discover`, `feed.create`)
 - `PATCH /api/feeds` -> `item.markRead`, `account.delete`
 - `PATCH /api/feeds/[id]` -> rename feed or set folders
 - `DELETE /api/feeds/[id]` -> delete feed

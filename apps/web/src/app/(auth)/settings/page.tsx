@@ -2,7 +2,6 @@ import { requireAuth } from "@/lib/auth";
 import { db, eq, users } from "@/lib/database";
 import { ensureUserRecord } from "@/lib/app-user";
 import { SettingsOverview } from "@/components/settings-overview";
-import { isMissingColumnError } from "@/lib/db-compat";
 import { coerceOwlAscii, DEFAULT_OWL_ASCII } from "@/lib/owl-brand";
 import { coerceThemeMode, DEFAULT_THEME_MODE } from "@/lib/theme-mode";
 
@@ -33,16 +32,6 @@ export default async function SettingsPage() {
         owlAscii: true,
         themeMode: true,
       },
-    })
-    .catch((error: unknown) => {
-      if (
-        isMissingColumnError(error, "owl_ascii") ||
-        isMissingColumnError(error, "theme_mode")
-      ) {
-        return null;
-      }
-
-      throw error;
     });
 
   const safeEmail = user?.email ?? ensuredUser.email;

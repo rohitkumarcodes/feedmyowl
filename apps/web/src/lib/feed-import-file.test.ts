@@ -120,41 +120,7 @@ describe("feed import file helpers", () => {
     ]);
   });
 
-  it("parses legacy and portable JSON exports", () => {
-    const legacy = parseJsonImportEntries(
-      JSON.stringify({
-        exportedAt: "2026-02-11T00:00:00.000Z",
-        folders: [
-          { id: "folder_a", name: "Folder A" },
-          { id: "folder_b", name: "Folder B" },
-        ],
-        feeds: [
-          {
-            url: "https://example.com/a.xml",
-            customTitle: "Custom A",
-            folderIds: ["folder_a"],
-          },
-          {
-            url: "https://example.com/b.xml",
-            folderId: "folder_b",
-          },
-        ],
-      })
-    );
-
-    expect(legacy).toEqual([
-      {
-        url: "https://example.com/a.xml",
-        folderNames: ["Folder A"],
-        customTitle: "Custom A",
-      },
-      {
-        url: "https://example.com/b.xml",
-        folderNames: ["Folder B"],
-        customTitle: null,
-      },
-    ]);
-
+  it("parses portable JSON v2 exports", () => {
     const portable = parseJsonImportEntries(
       JSON.stringify({
         version: 2,
@@ -177,6 +143,23 @@ describe("feed import file helpers", () => {
         customTitle: "Custom C",
       },
     ]);
+  });
+
+  it("rejects legacy JSON export shapes", () => {
+    expect(() =>
+      parseJsonImportEntries(
+        JSON.stringify({
+          exportedAt: "2026-02-11T00:00:00.000Z",
+          folders: [{ id: "folder_a", name: "Folder A" }],
+          feeds: [
+            {
+              url: "https://example.com/a.xml",
+              folderIds: ["folder_a"],
+            },
+          ],
+        })
+      )
+    ).toThrow("Only FeedMyOwl portable JSON v2 exports are supported.");
   });
 
   it("normalizes URLs and merges duplicate entries", () => {

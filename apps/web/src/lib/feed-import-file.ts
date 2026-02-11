@@ -167,7 +167,7 @@ export function parseOpmlImportEntries(contents: string): FeedImportEntry[] {
 }
 
 /**
- * Parse FeedMyOwl JSON exports (portable v2 and legacy v1-compatible).
+ * Parse FeedMyOwl portable JSON v2 exports.
  */
 export function parseJsonImportEntries(contents: string): FeedImportEntry[] {
   let parsed: unknown;
@@ -183,26 +183,13 @@ export function parseJsonImportEntries(contents: string): FeedImportEntry[] {
   }
 
   const root = parsed as Record<string, unknown>;
+  if (root.version !== 2) {
+    throw new Error("Only FeedMyOwl portable JSON v2 exports are supported.");
+  }
+
   const feedsValue = root.feeds;
   if (!Array.isArray(feedsValue)) {
     throw new Error("This JSON file does not contain a valid feeds array.");
-  }
-
-  const folderNameById = new Map<string, string>();
-  const foldersValue = root.folders;
-  if (Array.isArray(foldersValue)) {
-    for (const folder of foldersValue) {
-      if (!folder || typeof folder !== "object") {
-        continue;
-      }
-
-      const id = (folder as Record<string, unknown>).id;
-      const name = sanitizeFolderName((folder as Record<string, unknown>).name);
-      if (typeof id !== "string" || !name) {
-        continue;
-      }
-      folderNameById.set(id, name);
-    }
   }
 
   const entries: FeedImportEntry[] = [];
@@ -224,26 +211,6 @@ export function parseJsonImportEntries(contents: string): FeedImportEntry[] {
         const normalized = sanitizeFolderName(folderName);
         if (normalized) {
           folderNames.push(normalized);
-        }
-      }
-    } else {
-      if (Array.isArray(candidate.folderIds)) {
-        for (const folderId of candidate.folderIds) {
-          if (typeof folderId !== "string") {
-            continue;
-          }
-
-          const resolvedFolderName = folderNameById.get(folderId);
-          if (resolvedFolderName) {
-            folderNames.push(resolvedFolderName);
-          }
-        }
-      }
-
-      if (typeof candidate.folderId === "string") {
-        const resolvedFolderName = folderNameById.get(candidate.folderId);
-        if (resolvedFolderName) {
-          folderNames.push(resolvedFolderName);
         }
       }
     }

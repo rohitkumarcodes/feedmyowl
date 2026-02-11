@@ -14,7 +14,6 @@ import {
   encodeArticleCursor,
   type EncodedArticleCursor,
 } from "@/lib/article-pagination";
-import { isMissingRelationError } from "@/lib/db-compat";
 import { resolveFeedFolderIds } from "@/lib/folder-memberships";
 
 interface FeedAssignment {
@@ -80,24 +79,16 @@ async function loadUserFeedAssignments(userId: string): Promise<FeedAssignment[]
     where: eq(feeds.userId, userId),
     columns: {
       id: true,
-      folderId: true,
     },
   });
 
-  let memberships: Array<{ feedId: string; folderId: string }> = [];
-  try {
-    memberships = await db.query.feedFolderMemberships.findMany({
-      where: eq(feedFolderMemberships.userId, userId),
-      columns: {
-        feedId: true,
-        folderId: true,
-      },
-    });
-  } catch (error) {
-    if (!isMissingRelationError(error, "feed_folder_memberships")) {
-      throw error;
-    }
-  }
+  const memberships = await db.query.feedFolderMemberships.findMany({
+    where: eq(feedFolderMemberships.userId, userId),
+    columns: {
+      feedId: true,
+      folderId: true,
+    },
+  });
 
   const membershipFolderIdsByFeedId = new Map<string, string[]>();
   for (const membership of memberships) {
@@ -108,10 +99,9 @@ async function loadUserFeedAssignments(userId: string): Promise<FeedAssignment[]
 
   return userFeeds.map((feed) => ({
     id: feed.id,
-    assignedFolderIds: resolveFeedFolderIds({
-      legacyFolderId: feed.folderId,
-      membershipFolderIds: membershipFolderIdsByFeedId.get(feed.id) ?? [],
-    }),
+    assignedFolderIds: resolveFeedFolderIds(
+      membershipFolderIdsByFeedId.get(feed.id) ?? []
+    ),
   }));
 }
 
@@ -272,4 +262,3 @@ export async function listArticlePageForUser(params: {
     scope: params.scope,
   };
 }
-

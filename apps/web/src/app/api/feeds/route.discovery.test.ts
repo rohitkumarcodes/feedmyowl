@@ -97,16 +97,6 @@ function createFeedCreateRequest(url: string): NextRequest {
   }) as NextRequest;
 }
 
-function createLegacyFeedCreateRequest(url: string): NextRequest {
-  return new Request("https://app.feedmyowl.test/api/feeds", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      url,
-    }),
-  }) as NextRequest;
-}
-
 describe("POST /api/feeds discovery fallback", () => {
   beforeEach(() => {
     mocks.requireAuth.mockResolvedValue({ clerkId: "clerk_123" });
@@ -265,41 +255,19 @@ describe("POST /api/feeds discovery fallback", () => {
     expect(mocks.fetchFeedXml).toHaveBeenCalledTimes(2);
   });
 
-  it("keeps legacy feed.create compatibility when action is omitted", async () => {
-    mocks.parseFeedWithMetadata.mockResolvedValue({
-      parsedFeed: {
-        title: "Example Feed",
-        description: "Example description",
-        items: [],
-      },
-      etag: "\"etag-1\"",
-      lastModified: "Wed, 11 Feb 2026 00:00:00 GMT",
-      resolvedUrl: "https://example.com/feed.xml",
-    });
-
-    mocks.createFeedWithInitialItems.mockResolvedValue({
-      feed: {
-        id: "feed_legacy",
-        userId: "user_123",
-        url: "https://example.com/feed.xml",
-      },
-      insertedItems: 0,
-    });
-
-    const response = await POST(createLegacyFeedCreateRequest("https://example.com/feed.xml"));
+  it("requires an explicit action", async () => {
+    const response = await POST(
+      new Request("https://app.feedmyowl.test/api/feeds", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: "https://example.com/feed.xml",
+        }),
+      }) as NextRequest
+    );
     const body = await response.json();
 
-    expect(response.status).toBe(201);
-    expect(body.feed.id).toBe("feed_legacy");
-    expect(mocks.createFeedWithInitialItems).toHaveBeenCalledWith(
-      "user_123",
-      "https://example.com/feed.xml",
-      expect.any(Object),
-      [],
-      {
-        etag: "\"etag-1\"",
-        lastModified: "Wed, 11 Feb 2026 00:00:00 GMT",
-      }
-    );
+    expect(response.status).toBe(400);
+    expect(body.error).toBe("Action is required");
   });
 });

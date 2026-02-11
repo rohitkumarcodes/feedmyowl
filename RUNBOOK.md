@@ -63,12 +63,13 @@ From repo root:
 ### Feed cannot be added
 1. Validate URL format.
 2. For interactive add flow, check `POST /api/feeds` action `feed.discover`.
-3. If discovery status is `multiple`, user must select one candidate before `feed.create`.
-4. If discovery returns `invalid_xml`, expected message is: `Error: We couldn't find any feed at this URL. Contact site owner and ask for the feed link.`
-5. If request is rejected with `csrf_validation_failed`, verify `Origin`/`Referer` uses a trusted app origin.
-6. If request is rejected with `rate_limited`, inspect `Retry-After` and confirm user/IP request burst behavior.
-7. For SSRF block events, inspect logs for `feed.fetch.blocked` (blocked host/private IP/metadata endpoint).
-8. Check parser/network errors in logs.
+3. `POST /api/feeds` requires explicit `action` in JSON payload.
+4. If discovery status is `multiple`, user must select one candidate before `feed.create`.
+5. If discovery returns `invalid_xml`, expected message is: `Error: We couldn't find any feed at this URL. Contact site owner and ask for the feed link.`
+6. If request is rejected with `csrf_validation_failed`, verify `Origin`/`Referer` uses a trusted app origin.
+7. If request is rejected with `rate_limited`, inspect `Retry-After` and confirm user/IP request burst behavior.
+8. For SSRF block events, inspect logs for `feed.fetch.blocked` (blocked host/private IP/metadata endpoint).
+9. Check parser/network errors in logs.
 
 ### Folder operation fails
 1. Validate folder name length and uniqueness.
@@ -215,7 +216,7 @@ From repo root:
 
 ## 7. Data model notes
 - Canonical folder assignments: `feed_folder_memberships`.
-- Transitional compatibility field: `feeds.folder_id`.
+- `feeds.folder_id` removed; folder assignment is membership-only.
 - User logo preference field: `users.owl_ascii` (default `{o,o}`).
 - Feed HTTP cache validators:
   - `feeds.http_etag`

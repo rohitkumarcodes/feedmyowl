@@ -33,6 +33,9 @@ import {
   subscribeToSystemThemeModeChanges,
   type ThemeMode,
 } from "@/lib/theme-mode";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { getLandingPageUrl } from "@/lib/runtime-config";
+import { parseResponseJson } from "@/lib/client/http";
 import { SHORTCUT_GROUPS } from "./keyboard-shortcuts";
 import styles from "./settings-overview.module.css";
 
@@ -96,48 +99,6 @@ const THEME_MODE_OPTIONS: Array<{
     description: "Dimmer workspace for low-light reading sessions.",
   },
 ];
-
-/**
- * Safely parse JSON response bodies.
- */
-async function parseResponseJson<T>(response: Response): Promise<T | null> {
-  try {
-    return (await response.json()) as T;
-  } catch {
-    return null;
-  }
-}
-
-function usePrefersReducedMotion(): boolean {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
-      return;
-    }
-
-    const mediaQueryList = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const updatePreference = (event?: MediaQueryListEvent) => {
-      setPrefersReducedMotion(event ? event.matches : mediaQueryList.matches);
-    };
-
-    updatePreference();
-
-    if (typeof mediaQueryList.addEventListener === "function") {
-      mediaQueryList.addEventListener("change", updatePreference);
-      return () => {
-        mediaQueryList.removeEventListener("change", updatePreference);
-      };
-    }
-
-    mediaQueryList.addListener(updatePreference);
-    return () => {
-      mediaQueryList.removeListener(updatePreference);
-    };
-  }, []);
-
-  return prefersReducedMotion;
-}
 
 function OwlOptionsShutter({
   expanded,
@@ -377,8 +338,7 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
     null
   );
 
-  const landingUrl =
-    process.env.NEXT_PUBLIC_LANDING_PAGE_URL || "https://feedmyowl.com";
+  const landingUrl = getLandingPageUrl();
 
   useEffect(() => {
     setDraftOwlAscii(owlAscii);

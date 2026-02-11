@@ -1,23 +1,18 @@
 import {
-  and,
   db,
   eq,
-  feedFolderMemberships,
   folders,
 } from "@/lib/database";
-import { isMissingRelationError } from "@/lib/db-compat";
 import { discoverFeedCandidates } from "@/lib/feed-discovery";
 import { normalizeFeedError } from "@/lib/feed-errors";
-import {
-  normalizeFolderIds,
-  resolveFeedFolderIds,
-} from "@/lib/folder-memberships";
+import { normalizeFolderIds } from "@/lib/folder-memberships";
 import {
   createFeedWithInitialItems,
   findExistingFeedForUserByUrl,
   renameFeedForUser,
   setFeedFoldersForUser,
 } from "@/lib/feed-service";
+import { getFeedFolderIdsForUserFeed } from "@/lib/feed-folder-memberships";
 import { parseFeedWithMetadata, type ParsedFeed } from "@/lib/feed-parser";
 import type {
   FeedImportEntry,
@@ -28,9 +23,8 @@ import {
   FOLDER_NAME_MAX_LENGTH,
 } from "@/lib/folder-service";
 import { normalizeFeedUrl } from "@/lib/feed-url";
+import { NO_FEED_FOUND_MESSAGE } from "@/lib/feed-messages";
 
-const NO_FEED_FOUND_MESSAGE =
-  "Error: We couldn't find any feed at this URL. Contact site owner and ask for the feed link.";
 const IMPORT_WORKER_CONCURRENCY = 4;
 const CUSTOM_TITLE_MAX_LENGTH = 255;
 
@@ -81,33 +75,6 @@ function areSortedStringListsEqual(a: string[], b: string[]): boolean {
   }
 
   return true;
-}
-
-async function getFeedFolderIdsForUser(params: {
-  userId: string;
-  feedId: string;
-  legacyFolderId: string | null;
-}): Promise<string[]> {
-  let memberships: Array<{ folderId: string }> = [];
-
-  try {
-    memberships = await db.query.feedFolderMemberships.findMany({
-      where: and(
-        eq(feedFolderMemberships.userId, params.userId),
-        eq(feedFolderMemberships.feedId, params.feedId)
-      ),
-      columns: { folderId: true },
-    });
-  } catch (error) {
-    if (!isMissingRelationError(error, "feed_folder_memberships")) {
-      throw error;
-    }
-  }
-
-  return resolveFeedFolderIds({
-    legacyFolderId: params.legacyFolderId,
-    membershipFolderIds: memberships.map((membership) => membership.folderId),
-  });
 }
 
 async function createFolderResolver(userId: string): Promise<FolderResolver> {
@@ -258,11 +225,7 @@ async function mergeDuplicateFeedFolders(params: {
   }
 
   const existingFolderIds = normalizeFolderIds(
-    await getFeedFolderIdsForUser({
-      userId: params.userId,
-      feedId: params.existingFeed.id,
-      legacyFolderId: params.existingFeed.folderId,
-    })
+    await getFeedFolderIdsForUserFeed(params.userId, params.existingFeed.id)
   );
 
   const mergedFolderIds = normalizeFolderIds([

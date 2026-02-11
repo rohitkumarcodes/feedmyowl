@@ -35,4 +35,4 @@ As of 2026-02-11, feedmyowl ships with hardened defaults: Manual refresh only (b
 
 The goal is simple: help you read without distraction.
 
-[open app ↗](https://app.feedmyowl.com)
+[open app ↗]({{ metadata.appUrl }})

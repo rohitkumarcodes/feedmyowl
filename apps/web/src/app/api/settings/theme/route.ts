@@ -4,18 +4,8 @@ import { ensureUserRecord } from "@/lib/app-user";
 import { db, eq, users } from "@/lib/database";
 import { handleApiRouteError } from "@/lib/api-errors";
 import { assertTrustedWriteOrigin } from "@/lib/csrf";
-import { isMissingColumnError } from "@/lib/db-compat";
+import { parseRequestJson } from "@/lib/http/request-json";
 import { isThemeMode } from "@/lib/theme-mode";
-
-async function parseRequestJson(
-  request: NextRequest
-): Promise<Record<string, unknown> | null> {
-  try {
-    return (await request.json()) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -48,16 +38,6 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ themeMode });
   } catch (error) {
-    if (isMissingColumnError(error, "theme_mode")) {
-      return NextResponse.json(
-        {
-          error:
-            "Theme settings are temporarily unavailable. Apply latest database migrations.",
-        },
-        { status: 503 }
-      );
-    }
-
     return handleApiRouteError(error, "api.settings.theme.patch");
   }
 }

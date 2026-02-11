@@ -17,8 +17,10 @@ import {
   scopeToKey,
   type ArticleScope,
 } from "@/lib/article-pagination";
-import { isMissingRelationError } from "@/lib/db-compat";
-import { resolveFeedFolderIds } from "@/lib/folder-memberships";
+import {
+  getFeedMembershipFolderIds,
+  resolveFeedFolderIds,
+} from "@/lib/folder-memberships";
 import { purgeOldFeedItemsForUser } from "@/lib/retention";
 import { listArticlePageForUser } from "@/lib/article-service";
 
@@ -29,15 +31,6 @@ export const dynamic = "force-dynamic";
 
 function toIsoString(value: Date | null): string | null {
   return value ? value.toISOString() : null;
-}
-
-function getMembershipFolderIds(feed: unknown): string[] {
-  const candidate = feed as { folderMemberships?: Array<{ folderId: string }> };
-  if (!Array.isArray(candidate.folderMemberships)) {
-    return [];
-  }
-
-  return candidate.folderMemberships.map((membership) => membership.folderId);
 }
 
 function createEmptyInitialPaginationByScopeKey() {
@@ -68,57 +61,31 @@ export default async function FeedsPage() {
   // Enforce 50-items-per-feed cap during normal feed workspace loads.
   await purgeOldFeedItemsForUser(ensuredUser.id);
 
-  let user: Record<string, unknown> | null = null;
-
-  try {
-    user = (await db.query.users.findFirst({
-      where: eq(users.id, ensuredUser.id),
-      columns: {
-        id: true,
-        clerkId: true,
-        email: true,
-        subscriptionTier: true,
-        stripeCustomerId: true,
-        stripeSubscriptionId: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-      with: {
-        folders: true,
-        feeds: {
-          with: {
-            folderMemberships: {
-              columns: {
-                folderId: true,
-              },
+  const user = (await db.query.users.findFirst({
+    where: eq(users.id, ensuredUser.id),
+    columns: {
+      id: true,
+      clerkId: true,
+      email: true,
+      subscriptionTier: true,
+      stripeCustomerId: true,
+      stripeSubscriptionId: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+    with: {
+      folders: true,
+      feeds: {
+        with: {
+          folderMemberships: {
+            columns: {
+              folderId: true,
             },
           },
         },
       },
-    })) as Record<string, unknown> | null;
-  } catch (error) {
-    if (!isMissingRelationError(error, "feed_folder_memberships")) {
-      throw error;
-    }
-
-    user = (await db.query.users.findFirst({
-      where: eq(users.id, ensuredUser.id),
-      columns: {
-        id: true,
-        clerkId: true,
-        email: true,
-        subscriptionTier: true,
-        stripeCustomerId: true,
-        stripeSubscriptionId: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-      with: {
-        folders: true,
-        feeds: true,
-      },
-    })) as Record<string, unknown> | null;
-  }
+    },
+  })) as Record<string, unknown> | null;
 
   if (!user) {
     return (
@@ -166,7 +133,6 @@ export default async function FeedsPage() {
           customTitle: string | null;
           description: string | null;
           url: string;
-          folderId: string | null;
           lastFetchedAt: Date | null;
           lastFetchStatus: string | null;
           lastFetchErrorCode: string | null;
@@ -215,10 +181,7 @@ export default async function FeedsPage() {
           customTitle: feed.customTitle,
           description: feed.description,
           url: feed.url,
-          folderIds: resolveFeedFolderIds({
-            legacyFolderId: feed.folderId,
-            membershipFolderIds: getMembershipFolderIds(feed),
-          }),
+          folderIds: resolveFeedFolderIds(getFeedMembershipFolderIds(feed)),
           lastFetchedAt: toIsoString(feed.lastFetchedAt),
           lastFetchStatus: feed.lastFetchStatus,
           lastFetchErrorCode: feed.lastFetchErrorCode,

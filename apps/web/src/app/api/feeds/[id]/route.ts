@@ -9,24 +9,12 @@ import { requireAuth } from "@/lib/auth";
 import { handleApiRouteError } from "@/lib/api-errors";
 import { ensureUserRecord } from "@/lib/app-user";
 import { assertTrustedWriteOrigin } from "@/lib/csrf";
+import { parseRequestJson } from "@/lib/http/request-json";
 import {
   deleteFeedForUser,
   renameFeedForUser,
   setFeedFoldersForUser,
 } from "@/lib/feed-service";
-
-/**
- * Safely parse JSON request bodies and return null for invalid JSON.
- */
-async function parseRequestJson(
-  request: NextRequest
-): Promise<Record<string, unknown> | null> {
-  try {
-    return (await request.json()) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
 
 const FEED_CUSTOM_TITLE_MAX_LENGTH = 255;
 

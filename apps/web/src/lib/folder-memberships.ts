@@ -1,28 +1,13 @@
 /**
- * Transitional helpers for deriving feed folder assignments while both the
- * legacy feeds.folder_id column and the new membership table coexist.
+ * Helpers for deriving normalized feed folder assignments from
+ * feed_folder_memberships rows.
  */
 
 /**
  * Build a normalized folder-id list for one feed.
  */
-export function resolveFeedFolderIds(params: {
-  legacyFolderId: string | null;
-  membershipFolderIds: string[];
-}): string[] {
-  const deduped = new Set<string>();
-
-  for (const folderId of params.membershipFolderIds) {
-    if (folderId.trim()) {
-      deduped.add(folderId);
-    }
-  }
-
-  if (params.legacyFolderId?.trim()) {
-    deduped.add(params.legacyFolderId);
-  }
-
-  return [...deduped];
+export function resolveFeedFolderIds(membershipFolderIds: string[]): string[] {
+  return normalizeFolderIds(membershipFolderIds);
 }
 
 /**
@@ -39,4 +24,14 @@ export function normalizeFolderIds(folderIds: string[]): string[] {
   }
 
   return [...deduped].sort((a, b) => a.localeCompare(b));
+}
+
+export function getFeedMembershipFolderIds(feed: {
+  folderMemberships?: Array<{ folderId: string }>;
+}): string[] {
+  if (!Array.isArray(feed.folderMemberships)) {
+    return [];
+  }
+
+  return feed.folderMemberships.map((membership) => membership.folderId);
 }

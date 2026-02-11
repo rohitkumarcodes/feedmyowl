@@ -7,8 +7,7 @@ import {
   folders,
   inArray,
 } from "@/lib/database";
-import { isMissingRelationError } from "@/lib/db-compat";
-import { normalizeFolderIds, resolveFeedFolderIds } from "@/lib/folder-memberships";
+import { resolveFeedFolderIds } from "@/lib/folder-memberships";
 
 export const FOLDER_NAME_MAX_LENGTH = 255;
 
@@ -154,7 +153,6 @@ interface FolderMembershipSummary {
   totalFeeds: number;
   exclusiveFeedIds: string[];
   crossListedFeedIds: string[];
-  nextLegacyFolderIdByFeedId: Map<string, string | null>;
 }
 
 async function buildFolderMembershipSummary(
@@ -163,20 +161,13 @@ async function buildFolderMembershipSummary(
 ): Promise<FolderMembershipSummary> {
   const userFeeds = await db.query.feeds.findMany({
     where: eq(feeds.userId, userId),
-    columns: { id: true, folderId: true },
+    columns: { id: true },
   });
 
-  let memberships: Array<{ feedId: string; folderId: string }> = [];
-  try {
-    memberships = await db.query.feedFolderMemberships.findMany({
-      where: eq(feedFolderMemberships.userId, userId),
-      columns: { feedId: true, folderId: true },
-    });
-  } catch (error) {
-    if (!isMissingRelationError(error, "feed_folder_memberships")) {
-      throw error;
-    }
-  }
+  const memberships = await db.query.feedFolderMemberships.findMany({
+    where: eq(feedFolderMemberships.userId, userId),
+    columns: { feedId: true, folderId: true },
+  });
 
   const feedToMembershipFolderIds = new Map<string, string[]>();
   for (const membership of memberships) {
@@ -187,13 +178,11 @@ async function buildFolderMembershipSummary(
 
   const exclusiveFeedIds: string[] = [];
   const crossListedFeedIds: string[] = [];
-  const nextLegacyFolderIdByFeedId = new Map<string, string | null>();
 
   for (const feed of userFeeds) {
-    const assignedFolderIds = resolveFeedFolderIds({
-      legacyFolderId: feed.folderId,
-      membershipFolderIds: feedToMembershipFolderIds.get(feed.id) ?? [],
-    });
+    const assignedFolderIds = resolveFeedFolderIds(
+      feedToMembershipFolderIds.get(feed.id) ?? []
+    );
 
     if (!assignedFolderIds.includes(folderId)) {
       continue;
@@ -201,22 +190,16 @@ async function buildFolderMembershipSummary(
 
     if (assignedFolderIds.length <= 1) {
       exclusiveFeedIds.push(feed.id);
-      nextLegacyFolderIdByFeedId.set(feed.id, null);
       continue;
     }
 
     crossListedFeedIds.push(feed.id);
-    const nextFolderId = normalizeFolderIds(
-      assignedFolderIds.filter((candidate) => candidate !== folderId)
-    )[0];
-    nextLegacyFolderIdByFeedId.set(feed.id, nextFolderId ?? null);
   }
 
   return {
     totalFeeds: exclusiveFeedIds.length + crossListedFeedIds.length,
     exclusiveFeedIds,
     crossListedFeedIds,
-    nextLegacyFolderIdByFeedId,
   };
 }
 
@@ -238,7 +221,6 @@ export async function deleteFolderForUser(
   }
 
   const summary = await buildFolderMembershipSummary(userId, folderId);
-  const now = new Date();
 
   // neon-http does not support db.transaction(); execute writes sequentially.
   if (mode === "remove_and_unsubscribe_exclusive") {
@@ -253,24 +235,7 @@ export async function deleteFolderForUser(
         );
     }
 
-    for (const feedId of summary.crossListedFeedIds) {
-      const nextLegacyFolderId = summary.nextLegacyFolderIdByFeedId.get(feedId) ?? null;
-      await db
-        .update(feeds)
-        .set({
-          folderId: nextLegacyFolderId,
-          updatedAt: now,
-        })
-        .where(and(eq(feeds.id, feedId), eq(feeds.userId, userId)));
-    }
-  } else {
-    await db
-      .update(feeds)
-      .set({
-        folderId: null,
-        updatedAt: now,
-      })
-      .where(and(eq(feeds.userId, userId), eq(feeds.folderId, folderId)));
+    // Cross-listed feeds stay subscribed via remaining memberships.
   }
 
   await db

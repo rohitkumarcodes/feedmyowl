@@ -112,7 +112,7 @@ export const folders = pgTable("folders", {
 // =============================================================================
 /**
  * Stores RSS/Atom feed subscriptions. Each feed belongs to one user and can
- * optionally belong to a folder.
+ * can be assigned to folders via feed_folder_memberships.
  *
  * The title and description are populated after the first successful fetch.
  */
@@ -126,14 +126,6 @@ export const feeds = pgTable(
     userId: uuid("user_id")
       .references(() => users.id, { onDelete: "cascade" })
       .notNull(),
-
-    /**
-     * Optional folder grouping in the sidebar.
-     * On folder delete we preserve feeds by moving them to Uncategorized (NULL).
-     */
-    folderId: uuid("folder_id").references(() => folders.id, {
-      onDelete: "set null",
-    }),
 
     /** The RSS/Atom feed URL */
     url: text("url").notNull(),
@@ -191,9 +183,6 @@ export const feeds = pgTable(
 // =============================================================================
 /**
  * Stores many-to-many assignments between feeds and folders.
- *
- * This table enables one feed to appear in multiple folders while preserving
- * the legacy feeds.folder_id during rollout compatibility.
  */
 export const feedFolderMemberships = pgTable(
   "feed_folder_memberships",
@@ -327,7 +316,6 @@ export const foldersRelations = relations(folders, ({ one, many }) => ({
 
 export const feedsRelations = relations(feeds, ({ one, many }) => ({
   user: one(users, { fields: [feeds.userId], references: [users.id] }),
-  folder: one(folders, { fields: [feeds.folderId], references: [folders.id] }),
   items: many(feedItems),
   folderMemberships: many(feedFolderMemberships),
 }));

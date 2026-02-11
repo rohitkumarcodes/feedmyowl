@@ -5,6 +5,7 @@ import { handleApiRouteError } from "@/lib/api-errors";
 import { assertTrustedWriteOrigin } from "@/lib/csrf";
 import { captureMessage } from "@/lib/error-tracking";
 import { importFeedEntriesForUser } from "@/lib/feed-import-service";
+import { parseRequestJson } from "@/lib/http/request-json";
 import { applyRouteRateLimit } from "@/lib/rate-limit";
 import type {
   FeedImportEntry,
@@ -13,16 +14,6 @@ import type {
   FeedImportSourceType,
 } from "@/lib/feed-import-types";
 import { FEED_IMPORT_MAX_ENTRIES_PER_REQUEST } from "@/lib/feed-import-types";
-
-async function parseRequestJson(
-  request: NextRequest
-): Promise<Record<string, unknown> | null> {
-  try {
-    return (await request.json()) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
 
 function parseSourceType(value: unknown): FeedImportSourceType | null {
   return value === "OPML" || value === "JSON" ? value : null;

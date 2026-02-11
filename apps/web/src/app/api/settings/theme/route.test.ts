@@ -128,20 +128,6 @@ describe("PATCH /api/settings/theme", () => {
     expect(mocks.dbUpdate).not.toHaveBeenCalled();
   });
 
-  it("returns 503 when the theme_mode column is missing", async () => {
-    const missingColumnError = {
-      code: "42703",
-      message: 'column "theme_mode" does not exist',
-    };
-    mocks.dbUpdateSetWhere.mockRejectedValue(missingColumnError);
-
-    const response = await PATCH(createPatchRequest({ themeMode: "dark" }));
-    const body = await response.json();
-
-    expect(response.status).toBe(503);
-    expect(body.error).toContain("Theme settings are temporarily unavailable");
-  });
-
   it("delegates unexpected errors to shared API error handling", async () => {
     mocks.requireAuth.mockRejectedValue(new Error("Unauthorized: user is not signed in"));
     mocks.handleApiRouteError.mockReturnValue(

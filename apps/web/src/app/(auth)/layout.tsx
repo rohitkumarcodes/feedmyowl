@@ -8,7 +8,6 @@ import { AccountControls } from "./account-controls";
 import { requireAuth } from "@/lib/auth";
 import { ensureUserRecord } from "@/lib/app-user";
 import { db, eq, users } from "@/lib/database";
-import { isMissingColumnError } from "@/lib/db-compat";
 import { AuthThemeBootstrap } from "@/components/auth-theme-bootstrap";
 import {
   buildOwlFaviconDataUri,
@@ -31,12 +30,6 @@ async function getCurrentUserOwlAscii() {
     columns: {
       owlAscii: true,
     },
-  }).catch((error: unknown) => {
-    if (isMissingColumnError(error, "owl_ascii")) {
-      return null;
-    }
-
-    throw error;
   });
 
   return coerceOwlAscii(user?.owlAscii);
@@ -56,13 +49,6 @@ async function getCurrentUserThemeMode() {
       columns: {
         themeMode: true,
       },
-    })
-    .catch((error: unknown) => {
-      if (isMissingColumnError(error, "theme_mode")) {
-        return null;
-      }
-
-      throw error;
     });
 
   return coerceThemeMode(user?.themeMode);

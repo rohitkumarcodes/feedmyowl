@@ -13,6 +13,19 @@ import {
   parseBulkFeedLines,
   summarizeBulkAddRows,
 } from "@/lib/add-feed-bulk";
+import {
+  createFeed as createFeedRequest,
+  createFolder as createFolderRequest,
+  deleteFeed as deleteFeedRequest,
+  deleteFolder as deleteFolderRequest,
+  discoverFeed as discoverFeedRequest,
+  markItemRead as markItemReadRequest,
+  refreshFeeds as refreshFeedsRequest,
+  renameFeed as renameFeedRequest,
+  renameFolder as renameFolderRequest,
+  setFeedFolders as setFeedFoldersRequest,
+} from "@/lib/client/feeds-api";
+import { useFeedActionStatus } from "@/hooks/feeds/useFeedActionStatus";
 import { normalizeFeedUrl } from "@/lib/feed-url";
 import { OFFLINE_CACHED_ARTICLES_MESSAGE } from "@/lib/network-messages";
 
@@ -50,21 +63,6 @@ interface ApiErrorResponse {
   message?: string;
 }
 
-interface RefreshResult {
-  feedId: string;
-  feedUrl: string;
-  newItemCount: number;
-  status: "success" | "error";
-  errorCode?: string;
-  errorMessage?: string;
-}
-
-interface RefreshResponse {
-  results?: RefreshResult[];
-  /** Number of rows pruned by retention cap enforcement during refresh. */
-  retentionDeletedCount?: number;
-}
-
 interface FeedCreateResponse {
   feed?: {
     id: string;
@@ -84,50 +82,6 @@ interface FeedCreateResponse {
   message?: string;
 }
 
-interface FeedRenameResponse {
-  feed?: {
-    id: string;
-    title?: string | null;
-    customTitle?: string | null;
-    url?: string;
-    updatedAt?: string;
-  };
-}
-
-interface FeedFolderUpdateResponse {
-  feed?: {
-    id: string;
-    folderIds?: string[];
-  };
-}
-
-interface FolderCreateResponse {
-  folder?: {
-    id: string;
-    name: string;
-    createdAt?: string;
-    updatedAt?: string;
-  };
-}
-
-interface FolderRenameResponse {
-  folder?: {
-    id: string;
-    name: string;
-    createdAt?: string;
-    updatedAt?: string;
-  };
-}
-
-interface FolderDeleteResponse {
-  success?: boolean;
-  mode?: "remove_only" | "remove_and_unsubscribe_exclusive";
-  totalFeeds?: number;
-  exclusiveFeeds?: number;
-  crossListedFeeds?: number;
-  unsubscribedFeeds?: number;
-}
-
 interface UseFeedsWorkspaceActionsOptions {
   allArticles: ArticleViewModel[];
   feeds: FeedViewModel[];
@@ -145,17 +99,6 @@ interface UseFeedsWorkspaceActionsOptions {
     shouldPush?: boolean
   ) => void;
   setNetworkMessage: React.Dispatch<React.SetStateAction<string | null>>;
-}
-
-/**
- * Safely parse a JSON response body.
- */
-async function parseResponseJson<T>(response: Response): Promise<T | null> {
-  try {
-    return (await response.json()) as T;
-  } catch {
-    return null;
-  }
 }
 
 /**
@@ -197,7 +140,6 @@ export function useFeedsWorkspaceActions({
   const [bulkAddResultRows, setBulkAddResultRows] = useState<
     BulkAddResultRow[] | null
   >(null);
-  const [showAddAnotherAction, setShowAddAnotherAction] = useState(false);
 
   const [isAddingFeed, setIsAddingFeed] = useState(false);
   const [isRefreshingFeeds, setIsRefreshingFeeds] = useState(false);
@@ -208,8 +150,15 @@ export function useFeedsWorkspaceActions({
   const [deletingFolderId, setDeletingFolderId] = useState<string | null>(null);
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
 
-  const [infoMessage, setInfoMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const {
+    infoMessage,
+    setInfoMessage,
+    errorMessage,
+    setErrorMessage,
+    showAddAnotherAction,
+    setShowAddAnotherAction,
+    clearStatusMessages,
+  } = useFeedActionStatus();
 
   useEffect(() => {
     if (!infoMessage || showAddAnotherAction) {
@@ -225,7 +174,7 @@ export function useFeedsWorkspaceActions({
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [infoMessage, showAddAnotherAction]);
+  }, [infoMessage, setInfoMessage, showAddAnotherAction]);
 
   useEffect(() => {
     const validFolderIds = new Set(folders.map((folder) => folder.id));
@@ -293,22 +242,17 @@ export function useFeedsWorkspaceActions({
         })
       );
 
-      try {
-        const response = await fetch("/api/feeds", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "item.markRead", itemId: articleId }),
-        });
-
-        if (!response.ok) {
-          const body = await parseResponseJson<ApiErrorResponse>(response);
-          setErrorMessage(body?.error || "Unable to persist read state.");
+      const result = await markItemReadRequest(articleId);
+      if (!result.ok) {
+        if (result.networkError) {
+          setErrorMessage("Could not connect to the server.");
+          return;
         }
-      } catch {
-        setErrorMessage("Could not connect to the server.");
+
+        setErrorMessage(result.body?.error || "Unable to persist read state.");
       }
     },
-    [allArticles, setFeeds]
+    [allArticles, setErrorMessage, setFeeds]
   );
 
   const handleRefresh = useCallback(async () => {
@@ -326,38 +270,41 @@ export function useFeedsWorkspaceActions({
     setErrorMessage(null);
     setShowAddAnotherAction(false);
 
-    try {
-      const response = await fetch("/api/refresh", { method: "POST" });
-      const body = await parseResponseJson<RefreshResponse & ApiErrorResponse>(response);
-
-      if (!response.ok) {
-        setErrorMessage(body?.error || "Could not refresh feeds.");
-        setIsRefreshingFeeds(false);
-        return;
+    const result = await refreshFeedsRequest();
+    if (!result.ok) {
+      if (result.networkError) {
+        setErrorMessage("Could not connect to the server.");
+      } else {
+        setErrorMessage(result.body?.error || "Could not refresh feeds.");
       }
-
-      const addedCount =
-        body?.results?.reduce(
-          (total, result) => total + (result.status === "success" ? result.newItemCount : 0),
-          0
-        ) || 0;
-
-      const refreshMessage =
-        addedCount > 0
-          ? `Refresh complete. ${addedCount} new article${addedCount === 1 ? "" : "s"} added.`
-          : "Refresh complete. No new articles this time.";
-
-      setInfoMessage(refreshMessage);
-      setLiveMessage(refreshMessage);
       setIsRefreshingFeeds(false);
-      router.refresh();
-    } catch {
-      setErrorMessage(
-        "Could not connect to the server. Previously loaded articles are still available."
-      );
-      setIsRefreshingFeeds(false);
+      return;
     }
-  }, [isRefreshingFeeds, router, setLiveMessage, setNetworkMessage]);
+
+    const addedCount =
+      result.body?.results?.reduce(
+        (total, row) => total + (row.status === "success" ? row.newItemCount : 0),
+        0
+      ) || 0;
+
+    const refreshMessage =
+      addedCount > 0
+        ? `Refresh complete. ${addedCount} new article${addedCount === 1 ? "" : "s"} added.`
+        : "Refresh complete. No new articles this time.";
+
+    setInfoMessage(refreshMessage);
+    setLiveMessage(refreshMessage);
+    setIsRefreshingFeeds(false);
+    router.refresh();
+  }, [
+    isRefreshingFeeds,
+    router,
+    setErrorMessage,
+    setInfoMessage,
+    setLiveMessage,
+    setNetworkMessage,
+    setShowAddAnotherAction,
+  ]);
 
   const createFolder = useCallback(
     async (name: string): Promise<FolderViewModel | null> => {
@@ -372,49 +319,49 @@ export function useFeedsWorkspaceActions({
       setErrorMessage(null);
       setShowAddAnotherAction(false);
 
-      try {
-        const response = await fetch("/api/folders", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: trimmedName }),
-        });
-
-        const body = await parseResponseJson<ApiErrorResponse & FolderCreateResponse>(response);
-        if (!response.ok || !body?.folder?.id) {
+      const result = await createFolderRequest(trimmedName);
+      const body = result.body;
+      if (!result.ok || !body?.folder?.id) {
+        if (result.networkError) {
+          setErrorMessage("Could not connect to the server.");
+        } else {
           setErrorMessage(body?.error || "Could not create folder.");
-          setIsCreatingFolder(false);
-          return null;
         }
-
-        const nextFolder: FolderViewModel = {
-          id: body.folder.id,
-          name: body.folder.name,
-          createdAt: body.folder.createdAt ?? new Date().toISOString(),
-          updatedAt: body.folder.updatedAt ?? new Date().toISOString(),
-        };
-
-        setFolders((previousFolders) => {
-          const exists = previousFolders.some((folder) => folder.id === nextFolder.id);
-          if (exists) {
-            return previousFolders;
-          }
-
-          return [...previousFolders, nextFolder].sort((a, b) =>
-            a.name.localeCompare(b.name)
-          );
-        });
-
-        setInfoMessage("Folder created.");
-        setIsCreatingFolder(false);
-        router.refresh();
-        return nextFolder;
-      } catch {
-        setErrorMessage("Could not connect to the server.");
         setIsCreatingFolder(false);
         return null;
       }
+
+      const nextFolder: FolderViewModel = {
+        id: body.folder.id,
+        name: body.folder.name,
+        createdAt: body.folder.createdAt ?? new Date().toISOString(),
+        updatedAt: body.folder.updatedAt ?? new Date().toISOString(),
+      };
+
+      setFolders((previousFolders) => {
+        const exists = previousFolders.some((folder) => folder.id === nextFolder.id);
+        if (exists) {
+          return previousFolders;
+        }
+
+        return [...previousFolders, nextFolder].sort((a, b) =>
+          a.name.localeCompare(b.name)
+        );
+      });
+
+      setInfoMessage("Folder created.");
+      setIsCreatingFolder(false);
+      router.refresh();
+      return nextFolder;
     },
-    [isCreatingFolder, router, setFolders]
+    [
+      isCreatingFolder,
+      router,
+      setErrorMessage,
+      setFolders,
+      setInfoMessage,
+      setShowAddAnotherAction,
+    ]
   );
 
   const createFolderFromAddFeed = useCallback(async () => {
@@ -492,66 +439,37 @@ export function useFeedsWorkspaceActions({
       const discoverFeed = async (
         url: string
       ): Promise<(ApiErrorResponse & FeedDiscoverResponse) | null> => {
-        try {
-          const response = await fetch("/api/feeds", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "feed.discover",
-              url,
-            }),
-          });
-
-          const body = await parseResponseJson<ApiErrorResponse & FeedDiscoverResponse>(
-            response
-          );
-
-          if (!response.ok) {
-            return {
-              error: body?.error || "Could not discover feed URLs.",
-              code: body?.code,
-            };
+        const result = await discoverFeedRequest(url);
+        if (!result.ok) {
+          if (result.networkError) {
+            return { error: "Could not connect to the server." };
           }
 
-          return body;
-        } catch {
           return {
-            error: "Could not connect to the server.",
+            error: result.body?.error || "Could not discover feed URLs.",
+            code: result.body?.code,
           };
         }
+
+        return result.body;
       };
 
       const createFeed = async (
         url: string
       ): Promise<(ApiErrorResponse & FeedCreateResponse) | null> => {
-        try {
-          const response = await fetch("/api/feeds", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "feed.create",
-              url,
-              folderIds: addFeedFolderIds,
-            }),
-          });
-
-          const body = await parseResponseJson<ApiErrorResponse & FeedCreateResponse>(
-            response
-          );
-
-          if (!response.ok) {
-            return {
-              error: body?.error || "Could not add feed.",
-              code: body?.code,
-            };
+        const result = await createFeedRequest(url, addFeedFolderIds);
+        if (!result.ok) {
+          if (result.networkError) {
+            return { error: "Could not connect to the server." };
           }
 
-          return body;
-        } catch {
           return {
-            error: "Could not connect to the server.",
+            error: result.body?.error || "Could not add feed.",
+            code: result.body?.code,
           };
         }
+
+        return result.body;
       };
 
       setIsAddingFeed(true);
@@ -863,6 +781,9 @@ export function useFeedsWorkspaceActions({
       router,
       setNetworkMessage,
       selectedDiscoveryCandidateUrl,
+      setErrorMessage,
+      setInfoMessage,
+      setShowAddAnotherAction,
     ]
   );
 
@@ -877,42 +798,39 @@ export function useFeedsWorkspaceActions({
       setErrorMessage(null);
       setShowAddAnotherAction(false);
 
-      try {
-        const response = await fetch(`/api/feeds/${feedId}`, {
-          method: "DELETE",
-        });
-
-        const body = await parseResponseJson<ApiErrorResponse>(response);
-
-        if (!response.ok) {
-          setErrorMessage(body?.error || "Could not delete feed.");
-          setDeletingFeedId(null);
-          return;
+      const result = await deleteFeedRequest(feedId);
+      if (!result.ok) {
+        if (result.networkError) {
+          setErrorMessage("Could not connect to the server.");
+        } else {
+          setErrorMessage(result.body?.error || "Could not delete feed.");
         }
-
-        setFeeds((previousFeeds) => previousFeeds.filter((feed) => feed.id !== feedId));
-
-        setSelectedScope((previousScope) => {
-          if (previousScope.type === "feed" && previousScope.feedId === feedId) {
-            return { type: "all" };
-          }
-          return previousScope;
-        });
-
-        setInfoMessage("Feed deleted.");
         setDeletingFeedId(null);
-        router.refresh();
-      } catch {
-        setErrorMessage("Could not connect to the server.");
-        setDeletingFeedId(null);
+        return;
       }
+
+      setFeeds((previousFeeds) => previousFeeds.filter((feed) => feed.id !== feedId));
+
+      setSelectedScope((previousScope) => {
+        if (previousScope.type === "feed" && previousScope.feedId === feedId) {
+          return { type: "all" };
+        }
+        return previousScope;
+      });
+
+      setInfoMessage("Feed deleted.");
+      setDeletingFeedId(null);
+      router.refresh();
     },
     [
       deletingFeedId,
       renamingFeedId,
       router,
+      setErrorMessage,
       setFeeds,
+      setInfoMessage,
       setSelectedScope,
+      setShowAddAnotherAction,
       updatingFeedFoldersId,
     ]
   );
@@ -928,39 +846,39 @@ export function useFeedsWorkspaceActions({
       setErrorMessage(null);
       setShowAddAnotherAction(false);
 
-      try {
-        const response = await fetch(`/api/feeds/${feedId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name }),
-        });
-
-        const body = await parseResponseJson<ApiErrorResponse & FeedRenameResponse>(response);
-
-        if (!response.ok) {
-          setErrorMessage(body?.error || "Could not update feed name.");
-          setRenamingFeedId(null);
-          return false;
+      const result = await renameFeedRequest(feedId, name);
+      if (!result.ok) {
+        if (result.networkError) {
+          setErrorMessage("Could not connect to the server.");
+        } else {
+          setErrorMessage(result.body?.error || "Could not update feed name.");
         }
-
-        const nextCustomTitle = body?.feed?.customTitle ?? null;
-        setFeeds((previousFeeds) =>
-          previousFeeds.map((feed) =>
-            feed.id === feedId ? { ...feed, customTitle: nextCustomTitle } : feed
-          )
-        );
-
-        setInfoMessage(name.trim() ? "Feed name updated." : "Feed name reset.");
-        setRenamingFeedId(null);
-        router.refresh();
-        return true;
-      } catch {
-        setErrorMessage("Could not connect to the server.");
         setRenamingFeedId(null);
         return false;
       }
+
+      const nextCustomTitle = result.body?.feed?.customTitle ?? null;
+      setFeeds((previousFeeds) =>
+        previousFeeds.map((feed) =>
+          feed.id === feedId ? { ...feed, customTitle: nextCustomTitle } : feed
+        )
+      );
+
+      setInfoMessage(name.trim() ? "Feed name updated." : "Feed name reset.");
+      setRenamingFeedId(null);
+      router.refresh();
+      return true;
     },
-    [deletingFeedId, renamingFeedId, router, setFeeds, updatingFeedFoldersId]
+    [
+      deletingFeedId,
+      renamingFeedId,
+      router,
+      setErrorMessage,
+      setFeeds,
+      setInfoMessage,
+      setShowAddAnotherAction,
+      updatingFeedFoldersId,
+    ]
   );
 
   const handleSetFeedFolders = useCallback(
@@ -974,47 +892,45 @@ export function useFeedsWorkspaceActions({
       setErrorMessage(null);
       setShowAddAnotherAction(false);
 
-      try {
-        const response = await fetch(`/api/feeds/${feedId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "feed.setFolders",
-            folderIds,
-          }),
-        });
-        const body = await parseResponseJson<ApiErrorResponse & FeedFolderUpdateResponse>(response);
-
-        if (!response.ok) {
-          setErrorMessage(body?.error || "Could not update feed folders.");
-          setUpdatingFeedFoldersId(null);
-          return false;
+      const result = await setFeedFoldersRequest(feedId, folderIds);
+      if (!result.ok) {
+        if (result.networkError) {
+          setErrorMessage("Could not connect to the server.");
+        } else {
+          setErrorMessage(result.body?.error || "Could not update feed folders.");
         }
-
-        const nextFolderIds = body?.feed?.folderIds ?? [];
-        setFeeds((previousFeeds) =>
-          previousFeeds.map((feed) =>
-            feed.id === feedId ? { ...feed, folderIds: nextFolderIds } : feed
-          )
-        );
-
-        setInfoMessage(
-          nextFolderIds.length > 0
-            ? `Feed assigned to ${nextFolderIds.length} folder${
-                nextFolderIds.length === 1 ? "" : "s"
-              }.`
-            : "Feed moved to Uncategorized."
-        );
-        setUpdatingFeedFoldersId(null);
-        router.refresh();
-        return true;
-      } catch {
-        setErrorMessage("Could not connect to the server.");
         setUpdatingFeedFoldersId(null);
         return false;
       }
+
+      const nextFolderIds = result.body?.feed?.folderIds ?? [];
+      setFeeds((previousFeeds) =>
+        previousFeeds.map((feed) =>
+          feed.id === feedId ? { ...feed, folderIds: nextFolderIds } : feed
+        )
+      );
+
+      setInfoMessage(
+        nextFolderIds.length > 0
+          ? `Feed assigned to ${nextFolderIds.length} folder${
+              nextFolderIds.length === 1 ? "" : "s"
+            }.`
+          : "Feed moved to Uncategorized."
+      );
+      setUpdatingFeedFoldersId(null);
+      router.refresh();
+      return true;
     },
-    [deletingFeedId, renamingFeedId, router, setFeeds, updatingFeedFoldersId]
+    [
+      deletingFeedId,
+      renamingFeedId,
+      router,
+      setErrorMessage,
+      setFeeds,
+      setInfoMessage,
+      setShowAddAnotherAction,
+      updatingFeedFoldersId,
+    ]
   );
 
   const handleRenameFolder = useCallback(
@@ -1028,45 +944,46 @@ export function useFeedsWorkspaceActions({
       setErrorMessage(null);
       setShowAddAnotherAction(false);
 
-      try {
-        const response = await fetch(`/api/folders/${folderId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name }),
-        });
-        const body = await parseResponseJson<ApiErrorResponse & FolderRenameResponse>(response);
-
-        if (!response.ok || !body?.folder?.id) {
-          setErrorMessage(body?.error || "Could not rename folder.");
-          setRenamingFolderId(null);
-          return false;
+      const result = await renameFolderRequest(folderId, name);
+      if (!result.ok || !result.body?.folder?.id) {
+        if (result.networkError) {
+          setErrorMessage("Could not connect to the server.");
+        } else {
+          setErrorMessage(result.body?.error || "Could not rename folder.");
         }
-
-        setFolders((previousFolders) =>
-          previousFolders
-            .map((folder) =>
-              folder.id === folderId
-                ? {
-                    ...folder,
-                    name: body.folder?.name ?? folder.name,
-                    updatedAt: body.folder?.updatedAt ?? new Date().toISOString(),
-                  }
-                : folder
-            )
-            .sort((a, b) => a.name.localeCompare(b.name))
-        );
-
-        setInfoMessage("Folder name updated.");
-        setRenamingFolderId(null);
-        router.refresh();
-        return true;
-      } catch {
-        setErrorMessage("Could not connect to the server.");
         setRenamingFolderId(null);
         return false;
       }
+
+      setFolders((previousFolders) =>
+        previousFolders
+          .map((folder) =>
+            folder.id === folderId
+              ? {
+                  ...folder,
+                  name: result.body?.folder?.name ?? folder.name,
+                  updatedAt: result.body?.folder?.updatedAt ?? new Date().toISOString(),
+                }
+              : folder
+          )
+          .sort((a, b) => a.name.localeCompare(b.name))
+      );
+
+      setInfoMessage("Folder name updated.");
+      setRenamingFolderId(null);
+      router.refresh();
+      return true;
     },
-    [deletingFolderId, isCreatingFolder, renamingFolderId, router, setFolders]
+    [
+      deletingFolderId,
+      isCreatingFolder,
+      renamingFolderId,
+      router,
+      setErrorMessage,
+      setFolders,
+      setInfoMessage,
+      setShowAddAnotherAction,
+    ]
   );
 
   const handleDeleteFolder = useCallback(
@@ -1083,91 +1000,90 @@ export function useFeedsWorkspaceActions({
       setErrorMessage(null);
       setShowAddAnotherAction(false);
 
-      try {
-        const response = await fetch(`/api/folders/${folderId}?mode=${mode}`, {
-          method: "DELETE",
-        });
-        const body = await parseResponseJson<ApiErrorResponse & FolderDeleteResponse>(response);
-
-        if (!response.ok) {
-          setErrorMessage(body?.error || "Could not delete folder.");
-          setDeletingFolderId(null);
-          return false;
-        }
-
-        setFolders((previousFolders) =>
-          previousFolders.filter((folder) => folder.id !== folderId)
-        );
-
-        if (mode === "remove_and_unsubscribe_exclusive") {
-          setFeeds((previousFeeds) =>
-            previousFeeds
-              .filter((feed) => {
-                if (!feed.folderIds.includes(folderId)) {
-                  return true;
-                }
-                return feed.folderIds.length > 1;
-              })
-              .map((feed) =>
-                feed.folderIds.includes(folderId)
-                  ? {
-                      ...feed,
-                      folderIds: feed.folderIds.filter((candidate) => candidate !== folderId),
-                    }
-                  : feed
-              )
-          );
+      const result = await deleteFolderRequest(folderId, mode);
+      if (!result.ok) {
+        if (result.networkError) {
+          setErrorMessage("Could not connect to the server.");
         } else {
-          setFeeds((previousFeeds) =>
-            previousFeeds.map((feed) => ({
-              ...feed,
-              folderIds: feed.folderIds.filter((candidate) => candidate !== folderId),
-            }))
-          );
+          setErrorMessage(result.body?.error || "Could not delete folder.");
         }
-
-        setSelectedScope((previousScope) => {
-          if (previousScope.type === "folder" && previousScope.folderId === folderId) {
-            return { type: "all" };
-          }
-          return previousScope;
-        });
-
-        if (mode === "remove_and_unsubscribe_exclusive") {
-          const unsubscribedCount = body?.unsubscribedFeeds ?? 0;
-          setInfoMessage(
-            `Folder deleted. Unsubscribed ${unsubscribedCount} exclusive feed${
-              unsubscribedCount === 1 ? "" : "s"
-            }.`
-          );
-        } else {
-          setInfoMessage("Folder deleted. Feeds were moved to remaining folders or Uncategorized.");
-        }
-
-        setDeletingFolderId(null);
-        router.refresh();
-        return true;
-      } catch {
-        setErrorMessage("Could not connect to the server.");
         setDeletingFolderId(null);
         return false;
       }
+
+      setFolders((previousFolders) =>
+        previousFolders.filter((folder) => folder.id !== folderId)
+      );
+
+      if (mode === "remove_and_unsubscribe_exclusive") {
+        setFeeds((previousFeeds) =>
+          previousFeeds
+            .filter((feed) => {
+              if (!feed.folderIds.includes(folderId)) {
+                return true;
+              }
+              return feed.folderIds.length > 1;
+            })
+            .map((feed) =>
+              feed.folderIds.includes(folderId)
+                ? {
+                    ...feed,
+                    folderIds: feed.folderIds.filter((candidate) => candidate !== folderId),
+                  }
+                : feed
+            )
+        );
+      } else {
+        setFeeds((previousFeeds) =>
+          previousFeeds.map((feed) => ({
+            ...feed,
+            folderIds: feed.folderIds.filter((candidate) => candidate !== folderId),
+          }))
+        );
+      }
+
+      setSelectedScope((previousScope) => {
+        if (previousScope.type === "folder" && previousScope.folderId === folderId) {
+          return { type: "all" };
+        }
+        return previousScope;
+      });
+
+      if (mode === "remove_and_unsubscribe_exclusive") {
+        const unsubscribedCount = result.body?.unsubscribedFeeds ?? 0;
+        setInfoMessage(
+          `Folder deleted. Unsubscribed ${unsubscribedCount} exclusive feed${
+            unsubscribedCount === 1 ? "" : "s"
+          }.`
+        );
+      } else {
+        setInfoMessage("Folder deleted. Feeds were moved to remaining folders or Uncategorized.");
+      }
+
+      setDeletingFolderId(null);
+      router.refresh();
+      return true;
     },
-    [deletingFolderId, isCreatingFolder, renamingFolderId, router, setFeeds, setFolders, setSelectedScope]
+    [
+      deletingFolderId,
+      isCreatingFolder,
+      renamingFolderId,
+      router,
+      setErrorMessage,
+      setFeeds,
+      setFolders,
+      setInfoMessage,
+      setSelectedScope,
+      setShowAddAnotherAction,
+    ]
   );
 
-  const clearStatusMessages = useCallback(() => {
-    setInfoMessage(null);
-    setErrorMessage(null);
-    setShowAddAnotherAction(false);
-  }, []);
-
   const showAddFeedForm = useCallback(() => {
+    clearStatusMessages();
     setIsAddFeedFormVisible(true);
-    setErrorMessage(null);
     setAddFeedStage(null);
     setAddFeedProgressMessage(null);
-  }, []);
+  }, [clearStatusMessages]);
 
   const cancelAddFeedForm = useCallback(() => {
     setIsAddFeedFormVisible(false);
@@ -1200,7 +1116,7 @@ export function useFeedsWorkspaceActions({
     setSelectedDiscoveryCandidateUrl("");
     setAddFeedStage(null);
     setAddFeedProgressMessage(null);
-  }, []);
+  }, [setErrorMessage, setInfoMessage]);
 
   const handleAddAnother = useCallback(() => {
     setIsAddFeedFormVisible(true);
@@ -1217,12 +1133,12 @@ export function useFeedsWorkspaceActions({
     setInfoMessage(null);
     setErrorMessage(null);
     setShowAddAnotherAction(false);
-  }, [lastUsedAddFeedFolderIds]);
+  }, [lastUsedAddFeedFolderIds, setErrorMessage, setInfoMessage, setShowAddAnotherAction]);
 
   const selectDiscoveryCandidate = useCallback((url: string) => {
     setSelectedDiscoveryCandidateUrl(url);
     setErrorMessage(null);
-  }, []);
+  }, [setErrorMessage]);
 
   const inlineDuplicateMessage =
     addFeedInputMode === "single" && isSingleInputDuplicate

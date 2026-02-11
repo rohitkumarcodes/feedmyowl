@@ -14,6 +14,7 @@
  */
 
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { getTrustedOrigins } from "@/lib/trusted-origins";
 
 /**
  * Routes that do NOT require authentication.
@@ -25,30 +26,6 @@ const isPublicRoute = createRouteMatcher([
   "/api/webhooks(.*)",
 ]);
 
-function getAuthorizedParties(): string[] {
-  const parties = new Set<string>([
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://app.feedmyowl.com",
-  ]);
-
-  // Keep auth working on the app URL configured in env.
-  if (process.env.NEXT_PUBLIC_APP_URL) {
-    try {
-      parties.add(new URL(process.env.NEXT_PUBLIC_APP_URL).origin);
-    } catch {
-      // Ignore invalid URLs; Clerk will still use the safe defaults above.
-    }
-  }
-
-  // Vercel provides this in deployments (no protocol), useful before custom-domain cutover.
-  if (process.env.VERCEL_URL) {
-    parties.add(`https://${process.env.VERCEL_URL}`);
-  }
-
-  return [...parties];
-}
-
 export default clerkMiddleware(
   async (auth, request) => {
     // If the route is not public, require authentication.
@@ -58,7 +35,7 @@ export default clerkMiddleware(
     }
   },
   {
-    authorizedParties: getAuthorizedParties(),
+    authorizedParties: getTrustedOrigins(),
   }
 );
 

@@ -9,25 +9,13 @@ import { requireAuth } from "@/lib/auth";
 import { handleApiRouteError } from "@/lib/api-errors";
 import { ensureUserRecord } from "@/lib/app-user";
 import { assertTrustedWriteOrigin } from "@/lib/csrf";
+import { parseRequestJson } from "@/lib/http/request-json";
 import {
   deleteFolderForUser,
   FOLDER_NAME_MAX_LENGTH,
   renameFolderForUser,
   type DeleteFolderMode,
 } from "@/lib/folder-service";
-
-/**
- * Safely parse JSON request bodies and return null for invalid JSON.
- */
-async function parseRequestJson(
-  request: NextRequest
-): Promise<Record<string, unknown> | null> {
-  try {
-    return (await request.json()) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
 
 /**
  * PATCH /api/folders/[id]

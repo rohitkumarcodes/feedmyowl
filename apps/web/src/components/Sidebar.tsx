@@ -19,6 +19,7 @@ import { getFeedLabel } from "./feeds-workspace.selectors";
 import type { SidebarNotice } from "./sidebar-messages";
 import primitiveStyles from "./LeftPanePrimitives.module.css";
 import { PaneToggleIcon } from "./PaneToggleIcon";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import styles from "./Sidebar.module.css";
 
 export type SidebarScope =
@@ -139,37 +140,6 @@ interface ShutterFeedGroupProps {
   expanded: boolean;
   prefersReducedMotion: boolean;
   children: ReactNode;
-}
-
-function usePrefersReducedMotion(): boolean {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
-      return;
-    }
-
-    const mediaQueryList = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const updatePreference = (event?: MediaQueryListEvent) => {
-      setPrefersReducedMotion(event ? event.matches : mediaQueryList.matches);
-    };
-
-    updatePreference();
-
-    if (typeof mediaQueryList.addEventListener === "function") {
-      mediaQueryList.addEventListener("change", updatePreference);
-      return () => {
-        mediaQueryList.removeEventListener("change", updatePreference);
-      };
-    }
-
-    mediaQueryList.addListener(updatePreference);
-    return () => {
-      mediaQueryList.removeListener(updatePreference);
-    };
-  }, []);
-
-  return prefersReducedMotion;
 }
 
 function FolderRowIcon() {

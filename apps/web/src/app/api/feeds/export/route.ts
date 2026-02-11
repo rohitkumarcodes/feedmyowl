@@ -3,8 +3,7 @@
  *
  * Supported formats:
  *   - ?format=opml (default)
- *   - ?format=json (portable v2 by default)
- *   - ?format=json&version=1 (legacy verbose export shape)
+ *   - ?format=json (portable v2)
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -12,26 +11,14 @@ import { requireAuth } from "@/lib/auth";
 import { db, eq, users } from "@/lib/database";
 import { handleApiRouteError } from "@/lib/api-errors";
 import { ensureUserRecord } from "@/lib/app-user";
-import { isMissingRelationError } from "@/lib/db-compat";
-import { resolveFeedFolderIds } from "@/lib/folder-memberships";
+import {
+  getFeedMembershipFolderIds,
+  resolveFeedFolderIds,
+} from "@/lib/folder-memberships";
 
 interface FolderRow {
   id: string;
   name: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface FeedItemRow {
-  id: string;
-  guid: string | null;
-  title: string | null;
-  link: string | null;
-  author: string | null;
-  publishedAt: Date | null;
-  readAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 interface FeedRow {
@@ -40,11 +27,9 @@ interface FeedRow {
   title: string | null;
   customTitle: string | null;
   description: string | null;
-  folderId: string | null;
   lastFetchedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
-  items?: FeedItemRow[];
   folderMemberships?: Array<{ folderId: string }>;
 }
 
@@ -69,19 +54,8 @@ function escapeXml(value: string): string {
     .replace(/'/g, "&apos;");
 }
 
-function getMembershipFolderIds(feed: FeedRow): string[] {
-  if (!Array.isArray(feed.folderMemberships)) {
-    return [];
-  }
-
-  return feed.folderMemberships.map((membership) => membership.folderId);
-}
-
 function toResolvedFeedFolderIds(feed: FeedRow): string[] {
-  return resolveFeedFolderIds({
-    legacyFolderId: feed.folderId,
-    membershipFolderIds: getMembershipFolderIds(feed),
-  });
+  return resolveFeedFolderIds(getFeedMembershipFolderIds(feed));
 }
 
 /**
@@ -169,100 +143,43 @@ ${bodyLines}
 `;
 }
 
-async function queryExportUser(
-  userId: string,
-  includeItems: boolean
-): Promise<ExportUserRecord | null> {
-  const userColumns = {
-    id: true,
-    clerkId: true,
-    email: true,
-    createdAt: true,
-  } as const;
-
-  const feedColumns = {
-    id: true,
-    url: true,
-    title: true,
-    customTitle: true,
-    description: true,
-    folderId: true,
-    lastFetchedAt: true,
-    createdAt: true,
-    updatedAt: true,
-  } as const;
-
-  try {
-    if (includeItems) {
-      return (await db.query.users.findFirst({
-        where: eq(users.id, userId),
-        columns: userColumns,
-        with: {
-          folders: true,
-          feeds: {
-            columns: feedColumns,
-            with: {
-              items: true,
-              folderMemberships: {
-                columns: {
-                  folderId: true,
-                },
-              },
-            },
-          },
+async function queryExportUser(userId: string): Promise<ExportUserRecord | null> {
+  return (await db.query.users.findFirst({
+    where: eq(users.id, userId),
+    columns: {
+      id: true,
+      clerkId: true,
+      email: true,
+      createdAt: true,
+    },
+    with: {
+      folders: {
+        columns: {
+          id: true,
+          name: true,
         },
-      })) as ExportUserRecord | null;
-    }
-
-    return (await db.query.users.findFirst({
-      where: eq(users.id, userId),
-      columns: userColumns,
-      with: {
-        folders: true,
-        feeds: {
-          columns: feedColumns,
-          with: {
-            folderMemberships: {
-              columns: {
-                folderId: true,
-              },
+      },
+      feeds: {
+        columns: {
+          id: true,
+          url: true,
+          title: true,
+          customTitle: true,
+          description: true,
+          lastFetchedAt: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        with: {
+          folderMemberships: {
+            columns: {
+              folderId: true,
             },
           },
         },
       },
-    })) as ExportUserRecord | null;
-  } catch (error) {
-    if (!isMissingRelationError(error, "feed_folder_memberships")) {
-      throw error;
-    }
-
-    if (includeItems) {
-      return (await db.query.users.findFirst({
-        where: eq(users.id, userId),
-        columns: userColumns,
-        with: {
-          folders: true,
-          feeds: {
-            columns: feedColumns,
-            with: {
-              items: true,
-            },
-          },
-        },
-      })) as ExportUserRecord | null;
-    }
-
-    return (await db.query.users.findFirst({
-      where: eq(users.id, userId),
-      columns: userColumns,
-      with: {
-        folders: true,
-        feeds: {
-          columns: feedColumns,
-        },
-      },
-    })) as ExportUserRecord | null;
-  }
+    },
+  })) as ExportUserRecord | null;
 }
 
 /**
@@ -280,16 +197,15 @@ export async function GET(request: NextRequest) {
 
     const format = request.nextUrl.searchParams.get("format") || "opml";
     const jsonVersion = request.nextUrl.searchParams.get("version") || "2";
-    const includeLegacyItems = format === "json" && jsonVersion === "1";
 
-    if (format === "json" && jsonVersion !== "1" && jsonVersion !== "2") {
+    if (format === "json" && jsonVersion !== "2") {
       return NextResponse.json(
         { error: "Unsupported JSON export version" },
         { status: 400 }
       );
     }
 
-    const user = await queryExportUser(ensuredUser.id, includeLegacyItems);
+    const user = await queryExportUser(ensuredUser.id);
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -326,7 +242,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    if (format === "json" && jsonVersion === "2") {
+    if (format === "json") {
       const portableExport = {
         version: 2 as const,
         exportedAt: nowIso,
@@ -356,64 +272,6 @@ export async function GET(request: NextRequest) {
         headers: {
           "Content-Type": "application/json; charset=utf-8",
           "Content-Disposition": `attachment; filename="feedmyowl-data-v2-${filenameDate}.json"`,
-          "Cache-Control": "no-store",
-        },
-      });
-    }
-
-    if (format === "json" && jsonVersion === "1") {
-      const legacyExport = {
-        exportedAt: nowIso,
-        user: {
-          id: user.id || "",
-          clerkId: user.clerkId || "",
-          email: user.email || "",
-          createdAt: user.createdAt.toISOString(),
-        },
-        folders: folderRows
-          .map((folder) => ({
-            id: folder.id,
-            name: folder.name,
-            createdAt: folder.createdAt.toISOString(),
-            updatedAt: folder.updatedAt.toISOString(),
-          }))
-          .sort((a, b) => a.name.localeCompare(b.name)),
-        feeds: feedRows
-          .map((feed) => ({
-            id: feed.id,
-            url: feed.url,
-            title: feed.title,
-            customTitle: feed.customTitle,
-            description: feed.description,
-            folderIds: toResolvedFeedFolderIds(feed),
-            folderId: feed.folderId,
-            lastFetchedAt: feed.lastFetchedAt?.toISOString() || null,
-            createdAt: feed.createdAt.toISOString(),
-            updatedAt: feed.updatedAt.toISOString(),
-            items: (feed.items || []).map((item) => ({
-              id: item.id,
-              guid: item.guid,
-              title: item.title,
-              link: item.link,
-              author: item.author,
-              publishedAt: item.publishedAt?.toISOString() || null,
-              readAt: item.readAt?.toISOString() || null,
-              createdAt: item.createdAt.toISOString(),
-              updatedAt: item.updatedAt.toISOString(),
-            })),
-          }))
-          .sort((a, b) => {
-            const aLabel = a.customTitle || a.title || a.url;
-            const bLabel = b.customTitle || b.title || b.url;
-            return aLabel.localeCompare(bLabel);
-          }),
-      };
-
-      return new NextResponse(JSON.stringify(legacyExport, null, 2), {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json; charset=utf-8",
-          "Content-Disposition": `attachment; filename="feedmyowl-data-v1-${filenameDate}.json"`,
           "Cache-Control": "no-store",
         },
       });

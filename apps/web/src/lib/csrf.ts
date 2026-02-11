@@ -1,27 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { captureMessage } from "@/lib/error-tracking";
-
-function getTrustedOrigins(): string[] {
-  const trusted = new Set<string>([
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://app.feedmyowl.com",
-  ]);
-
-  if (process.env.NEXT_PUBLIC_APP_URL) {
-    try {
-      trusted.add(new URL(process.env.NEXT_PUBLIC_APP_URL).origin);
-    } catch {
-      // Ignore invalid app URL values.
-    }
-  }
-
-  if (process.env.VERCEL_URL) {
-    trusted.add(`https://${process.env.VERCEL_URL}`);
-  }
-
-  return [...trusted];
-}
+import { getTrustedOrigins } from "@/lib/trusted-origins";
 
 function extractOriginFromReferer(referer: string): string | null {
   try {

@@ -132,26 +132,9 @@ describe("GET /api/feeds/export", () => {
     ]);
   });
 
-  it("returns legacy JSON export when version=1 is requested", async () => {
-    const response = await GET(
-      createRequest("https://app.feedmyowl.test/api/feeds/export?format=json&version=1")
-    );
-    const body = (await response.json()) as {
-      user: { id: string };
-      feeds: Array<{ id: string; items: Array<{ id: string }> }>;
-    };
-
-    expect(response.status).toBe(200);
-    expect(body.user.id).toBe("user_123");
-    expect(body.feeds[0].id).toBe("feed_1");
-    expect(body.feeds[0].items).toEqual([
-      expect.objectContaining({ id: "item_1" }),
-    ]);
-  });
-
   it("returns 400 for unsupported JSON export version", async () => {
     const response = await GET(
-      createRequest("https://app.feedmyowl.test/api/feeds/export?format=json&version=3")
+      createRequest("https://app.feedmyowl.test/api/feeds/export?format=json&version=1")
     );
     const body = (await response.json()) as { error?: string };
 
