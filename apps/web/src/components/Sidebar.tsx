@@ -932,8 +932,8 @@ export function Sidebar({
   };
   const noticeKindIcons: Record<SidebarNotice["kind"], string> = {
     error: "!",
-    progress: "…",
-    offline: "⦿",
+    progress: "~",
+    offline: "o",
     info: "i",
   };
 
@@ -1457,9 +1457,12 @@ export function Sidebar({
             aria-modal="true"
           >
             <h3>Move uncategorized feeds</h3>
-            <p>Select a folder for all uncategorized feeds.</p>
+            <p>
+              Move {uncategorizedFeeds.length} uncategorized feed
+              {uncategorizedFeeds.length === 1 ? "" : "s"} to a folder.
+            </p>
             {sortedFolders.length === 0 ? (
-              <p>No folders exist yet. Create one below.</p>
+              <p>No folders exist yet. Create one below to continue.</p>
             ) : null}
 
             {sortedFolders.length > 0 ? (
@@ -1487,11 +1490,28 @@ export function Sidebar({
                 className={primitiveStyles.input}
                 value={uncategorizedNewFolderName}
                 onChange={(event) => setUncategorizedNewFolderName(event.currentTarget.value)}
+                onKeyDown={(event) => {
+                  if (event.key !== "Enter") {
+                    return;
+                  }
+
+                  event.preventDefault();
+                  void handleCreateFolderFromUncategorizedMove();
+                }}
                 placeholder="Folder name"
                 disabled={isCreatingFolder || isMovingUncategorized}
                 maxLength={255}
               />
             </label>
+            {uncategorizedNewFolderDuplicate ? (
+              <p className={styles.moveDialogHint}>
+                A folder named "{uncategorizedNewFolderDuplicate.name}" already exists.
+              </p>
+            ) : (
+              <p className={styles.moveDialogHint}>
+                Tip: press Enter in the field above to create the folder.
+              </p>
+            )}
             <div className={styles.deleteDialogActions}>
               <button
                 type="button"
@@ -1507,9 +1527,10 @@ export function Sidebar({
                 <button
                   type="button"
                   className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
-                  onClick={() =>
-                    setUncategorizedTargetFolderId(uncategorizedNewFolderDuplicate.id)
-                  }
+                  onClick={() => {
+                    setUncategorizedTargetFolderId(uncategorizedNewFolderDuplicate.id);
+                    setUncategorizedNewFolderName("");
+                  }}
                   disabled={isMovingUncategorized}
                 >
                   Use existing
@@ -1546,7 +1567,11 @@ export function Sidebar({
                 }}
                 disabled={!uncategorizedTargetFolderId || isMovingUncategorized}
               >
-                {isMovingUncategorized ? "Moving..." : "Move all"}
+                {isMovingUncategorized
+                  ? "Moving..."
+                  : `Move ${uncategorizedFeeds.length} feed${
+                      uncategorizedFeeds.length === 1 ? "" : "s"
+                    }`}
               </button>
             </div>
           </div>

@@ -405,3 +405,8 @@
   color: var(--lp-text-muted);
   font-size: var(--text-xs);
 }
+
+.moveDialogHint {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}

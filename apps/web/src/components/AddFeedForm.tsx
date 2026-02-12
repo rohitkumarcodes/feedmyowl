@@ -24,6 +24,16 @@ interface AddFeedBulkSummary {
   failedDetails: string[];
 }
 
+const BULK_STATUS_LABELS: Record<
+  "imported" | "merged" | "duplicate" | "failed",
+  string
+> = {
+  imported: "Imported",
+  merged: "Merged",
+  duplicate: "Duplicate",
+  failed: "Failed",
+};
+
 export interface AddFeedFormProps {
   presentation?: "inline" | "dialog";
   addFeedInputMode: "single" | "bulk";
@@ -394,13 +404,17 @@ export function AddFeedForm({
           {bulkAddResultRows && bulkAddResultRows.length > 0 ? (
             <div className={styles.bulkTableWrap}>
               <div className={styles.bulkTableActions}>
+                <span className={styles.bulkTableCount}>
+                  {bulkAddResultRows.length} result
+                  {bulkAddResultRows.length === 1 ? "" : "s"}
+                </span>
                 <button
                   type="button"
                   className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
                   onClick={onRetryFailedBulk}
                   disabled={failedRows.length === 0 || isAddingFeed}
                 >
-                  Retry failed
+                  Retry failed ({failedRows.length})
                 </button>
                 <button
                   type="button"
@@ -408,7 +422,7 @@ export function AddFeedForm({
                   onClick={onCopyFailedUrls}
                   disabled={failedRows.length === 0}
                 >
-                  Copy failed URLs
+                  Copy failed URLs ({failedRows.length})
                 </button>
               </div>
               <table className={styles.bulkTable}>
@@ -420,16 +434,16 @@ export function AddFeedForm({
                   </tr>
                 </thead>
                 <tbody>
-                  {bulkAddResultRows.map((row) => {
+                  {bulkAddResultRows.map((row, index) => {
                     const isFailed = row.status === "failed";
                     const isExpanded = Boolean(expandedFailureUrls[row.url]);
 
                     return (
-                      <tr key={`${row.url}-${row.status}`}>
+                      <tr key={`${row.url}-${row.status}-${index}`}>
                         <td className={styles.bulkUrlCell}>{row.url}</td>
                         <td>
                           <span className={`${styles.statusChip} ${styles[`statusChip${row.status}`]}`}>
-                            {row.status}
+                            {BULK_STATUS_LABELS[row.status]}
                           </span>
                         </td>
                         <td>
@@ -439,11 +453,16 @@ export function AddFeedForm({
                                 type="button"
                                 className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
                                 onClick={() => toggleFailureDetails(row.url)}
+                                aria-expanded={isExpanded}
+                                aria-controls={`bulk-failure-${index}`}
                               >
-                                {isExpanded ? "Hide" : "Show"}
+                                {isExpanded ? "Hide error" : "Show error"}
                               </button>
                               {isExpanded ? (
-                                <p className={styles.bulkFailureDetail}>
+                                <p
+                                  id={`bulk-failure-${index}`}
+                                  className={styles.bulkFailureDetail}
+                                >
                                   {row.message || "Could not import."}
                                 </p>
                               ) : null}

@@ -195,8 +195,15 @@
 }
 
 .bulkTableActions {
+  align-items: center;
   display: flex;
   gap: 6px;
+  justify-content: space-between;
+}
+
+.bulkTableCount {
+  color: var(--lp-text-muted);
+  font-size: var(--text-xs);
 }
 
 .bulkTable {
@@ -214,9 +221,17 @@
 }
 
 .bulkTable th {
+  background: var(--lp-surface-0);
   border-top: 0;
   color: var(--lp-text-muted);
+  position: sticky;
+  top: 0;
   text-transform: uppercase;
+  z-index: 1;
+}
+
+.bulkTable tbody tr:hover {
+  background: var(--lp-surface-hover);
 }
 
 .bulkUrlCell {
@@ -227,20 +242,25 @@
 .statusChip {
   border: 1px solid var(--lp-border);
   display: inline-flex;
+  font-weight: var(--weight-semibold);
   padding: 1px 6px;
-  text-transform: capitalize;
 }
 
 .statusChipimported {
-  background: var(--lp-surface-hover);
+  background: rgb(0 95 215 / 10%);
+  border-color: rgb(0 95 215 / 40%);
+  color: var(--accent);
 }
 
 .statusChipmerged {
-  background: var(--lp-surface-hover);
+  background: rgb(0 95 215 / 8%);
+  border-color: rgb(0 95 215 / 28%);
+  color: var(--text-primary);
 }
 
 .statusChipduplicate {
   background: var(--lp-surface-1);
+  color: var(--lp-text-muted);
 }
 
 .statusChipfailed {
@@ -281,5 +301,11 @@
   .inlineDuplicateRow {
     align-items: stretch;
     display: grid;
+  }
+
+  .bulkTableActions {
+    align-items: stretch;
+    flex-direction: column;
+    justify-content: flex-start;
   }
 }
