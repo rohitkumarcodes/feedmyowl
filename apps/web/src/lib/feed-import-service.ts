@@ -292,8 +292,10 @@ async function resolveImportCandidate(params: {
     params.userId,
     params.normalizedInputUrl
   );
-  let directFailureAfterFallback: Pick<FeedImportRowResult, "code" | "message"> | null =
-    null;
+  let directFailureAfterFallback: {
+    code: FeedImportRowResult["code"];
+    message: string;
+  } | null = null;
 
   if (directExistingFeed) {
     return {

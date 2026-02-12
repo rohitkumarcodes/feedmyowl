@@ -880,7 +880,7 @@ export function Sidebar({
       {sidebarFolderDuplicate ? (
         <div className={styles.sidebarDuplicateRow}>
           <span className={styles.sidebarDuplicateText}>
-            A folder named "{sidebarFolderDuplicate.name}" already exists.
+            A folder named &quot;{sidebarFolderDuplicate.name}&quot; already exists.
           </span>
           <button
             type="button"
@@ -1505,7 +1505,7 @@ export function Sidebar({
             </label>
             {uncategorizedNewFolderDuplicate ? (
               <p className={styles.moveDialogHint}>
-                A folder named "{uncategorizedNewFolderDuplicate.name}" already exists.
+                A folder named &quot;{uncategorizedNewFolderDuplicate.name}&quot; already exists.
               </p>
             ) : (
               <p className={styles.moveDialogHint}>

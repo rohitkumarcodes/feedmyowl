@@ -878,14 +878,17 @@ export function useFeedsWorkspaceActions({
       applyCreatedFeed,
       applyUpdatedExistingFeed,
       bulkFeedUrlInput,
+      clearProgressNotice,
       createFeedForAdd,
       discoverFeedForAdd,
       discoveryCandidates.length,
       feedUrlInput,
       isAddingFeed,
+      normalizedExistingFeedUrls,
       router,
       runBulkImport,
       setNetworkMessage,
+      setProgressNotice,
       selectedDiscoveryCandidateUrl,
       setErrorMessage,
       setInfoMessage,
@@ -1338,7 +1341,7 @@ export function useFeedsWorkspaceActions({
     setAddFeedStage(null);
     setCreatedFolderRenameId(null);
     clearProgressNotice();
-  }, [clearStatusMessages]);
+  }, [clearProgressNotice, clearStatusMessages]);
 
   const cancelAddFeedForm = useCallback(() => {
     setIsAddFeedFormVisible(false);
@@ -1353,7 +1356,7 @@ export function useFeedsWorkspaceActions({
     setAddFeedStage(null);
     setCreatedFolderRenameId(null);
     clearProgressNotice();
-  }, []);
+  }, [clearProgressNotice]);
 
   const toggleAddFeedFolder = useCallback((folderId: string) => {
     setAddFeedFolderIds((previous) =>
@@ -1373,7 +1376,7 @@ export function useFeedsWorkspaceActions({
     setAddFeedStage(null);
     setCreatedFolderRenameId(null);
     clearProgressNotice();
-  }, [setErrorMessage, setInfoMessage]);
+  }, [clearProgressNotice, setErrorMessage, setInfoMessage]);
 
   const handleAddAnother = useCallback(() => {
     setIsAddFeedFormVisible(true);
@@ -1391,7 +1394,13 @@ export function useFeedsWorkspaceActions({
     setErrorMessage(null);
     setShowAddAnotherAction(false);
     setCreatedFolderRenameId(null);
-  }, [lastUsedAddFeedFolderIds, setErrorMessage, setInfoMessage, setShowAddAnotherAction]);
+  }, [
+    clearProgressNotice,
+    lastUsedAddFeedFolderIds,
+    setErrorMessage,
+    setInfoMessage,
+    setShowAddAnotherAction,
+  ]);
 
   const handleRetryFailedBulkAdd = useCallback(async () => {
     if (isAddingFeed || !bulkAddResultRows) {

@@ -565,7 +565,7 @@ export function AddFeedForm({
       {duplicateFolder ? (
         <div className={styles.inlineDuplicateRow}>
           <p className={styles.inlineMessage}>
-            A folder named "{duplicateFolder.name}" already exists.
+            A folder named &quot;{duplicateFolder.name}&quot; already exists.
           </p>
           <button
             type="button"
