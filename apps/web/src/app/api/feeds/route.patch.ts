@@ -3,7 +3,10 @@ import { db, eq, users } from "@/lib/database";
 import { deleteAuthUser } from "@/lib/auth";
 import { handleApiRouteError } from "@/lib/api-errors";
 import { assertTrustedWriteOrigin } from "@/lib/csrf";
-import { markFeedItemReadForUser } from "@/lib/feed-service";
+import {
+  deleteUncategorizedFeedsForUser,
+  markFeedItemReadForUser,
+} from "@/lib/feed-service";
 import { getAppUser, parseRouteJson } from "./route.shared";
 
 /**
@@ -11,6 +14,7 @@ import { getAppUser, parseRouteJson } from "./route.shared";
  *
  * Supported actions:
  *   - item.markRead
+ *   - uncategorized.delete
  *   - account.delete
  */
 export async function patchFeedsRoute(request: NextRequest) {
@@ -53,6 +57,19 @@ export async function patchFeedsRoute(request: NextRequest) {
       }
 
       return NextResponse.json({ itemId: result.itemId, readAt: result.readAt });
+    }
+
+    if (payload.action === "uncategorized.delete") {
+      const confirmed = payload.confirm === true;
+      if (!confirmed) {
+        return NextResponse.json(
+          { error: "Uncategorized deletion must be explicitly confirmed." },
+          { status: 400 }
+        );
+      }
+
+      const deletedFeedCount = await deleteUncategorizedFeedsForUser(appUser.id);
+      return NextResponse.json({ success: true, deletedFeedCount });
     }
 
     if (payload.action === "account.delete") {

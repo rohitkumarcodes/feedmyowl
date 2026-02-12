@@ -378,6 +378,46 @@ export async function deleteFeedForUser(userId: string, feedId: string): Promise
 }
 
 /**
+ * Delete all uncategorized feeds (feeds without folder memberships) for one user.
+ */
+export async function deleteUncategorizedFeedsForUser(userId: string): Promise<number> {
+  const userFeeds = await db.query.feeds.findMany({
+    where: eq(feeds.userId, userId),
+    columns: { id: true },
+  });
+
+  if (userFeeds.length === 0) {
+    return 0;
+  }
+
+  const userFeedIds = userFeeds.map((feed) => feed.id);
+
+  const memberships = await db.query.feedFolderMemberships.findMany({
+    where: and(
+      eq(feedFolderMemberships.userId, userId),
+      inArray(feedFolderMemberships.feedId, userFeedIds)
+    ),
+    columns: { feedId: true },
+  });
+
+  const categorizedFeedIds = new Set(memberships.map((membership) => membership.feedId));
+  const uncategorizedFeedIds = userFeedIds.filter(
+    (feedId) => !categorizedFeedIds.has(feedId)
+  );
+
+  if (uncategorizedFeedIds.length === 0) {
+    return 0;
+  }
+
+  const deletedFeeds = await db
+    .delete(feeds)
+    .where(and(eq(feeds.userId, userId), inArray(feeds.id, uncategorizedFeedIds)))
+    .returning({ id: feeds.id });
+
+  return deletedFeeds.length;
+}
+
+/**
  * Update the user-defined display name for one feed belonging to one user.
  */
 export async function renameFeedForUser(

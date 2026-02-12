@@ -106,6 +106,7 @@ interface SidebarProps {
 
   deletingFolderId: string | null;
   renamingFolderId: string | null;
+  isDeletingUncategorized: boolean;
   onCreateFolder: (name: string) => boolean | Promise<boolean>;
   onRequestFolderRename: (
     folderId: string,
@@ -115,6 +116,7 @@ interface SidebarProps {
     folderId: string,
     mode: FolderDeleteMode
   ) => Promise<boolean>;
+  onRequestUncategorizedDelete: () => Promise<boolean>;
 
   onCollapse: () => void;
 }
@@ -512,20 +514,26 @@ export function Sidebar({
   onRequestFeedFolderUpdate,
   deletingFolderId,
   renamingFolderId,
+  isDeletingUncategorized,
   onCreateFolder,
   onRequestFolderRename,
   onRequestFolderDelete,
+  onRequestUncategorizedDelete,
   onCollapse,
 }: SidebarProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
   const [expandedFolderIds, setExpandedFolderIds] = useState<Record<string, boolean>>({});
   const [isUncategorizedExpanded, setIsUncategorizedExpanded] = useState(false);
+  const [isUncategorizedMenuOpen, setIsUncategorizedMenuOpen] = useState(false);
+  const [isUncategorizedDeleteDialogOpen, setIsUncategorizedDeleteDialogOpen] =
+    useState(false);
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
   const [isSidebarFolderFormVisible, setIsSidebarFolderFormVisible] = useState(false);
   const [sidebarFolderName, setSidebarFolderName] = useState("");
   const [pendingDeleteFolderId, setPendingDeleteFolderId] = useState<string | null>(null);
   const [isDeletingWithUnsubscribe, setIsDeletingWithUnsubscribe] = useState(false);
   const addMenuRef = useRef<HTMLDivElement>(null);
+  const uncategorizedActionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setExpandedFolderIds((previous) => {
@@ -565,6 +573,32 @@ export function Sidebar({
     };
   }, [isAddMenuOpen]);
 
+  useEffect(() => {
+    if (!isUncategorizedMenuOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!uncategorizedActionsRef.current?.contains(event.target as Node)) {
+        setIsUncategorizedMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsUncategorizedMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isUncategorizedMenuOpen]);
+
   const sortedFolders = useMemo(
     () => [...folders].sort((a, b) => a.name.localeCompare(b.name)),
     [folders]
@@ -601,6 +635,15 @@ export function Sidebar({
     () => sortedFeeds.filter((feed) => feed.folderIds.length === 0),
     [sortedFeeds]
   );
+
+  useEffect(() => {
+    if (uncategorizedFeeds.length > 0) {
+      return;
+    }
+
+    setIsUncategorizedMenuOpen(false);
+    setIsUncategorizedDeleteDialogOpen(false);
+  }, [uncategorizedFeeds.length]);
 
   const pendingDeleteStats = useMemo(() => {
     if (!pendingDeleteFolderId) {
@@ -985,7 +1028,34 @@ export function Sidebar({
                   {uncategorizedFeeds.length}
                 </span>
               </button>
-              <div className={styles.folderActionsSpacer} aria-hidden="true" />
+              <div className={styles.folderActions} ref={uncategorizedActionsRef}>
+                <button
+                  type="button"
+                  className={`${primitiveStyles.iconButton} ${styles.folderActionsButton}`}
+                  onClick={() => setIsUncategorizedMenuOpen((previous) => !previous)}
+                  aria-label="Open actions for Uncategorized"
+                  aria-expanded={isUncategorizedMenuOpen}
+                  disabled={isDeletingUncategorized}
+                >
+                  ⋯
+                </button>
+
+                {isUncategorizedMenuOpen ? (
+                  <div className={primitiveStyles.menu}>
+                    <button
+                      type="button"
+                      className={primitiveStyles.menuItem}
+                      onClick={() => {
+                        setIsUncategorizedMenuOpen(false);
+                        setIsUncategorizedDeleteDialogOpen(true);
+                      }}
+                      disabled={isDeletingUncategorized}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             </div>
 
             <ShutterFeedGroup
@@ -1121,6 +1191,48 @@ export function Sidebar({
                 {isDeletingWithUnsubscribe
                   ? "Deleting..."
                   : "Delete folder and unsubscribe exclusive feeds"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {isUncategorizedDeleteDialogOpen ? (
+        <div
+          className={`${primitiveStyles.dialogBackdrop} ${primitiveStyles.dialogBackdropBottom}`}
+        >
+          <div
+            className={`${primitiveStyles.dialog} ${primitiveStyles.dialogMobileBottom} ${styles.deleteDialog}`}
+            role="dialog"
+            aria-modal="true"
+          >
+            <h3>Delete uncategorized</h3>
+            <p>
+              Deleting uncategorized folder will delete both the folder and the feeds.
+              Are you sure you want to delete?
+            </p>
+            <div className={styles.deleteDialogActions}>
+              <button
+                type="button"
+                className={primitiveStyles.button}
+                onClick={() => setIsUncategorizedDeleteDialogOpen(false)}
+                disabled={isDeletingUncategorized}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={`${primitiveStyles.button} ${primitiveStyles.buttonDanger}`}
+                onClick={() => {
+                  void onRequestUncategorizedDelete().then((deleted) => {
+                    if (deleted) {
+                      setIsUncategorizedDeleteDialogOpen(false);
+                    }
+                  });
+                }}
+                disabled={isDeletingUncategorized}
+              >
+                {isDeletingUncategorized ? "Deleting..." : "Yes, delete"}
               </button>
             </div>
           </div>

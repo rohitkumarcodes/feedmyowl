@@ -277,6 +277,7 @@ export function FeedsWorkspace({
     updatingFeedFoldersId,
     deletingFolderId,
     renamingFolderId,
+    isDeletingUncategorized,
     infoMessage,
     errorMessage,
     setAddFeedInputMode,
@@ -299,6 +300,7 @@ export function FeedsWorkspace({
     handleSetFeedFolders,
     handleRenameFolder,
     handleDeleteFolder,
+    handleDeleteUncategorizedFeeds,
   } = useFeedsWorkspaceActions({
     allArticles,
     feeds,
@@ -837,6 +839,7 @@ export function FeedsWorkspace({
             }}
             deletingFolderId={deletingFolderId}
             renamingFolderId={renamingFolderId}
+            isDeletingUncategorized={isDeletingUncategorized}
             onCreateFolder={(name) => {
               return createFolderFromSidebar(name);
             }}
@@ -845,6 +848,9 @@ export function FeedsWorkspace({
             }}
             onRequestFolderDelete={(folderId, mode) => {
               return handleDeleteFolder(folderId, mode);
+            }}
+            onRequestUncategorizedDelete={() => {
+              return handleDeleteUncategorizedFeeds();
             }}
             onCollapse={handleSidebarCollapse}
           />

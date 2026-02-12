@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   findExistingFeedForUserByUrl: vi.fn(),
   setFeedFoldersForUser: vi.fn(),
   markFeedItemReadForUser: vi.fn(),
+  deleteUncategorizedFeedsForUser: vi.fn(),
   purgeOldFeedItemsForUser: vi.fn(),
   assertTrustedWriteOrigin: vi.fn(),
   applyRouteRateLimit: vi.fn(),
@@ -68,6 +69,7 @@ vi.mock("@/lib/feed-service", () => ({
   findExistingFeedForUserByUrl: mocks.findExistingFeedForUserByUrl,
   setFeedFoldersForUser: mocks.setFeedFoldersForUser,
   markFeedItemReadForUser: mocks.markFeedItemReadForUser,
+  deleteUncategorizedFeedsForUser: mocks.deleteUncategorizedFeedsForUser,
 }));
 
 vi.mock("@/lib/retention", () => ({

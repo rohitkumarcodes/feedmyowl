@@ -252,6 +252,17 @@ This log records active product and technical decisions for the current app phas
   - Duplicate create responses include additive `mergedFolderCount`.
   - Bulk add summary distinguishes merged duplicates from unchanged duplicates.
 
+### D-2026-02-12-02
+- Date: 2026-02-12
+- Status: active
+- Decision: `Uncategorized` in `/feeds` has a destructive delete action with one explicit confirmation prompt.
+- Why: Users requested a direct cleanup path for unassigned subscriptions while keeping behavior predictable.
+- Details:
+  - `Uncategorized` row shows an actions menu with `Delete` when uncategorized feeds exist.
+  - Confirmation copy is fixed to: `Deleting uncategorized folder will delete both the folder and the feeds. Are you sure you want to delete?`
+  - Confirming delete unsubscribes all feeds that currently have zero folder assignments.
+  - `Uncategorized` remains existence-based: hidden when empty, automatically visible again when a new unassigned feed appears.
+
 ## Superseded decisions
 
 ### D-2026-02-07-05

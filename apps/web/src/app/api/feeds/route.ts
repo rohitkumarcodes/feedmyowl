@@ -3,7 +3,7 @@
  *
  * GET  -> list feeds
  * POST -> discover/create feed
- * PATCH -> mark article read / delete account
+ * PATCH -> mark article read / delete uncategorized feeds / delete account
  */
 
 import { NextRequest } from "next/server";

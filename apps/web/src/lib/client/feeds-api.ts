@@ -38,6 +38,17 @@ export async function markItemRead(itemId: string) {
   });
 }
 
+export async function deleteUncategorizedFeeds(confirm: boolean) {
+  return await callJson<{ success?: boolean; deletedFeedCount?: number; error?: string }>(
+    "/api/feeds",
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "uncategorized.delete", confirm }),
+    }
+  );
+}
+
 export async function refreshFeeds() {
   return await callJson<{ error?: string; results?: Array<{ status: string; newItemCount: number }> }>(
     "/api/refresh",

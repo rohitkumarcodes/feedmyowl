@@ -18,6 +18,7 @@ import {
   createFolder as createFolderRequest,
   deleteFeed as deleteFeedRequest,
   deleteFolder as deleteFolderRequest,
+  deleteUncategorizedFeeds as deleteUncategorizedFeedsRequest,
   discoverFeed as discoverFeedRequest,
   markItemRead as markItemReadRequest,
   refreshFeeds as refreshFeedsRequest,
@@ -150,6 +151,7 @@ export function useFeedsWorkspaceActions({
   const [updatingFeedFoldersId, setUpdatingFeedFoldersId] = useState<string | null>(null);
   const [deletingFolderId, setDeletingFolderId] = useState<string | null>(null);
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
+  const [isDeletingUncategorized, setIsDeletingUncategorized] = useState(false);
 
   const {
     infoMessage,
@@ -1117,6 +1119,72 @@ export function useFeedsWorkspaceActions({
     ]
   );
 
+  const handleDeleteUncategorizedFeeds = useCallback(
+    async (): Promise<boolean> => {
+      if (
+        isDeletingUncategorized ||
+        deletingFolderId ||
+        renamingFolderId ||
+        isCreatingFolder
+      ) {
+        return false;
+      }
+
+      setIsDeletingUncategorized(true);
+      setInfoMessage(null);
+      setErrorMessage(null);
+      setShowAddAnotherAction(false);
+
+      const result = await deleteUncategorizedFeedsRequest(true);
+      if (!result.ok || !result.body?.success) {
+        if (result.networkError) {
+          setErrorMessage("Could not connect to the server.");
+        } else {
+          setErrorMessage(result.body?.error || "Could not delete uncategorized feeds.");
+        }
+        setIsDeletingUncategorized(false);
+        return false;
+      }
+
+      const deletedFeedCount = result.body.deletedFeedCount ?? 0;
+
+      setFeeds((previousFeeds) =>
+        previousFeeds.filter((feed) => feed.folderIds.length > 0)
+      );
+
+      setSelectedScope((previousScope) => {
+        if (previousScope.type === "uncategorized") {
+          return { type: "all" };
+        }
+        return previousScope;
+      });
+
+      setInfoMessage(
+        deletedFeedCount > 0
+          ? `Deleted ${deletedFeedCount} uncategorized feed${
+              deletedFeedCount === 1 ? "" : "s"
+            }.`
+          : "No uncategorized feeds to delete."
+      );
+
+      setIsDeletingUncategorized(false);
+      router.refresh();
+      return true;
+    },
+    [
+      deletingFolderId,
+      isCreatingFolder,
+      isDeletingUncategorized,
+      renamingFolderId,
+      router,
+      setErrorMessage,
+      setFeeds,
+      setInfoMessage,
+      setSelectedScope,
+      setShowAddAnotherAction,
+    ]
+  );
+
   const showAddFeedForm = useCallback(() => {
     clearStatusMessages();
     setIsAddFeedFormVisible(true);
@@ -1215,6 +1283,7 @@ export function useFeedsWorkspaceActions({
     updatingFeedFoldersId,
     deletingFolderId,
     renamingFolderId,
+    isDeletingUncategorized,
     infoMessage,
     errorMessage,
     setAddFeedInputMode: updateAddFeedInputMode,
@@ -1237,5 +1306,6 @@ export function useFeedsWorkspaceActions({
     handleSetFeedFolders,
     handleRenameFolder,
     handleDeleteFolder,
+    handleDeleteUncategorizedFeeds,
   };
 }

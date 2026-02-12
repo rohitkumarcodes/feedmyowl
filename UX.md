@@ -42,6 +42,10 @@ Manual refresh only (background jobs deferred).
   - Inline add-feed folder input: `Enter` creates folder (does not submit add-feed).
   - Sidebar add-folder form: `Enter` submits folder creation.
 - Rename and delete folders from folder row actions.
+- `Uncategorized` row includes an actions menu with a destructive `Delete` action.
+- Deleting `Uncategorized` uses one confirmation prompt:
+  - `Deleting uncategorized folder will delete both the folder and the feeds. Are you sure you want to delete?`
+- Confirming uncategorized delete unsubscribes all currently uncategorized feeds.
 - Delete dialog offers:
   - Delete folder only.
   - Delete folder and unsubscribe exclusive feeds.
@@ -79,6 +83,8 @@ Manual refresh only (background jobs deferred).
 ## 6. Scope behavior
 - `Read all`: all articles.
 - `Uncategorized`: only feeds with no folder assignments.
+- `Uncategorized` appears only when at least one feed has zero folder assignments.
+- After deleting uncategorized feeds, the `Uncategorized` row disappears until a new unassigned feed exists.
 - Folder scope: union of feeds in that folder.
 - Feed scope: only that feed’s articles.
 - Global search behavior:
