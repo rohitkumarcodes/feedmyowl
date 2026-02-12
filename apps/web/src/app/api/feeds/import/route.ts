@@ -83,8 +83,8 @@ export async function POST(request: NextRequest) {
       request,
       routeKey: "api_feeds_import_post",
       userId: appUser.id,
-      userLimitPerMinute: 3,
-      ipLimitPerMinute: 20,
+      userLimitPerMinute: 25,
+      ipLimitPerMinute: 100,
     });
 
     if (!rateLimit.allowed) {

@@ -188,6 +188,14 @@ describe("POST /api/feeds/import", () => {
       "duplicate_unchanged",
       "imported",
     ]);
+    expect(mocks.applyRouteRateLimit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        routeKey: "api_feeds_import_post",
+        userId: "user_123",
+        userLimitPerMinute: 25,
+        ipLimitPerMinute: 100,
+      })
+    );
     expect(mocks.renameFeedForUser).toHaveBeenCalledTimes(1);
     expect(mocks.renameFeedForUser).toHaveBeenCalledWith(
       "user_123",

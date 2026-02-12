@@ -159,7 +159,9 @@ describe("feed import file helpers", () => {
           ],
         })
       )
-    ).toThrow("Only FeedMyOwl portable JSON v2 exports are supported.");
+    ).toThrow(
+      "Only FeedMyOwl portable JSON v2 exports are supported. Found version unknown. Re-export your feeds as JSON v2 and try again."
+    );
   });
 
   it("normalizes URLs and merges duplicate entries", () => {

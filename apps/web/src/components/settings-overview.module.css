@@ -253,6 +253,10 @@ button.linkButton:hover:enabled {
   padding-left: 18px;
 }
 
+.downloadFailuresButton {
+  justify-self: start;
+}
+
 .shortcutsControls {
   background: var(--bg-primary);
   border: 1px solid var(--border);

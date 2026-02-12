@@ -119,6 +119,12 @@ Behavior notes:
   `403` with `code: "csrf_validation_failed"`.
 - Rate-limited write routes can return `429` with `code: "rate_limited"` and
   `Retry-After`.
+- `POST /api/feeds/import` rate limits:
+  - User: 25 requests/minute.
+  - IP: 100 requests/minute.
+  - With chunk size 20, supports up to 500 feed URLs/minute per user.
+- Settings import retries `429` chunk responses up to 2 times using `Retry-After`
+  before marking that chunk as failed.
 - `feed.discover` always attempts discovery fallback even after direct non-`invalid_xml`
   parse failures; direct reachability errors are returned only if fallback validates no candidate.
 - Site discovery can probe `www.<host>` candidates when base-host HTML fetch fails.
@@ -128,6 +134,7 @@ Behavior notes:
   - Nested outlines flatten to one folder label (example: `Tech / Web`).
   - OPML `category` paths also map to flat folder labels.
   - Multiple category paths on one feed create multiple folder assignments.
+- JSON import accepts FeedMyOwl portable exports in version 2 format (`JSON v2`).
 
 ## 8. Reliability defaults
 - Feed refresh errors are tracked per feed with calm inline messaging.

@@ -20,6 +20,14 @@ import {
   type FeedImportRowSummary,
 } from "@/lib/feed-import-file";
 import {
+  IMPORT_RATE_LIMIT_MAX_RETRIES,
+  buildChunkFallbackRows,
+  buildImportFailureReport,
+  isImportFailureRow,
+  parseRetryAfterSeconds,
+  reconcileChunkRowsByUrl,
+} from "@/lib/feed-import-client";
+import {
   FEED_IMPORT_CLIENT_CHUNK_SIZE,
   FEED_IMPORT_MAX_TOTAL_ENTRIES,
   type FeedImportResponse,
@@ -47,6 +55,7 @@ interface SettingsOverviewProps {
 
 interface ImportRequestErrorBody {
   error?: string;
+  code?: string;
 }
 
 interface SaveOwlResponseBody {
@@ -71,6 +80,7 @@ interface ImportSummary {
   sourceType: FeedImportSourceType;
   discoveredCount: number;
   summary: FeedImportRowSummary;
+  failedRows: FeedImportRowResult[];
 }
 
 interface ImportProgress {
@@ -317,6 +327,7 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isImportingFeeds, setIsImportingFeeds] = useState(false);
   const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
+  const [importRetryDelaySeconds, setImportRetryDelaySeconds] = useState<number | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [importSummary, setImportSummary] = useState<ImportSummary | null>(null);
   const [draftOwlAscii, setDraftOwlAscii] = useState<OwlAscii>(owlAscii);
@@ -615,6 +626,7 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
     setImportError(null);
     setImportSummary(null);
     setImportProgress(null);
+    setImportRetryDelaySeconds(null);
     setIsImportingFeeds(true);
 
     try {
@@ -646,64 +658,62 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
       setImportProgress({ processedCount: 0, totalCount: normalizedEntries.length });
 
       for (const chunk of chunks) {
-        const fallbackRows = chunk.map(
-          (entry): FeedImportRowResult => ({
-            url: entry.url,
-            status: "failed",
-            code: "unknown",
-            message: "Could not import.",
-          })
-        );
+        let chunkRows: FeedImportRowResult[] | null = null;
+        let attempt = 0;
 
-        try {
-          const response = await fetch("/api/feeds/import", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              sourceType: parsedFile.sourceType,
-              entries: chunk,
-              options: { skipMultiCandidate: true },
-            }),
-          });
+        while (attempt <= IMPORT_RATE_LIMIT_MAX_RETRIES) {
+          try {
+            const response = await fetch("/api/feeds/import", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                sourceType: parsedFile.sourceType,
+                entries: chunk,
+                options: { skipMultiCandidate: true },
+              }),
+            });
 
-          const body = await parseResponseJson<
-            FeedImportResponse & ImportRequestErrorBody
-          >(response);
+            const body = await parseResponseJson<
+              FeedImportResponse & ImportRequestErrorBody
+            >(response);
 
-          if (!response.ok || !body || !Array.isArray(body.rows)) {
-            const requestErrorMessage = body?.error || "Could not import this chunk.";
-            allRows.push(
-              ...fallbackRows.map((row) => ({
-                ...row,
-                message: requestErrorMessage,
-              }))
-            );
-          } else {
-            const parsedRows = body.rows.filter(
-              (row): row is FeedImportRowResult =>
-                Boolean(
-                  row &&
-                    typeof row === "object" &&
-                    typeof row.url === "string" &&
-                    typeof row.status === "string"
-                )
-            );
-
-            allRows.push(...parsedRows);
-
-            if (parsedRows.length < chunk.length) {
-              allRows.push(...fallbackRows.slice(parsedRows.length));
+            if (response.ok && body && Array.isArray(body.rows)) {
+              chunkRows = reconcileChunkRowsByUrl({
+                entries: chunk,
+                rows: body.rows,
+                fallbackMessage: "Could not import this row.",
+              });
+              break;
             }
+
+            if (response.status === 429 && attempt < IMPORT_RATE_LIMIT_MAX_RETRIES) {
+              const retryAfterSeconds = parseRetryAfterSeconds(
+                response.headers.get("Retry-After")
+              );
+              setImportRetryDelaySeconds(retryAfterSeconds);
+              await new Promise((resolve) => {
+                window.setTimeout(resolve, retryAfterSeconds * 1_000);
+              });
+              setImportRetryDelaySeconds(null);
+              attempt += 1;
+              continue;
+            }
+
+            const requestErrorMessage = body?.error || "Could not import this chunk.";
+            chunkRows = buildChunkFallbackRows(chunk, requestErrorMessage);
+            break;
+          } catch {
+            chunkRows = buildChunkFallbackRows(
+              chunk,
+              "Could not connect to the server."
+            );
+            break;
           }
-        } catch {
-          allRows.push(
-            ...fallbackRows.map((row) => ({
-              ...row,
-              message: "Could not connect to the server.",
-            }))
-          );
         }
 
+        allRows.push(
+          ...(chunkRows || buildChunkFallbackRows(chunk, "Could not import this chunk."))
+        );
         processedCount += chunk.length;
         setImportProgress({
           processedCount,
@@ -712,11 +722,13 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
       }
 
       const summary = summarizeImportRows(allRows);
+      const failedRows = allRows.filter(isImportFailureRow);
       setImportSummary({
         fileName: selectedFile.name,
         sourceType: parsedFile.sourceType,
         discoveredCount: parsedFile.entries.length,
         summary,
+        failedRows,
       });
 
       if (summary.importedCount > 0 || summary.mergedCount > 0) {
@@ -731,7 +743,31 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
     } finally {
       setIsImportingFeeds(false);
       setImportProgress(null);
+      setImportRetryDelaySeconds(null);
     }
+  }
+
+  function handleDownloadFailedImportRows() {
+    if (!importSummary || importSummary.failedRows.length === 0) {
+      return;
+    }
+
+    const reportText = buildImportFailureReport({
+      fileName: importSummary.fileName,
+      failedRows: importSummary.failedRows,
+    });
+    const reportBlob = new Blob([reportText], { type: "text/plain;charset=utf-8" });
+    const downloadUrl = URL.createObjectURL(reportBlob);
+    const link = document.createElement("a");
+    const baseFileName = importSummary.fileName.replace(/\.[^/.]+$/, "") || "feeds";
+    const dateStamp = new Date().toISOString().slice(0, 10);
+
+    link.href = downloadUrl;
+    link.download = `feedmyowl-import-failures-${baseFileName}-${dateStamp}.txt`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(downloadUrl);
   }
 
   const importSummaryText = importSummary
@@ -869,7 +905,7 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
         <section className={styles.panel}>
           <h2>Feeds</h2>
           <p className={styles.muted}>
-            Export your library or import feeds from OPML/XML or FeedMyOwl JSON.
+            Export your library or import feeds from OPML/XML or FeedMyOwl JSON v2.
           </p>
           <div className={styles.inlineActions}>
             <button
@@ -896,10 +932,18 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
             </button>
           </div>
           {isImportingFeeds && importProgress ? (
-            <p className={styles.importProgress} role="status" aria-live="polite">
-              Importing {importProgress.processedCount} of {importProgress.totalCount} feed URL
-              {importProgress.totalCount === 1 ? "" : "s"}...
-            </p>
+            <>
+              <p className={styles.importProgress} role="status" aria-live="polite">
+                Importing {importProgress.processedCount} of {importProgress.totalCount} feed URL
+                {importProgress.totalCount === 1 ? "" : "s"}...
+              </p>
+              {importRetryDelaySeconds !== null ? (
+                <p className={styles.importProgress} role="status" aria-live="polite">
+                  Rate limit reached. Retrying this chunk in {importRetryDelaySeconds} second
+                  {importRetryDelaySeconds === 1 ? "" : "s"}...
+                </p>
+              ) : null}
+            </>
           ) : null}
           <input
             ref={importFileInputRef}
@@ -915,6 +959,15 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
             <div className={styles.importSummary} role="status">
               <p>{importSummaryText}</p>
               <p className={styles.muted}>Source file: {importSummary.fileName}</p>
+              {importSummary.failedRows.length > 0 ? (
+                <button
+                  type="button"
+                  className={`${styles.linkButton} ${styles.downloadFailuresButton}`}
+                  onClick={handleDownloadFailedImportRows}
+                >
+                  Download failed URLs
+                </button>
+              ) : null}
               {importSummary.summary.failedDetails.length > 0 ? (
                 <ul className={styles.importFailureList}>
                   {importSummary.summary.failedDetails.map((detail) => (

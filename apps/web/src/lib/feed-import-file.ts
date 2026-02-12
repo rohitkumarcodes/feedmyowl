@@ -184,7 +184,13 @@ export function parseJsonImportEntries(contents: string): FeedImportEntry[] {
 
   const root = parsed as Record<string, unknown>;
   if (root.version !== 2) {
-    throw new Error("Only FeedMyOwl portable JSON v2 exports are supported.");
+    const detectedVersion =
+      typeof root.version === "number" || typeof root.version === "string"
+        ? String(root.version)
+        : "unknown";
+    throw new Error(
+      `Only FeedMyOwl portable JSON v2 exports are supported. Found version ${detectedVersion}. Re-export your feeds as JSON v2 and try again.`
+    );
   }
 
   const feedsValue = root.feeds;

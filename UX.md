@@ -156,6 +156,10 @@ Manual refresh only (background jobs deferred).
 - Feeds import:
   - Import button shows numeric progress while processing (`Importing (x/y)...`).
   - Inline status text shows processed progress during the active import.
+  - If import hits rate limits (`429`), the current chunk auto-retries up to 2 times using `Retry-After`.
+  - While waiting to retry, settings shows a short inline status (`Retrying this chunk in Ns...`).
+  - Import help text explicitly calls out `FeedMyOwl JSON v2`.
+  - After import, users can download all failed rows as a plain-text report (`Download failed URLs`).
   - OPML folders are preserved from:
     - Nested outlines (flattened into one folder label, example `Tech / Web`).
     - OPML `category` paths (example `/Tech/Web` -> `Tech / Web`).

@@ -27,6 +27,7 @@ From repo root:
 - Semantic sidebar notices (`progress`, `offline`, `info`, `error`) with consistent behavior.
 - Account logo selection (ASCII owl + favicon) from Settings.
 - Settings feed import progress indicator (`Importing (x/y)...` + inline progress text).
+- Settings import rate-limit handling retries `429` chunk responses up to 2 times using `Retry-After`.
 - Settings keyboard shortcuts toggle panel (collapsed by default) with docs link.
 - Account deletion.
 
@@ -120,8 +121,12 @@ From repo root:
    - `POST /api/feeds/import`
    - `POST /api/refresh`
 2. Confirm response shape: status `429`, header `Retry-After`, body `code="rate_limited"`.
-3. Validate user-level and IP-level request rates over the previous minute.
-4. If limits are being hit unexpectedly, inspect edge/proxy IP forwarding headers.
+3. Import route limits:
+   - `POST /api/feeds/import`: user `25` requests/minute, IP `100` requests/minute.
+   - With import chunk size `20`, this supports up to `500` feed URLs/minute per user.
+4. Validate user-level and IP-level request rates over the previous minute.
+5. Settings import retries `429` for the same chunk up to 2 times before marking that chunk failed.
+6. If limits are being hit unexpectedly, inspect edge/proxy IP forwarding headers.
 
 ### CSRF rejection on mutating routes
 1. Confirm response status `403` with `code="csrf_validation_failed"`.
