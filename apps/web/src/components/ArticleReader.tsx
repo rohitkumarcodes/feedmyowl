@@ -179,6 +179,7 @@ export function ArticleReader({ article }: ArticleReaderProps) {
         <div
           ref={bodyRef}
           className={styles.body}
+          data-article-reader-body
           dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
         />
       </article>

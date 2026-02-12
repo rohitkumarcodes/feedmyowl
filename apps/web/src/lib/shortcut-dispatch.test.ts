@@ -45,7 +45,7 @@ describe("shortcut-dispatch", () => {
     ).toBe("article.previous.vim");
   });
 
-  it("maps arrow keys and enter only in list context", () => {
+  it("maps list navigation keys in list context", () => {
     expect(
       resolveShortcutAction(eventSnapshot("ArrowDown"), {
         ...baseContext,
@@ -54,18 +54,69 @@ describe("shortcut-dispatch", () => {
     ).toBe("article.next.arrow");
 
     expect(
-      resolveShortcutAction(eventSnapshot("ArrowDown"), {
-        ...baseContext,
-        isReaderContext: true,
-      })
-    ).toBeNull();
-
-    expect(
       resolveShortcutAction(eventSnapshot("Enter"), {
         ...baseContext,
         isListContext: true,
       })
     ).toBe("article.open");
+
+    expect(
+      resolveShortcutAction(eventSnapshot("ArrowDown"), {
+        ...baseContext,
+        isReaderContext: true,
+      })
+    ).toBeNull();
+  });
+
+  it("maps reader scroll keys only in reader context", () => {
+    expect(
+      resolveShortcutAction(eventSnapshot("ArrowDown"), {
+        ...baseContext,
+        isReaderContext: true,
+      })
+    ).toBe("reader.scroll.lineDown");
+
+    expect(
+      resolveShortcutAction(eventSnapshot("ArrowUp"), {
+        ...baseContext,
+        isReaderContext: true,
+      })
+    ).toBe("reader.scroll.lineUp");
+
+    expect(
+      resolveShortcutAction(eventSnapshot("PageDown"), {
+        ...baseContext,
+        isReaderContext: true,
+      })
+    ).toBe("reader.scroll.pageDown");
+
+    expect(
+      resolveShortcutAction(eventSnapshot("PageUp"), {
+        ...baseContext,
+        isReaderContext: true,
+      })
+    ).toBe("reader.scroll.pageUp");
+
+    expect(
+      resolveShortcutAction(eventSnapshot(" "), {
+        ...baseContext,
+        isReaderContext: true,
+      })
+    ).toBe("reader.scroll.pageDown");
+
+    expect(
+      resolveShortcutAction(eventSnapshot(" ", { shiftKey: true }), {
+        ...baseContext,
+        isReaderContext: true,
+      })
+    ).toBe("reader.scroll.pageUp");
+
+    expect(
+      resolveShortcutAction(eventSnapshot("PageDown"), {
+        ...baseContext,
+        isListContext: true,
+      })
+    ).toBeNull();
   });
 
   it("maps workspace-wide actions when not typing", () => {

@@ -14,6 +14,10 @@ interface UseKeyboardShortcutsOptions {
   onPreviousArticleVim: () => void;
   onNextArticleArrow: () => void;
   onPreviousArticleArrow: () => void;
+  onReaderScrollLineDown: () => boolean;
+  onReaderScrollLineUp: () => boolean;
+  onReaderScrollPageDown: () => boolean;
+  onReaderScrollPageUp: () => boolean;
   onOpenArticle: () => void;
   onRefreshFeeds: () => void;
   onCycleFocusPanes: () => void;
@@ -35,6 +39,43 @@ function isTypingTarget(target: EventTarget | null): boolean {
   return target.isContentEditable;
 }
 
+const READER_SCROLL_BLOCKED_SELECTOR = [
+  "a",
+  "button",
+  "input",
+  "textarea",
+  "select",
+  "summary",
+  "audio",
+  "video",
+  "iframe",
+  '[contenteditable=""]',
+  '[contenteditable="true"]',
+  '[contenteditable="plaintext-only"]',
+  '[tabindex]:not([tabindex="-1"])',
+].join(",");
+
+function resolveTargetElement(target: EventTarget | null): Element | null {
+  if (target instanceof Element) {
+    return target;
+  }
+
+  if (target instanceof Node) {
+    return target.parentElement;
+  }
+
+  return null;
+}
+
+function isReaderScrollBlockedTarget(target: EventTarget | null): boolean {
+  const element = resolveTargetElement(target);
+  if (!element || typeof element.closest !== "function") {
+    return false;
+  }
+
+  return Boolean(element.closest(READER_SCROLL_BLOCKED_SELECTOR));
+}
+
 /**
  * Attaches document-level key handlers for navigation, refresh, and shortcuts help.
  */
@@ -47,6 +88,10 @@ export function useKeyboardShortcuts({
   onPreviousArticleVim,
   onNextArticleArrow,
   onPreviousArticleArrow,
+  onReaderScrollLineDown,
+  onReaderScrollLineUp,
+  onReaderScrollPageDown,
+  onReaderScrollPageUp,
   onOpenArticle,
   onRefreshFeeds,
   onCycleFocusPanes,
@@ -78,6 +123,50 @@ export function useKeyboardShortcuts({
       );
 
       if (!action) {
+        return;
+      }
+
+      if (action === "reader.scroll.lineDown") {
+        if (isReaderScrollBlockedTarget(event.target)) {
+          return;
+        }
+
+        if (onReaderScrollLineDown()) {
+          event.preventDefault();
+        }
+        return;
+      }
+
+      if (action === "reader.scroll.lineUp") {
+        if (isReaderScrollBlockedTarget(event.target)) {
+          return;
+        }
+
+        if (onReaderScrollLineUp()) {
+          event.preventDefault();
+        }
+        return;
+      }
+
+      if (action === "reader.scroll.pageDown") {
+        if (isReaderScrollBlockedTarget(event.target)) {
+          return;
+        }
+
+        if (onReaderScrollPageDown()) {
+          event.preventDefault();
+        }
+        return;
+      }
+
+      if (action === "reader.scroll.pageUp") {
+        if (isReaderScrollBlockedTarget(event.target)) {
+          return;
+        }
+
+        if (onReaderScrollPageUp()) {
+          event.preventDefault();
+        }
         return;
       }
 
@@ -147,6 +236,10 @@ export function useKeyboardShortcuts({
     onPreviousArticleVim,
     onNextArticleArrow,
     onPreviousArticleArrow,
+    onReaderScrollLineDown,
+    onReaderScrollLineUp,
+    onReaderScrollPageDown,
+    onReaderScrollPageUp,
     onCloseShortcuts,
     onCycleFocusPanes,
     onFocusSearch,

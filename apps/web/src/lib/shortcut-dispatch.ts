@@ -37,6 +37,10 @@ function isQuestionMark(snapshot: ShortcutEventSnapshot): boolean {
   return normalizedKey === "?" || (normalizedKey === "/" && snapshot.shiftKey);
 }
 
+function isSpaceKey(key: string): boolean {
+  return key === " " || key === "Spacebar";
+}
+
 /**
  * Resolve the current key event into a workspace action id.
  */
@@ -76,6 +80,26 @@ export function resolveShortcutAction(
 
   if (key === "ArrowUp" && context.isListContext) {
     return "article.previous.arrow";
+  }
+
+  if (key === "ArrowDown" && context.isReaderContext) {
+    return "reader.scroll.lineDown";
+  }
+
+  if (key === "ArrowUp" && context.isReaderContext) {
+    return "reader.scroll.lineUp";
+  }
+
+  if (key === "PageDown" && context.isReaderContext) {
+    return "reader.scroll.pageDown";
+  }
+
+  if (key === "PageUp" && context.isReaderContext) {
+    return "reader.scroll.pageUp";
+  }
+
+  if (isSpaceKey(key) && context.isReaderContext) {
+    return snapshot.shiftKey ? "reader.scroll.pageUp" : "reader.scroll.pageDown";
   }
 
   if (key === "Enter" && context.isListContext) {

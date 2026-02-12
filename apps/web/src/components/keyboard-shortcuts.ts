@@ -7,6 +7,10 @@ export type ShortcutActionId =
   | "article.previous.vim"
   | "article.next.arrow"
   | "article.previous.arrow"
+  | "reader.scroll.lineDown"
+  | "reader.scroll.lineUp"
+  | "reader.scroll.pageDown"
+  | "reader.scroll.pageUp"
   | "article.open"
   | "feeds.refresh"
   | "workspace.focusCycle"
@@ -58,19 +62,43 @@ export const SHORTCUT_DEFINITIONS: readonly ShortcutDefinition[] = [
     id: "article.next.arrow",
     group: "navigation",
     keys: ["ArrowDown"],
-    description: "Select next article (list only)",
+    description: "ArrowDown: Select next article (list)",
   },
   {
     id: "article.previous.arrow",
     group: "navigation",
     keys: ["ArrowUp"],
-    description: "Select previous article (list only)",
+    description: "ArrowUp: Select previous article (list)",
+  },
+  {
+    id: "reader.scroll.lineDown",
+    group: "navigation",
+    keys: ["ArrowDown"],
+    description: "ArrowDown: Scroll down 3 lines (reader)",
+  },
+  {
+    id: "reader.scroll.lineUp",
+    group: "navigation",
+    keys: ["ArrowUp"],
+    description: "ArrowUp: Scroll up 3 lines (reader)",
   },
   {
     id: "article.open",
     group: "reading_actions",
     keys: ["Enter"],
     description: "Open selected article (list only)",
+  },
+  {
+    id: "reader.scroll.pageDown",
+    group: "reading_actions",
+    keys: ["Space", "PageDown"],
+    description: "Scroll down one reading page with overlap (reader)",
+  },
+  {
+    id: "reader.scroll.pageUp",
+    group: "reading_actions",
+    keys: ["Shift+Space", "PageUp"],
+    description: "Scroll up one reading page with overlap (reader)",
   },
   {
     id: "feeds.refresh",

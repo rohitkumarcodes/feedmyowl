@@ -9,6 +9,10 @@ import { Layout } from "./Layout";
 import { Sidebar, SidebarScope } from "./Sidebar";
 import { resolveVimArticleNavigation } from "./article-keyboard-navigation";
 import {
+  scrollReaderByLine,
+  scrollReaderByPage,
+} from "./article-reader-scroll";
+import {
   advancePaneFocusCycle,
   type PaneCyclePhase,
 } from "./pane-focus-cycle";
@@ -38,6 +42,7 @@ import {
   selectVisibleArticles,
 } from "./feeds-workspace.selectors";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { useFeedsWorkspaceActions } from "@/hooks/useFeedsWorkspaceActions";
 import { useFeedsWorkspaceMobile } from "@/hooks/useFeedsWorkspaceMobile";
 import { useFeedsWorkspaceNetwork } from "@/hooks/useFeedsWorkspaceNetwork";
@@ -116,6 +121,7 @@ export function FeedsWorkspace({
   const sidebarCollapsedRef = useRef(sidebarCollapsed);
   const listCollapsedRef = useRef(listCollapsed);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     setFeeds((previousFeeds) =>
@@ -456,6 +462,28 @@ export function FeedsWorkspace({
     input.select();
   }, []);
 
+  const scrollReaderByKeyboardLine = useCallback((direction: 1 | -1): boolean => {
+    const readerRoot = document.querySelector<HTMLElement>("[data-article-reader-root]");
+    if (!readerRoot) {
+      return false;
+    }
+
+    return scrollReaderByLine(readerRoot, direction, "auto");
+  }, []);
+
+  const scrollReaderByKeyboardPage = useCallback(
+    (direction: 1 | -1): boolean => {
+      const readerRoot = document.querySelector<HTMLElement>("[data-article-reader-root]");
+      if (!readerRoot) {
+        return false;
+      }
+
+      const behavior: ScrollBehavior = prefersReducedMotion ? "auto" : "smooth";
+      return scrollReaderByPage(readerRoot, direction, behavior);
+    },
+    [prefersReducedMotion]
+  );
+
   const handleSidebarCollapse = useCallback(() => {
     setSidebarCollapsed(true);
     sidebarCollapsedRef.current = true;
@@ -517,9 +545,9 @@ export function FeedsWorkspace({
     async (articleId: string) => {
       setSelectedArticleId(articleId);
       setOpenArticleId(articleId);
+      focusReaderTitle();
       clearStatusMessages();
       await markArticleAsRead(articleId);
-      focusReaderTitle();
 
       if (isMobile) {
         setMobileViewWithHistory("reader", true);
@@ -730,6 +758,10 @@ export function FeedsWorkspace({
     onPreviousArticleVim: () => navigateAndOpenByVim(-1),
     onNextArticleArrow: () => moveSelectionByArrow(1),
     onPreviousArticleArrow: () => moveSelectionByArrow(-1),
+    onReaderScrollLineDown: () => scrollReaderByKeyboardLine(1),
+    onReaderScrollLineUp: () => scrollReaderByKeyboardLine(-1),
+    onReaderScrollPageDown: () => scrollReaderByKeyboardPage(1),
+    onReaderScrollPageUp: () => scrollReaderByKeyboardPage(-1),
     onOpenArticle: () => {
       if (selectedArticleId) {
         void openSelectedArticle(selectedArticleId);
