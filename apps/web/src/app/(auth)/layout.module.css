@@ -180,35 +180,29 @@
 
 .optionsActionSlot {
   display: block;
+  position: relative;
   width: 100%;
 }
 
-.optionsClerkButtonBox {
-  display: block;
-  width: 100%;
+.optionsClerkHiddenBox {
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: absolute;
+  width: 0;
 }
 
-.optionsActionSlot > * {
-  display: block;
-  width: 100%;
+.optionsClerkHiddenTrigger {
+  border: 0 !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  padding: 0 !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  width: 1px !important;
 }
 
-.optionsActionSlot :global(.cl-userButtonBox),
-.optionsActionSlot :global(.cl-userButtonRoot),
-.optionsActionSlot :global(.cl-userButtonTrigger) {
-  max-width: none !important;
-  width: 100% !important;
-}
-
-.optionsActionSlot :global(.cl-userButtonTrigger) {
-  align-items: center !important;
-  display: inline-flex !important;
-  gap: 8px !important;
-  justify-content: flex-start !important;
-}
-
-.optionsActionButton,
-.optionsClerkButton {
+.optionsActionButton {
   align-items: center;
   background: var(--bg-primary);
   border: 0;
@@ -232,41 +226,14 @@
   width: 14px;
 }
 
-.optionsClerkButton {
-  align-items: center !important;
-  box-sizing: border-box;
-  display: inline-flex !important;
-  gap: 8px !important;
-  justify-content: flex-start !important;
-  margin: 0;
-  max-width: none;
-  width: 100%;
-}
-
-.optionsClerkButton::after {
-  color: var(--text-primary);
-  content: "Admin";
-  flex: 0 0 auto;
-  font-size: var(--text-sm);
-  line-height: 1.2;
-  margin-left: 0;
-}
-
-.optionsActionButton:focus-visible,
-.optionsClerkButton:focus-visible {
+.optionsActionButton:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-.optionsActionButton:hover,
-.optionsClerkButton:hover {
+.optionsActionButton:hover {
   background: var(--bg-tertiary);
   transition: background-color 90ms ease;
-}
-
-.accountMenuAvatar {
-  height: 14px;
-  width: 14px;
 }
 
 @media (max-width: 1120px) {
@@ -304,8 +271,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .optionsTrigger:hover,
-  .optionsActionButton:hover,
-  .optionsClerkButton:hover {
+  .optionsActionButton:hover {
     transition: none;
   }
 

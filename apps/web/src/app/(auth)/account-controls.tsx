@@ -14,6 +14,7 @@ export function AccountControls() {
   const selectedSegment = useSelectedLayoutSegment();
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const controlsRef = useRef<HTMLDivElement>(null);
+  const adminActionRef = useRef<HTMLDivElement>(null);
   const dialogId = useId();
   const showShortcutsAction = selectedSegment === "feeds";
   const optionsToggleLabel = isOptionsOpen ? "Close options" : "Open options";
@@ -66,6 +67,14 @@ export function AccountControls() {
     setIsOptionsOpen(false);
   };
 
+  const handleOpenAdmin = () => {
+    const hiddenTrigger = adminActionRef.current?.querySelector<HTMLButtonElement>(
+      `.${styles.optionsClerkHiddenTrigger}`
+    );
+    hiddenTrigger?.click();
+    setIsOptionsOpen(false);
+  };
+
   return (
     <div className={styles.accountControls} ref={controlsRef}>
       <button
@@ -91,7 +100,7 @@ export function AccountControls() {
       >
         <div className={styles.optionsActionsBox}>
           <div className={styles.optionsActions}>
-            <div className={styles.optionsActionSlot}>
+            <div className={styles.optionsActionSlot} ref={adminActionRef}>
               <UserMenu
                 afterSignOutUrl="/sign-in"
                 appearance={{
@@ -107,13 +116,34 @@ export function AccountControls() {
                     fontSize: "0.9375rem",
                     borderRadius: "0px",
                   },
-                elements: {
-                  userButtonBox: styles.optionsClerkButtonBox,
-                  userButtonTrigger: styles.optionsClerkButton,
-                  userButtonAvatarBox: styles.accountMenuAvatar,
-                },
-              }}
+                  elements: {
+                    userButtonBox: styles.optionsClerkHiddenBox,
+                    userButtonTrigger: styles.optionsClerkHiddenTrigger,
+                  },
+                }}
               />
+              <button
+                type="button"
+                className={styles.optionsActionButton}
+                onClick={handleOpenAdmin}
+              >
+                <svg
+                  className={styles.optionsActionIcon}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="8" r="3.4" stroke="currentColor" strokeWidth="1.8" />
+                  <path
+                    d="M5.3 19.2C6.5 16.7 9.1 15.2 12 15.2C14.9 15.2 17.5 16.7 18.7 19.2"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span>Admin</span>
+              </button>
             </div>
 
             <Link
