@@ -292,6 +292,8 @@ async function resolveImportCandidate(params: {
     params.userId,
     params.normalizedInputUrl
   );
+  let directFailureAfterFallback: Pick<FeedImportRowResult, "code" | "message"> | null =
+    null;
 
   if (directExistingFeed) {
     return {
@@ -331,8 +333,7 @@ async function resolveImportCandidate(params: {
     const normalizedDirectError = normalizeFeedError(error, "create");
     if (normalizedDirectError.code !== "invalid_xml") {
       const mappedFailure = mapFailureFromFeedError(error);
-      return {
-        status: "failed",
+      directFailureAfterFallback = {
         code: mappedFailure.code,
         message: mappedFailure.message || "Could not import this feed.",
       };
@@ -363,6 +364,14 @@ async function resolveImportCandidate(params: {
   }
 
   if (validatedCandidates.length === 0) {
+    if (directFailureAfterFallback) {
+      return {
+        status: "failed",
+        code: directFailureAfterFallback.code,
+        message: directFailureAfterFallback.message,
+      };
+    }
+
     return {
       status: "failed",
       code: "invalid_xml",

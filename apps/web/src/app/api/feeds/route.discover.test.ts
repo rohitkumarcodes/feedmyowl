@@ -203,6 +203,77 @@ describe("POST /api/feeds feed.discover", () => {
     ]);
   });
 
+  it("falls back to discovery when direct parse fails with a non-invalid_xml error", async () => {
+    mocks.parseFeed.mockRejectedValue(new Error("Network request failed"));
+    mocks.normalizeFeedError.mockReturnValue({
+      code: "network",
+      message: "Could not reach this URL. Check the address and try again.",
+    });
+    mocks.discoverFeedCandidates.mockResolvedValue({
+      candidates: ["https://example.com/feed.xml"],
+      methodHints: {
+        "https://example.com/feed.xml": "html_alternate",
+      },
+    });
+    mocks.fetchFeedXml.mockResolvedValue({
+      status: "ok",
+      text: "<rss><channel><title>Recovered Feed</title></channel></rss>",
+      etag: null,
+      lastModified: null,
+      finalUrl: "https://example.com/feed.xml",
+      statusCode: 200,
+    });
+    mocks.parseFeedXml.mockResolvedValue({
+      title: "Recovered Feed",
+      description: "Recovered",
+      items: [],
+    });
+
+    const response = await POST(createDiscoverRequest("https://example.com"));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.status).toBe("single");
+    expect(body.candidates).toEqual([
+      {
+        url: "https://example.com/feed.xml",
+        title: "Recovered Feed",
+        method: "html_alternate",
+        duplicate: false,
+        existingFeedId: null,
+      },
+    ]);
+    expect(mocks.fetchFeedXml).toHaveBeenCalledWith("https://example.com/feed.xml", {
+      timeoutMs: 7_000,
+      retries: 1,
+      maxRedirects: 5,
+    });
+  });
+
+  it("returns the direct non-invalid_xml error when discovery cannot validate any candidate", async () => {
+    mocks.parseFeed.mockRejectedValue(new Error("Timed out"));
+    mocks.normalizeFeedError.mockReturnValue({
+      code: "timeout",
+      message: "This feed could not be updated. The server did not respond in time. This is often temporary.",
+    });
+    mocks.discoverFeedCandidates.mockResolvedValue({
+      candidates: ["https://example.com/feed.xml"],
+      methodHints: {
+        "https://example.com/feed.xml": "heuristic_path",
+      },
+    });
+    mocks.fetchFeedXml.mockRejectedValue(new Error("Timed out"));
+
+    const response = await POST(createDiscoverRequest("https://example.com"));
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.code).toBe("timeout");
+    expect(body.error).toBe(
+      "This feed could not be updated. The server did not respond in time. This is often temporary."
+    );
+  });
+
   it("returns duplicate when all valid candidates are already subscribed", async () => {
     mocks.parseFeed.mockResolvedValue({
       title: "Direct Feed",

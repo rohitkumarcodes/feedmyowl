@@ -71,7 +71,7 @@ function toDiscoverCandidateResponse(
 async function fetchFeedCandidateXml(url: string): Promise<CandidateXmlFetchResult> {
   const response = await fetchFeedXml(url, {
     timeoutMs: FEED_CANDIDATE_TIMEOUT_MS,
-    retries: 0,
+    retries: 1,
     maxRedirects: 5,
   });
 
@@ -261,6 +261,7 @@ export async function postFeedsRoute(request: NextRequest) {
     if (action === "feed.discover") {
       const validatedCandidates: ValidatedDiscoverCandidate[] = [];
       const seenCandidateUrls = new Set<string>();
+      let directErrorAfterFallback: ApiError | null = null;
 
       try {
         const parsedDirectFeed = await parseFeed(nextUrl);
@@ -277,13 +278,10 @@ export async function postFeedsRoute(request: NextRequest) {
         const normalizedError = normalizeFeedError(error, "create");
 
         if (normalizedError.code !== "invalid_xml") {
-          return NextResponse.json(
-            {
-              error: normalizedError.message,
-              code: normalizedError.code,
-            } satisfies ApiError,
-            { status: 400 }
-          );
+          directErrorAfterFallback = {
+            error: normalizedError.message,
+            code: normalizedError.code,
+          };
         }
       }
 
@@ -309,6 +307,10 @@ export async function postFeedsRoute(request: NextRequest) {
       }
 
       if (validatedCandidates.length === 0) {
+        if (directErrorAfterFallback) {
+          return NextResponse.json(directErrorAfterFallback, { status: 400 });
+        }
+
         return NextResponse.json(
           {
             error: NO_FEED_FOUND_MESSAGE,

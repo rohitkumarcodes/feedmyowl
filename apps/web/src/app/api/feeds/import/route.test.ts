@@ -216,6 +216,118 @@ describe("POST /api/feeds/import", () => {
     });
   });
 
+  it("imports a discovered candidate when direct parsing fails with a non-invalid_xml error", async () => {
+    mocks.parseFeedWithMetadata.mockImplementation(async (url: string) => {
+      if (url === "https://example.com/") {
+        throw new Error("Network request failed");
+      }
+
+      return {
+        parsedFeed: {
+          title: "Discovered Feed",
+          description: "Discovered",
+          items: [],
+        },
+        etag: null,
+        lastModified: null,
+        resolvedUrl: url,
+      };
+    });
+    mocks.normalizeFeedError.mockReturnValue({
+      code: "network",
+      message: "Could not reach this URL. Check the address and try again.",
+    });
+    mocks.discoverFeedCandidates.mockResolvedValue({
+      candidates: ["https://example.com/feed.xml"],
+      methodHints: {
+        "https://example.com/feed.xml": "html_alternate",
+      },
+    });
+    mocks.createFeedWithInitialItems.mockResolvedValue({
+      feed: { id: "feed_discovered", folderId: null },
+      insertedItems: 0,
+    });
+
+    const response = await POST(
+      createImportRequest({
+        sourceType: "JSON",
+        entries: [{ url: "https://example.com", folderNames: [], customTitle: null }],
+      })
+    );
+    const body = (await response.json()) as {
+      rows: Array<{ status: string; message?: string }>;
+      importedCount: number;
+      failedCount: number;
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.importedCount).toBe(1);
+    expect(body.failedCount).toBe(0);
+    expect(body.rows[0]).toMatchObject({
+      status: "imported",
+      message: "Feed found automatically and added.",
+    });
+    expect(mocks.createFeedWithInitialItems).toHaveBeenCalledWith(
+      "user_123",
+      "https://example.com/feed.xml",
+      expect.any(Object),
+      [],
+      {
+        etag: null,
+        lastModified: null,
+      }
+    );
+  });
+
+  it("returns mapped direct failure when direct parsing fails with non-invalid_xml and discovery has no valid candidates", async () => {
+    mocks.parseFeedWithMetadata.mockImplementation(async (url: string) => {
+      if (url === "https://example.com/" || url === "https://example.com/feed.xml") {
+        throw new Error("Timed out");
+      }
+
+      return {
+        parsedFeed: {
+          title: "Unexpected",
+          description: "Unexpected",
+          items: [],
+        },
+        etag: null,
+        lastModified: null,
+        resolvedUrl: url,
+      };
+    });
+    mocks.normalizeFeedError.mockReturnValue({
+      code: "timeout",
+      message: "This feed could not be updated. The server did not respond in time. This is often temporary.",
+    });
+    mocks.discoverFeedCandidates.mockResolvedValue({
+      candidates: ["https://example.com/feed.xml"],
+      methodHints: {
+        "https://example.com/feed.xml": "heuristic_path",
+      },
+    });
+
+    const response = await POST(
+      createImportRequest({
+        sourceType: "JSON",
+        entries: [{ url: "https://example.com", folderNames: [], customTitle: null }],
+      })
+    );
+    const body = (await response.json()) as {
+      rows: Array<{ status: string; code?: string; message?: string }>;
+      failedCount: number;
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.failedCount).toBe(1);
+    expect(body.rows[0]).toMatchObject({
+      status: "failed",
+      code: "network_timeout",
+      message:
+        "This feed could not be updated. The server did not respond in time. This is often temporary.",
+    });
+  });
+
   it("merges folders for duplicates and reuses existing/new folder IDs", async () => {
     mocks.findExistingFeedForUserByUrl.mockResolvedValue({
       id: "feed_existing",
