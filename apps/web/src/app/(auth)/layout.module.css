@@ -200,6 +200,13 @@
   width: 100% !important;
 }
 
+.optionsActionSlot :global(.cl-userButtonTrigger) {
+  align-items: center !important;
+  display: inline-flex !important;
+  gap: 8px !important;
+  justify-content: flex-start !important;
+}
+
 .optionsActionButton,
 .optionsClerkButton {
   align-items: center;
@@ -226,8 +233,11 @@
 }
 
 .optionsClerkButton {
+  align-items: center !important;
   box-sizing: border-box;
   display: inline-flex !important;
+  gap: 8px !important;
+  justify-content: flex-start !important;
   margin: 0;
   max-width: none;
   width: 100%;
@@ -236,8 +246,10 @@
 .optionsClerkButton::after {
   color: var(--text-primary);
   content: "Admin";
+  flex: 0 0 auto;
   font-size: var(--text-sm);
   line-height: 1.2;
+  margin-left: 0;
 }
 
 .optionsActionButton:focus-visible,
