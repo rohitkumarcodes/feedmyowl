@@ -107,11 +107,12 @@ export function AccountControls() {
                     fontSize: "0.9375rem",
                     borderRadius: "0px",
                   },
-                  elements: {
-                    userButtonTrigger: styles.optionsClerkButton,
-                    userButtonAvatarBox: styles.accountMenuAvatar,
-                  },
-                }}
+                elements: {
+                  userButtonBox: styles.optionsClerkButtonBox,
+                  userButtonTrigger: styles.optionsClerkButton,
+                  userButtonAvatarBox: styles.accountMenuAvatar,
+                },
+              }}
               />
             </div>
 
