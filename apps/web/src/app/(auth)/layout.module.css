@@ -179,12 +179,25 @@
 }
 
 .optionsActionSlot {
+  display: block;
   width: 100%;
 }
 
 .optionsClerkButtonBox {
   display: block;
   width: 100%;
+}
+
+.optionsActionSlot > * {
+  display: block;
+  width: 100%;
+}
+
+.optionsActionSlot :global(.cl-userButtonBox),
+.optionsActionSlot :global(.cl-userButtonRoot),
+.optionsActionSlot :global(.cl-userButtonTrigger) {
+  max-width: none !important;
+  width: 100% !important;
 }
 
 .optionsActionButton,
@@ -214,6 +227,7 @@
 
 .optionsClerkButton {
   box-sizing: border-box;
+  display: inline-flex !important;
   margin: 0;
   max-width: none;
   width: 100%;
