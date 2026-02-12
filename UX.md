@@ -60,15 +60,18 @@ Manual refresh only (background jobs deferred).
   - Inline folder creation.
 - URL handling:
   - Missing scheme auto-normalizes to `https://`.
-  - Do not auto-add `www` or infer TLDs.
+  - Do not auto-rewrite the typed hostname or infer TLDs in normalized input.
+  - If the typed host is unreachable during discovery, fallback also probes `www.<host>` candidates.
   - Feed fetch hardening: SSRF blocking, redirect revalidation, timeout + retries.
 - Discovery flow:
   - Single add runs `discover` then `create`.
+  - Direct non-`invalid_xml` failures still run discovery fallback before returning reachability errors.
   - If exactly one addable feed is found, add proceeds automatically.
   - If multiple addable feeds are found, user must choose one before create.
   - If none are valid, show: `Error: We couldn't find any feed at this URL. Contact site owner and ask for the feed link.`
 - Progress and feedback:
   - Stage messages: normalizing, discovering, awaiting selection, creating.
+  - Unexpected submit exceptions must surface an explicit sidebar error notice (`Could not add feed right now.`), not a silent no-op.
   - Inline duplicate hint disables submit for exact URL duplicates.
   - Duplicate create with selected folders merges assignments into the existing feed.
   - Successful single add closes form by default and offers `Add another`.

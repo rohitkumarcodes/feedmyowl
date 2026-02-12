@@ -22,3 +22,5 @@ This release adds global fuzzy search to the feeds workspace and updates keyboar
 Follow-up (2026-02-11): platform hardening for feed writes/fetches is now in place, including Manual refresh only (background jobs deferred), CSRF same-origin checks on mutating non-webhook routes, rate limits enforced with Redis/Upstash (fail-open if Redis unavailable), feed fetch hardening (SSRF blocking, redirect revalidation, timeout + retries), conditional fetch support (ETag / Last-Modified), and reliable dedupe with DB uniqueness.
 
 Docs follow-up (2026-02-11): import/export docs now use beginner-friendly language and cover OPML folder behavior clearly, including flat folder mapping for category paths and the planned roadmap for safer migration features.
+
+Follow-up (2026-02-12): add-feed discovery docs were updated to reflect deterministic fallback behavior for site URLs, including `www.<host>` probing and explicit error notices for unexpected submit failures.

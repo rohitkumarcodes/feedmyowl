@@ -16,6 +16,7 @@ From repo root:
 - Assign feeds to multiple folders.
 - Delete the virtual `Uncategorized` scope from sidebar actions (single confirmation; deletes uncategorized feeds).
 - Discover feed candidates from site URLs before create.
+- Discovery fallback can probe `www.<host>` site variants when the typed host is unreachable.
 - Bulk add feed/site URLs from sidebar add form.
 - Manual refresh.
 - Read articles.
@@ -64,13 +65,15 @@ From repo root:
 ### Feed cannot be added
 1. Validate URL format.
 2. For interactive add flow, check `POST /api/feeds` action `feed.discover`.
-3. `POST /api/feeds` requires explicit `action` in JSON payload.
-4. If discovery status is `multiple`, user must select one candidate before `feed.create`.
-5. If discovery returns `invalid_xml`, expected message is: `Error: We couldn't find any feed at this URL. Contact site owner and ask for the feed link.`
-6. If request is rejected with `csrf_validation_failed`, verify `Origin`/`Referer` uses a trusted app origin.
-7. If request is rejected with `rate_limited`, inspect `Retry-After` and confirm user/IP request burst behavior.
-8. For SSRF block events, inspect logs for `feed.fetch.blocked` (blocked host/private IP/metadata endpoint).
-9. Check parser/network errors in logs.
+3. If the input host omits `www`, verify discovery candidate probes for `www.<host>` when base-host HTML fetch fails.
+4. `POST /api/feeds` requires explicit `action` in JSON payload.
+5. If discovery status is `multiple`, user must select one candidate before `feed.create`.
+6. If discovery returns `invalid_xml`, expected message is: `Error: We couldn't find any feed at this URL. Contact site owner and ask for the feed link.`
+7. If request is rejected with `csrf_validation_failed`, verify `Origin`/`Referer` uses a trusted app origin.
+8. If request is rejected with `rate_limited`, inspect `Retry-After` and confirm user/IP request burst behavior.
+9. For SSRF block events, inspect logs for `feed.fetch.blocked` (blocked host/private IP/metadata endpoint).
+10. Check parser/network errors in logs.
+11. If UI appears idle after submit, verify sidebar notices for explicit error status (`Could not add feed right now.`) rather than silent failure.
 
 ### Folder operation fails
 1. Validate folder name length and uniqueness.
@@ -245,46 +248,47 @@ From repo root:
 1. Sign in.
 2. Create a folder.
 3. Add a single feed with a scheme-less URL (`example.com`) and confirm it resolves.
-4. Add a site URL with multiple discovered feeds and confirm chooser gating.
-5. Use bulk mode with mixed valid/duplicate/invalid URLs and verify summary.
-6. Add a feed and assign it to multiple folders.
-7. Verify `Add another` reopens add form with previous folder selection.
-8. Delete `Uncategorized` from sidebar actions, confirm uncategorized feeds are removed and row disappears.
-9. Add a new feed without folder assignment and confirm `Uncategorized` appears again.
-10. Refresh feeds.
-11. Open an article and verify read-state.
-12. Reassign feed folders via feed actions.
-13. Delete a folder in both modes and verify expected outcomes.
-14. Open Settings, change owl option, click `Save owl`, and verify sidebar brand + favicon update.
-15. Reload, sign in again, and confirm owl choice persists.
-16. Start a feed import from OPML/JSON and verify progress appears as numeric counts (`x/y`).
-17. On mobile viewport, verify in-app back transitions `Reader -> Articles -> Feeds`.
-18. On mobile viewport, verify top spacing is compact and fixed brand slot is hidden.
-19. On settings page, verify first-step delete action is text-labeled (`Delete account...`).
-20. On desktop/tablet, verify `Shortcuts (?)` button is visible in sidebar toolbar.
-21. Press `?` and verify shortcuts modal opens, traps focus, and closes with `Escape`.
-22. Verify one-time shortcut hint appears before dismissal and stays hidden after dismissal/reload.
-23. Press `f` repeatedly on desktop/tablet and verify exact pane cycle order:
+4. Add a scheme-less site URL where only `www.<host>` serves feed links and confirm discovery still resolves.
+5. Add a site URL with multiple discovered feeds and confirm chooser gating.
+6. Use bulk mode with mixed valid/duplicate/invalid URLs and verify summary.
+7. Add a feed and assign it to multiple folders.
+8. Verify `Add another` reopens add form with previous folder selection.
+9. Delete `Uncategorized` from sidebar actions, confirm uncategorized feeds are removed and row disappears.
+10. Add a new feed without folder assignment and confirm `Uncategorized` appears again.
+11. Refresh feeds.
+12. Open an article and verify read-state.
+13. Reassign feed folders via feed actions.
+14. Delete a folder in both modes and verify expected outcomes.
+15. Open Settings, change owl option, click `Save owl`, and verify sidebar brand + favicon update.
+16. Reload, sign in again, and confirm owl choice persists.
+17. Start a feed import from OPML/JSON and verify progress appears as numeric counts (`x/y`).
+18. On mobile viewport, verify in-app back transitions `Reader -> Articles -> Feeds`.
+19. On mobile viewport, verify top spacing is compact and fixed brand slot is hidden.
+20. On settings page, verify first-step delete action is text-labeled (`Delete account...`).
+21. On desktop/tablet, verify `Shortcuts (?)` button is visible in sidebar toolbar.
+22. Press `?` and verify shortcuts modal opens, traps focus, and closes with `Escape`.
+23. Verify one-time shortcut hint appears before dismissal and stays hidden after dismissal/reload.
+24. Press `f` repeatedly on desktop/tablet and verify exact pane cycle order:
     collapse sidebar -> collapse list -> expand list -> expand sidebar.
-24. Press `r` and verify feed refresh still triggers.
-25. Verify `j/k` open next/previous articles in list and reader contexts, and in feed scope cross list boundaries with wrap-around.
-26. Verify arrow keys move selection only in list context; reader keeps native arrow scrolling.
-27. Trigger success info message and verify auto-clear after ~8 seconds.
-28. Trigger actionable info message (`Add another`) and verify it does not auto-clear immediately.
-29. Trigger an error and verify assertive rendering/dismiss behavior.
-30. Verify article rows retain dot marker and show stronger unread vs read title tone.
-31. On settings page, verify `Keyboard shortcuts` toggle is collapsed by default and docs link is present.
-32. On website pages, verify global nav includes `About` with correct active state on `/about/`.
-33. In article list, search with a 1-character query and confirm non-search hint is shown.
-34. Search with a 2+ character query and confirm global ranked results are shown.
-35. Verify search row clear button and `Escape` both clear the active query.
-36. Press `/` from list and reader contexts and confirm focus moves to search input.
-37. While search is active, change sidebar scope and verify search results remain global and the open reader article stays open.
-38. Search `heart` and confirm exact match appears with contiguous highlight.
-39. Search typo `heaet` and confirm typo fallback returns the `Heart` result.
-40. Confirm typo fallback results do not show fragmented highlight noise for unrelated titles.
-41. In `Read all feeds`, scroll repeatedly and confirm additional pages auto-load until `You’re all caught up.`
-42. Switch between `all`, `uncategorized`, one folder, and one feed; confirm each scope initializes its own cursor paging and remains stable when returning to a previous scope.
+25. Press `r` and verify feed refresh still triggers.
+26. Verify `j/k` open next/previous articles in list and reader contexts, and in feed scope cross list boundaries with wrap-around.
+27. Verify arrow keys move selection only in list context; reader keeps native arrow scrolling.
+28. Trigger success info message and verify auto-clear after ~8 seconds.
+29. Trigger actionable info message (`Add another`) and verify it does not auto-clear immediately.
+30. Trigger an error and verify assertive rendering/dismiss behavior.
+31. Verify article rows retain dot marker and show stronger unread vs read title tone.
+32. On settings page, verify `Keyboard shortcuts` toggle is collapsed by default and docs link is present.
+33. On website pages, verify global nav includes `About` with correct active state on `/about/`.
+34. In article list, search with a 1-character query and confirm non-search hint is shown.
+35. Search with a 2+ character query and confirm global ranked results are shown.
+36. Verify search row clear button and `Escape` both clear the active query.
+37. Press `/` from list and reader contexts and confirm focus moves to search input.
+38. While search is active, change sidebar scope and verify search results remain global and the open reader article stays open.
+39. Search `heart` and confirm exact match appears with contiguous highlight.
+40. Search typo `heaet` and confirm typo fallback returns the `Heart` result.
+41. Confirm typo fallback results do not show fragmented highlight noise for unrelated titles.
+42. In `Read all feeds`, scroll repeatedly and confirm additional pages auto-load until `You’re all caught up.`
+43. Switch between `all`, `uncategorized`, one folder, and one feed; confirm each scope initializes its own cursor paging and remains stable when returning to a previous scope.
 
 ## 9. Import/export roadmap (beginner-friendly)
 - Import preview before apply:

@@ -119,6 +119,9 @@ Behavior notes:
   `403` with `code: "csrf_validation_failed"`.
 - Rate-limited write routes can return `429` with `code: "rate_limited"` and
   `Retry-After`.
+- `feed.discover` always attempts discovery fallback even after direct non-`invalid_xml`
+  parse failures; direct reachability errors are returned only if fallback validates no candidate.
+- Site discovery can probe `www.<host>` candidates when base-host HTML fetch fails.
 - `POST /api/refresh` may include additive `fetchState` per feed result:
   `"updated"` or `"not_modified"`.
 - OPML import folder mapping keeps organization in a single-level model:
@@ -133,6 +136,7 @@ Behavior notes:
 - CSRF same-origin checks on mutating non-webhook routes.
 - Rate limits enforced with Redis/Upstash; fail-open if Redis unavailable.
 - Feed fetch hardening: SSRF blocking, redirect revalidation, timeout + retries.
+- Discovery candidate XML validation uses one retry for transient upstream failures.
 - Conditional fetch support: ETag / Last-Modified.
 - Reliable dedupe: GUID + content fingerprint with DB uniqueness.
 - Article retention is count-based: keep at most 50 items per feed, ranked by
@@ -145,6 +149,7 @@ Behavior notes:
   - `error` notices are assertive alerts and persist until dismissed/replaced.
   - `progress` and `offline` notices are polite non-dismissible statuses.
   - `info` notices auto-clear after 8 seconds unless they include an action.
+- Add-feed submit path reports unexpected client exceptions as explicit error notice text instead of silent failure.
 
 ## 9. Keyboard model defaults
 - Enabled only on `/feeds` and only on desktop/tablet.

@@ -52,7 +52,8 @@ This log records active product and technical decisions for the current app phas
 - Why: Reduce failed adds and prevent auto-subscribing to the wrong feed when multiple valid candidates exist.
 - Details:
   - Input without scheme auto-normalizes to `https://`.
-  - Do not auto-add `www` or infer TLD suffixes.
+  - Do not auto-rewrite hostnames in user input or infer TLD suffixes during normalization.
+  - If site-URL discovery cannot reach the typed host, discovery also probes `www.<host>` candidates before failing.
   - Interactive add supports bulk newline input with per-row outcomes.
   - No-feed fallback message is fixed to: `Error: We couldn't find any feed at this URL. Contact site owner and ask for the feed link.`
 
@@ -262,6 +263,18 @@ This log records active product and technical decisions for the current app phas
   - Confirmation copy is fixed to: `Deleting uncategorized folder will delete both the folder and the feeds. Are you sure you want to delete?`
   - Confirming delete unsubscribes all feeds that currently have zero folder assignments.
   - `Uncategorized` remains existence-based: hidden when empty, automatically visible again when a new unassigned feed appears.
+
+### D-2026-02-12-03
+- Date: 2026-02-12
+- Status: active
+- Decision: Add-feed discovery fallback is deterministic for site URLs, including non-`www` host variants.
+- Why: Users reported flaky "could not reach" outcomes for the same site URL when valid feed links existed.
+- Details:
+  - `feed.discover` always attempts candidate discovery fallback after direct parse failures, including non-`invalid_xml` errors.
+  - If fallback validates at least one candidate, discovery returns normal candidate status (`single`, `multiple`, or `duplicate`).
+  - If fallback validates none, direct non-`invalid_xml` error messaging is preserved.
+  - Candidate XML validation uses one retry to reduce transient network failures.
+  - Add-feed submit path surfaces an explicit error notice on unexpected client exceptions (no silent no-op).
 
 ## Superseded decisions
 

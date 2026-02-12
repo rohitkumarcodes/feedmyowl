@@ -35,6 +35,9 @@ Three stacked views:
 
 ## 5. Interaction model
 - Add-feed supports folder multi-select and inline folder creation.
+- Add-feed site discovery is deterministic:
+  - Direct parse failures still run candidate discovery fallback.
+  - If base host discovery fails, a `www.<host>` probe is attempted for candidate links/paths.
 - Feed row menu supports:
   - Edit name
   - Folders assignment checklist
@@ -47,6 +50,7 @@ Three stacked views:
   - `progress` and `offline` are non-dismissible status notices.
   - `info` is dismissible and auto-clears after 8s unless actionable.
   - `error` is dismissible and shown with stronger contrast.
+- Add-feed submit must never fail silently; unexpected client exceptions surface explicit error notice text.
 - Settings import shows numeric progress while processing feed URLs.
 - Settings delete entry point is text-first (`Delete account...`) before confirmation.
 - Settings keyboard shortcuts use a collapsed-by-default toggle (caret then keyboard icon)

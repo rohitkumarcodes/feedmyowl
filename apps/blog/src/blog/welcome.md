@@ -26,6 +26,8 @@ Most feed readers optimize for engagement. feedmyowl does not.
 
 As of 2026-02-11, feedmyowl ships with hardened defaults: Manual refresh only (background jobs deferred). Feed fetch hardening includes SSRF blocking, redirect revalidation, timeout + retries, plus conditional fetch support (ETag / Last-Modified) and reliable dedupe (GUID + content fingerprint with DB uniqueness).
 
+As of 2026-02-12, add-feed discovery is more deterministic for site URLs: if a non-`www` host fails, feed discovery also probes `www.<host>` candidates, and add attempts now surface explicit errors instead of appearing to do nothing.
+
 ## import and export (beginner friendly)
 
 - Import supports OPML/XML and FeedMyOwl JSON.
