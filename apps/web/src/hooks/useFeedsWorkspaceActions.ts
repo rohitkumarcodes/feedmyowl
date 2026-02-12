@@ -1451,7 +1451,7 @@ export function useFeedsWorkspaceActions({
     }
 
     try {
-      await navigator.clipboard.writeText(failedUrls.join("\\n"));
+      await navigator.clipboard.writeText(failedUrls.join("\n"));
       setInfoMessage(`Copied ${failedUrls.length} failed URL${failedUrls.length === 1 ? "" : "s"}.`);
     } catch {
       setErrorMessage("Could not copy failed URLs.");

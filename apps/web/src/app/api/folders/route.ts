@@ -10,8 +10,10 @@ import { handleApiRouteError } from "@/lib/api-errors";
 import { ensureUserRecord } from "@/lib/app-user";
 import { assertTrustedWriteOrigin } from "@/lib/csrf";
 import { parseRequestJson } from "@/lib/http/request-json";
+import { applyRouteRateLimit } from "@/lib/rate-limit";
 import {
   createFolderForUser,
+  FOLDER_LIMIT,
   FOLDER_NAME_MAX_LENGTH,
 } from "@/lib/folder-service";
 
@@ -33,6 +35,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    const rateLimit = await applyRouteRateLimit({
+      request,
+      routeKey: "api_folders_post",
+      userId: user.id,
+      userLimitPerMinute: 20,
+      ipLimitPerMinute: 60,
+    });
+
+    if (!rateLimit.allowed) {
+      return rateLimit.response;
+    }
+
     const payload = await parseRequestJson(request);
     const name = payload?.name;
 
@@ -47,6 +61,27 @@ export async function POST(request: NextRequest) {
         {
           error: `Folder name must be 1-${FOLDER_NAME_MAX_LENGTH} characters.`,
           code: "invalid_name",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (result.status === "folder_limit_reached") {
+      return NextResponse.json(
+        {
+          error: `You can have up to ${FOLDER_LIMIT} folders.`,
+          code: "folder_limit_reached",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (result.status === "reserved_name") {
+      return NextResponse.json(
+        {
+          error:
+            "This name is reserved. Please choose a different folder name.",
+          code: "reserved_name",
         },
         { status: 400 }
       );

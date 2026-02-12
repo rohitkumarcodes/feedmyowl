@@ -182,6 +182,14 @@ export function FeedItem({
         aria-current={isActive ? "true" : undefined}
       >
         <span className={styles.label}>{label}</span>
+        {selectedFolderIds.length > 1 ? (
+          <span
+            className={styles.multiFolderBadge}
+            title={`In ${selectedFolderIds.length} folders`}
+          >
+            {selectedFolderIds.length}
+          </span>
+        ) : null}
       </button>
 
       <div className={styles.actions} ref={actionsRef}>
@@ -221,7 +229,7 @@ export function FeedItem({
                   value={renameValue}
                   onChange={(event) => setRenameValue(event.target.value)}
                   className={primitiveStyles.input}
-                  placeholder="Feed name"
+                  placeholder="Leave empty to reset name"
                   maxLength={255}
                   disabled={isRenaming}
                 />

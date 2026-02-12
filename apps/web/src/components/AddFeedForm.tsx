@@ -11,6 +11,12 @@ import type { FolderViewModel } from "./feeds-types";
 import primitiveStyles from "./LeftPanePrimitives.module.css";
 import styles from "./AddFeedForm.module.css";
 
+/**
+ * Folder names that match built-in sidebar scope labels (case-insensitive).
+ * Must stay in sync with RESERVED_FOLDER_NAMES in folder-service.ts.
+ */
+const RESERVED_FOLDER_NAMES = new Set(["all feeds", "uncategorized"]);
+
 interface AddFeedDiscoveryCandidate extends DiscoveryBadgeCandidate {
   existingFeedId?: string | null;
 }
@@ -147,8 +153,11 @@ export function AddFeedForm({
     !hasValidSelection;
 
   const normalizedNewFolderName = newFolderNameInput.trim().toLocaleLowerCase();
+  const isNewFolderReserved =
+    normalizedNewFolderName.length > 0 &&
+    RESERVED_FOLDER_NAMES.has(normalizedNewFolderName);
   const duplicateFolder =
-    normalizedNewFolderName.length > 0
+    normalizedNewFolderName.length > 0 && !isNewFolderReserved
       ? availableFolders.find(
           (folder) => folder.name.trim().toLocaleLowerCase() === normalizedNewFolderName
         )
@@ -156,6 +165,7 @@ export function AddFeedForm({
 
   const canCreateFolder =
     newFolderNameInput.trim().length > 0 &&
+    !isNewFolderReserved &&
     !duplicateFolder &&
     !isCreatingFolder &&
     !isAddingFeed;
@@ -562,7 +572,13 @@ export function AddFeedForm({
         </button>
       </div>
 
-      {duplicateFolder ? (
+      {isNewFolderReserved ? (
+        <div className={styles.inlineDuplicateRow}>
+          <p className={styles.inlineMessage}>
+            This name is reserved.
+          </p>
+        </div>
+      ) : duplicateFolder ? (
         <div className={styles.inlineDuplicateRow}>
           <p className={styles.inlineMessage}>
             A folder named &quot;{duplicateFolder.name}&quot; already exists.

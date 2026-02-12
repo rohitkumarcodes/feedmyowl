@@ -11,6 +11,17 @@ import { resolveFeedFolderIds } from "@/lib/folder-memberships";
 
 export const FOLDER_NAME_MAX_LENGTH = 255;
 
+/**
+ * Maximum folders a user can create.
+ * TODO: differentiate free vs paid when Stripe integration is active.
+ */
+export const FOLDER_LIMIT = 50;
+
+/**
+ * Folder names that match built-in sidebar scope labels (case-insensitive).
+ */
+const RESERVED_FOLDER_NAMES = new Set(["all feeds", "uncategorized"]);
+
 export interface FolderRecord {
   id: string;
   name: string;
@@ -20,7 +31,9 @@ export interface FolderRecord {
 
 export type CreateFolderForUserResult =
   | { status: "invalid_name" }
+  | { status: "reserved_name" }
   | { status: "duplicate_name" }
+  | { status: "folder_limit_reached" }
   | { status: "ok"; folder: FolderRecord };
 
 /**
@@ -35,12 +48,21 @@ export async function createFolderForUser(
     return { status: "invalid_name" };
   }
 
+  const normalizedName = trimmedName.toLocaleLowerCase();
+
+  if (RESERVED_FOLDER_NAMES.has(normalizedName)) {
+    return { status: "reserved_name" };
+  }
+
   const existingFolders = await db.query.folders.findMany({
     where: eq(folders.userId, userId),
     columns: { id: true, name: true },
   });
 
-  const normalizedName = trimmedName.toLocaleLowerCase();
+  if (existingFolders.length >= FOLDER_LIMIT) {
+    return { status: "folder_limit_reached" };
+  }
+
   const hasDuplicate = existingFolders.some(
     (folder) => folder.name.trim().toLocaleLowerCase() === normalizedName
   );
@@ -50,26 +72,48 @@ export async function createFolderForUser(
   }
 
   const now = new Date();
-  const [created] = await db
-    .insert(folders)
-    .values({
-      userId,
-      name: trimmedName,
-      createdAt: now,
-      updatedAt: now,
-    })
-    .returning({
-      id: folders.id,
-      name: folders.name,
-      createdAt: folders.createdAt,
-      updatedAt: folders.updatedAt,
-    });
 
-  return { status: "ok", folder: created };
+  try {
+    const [created] = await db
+      .insert(folders)
+      .values({
+        userId,
+        name: trimmedName,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning({
+        id: folders.id,
+        name: folders.name,
+        createdAt: folders.createdAt,
+        updatedAt: folders.updatedAt,
+      });
+
+    return { status: "ok", folder: created };
+  } catch (error: unknown) {
+    // Unique index violation (TOCTOU safety net).
+    if (isUniqueViolation(error)) {
+      return { status: "duplicate_name" };
+    }
+    throw error;
+  }
+}
+
+/**
+ * Detect a PostgreSQL unique_violation (code 23505) from neon-http errors.
+ */
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code: string }).code === "23505"
+  );
 }
 
 export type RenameFolderForUserResult =
   | { status: "invalid_name" }
+  | { status: "reserved_name" }
   | { status: "duplicate_name" }
   | { status: "not_found" }
   | { status: "ok"; folder: FolderRecord };
@@ -85,6 +129,10 @@ export async function renameFolderForUser(
   const trimmedName = name.trim();
   if (!trimmedName || trimmedName.length > FOLDER_NAME_MAX_LENGTH) {
     return { status: "invalid_name" };
+  }
+
+  if (RESERVED_FOLDER_NAMES.has(trimmedName.toLocaleLowerCase())) {
+    return { status: "reserved_name" };
   }
 
   const existingFolder = await db.query.folders.findFirst({
@@ -113,25 +161,34 @@ export async function renameFolderForUser(
   }
 
   const now = new Date();
-  const [updatedFolder] = await db
-    .update(folders)
-    .set({
-      name: trimmedName,
-      updatedAt: now,
-    })
-    .where(and(eq(folders.id, folderId), eq(folders.userId, userId)))
-    .returning({
-      id: folders.id,
-      name: folders.name,
-      createdAt: folders.createdAt,
-      updatedAt: folders.updatedAt,
-    });
 
-  if (!updatedFolder) {
-    return { status: "not_found" };
+  try {
+    const [updatedFolder] = await db
+      .update(folders)
+      .set({
+        name: trimmedName,
+        updatedAt: now,
+      })
+      .where(and(eq(folders.id, folderId), eq(folders.userId, userId)))
+      .returning({
+        id: folders.id,
+        name: folders.name,
+        createdAt: folders.createdAt,
+        updatedAt: folders.updatedAt,
+      });
+
+    if (!updatedFolder) {
+      return { status: "not_found" };
+    }
+
+    return { status: "ok", folder: updatedFolder };
+  } catch (error: unknown) {
+    // Unique index violation (TOCTOU safety net).
+    if (isUniqueViolation(error)) {
+      return { status: "duplicate_name" };
+    }
+    throw error;
   }
-
-  return { status: "ok", folder: updatedFolder };
 }
 
 export type DeleteFolderMode =

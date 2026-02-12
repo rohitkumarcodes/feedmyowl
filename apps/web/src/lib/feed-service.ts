@@ -7,6 +7,7 @@ import {
   feeds,
   folders,
   inArray,
+  not,
   users,
 } from "@/lib/database";
 import { computeFeedItemFingerprint } from "@/lib/feed-item-fingerprint";
@@ -593,26 +594,46 @@ export async function setFeedFoldersForUser(
 
   const now = new Date();
 
-  // neon-http does not support db.transaction(); execute writes sequentially.
-  await db
-    .delete(feedFolderMemberships)
-    .where(
-      and(
-        eq(feedFolderMemberships.userId, userId),
-        eq(feedFolderMemberships.feedId, feedId)
-      )
-    );
-
+  // neon-http does not support db.transaction(), so we use an
+  // insert-first-then-delete pattern to avoid a window where memberships are
+  // missing. The unique constraint on (userId, feedId, folderId) ensures
+  // onConflictDoNothing is safe for already-existing memberships.
   if (normalizedFolderIds.length > 0) {
-    await db.insert(feedFolderMemberships).values(
-      normalizedFolderIds.map((folderId) => ({
-        userId,
-        feedId,
-        folderId,
-        createdAt: now,
-        updatedAt: now,
-      }))
-    );
+    await db
+      .insert(feedFolderMemberships)
+      .values(
+        normalizedFolderIds.map((folderId) => ({
+          userId,
+          feedId,
+          folderId,
+          createdAt: now,
+          updatedAt: now,
+        }))
+      )
+      .onConflictDoNothing();
+  }
+
+  // Remove memberships that are no longer desired.
+  if (normalizedFolderIds.length > 0) {
+    await db
+      .delete(feedFolderMemberships)
+      .where(
+        and(
+          eq(feedFolderMemberships.userId, userId),
+          eq(feedFolderMemberships.feedId, feedId),
+          not(inArray(feedFolderMemberships.folderId, normalizedFolderIds))
+        )
+      );
+  } else {
+    // User wants zero folders — remove all memberships for this feed.
+    await db
+      .delete(feedFolderMemberships)
+      .where(
+        and(
+          eq(feedFolderMemberships.userId, userId),
+          eq(feedFolderMemberships.feedId, feedId)
+        )
+      );
   }
 
   await db

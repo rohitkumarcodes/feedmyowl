@@ -21,6 +21,45 @@ import { PaneToggleIcon } from "./PaneToggleIcon";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import styles from "./Sidebar.module.css";
 
+/**
+ * Folder names that match built-in sidebar scope labels (case-insensitive).
+ * Must stay in sync with RESERVED_FOLDER_NAMES in folder-service.ts.
+ */
+const RESERVED_FOLDER_NAMES = new Set(["all feeds", "uncategorized"]);
+
+const EXPANDED_FOLDERS_STORAGE_KEY = "feedmyowl:expandedFolders";
+
+/**
+ * Read persisted folder expansion state from localStorage.
+ * Returns an empty object if nothing is stored or parsing fails.
+ */
+function readExpandedFolders(): Record<string, boolean> {
+  try {
+    const raw = localStorage.getItem(EXPANDED_FOLDERS_STORAGE_KEY);
+    if (!raw) {
+      return {};
+    }
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+      return parsed as Record<string, boolean>;
+    }
+    return {};
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Persist folder expansion state to localStorage.
+ */
+function writeExpandedFolders(state: Record<string, boolean>): void {
+  try {
+    localStorage.setItem(EXPANDED_FOLDERS_STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // Storage full or unavailable — ignore silently.
+  }
+}
+
 export type SidebarScope =
   | { type: "none" }
   | { type: "all" }
@@ -135,6 +174,7 @@ interface SidebarProps {
 
 interface FolderRowProps {
   folder: FolderViewModel;
+  siblingFolders: FolderViewModel[];
   isMobile: boolean;
   feedCount: number;
   isActive: boolean;
@@ -177,6 +217,7 @@ function FolderRowIcon() {
 
 function FolderRow({
   folder,
+  siblingFolders,
   isMobile,
   feedCount,
   isActive,
@@ -246,9 +287,28 @@ function FolderRow({
     }, 0);
   }, [folder.name, isRenameOpen]);
 
+  const renameNormalized = renameValue.trim().toLocaleLowerCase();
+  const isRenameReserved =
+    renameValue.trim().length > 0 && RESERVED_FOLDER_NAMES.has(renameNormalized);
+
+  const renameDuplicateFolder =
+    renameValue.trim().length > 0 && !isRenameReserved
+      ? siblingFolders.find(
+          (sibling) =>
+            sibling.id !== folder.id &&
+            sibling.name.trim().toLocaleLowerCase() === renameNormalized
+        )
+      : undefined;
+
+  const canSubmitRename =
+    !isRenaming &&
+    renameValue.trim().length > 0 &&
+    !isRenameReserved &&
+    !renameDuplicateFolder;
+
   const handleRenameSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (isRenaming) {
+    if (!canSubmitRename) {
       return;
     }
 
@@ -329,11 +389,20 @@ function FolderRow({
                   maxLength={255}
                   disabled={isRenaming}
                 />
+                {isRenameReserved ? (
+                  <p className={styles.renameDuplicateHint}>
+                    This name is reserved.
+                  </p>
+                ) : renameDuplicateFolder ? (
+                  <p className={styles.renameDuplicateHint}>
+                    A folder named &quot;{renameDuplicateFolder.name}&quot; already exists.
+                  </p>
+                ) : null}
                 <div className={styles.renameActions}>
                   <button
                     type="submit"
                     className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
-                    disabled={isRenaming}
+                    disabled={!canSubmitRename}
                   >
                     {isRenaming ? "Saving..." : "Save"}
                   </button>
@@ -557,7 +626,9 @@ export function Sidebar({
   onCollapse,
 }: SidebarProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
-  const [expandedFolderIds, setExpandedFolderIds] = useState<Record<string, boolean>>({});
+  const [expandedFolderIds, setExpandedFolderIds] = useState<Record<string, boolean>>(
+    readExpandedFolders
+  );
   const [isUncategorizedExpanded, setIsUncategorizedExpanded] = useState(false);
   const [isUncategorizedMenuOpen, setIsUncategorizedMenuOpen] = useState(false);
   const [isUncategorizedDeleteDialogOpen, setIsUncategorizedDeleteDialogOpen] =
@@ -574,6 +645,7 @@ export function Sidebar({
   const [pendingSidebarAutoRenameFolderName, setPendingSidebarAutoRenameFolderName] =
     useState<string | null>(null);
   const [autoRenameFolderId, setAutoRenameFolderId] = useState<string | null>(null);
+  const [pendingDeleteFeedId, setPendingDeleteFeedId] = useState<string | null>(null);
   const [pendingDeleteFolderId, setPendingDeleteFolderId] = useState<string | null>(null);
   const [isDeletingWithUnsubscribe, setIsDeletingWithUnsubscribe] = useState(false);
   const addMenuRef = useRef<HTMLDivElement>(null);
@@ -590,6 +662,11 @@ export function Sidebar({
       return next;
     });
   }, [folders]);
+
+  // Persist folder expansion state to localStorage whenever it changes.
+  useEffect(() => {
+    writeExpandedFolders(expandedFolderIds);
+  }, [expandedFolderIds]);
 
   useEffect(() => {
     if (selectedScope.type !== "feed") {
@@ -800,23 +877,39 @@ export function Sidebar({
   };
 
   const isAddMenuDisabled = isAddingFeed || isCreatingFolder;
-  const sidebarFolderDuplicate = folders.find(
-    (folder) =>
-      folder.name.trim().toLocaleLowerCase() ===
-      sidebarFolderName.trim().toLocaleLowerCase() &&
-      sidebarFolderName.trim().length > 0
-  );
+  const isSidebarFolderReserved =
+    sidebarFolderName.trim().length > 0 &&
+    RESERVED_FOLDER_NAMES.has(sidebarFolderName.trim().toLocaleLowerCase());
+  const sidebarFolderDuplicate = !isSidebarFolderReserved
+    ? folders.find(
+        (folder) =>
+          folder.name.trim().toLocaleLowerCase() ===
+          sidebarFolderName.trim().toLocaleLowerCase() &&
+          sidebarFolderName.trim().length > 0
+      )
+    : undefined;
   const canCreateSidebarFolder =
-    sidebarFolderName.trim().length > 0 && !isCreatingFolder && !sidebarFolderDuplicate;
-  const uncategorizedNewFolderDuplicate = folders.find(
-    (folder) =>
-      folder.name.trim().toLocaleLowerCase() ===
-      uncategorizedNewFolderName.trim().toLocaleLowerCase() &&
-      uncategorizedNewFolderName.trim().length > 0
-  );
+    sidebarFolderName.trim().length > 0 &&
+    !isCreatingFolder &&
+    !isSidebarFolderReserved &&
+    !sidebarFolderDuplicate;
+  const isUncategorizedFolderReserved =
+    uncategorizedNewFolderName.trim().length > 0 &&
+    RESERVED_FOLDER_NAMES.has(
+      uncategorizedNewFolderName.trim().toLocaleLowerCase()
+    );
+  const uncategorizedNewFolderDuplicate = !isUncategorizedFolderReserved
+    ? folders.find(
+        (folder) =>
+          folder.name.trim().toLocaleLowerCase() ===
+          uncategorizedNewFolderName.trim().toLocaleLowerCase() &&
+          uncategorizedNewFolderName.trim().length > 0
+      )
+    : undefined;
   const canCreateUncategorizedFolder =
     uncategorizedNewFolderName.trim().length > 0 &&
     !uncategorizedNewFolderDuplicate &&
+    !isUncategorizedFolderReserved &&
     !isCreatingFolder;
 
   const handleCreateFolderFromUncategorizedMove = async () => {
@@ -859,6 +952,7 @@ export function Sidebar({
         placeholder="Folder name"
         maxLength={255}
         disabled={isCreatingFolder}
+        autoFocus
       />
       <div className={styles.sidebarFolderActions}>
         <button
@@ -877,7 +971,13 @@ export function Sidebar({
           Cancel
         </button>
       </div>
-      {sidebarFolderDuplicate ? (
+      {isSidebarFolderReserved ? (
+        <div className={styles.sidebarDuplicateRow}>
+          <span className={styles.sidebarDuplicateText}>
+            This name is reserved.
+          </span>
+        </div>
+      ) : sidebarFolderDuplicate ? (
         <div className={styles.sidebarDuplicateRow}>
           <span className={styles.sidebarDuplicateText}>
             A folder named &quot;{sidebarFolderDuplicate.name}&quot; already exists.
@@ -915,7 +1015,7 @@ export function Sidebar({
           folderOptions={sortedFolders}
           selectedFolderIds={feed.folderIds}
           onSelect={() => onSelectFeed(feed.id)}
-          onDelete={() => onRequestFeedDelete(feed.id)}
+          onDelete={() => setPendingDeleteFeedId(feed.id)}
           onRename={(name) => onRequestFeedRename(feed.id, name)}
           onSaveFolders={(nextFolderIds) =>
             onRequestFeedFolderUpdate(feed.id, nextFolderIds)
@@ -1278,6 +1378,7 @@ export function Sidebar({
             <div key={folder.id} className={styles.folderGroup}>
               <FolderRow
                 folder={folder}
+                siblingFolders={sortedFolders}
                 isMobile={isMobile}
                 feedCount={folderFeeds.length}
                 isActive={isFolderActive}
@@ -1287,7 +1388,7 @@ export function Sidebar({
                 onToggleExpand={() =>
                   setExpandedFolderIds((previous) => ({
                     ...previous,
-                    [folder.id]: !(previous[folder.id] ?? true),
+                    [folder.id]: !(previous[folder.id] ?? false),
                   }))
                 }
                 onSelectFolder={() => onSelectFolder(folder.id)}
@@ -1333,6 +1434,49 @@ export function Sidebar({
         </button>
       </div>
 
+      {pendingDeleteFeedId ? (() => {
+        const pendingFeed = feeds.find((feed) => feed.id === pendingDeleteFeedId);
+        const pendingFeedLabel = pendingFeed ? getFeedLabel(pendingFeed) : "this feed";
+        return (
+          <div
+            className={`${primitiveStyles.dialogBackdrop} ${primitiveStyles.dialogBackdropBottom}`}
+          >
+            <div
+              className={`${primitiveStyles.dialog} ${primitiveStyles.dialogMobileBottom} ${styles.deleteDialog}`}
+              role="dialog"
+              aria-modal="true"
+            >
+              <h3>Delete feed</h3>
+              <p>
+                Are you sure you want to delete &quot;{pendingFeedLabel}&quot;? All
+                articles from this feed will be removed. This cannot be undone.
+              </p>
+              <div className={styles.deleteDialogActions}>
+                <button
+                  type="button"
+                  className={primitiveStyles.button}
+                  onClick={() => setPendingDeleteFeedId(null)}
+                  disabled={deletingFeedId === pendingDeleteFeedId}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className={`${primitiveStyles.button} ${primitiveStyles.buttonDanger}`}
+                  onClick={() => {
+                    onRequestFeedDelete(pendingDeleteFeedId);
+                    setPendingDeleteFeedId(null);
+                  }}
+                  disabled={deletingFeedId === pendingDeleteFeedId}
+                >
+                  Delete feed
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })() : null}
+
       {pendingDeleteFolderId && pendingDeleteStats ? (
         <div
           className={`${primitiveStyles.dialogBackdrop} ${primitiveStyles.dialogBackdropBottom}`}
@@ -1343,64 +1487,98 @@ export function Sidebar({
             aria-modal="true"
           >
             <h3>Delete folder</h3>
-            <p>
-              You are deleting a folder with {pendingDeleteStats.total} feed
-              {pendingDeleteStats.total === 1 ? "" : "s"}.
-            </p>
-            <p>
-              {pendingDeleteStats.crossListed} feed
-              {pendingDeleteStats.crossListed === 1 ? "" : "s"} are also in other folders.
-              {" "}
-              {pendingDeleteStats.exclusive} feed
-              {pendingDeleteStats.exclusive === 1 ? " is" : "s are"} only in this folder.
-            </p>
-            <div className={styles.deleteDialogActions}>
-              <button
-                type="button"
-                className={primitiveStyles.button}
-                onClick={() => setPendingDeleteFolderId(null)}
-                disabled={deletingFolderId === pendingDeleteFolderId}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={primitiveStyles.button}
-                onClick={() => {
-                  void onRequestFolderDelete(pendingDeleteFolderId, "remove_only").then(
-                    (deleted) => {
-                      if (deleted) {
-                        setPendingDeleteFolderId(null);
-                      }
-                    }
-                  );
-                }}
-                disabled={deletingFolderId === pendingDeleteFolderId}
-              >
-                Delete folder only (keep all feeds)
-              </button>
-              <button
-                type="button"
-                className={`${primitiveStyles.button} ${primitiveStyles.buttonDanger}`}
-                onClick={() => {
-                  setIsDeletingWithUnsubscribe(true);
-                  void onRequestFolderDelete(
-                    pendingDeleteFolderId,
-                    "remove_and_unsubscribe_exclusive"
-                  ).then((deleted) => {
-                    if (deleted) {
-                      setPendingDeleteFolderId(null);
-                    }
-                    setIsDeletingWithUnsubscribe(false);
-                  });
-                }}
-                disabled={deletingFolderId === pendingDeleteFolderId}
-              >
-                {isDeletingWithUnsubscribe
-                  ? "Deleting..."
-                  : "Delete folder and unsubscribe feeds only in this folder"}
-              </button>
-            </div>
+            {pendingDeleteStats.total === 0 ? (
+              <>
+                <p>This folder is empty. Delete it?</p>
+                <div className={styles.deleteDialogActions}>
+                  <button
+                    type="button"
+                    className={primitiveStyles.button}
+                    onClick={() => setPendingDeleteFolderId(null)}
+                    disabled={deletingFolderId === pendingDeleteFolderId}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className={`${primitiveStyles.button} ${primitiveStyles.buttonDanger}`}
+                    onClick={() => {
+                      void onRequestFolderDelete(pendingDeleteFolderId, "remove_only").then(
+                        (deleted) => {
+                          if (deleted) {
+                            setPendingDeleteFolderId(null);
+                          }
+                        }
+                      );
+                    }}
+                    disabled={deletingFolderId === pendingDeleteFolderId}
+                  >
+                    Delete folder
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p>
+                  You are deleting a folder with {pendingDeleteStats.total} feed
+                  {pendingDeleteStats.total === 1 ? "" : "s"}.
+                </p>
+                <p>
+                  {pendingDeleteStats.crossListed} feed
+                  {pendingDeleteStats.crossListed === 1 ? "" : "s"} are also in other folders.
+                  {" "}
+                  {pendingDeleteStats.exclusive} feed
+                  {pendingDeleteStats.exclusive === 1 ? " is" : "s are"} only in this folder.
+                </p>
+                <div className={styles.deleteDialogActions}>
+                  <button
+                    type="button"
+                    className={primitiveStyles.button}
+                    onClick={() => setPendingDeleteFolderId(null)}
+                    disabled={deletingFolderId === pendingDeleteFolderId}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className={primitiveStyles.button}
+                    onClick={() => {
+                      void onRequestFolderDelete(pendingDeleteFolderId, "remove_only").then(
+                        (deleted) => {
+                          if (deleted) {
+                            setPendingDeleteFolderId(null);
+                          }
+                        }
+                      );
+                    }}
+                    disabled={deletingFolderId === pendingDeleteFolderId}
+                  >
+                    Delete folder only (keep all feeds)
+                  </button>
+                  <button
+                    type="button"
+                    className={`${primitiveStyles.button} ${primitiveStyles.buttonDanger}`}
+                    onClick={() => {
+                      setIsDeletingWithUnsubscribe(true);
+                      void onRequestFolderDelete(
+                        pendingDeleteFolderId,
+                        "remove_and_unsubscribe_exclusive"
+                      ).then((deleted) => {
+                        if (deleted) {
+                          setPendingDeleteFolderId(null);
+                        }
+                        setIsDeletingWithUnsubscribe(false);
+                      });
+                    }}
+                    disabled={deletingFolderId === pendingDeleteFolderId}
+                  >
+                    {isDeletingWithUnsubscribe
+                      ? "Deleting..."
+                      : "Delete folder and unsubscribe feeds only in this folder"}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       ) : null}
@@ -1503,7 +1681,11 @@ export function Sidebar({
                 maxLength={255}
               />
             </label>
-            {uncategorizedNewFolderDuplicate ? (
+            {isUncategorizedFolderReserved ? (
+              <p className={styles.moveDialogHint}>
+                This name is reserved.
+              </p>
+            ) : uncategorizedNewFolderDuplicate ? (
               <p className={styles.moveDialogHint}>
                 A folder named &quot;{uncategorizedNewFolderDuplicate.name}&quot; already exists.
               </p>
@@ -1552,7 +1734,7 @@ export function Sidebar({
               </button>
               <button
                 type="button"
-                className={`${primitiveStyles.button} ${primitiveStyles.buttonDanger}`}
+                className={primitiveStyles.button}
                 onClick={() => {
                   if (!uncategorizedTargetFolderId) {
                     return;

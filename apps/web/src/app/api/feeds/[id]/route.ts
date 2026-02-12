@@ -10,6 +10,7 @@ import { handleApiRouteError } from "@/lib/api-errors";
 import { ensureUserRecord } from "@/lib/app-user";
 import { assertTrustedWriteOrigin } from "@/lib/csrf";
 import { parseRequestJson } from "@/lib/http/request-json";
+import { applyRouteRateLimit } from "@/lib/rate-limit";
 import {
   deleteFeedForUser,
   renameFeedForUser,
@@ -38,6 +39,18 @@ export async function PATCH(
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const rateLimit = await applyRouteRateLimit({
+      request,
+      routeKey: "api_feeds_id_patch",
+      userId: user.id,
+      userLimitPerMinute: 20,
+      ipLimitPerMinute: 60,
+    });
+
+    if (!rateLimit.allowed) {
+      return rateLimit.response;
     }
 
     const payload = await parseRequestJson(request);
@@ -133,6 +146,18 @@ export async function DELETE(
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const rateLimit = await applyRouteRateLimit({
+      request,
+      routeKey: "api_feeds_id_delete",
+      userId: user.id,
+      userLimitPerMinute: 20,
+      ipLimitPerMinute: 60,
+    });
+
+    if (!rateLimit.allowed) {
+      return rateLimit.response;
     }
 
     const deleted = await deleteFeedForUser(user.id, id);

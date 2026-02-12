@@ -327,6 +327,11 @@
   gap: 8px;
 }
 
+.renameDuplicateHint {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
 .renameActions {
   display: flex;
   gap: 6px;

@@ -88,24 +88,38 @@ export const users = pgTable("users", {
  *
  * Folder deletion removes folder memberships while feeds remain intact.
  */
-export const folders = pgTable("folders", {
-  /** Unique identifier (UUID v4, auto-generated) */
-  id: uuid("id").defaultRandom().primaryKey(),
+export const folders = pgTable(
+  "folders",
+  {
+    /** Unique identifier (UUID v4, auto-generated) */
+    id: uuid("id").defaultRandom().primaryKey(),
 
-  /** Which user owns this folder */
-  userId: uuid("user_id")
-    .references(() => users.id, { onDelete: "cascade" })
-    .notNull(),
+    /** Which user owns this folder */
+    userId: uuid("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
 
-  /** Human-readable folder name shown in the sidebar */
-  name: varchar("name", { length: 255 }).notNull(),
+    /** Human-readable folder name shown in the sidebar */
+    name: varchar("name", { length: 255 }).notNull(),
 
-  /** When this folder was created */
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+    /** When this folder was created */
+    createdAt: timestamp("created_at").defaultNow().notNull(),
 
-  /** When this folder was last updated */
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+    /** When this folder was last updated */
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    /**
+     * Prevent duplicate folder names per user (case-insensitive).
+     * The application checks for duplicates first (fast path); this index
+     * is the safety net for concurrent requests (TOCTOU).
+     */
+    userNameUniqueIdx: uniqueIndex("folders_user_id_lower_name_unique").on(
+      table.userId,
+      sql`lower(${table.name})`
+    ),
+  })
+);
 
 // =============================================================================
 // FEEDS TABLE
