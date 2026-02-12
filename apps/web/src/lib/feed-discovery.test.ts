@@ -97,4 +97,31 @@ describe("discoverFeedCandidates", () => {
     expect(result.methodHints["https://site.example.com/feed"]).toBe("html_alternate");
     expect(Object.keys(result.methodHints)).toHaveLength(result.candidates.length);
   });
+
+  it("falls back to www host candidates when the non-www host is unreachable", async () => {
+    mocks.fetchRemoteText
+      .mockRejectedValueOnce(new Error("Unable to resolve host"))
+      .mockResolvedValueOnce({
+        status: "ok",
+        text: "<html><head></head><body>No feeds listed</body></html>",
+        etag: null,
+        lastModified: null,
+        finalUrl: "https://www.site.example.com/",
+        statusCode: 200,
+      });
+
+    const result = await discoverFeedCandidates("https://site.example.com");
+
+    expect(result.candidates).toEqual([
+      "https://www.site.example.com/feed",
+      "https://www.site.example.com/feed.xml",
+      "https://www.site.example.com/rss",
+      "https://www.site.example.com/rss.xml",
+      "https://www.site.example.com/atom.xml",
+    ]);
+
+    for (const candidate of result.candidates) {
+      expect(result.methodHints[candidate]).toBe("heuristic_path");
+    }
+  });
 });

@@ -23,6 +23,32 @@ const HEURISTIC_PATHS = [
   "/?feed=rss2",
 ] as const;
 
+function buildWwwVariantUrl(inputUrl: string): string | null {
+  let parsedInput: URL;
+  try {
+    parsedInput = new URL(inputUrl);
+  } catch {
+    return null;
+  }
+
+  const hostname = parsedInput.hostname.toLowerCase();
+
+  if (hostname.startsWith("www.")) {
+    return null;
+  }
+
+  if (hostname === "localhost" || hostname.endsWith(".localhost")) {
+    return null;
+  }
+
+  if (!hostname.includes(".")) {
+    return null;
+  }
+
+  parsedInput.hostname = `www.${hostname}`;
+  return parsedInput.toString();
+}
+
 function decodeHtmlEntities(value: string): string {
   return value
     .replace(/&amp;/gi, "&")
@@ -183,6 +209,21 @@ export async function discoverFeedCandidates(
 
   if (html) {
     extractAlternateCandidates(html, normalizedInputUrl, result, normalizedInputUrl);
+  }
+
+  if (!html) {
+    const wwwVariantUrl = buildWwwVariantUrl(normalizedInputUrl);
+
+    if (wwwVariantUrl) {
+      const wwwHtml = await fetchHtml(wwwVariantUrl);
+      if (wwwHtml) {
+        extractAlternateCandidates(wwwHtml, wwwVariantUrl, result, normalizedInputUrl);
+      }
+
+      for (const candidate of buildHeuristicCandidates(wwwVariantUrl)) {
+        addCandidate(result, candidate, "heuristic_path", normalizedInputUrl);
+      }
+    }
   }
 
   for (const candidate of buildHeuristicCandidates(normalizedInputUrl)) {

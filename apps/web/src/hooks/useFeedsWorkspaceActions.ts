@@ -705,172 +705,179 @@ export function useFeedsWorkspaceActions({
       setInfoMessage(null);
       setErrorMessage(null);
       setShowAddAnotherAction(false);
+      try {
 
-      if (addFeedInputMode === "bulk") {
-        const parsedLines = dedupeBulkFeedLines(parseBulkFeedLines(bulkFeedUrlInput));
-        if (parsedLines.length === 0) {
-          setErrorMessage("Paste at least one feed or site URL.");
+        if (addFeedInputMode === "bulk") {
+          const parsedLines = dedupeBulkFeedLines(parseBulkFeedLines(bulkFeedUrlInput));
+          if (parsedLines.length === 0) {
+            setErrorMessage("Paste at least one feed or site URL.");
+            setIsAddingFeed(false);
+            return;
+          }
+          setBulkAddResultRows(null);
+
+          const hasStateChanges = await runBulkImport(parsedLines, null);
+          setIsAddingFeed(false);
+
+          if (hasStateChanges) {
+            router.refresh();
+          }
+          return;
+        }
+
+        const typedUrl = feedUrlInput.trim();
+        if (!typedUrl) {
+          setErrorMessage("Feed URL is required.");
+          setAddFeedStage(null);
+          clearProgressNotice();
           setIsAddingFeed(false);
           return;
         }
-        setBulkAddResultRows(null);
 
-        const hasStateChanges = await runBulkImport(parsedLines, null);
+        setAddFeedStage("normalizing");
+        setProgressNotice("Normalizing URL...");
+        const normalizedSingleUrl = normalizeFeedUrl(typedUrl);
+        if (!normalizedSingleUrl) {
+          setErrorMessage("This URL does not appear to be valid.");
+          setAddFeedStage(null);
+          clearProgressNotice();
+          setIsAddingFeed(false);
+          return;
+        }
+
+        if (normalizedExistingFeedUrls.has(normalizedSingleUrl)) {
+          setErrorMessage("This feed is already in your library.");
+          setAddFeedStage(null);
+          clearProgressNotice();
+          setIsAddingFeed(false);
+          return;
+        }
+
+        let candidateToCreateUrl: string | null = null;
+        if (discoveryCandidates.length > 1) {
+          if (!selectedDiscoveryCandidateUrl) {
+            setErrorMessage("Select one discovered feed URL to continue.");
+            setAddFeedStage("awaiting_selection");
+            setProgressNotice(
+              "Multiple feeds found. Select one to continue."
+            );
+            setIsAddingFeed(false);
+            return;
+          }
+
+          candidateToCreateUrl = selectedDiscoveryCandidateUrl;
+        } else {
+          setAddFeedStage("discovering");
+          setProgressNotice("Looking for feed URLs...");
+          const discoverBody = await discoverFeedForAdd(normalizedSingleUrl);
+          if (!discoverBody) {
+            setErrorMessage("Could not discover feed URLs.");
+            setAddFeedStage(null);
+            clearProgressNotice();
+            setIsAddingFeed(false);
+            return;
+          }
+
+          if (discoverBody.error) {
+            setErrorMessage(discoverBody.error);
+            setAddFeedStage(null);
+            clearProgressNotice();
+            setIsAddingFeed(false);
+            return;
+          }
+
+          const candidates = discoverBody.candidates ?? [];
+          const addableCandidates = candidates.filter((candidate) => !candidate.duplicate);
+
+          if (discoverBody.status === "multiple" || addableCandidates.length > 1) {
+            setDiscoveryCandidates(candidates);
+            setSelectedDiscoveryCandidateUrl("");
+            setAddFeedStage("awaiting_selection");
+            setProgressNotice(
+              "Multiple feeds found. Select one to continue."
+            );
+            setIsAddingFeed(false);
+            return;
+          }
+
+          candidateToCreateUrl =
+            discoverBody.status === "duplicate" || addableCandidates.length === 0
+              ? normalizedSingleUrl
+              : addableCandidates[0].url;
+        }
+
+        if (!candidateToCreateUrl) {
+          setErrorMessage("Could not resolve a feed URL to add.");
+          setAddFeedStage(null);
+          clearProgressNotice();
+          setIsAddingFeed(false);
+          return;
+        }
+
+        setAddFeedStage("creating");
+        setProgressNotice("Adding selected feed...");
+        const createBody = await createFeedForAdd(candidateToCreateUrl);
+        if (!createBody) {
+          setErrorMessage("Could not add feed.");
+          setAddFeedStage(null);
+          clearProgressNotice();
+          setIsAddingFeed(false);
+          return;
+        }
+
+        if (createBody.error) {
+          setErrorMessage(createBody.error);
+          setAddFeedStage(null);
+          clearProgressNotice();
+          setIsAddingFeed(false);
+          return;
+        }
+
+        setFeedUrlInput("");
+        setBulkFeedUrlInput("");
+        setAddFeedNewFolderNameInput("");
+        setDiscoveryCandidates([]);
+        setSelectedDiscoveryCandidateUrl("");
+        setAddFeedStage(null);
+        clearProgressNotice();
         setIsAddingFeed(false);
 
-        if (hasStateChanges) {
+        if (createBody.duplicate) {
+          applyUpdatedExistingFeed(createBody.feed);
+          const mergedFolderCount = createBody.mergedFolderCount ?? 0;
+          if (mergedFolderCount > 0) {
+            setShowAddAnotherAction(true);
+            setLastUsedAddFeedFolderIds(addFeedFolderIds);
+          }
+          setInfoMessage(createBody.message || "This feed is already in your library.");
+          setAddFeedFolderIds([]);
+          setIsAddFeedFormVisible(false);
           router.refresh();
-        }
-        return;
-      }
-
-      const typedUrl = feedUrlInput.trim();
-      if (!typedUrl) {
-        setErrorMessage("Feed URL is required.");
-        setAddFeedStage(null);
-        clearProgressNotice();
-        setIsAddingFeed(false);
-        return;
-      }
-
-      setAddFeedStage("normalizing");
-      setProgressNotice("Normalizing URL...");
-      const normalizedSingleUrl = normalizeFeedUrl(typedUrl);
-      if (!normalizedSingleUrl) {
-        setErrorMessage("This URL does not appear to be valid.");
-        setAddFeedStage(null);
-        clearProgressNotice();
-        setIsAddingFeed(false);
-        return;
-      }
-
-      if (normalizedExistingFeedUrls.has(normalizedSingleUrl)) {
-        setErrorMessage("This feed is already in your library.");
-        setAddFeedStage(null);
-        clearProgressNotice();
-        setIsAddingFeed(false);
-        return;
-      }
-
-      let candidateToCreateUrl: string | null = null;
-      if (discoveryCandidates.length > 1) {
-        if (!selectedDiscoveryCandidateUrl) {
-          setErrorMessage("Select one discovered feed URL to continue.");
-          setAddFeedStage("awaiting_selection");
-          setProgressNotice(
-            "Multiple feeds found. Select one to continue."
-          );
-          setIsAddingFeed(false);
           return;
         }
 
-        candidateToCreateUrl = selectedDiscoveryCandidateUrl;
-      } else {
-        setAddFeedStage("discovering");
-        setProgressNotice("Looking for feed URLs...");
-        const discoverBody = await discoverFeedForAdd(normalizedSingleUrl);
-        if (!discoverBody) {
-          setErrorMessage("Could not discover feed URLs.");
-          setAddFeedStage(null);
-          clearProgressNotice();
-          setIsAddingFeed(false);
-          return;
+        if (createBody.feed?.id) {
+          applyCreatedFeed(createBody.feed);
         }
 
-        if (discoverBody.error) {
-          setErrorMessage(discoverBody.error);
-          setAddFeedStage(null);
-          clearProgressNotice();
-          setIsAddingFeed(false);
-          return;
-        }
-
-        const candidates = discoverBody.candidates ?? [];
-        const addableCandidates = candidates.filter((candidate) => !candidate.duplicate);
-
-        if (discoverBody.status === "multiple" || addableCandidates.length > 1) {
-          setDiscoveryCandidates(candidates);
-          setSelectedDiscoveryCandidateUrl("");
-          setAddFeedStage("awaiting_selection");
-          setProgressNotice(
-            "Multiple feeds found. Select one to continue."
-          );
-          setIsAddingFeed(false);
-          return;
-        }
-
-        candidateToCreateUrl =
-          discoverBody.status === "duplicate" || addableCandidates.length === 0
-            ? normalizedSingleUrl
-            : addableCandidates[0].url;
-      }
-
-      if (!candidateToCreateUrl) {
-        setErrorMessage("Could not resolve a feed URL to add.");
-        setAddFeedStage(null);
-        clearProgressNotice();
-        setIsAddingFeed(false);
-        return;
-      }
-
-      setAddFeedStage("creating");
-      setProgressNotice("Adding selected feed...");
-      const createBody = await createFeedForAdd(candidateToCreateUrl);
-      if (!createBody) {
-        setErrorMessage("Could not add feed.");
-        setAddFeedStage(null);
-        clearProgressNotice();
-        setIsAddingFeed(false);
-        return;
-      }
-
-      if (createBody.error) {
-        setErrorMessage(createBody.error);
-        setAddFeedStage(null);
-        clearProgressNotice();
-        setIsAddingFeed(false);
-        return;
-      }
-
-      setFeedUrlInput("");
-      setBulkFeedUrlInput("");
-      setAddFeedNewFolderNameInput("");
-      setDiscoveryCandidates([]);
-      setSelectedDiscoveryCandidateUrl("");
-      setAddFeedStage(null);
-      clearProgressNotice();
-      setIsAddingFeed(false);
-
-      if (createBody.duplicate) {
-        applyUpdatedExistingFeed(createBody.feed);
-        const mergedFolderCount = createBody.mergedFolderCount ?? 0;
-        if (mergedFolderCount > 0) {
-          setShowAddAnotherAction(true);
-          setLastUsedAddFeedFolderIds(addFeedFolderIds);
-        }
-        setInfoMessage(createBody.message || "This feed is already in your library.");
+        const folderCount = createBody?.feed?.folderIds?.length ?? 0;
+        const assignmentMessage =
+          folderCount > 0
+            ? `Added to ${folderCount} folder${folderCount === 1 ? "" : "s"}.`
+            : "Added to Uncategorized.";
+        const baseMessage = createBody?.message || "Feed added.";
+        setShowAddAnotherAction(true);
+        setInfoMessage(`${baseMessage} ${assignmentMessage}`);
+        setLastUsedAddFeedFolderIds(addFeedFolderIds);
         setAddFeedFolderIds([]);
         setIsAddFeedFormVisible(false);
         router.refresh();
-        return;
+      } catch {
+        setErrorMessage("Could not add feed right now.");
+        setAddFeedStage(null);
+        clearProgressNotice();
+        setIsAddingFeed(false);
       }
-
-      if (createBody.feed?.id) {
-        applyCreatedFeed(createBody.feed);
-      }
-
-      const folderCount = createBody?.feed?.folderIds?.length ?? 0;
-      const assignmentMessage =
-        folderCount > 0
-          ? `Added to ${folderCount} folder${folderCount === 1 ? "" : "s"}.`
-          : "Added to Uncategorized.";
-      const baseMessage = createBody?.message || "Feed added.";
-      setShowAddAnotherAction(true);
-      setInfoMessage(`${baseMessage} ${assignmentMessage}`);
-      setLastUsedAddFeedFolderIds(addFeedFolderIds);
-      setAddFeedFolderIds([]);
-      setIsAddFeedFormVisible(false);
-      router.refresh();
     },
     [
       addFeedInputMode,
