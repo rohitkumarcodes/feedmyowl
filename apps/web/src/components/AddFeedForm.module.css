@@ -5,6 +5,11 @@
   padding: 8px;
 }
 
+.formDialog {
+  margin-top: 0;
+  padding: 0;
+}
+
 .label {
   color: var(--lp-text-muted);
   font-size: var(--text-xs);

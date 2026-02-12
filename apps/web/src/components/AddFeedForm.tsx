@@ -22,7 +22,8 @@ interface AddFeedBulkSummary {
   failedDetails: string[];
 }
 
-interface AddFeedFormProps {
+export interface AddFeedFormProps {
+  presentation?: "inline" | "dialog";
   addFeedInputMode: "single" | "bulk";
   addFeedStage: "normalizing" | "discovering" | "awaiting_selection" | "creating" | null;
   discoveryCandidates: AddFeedDiscoveryCandidate[];
@@ -53,9 +54,10 @@ interface AddFeedFormProps {
 }
 
 /**
- * Renders a compact inline feed/site URL form.
+ * Renders feed/site URL input and folder assignment controls.
  */
 export function AddFeedForm({
+  presentation = "inline",
   addFeedInputMode,
   addFeedStage,
   discoveryCandidates,
@@ -111,6 +113,13 @@ export function AddFeedForm({
     !hasValidSelection;
   const canCreateFolder =
     newFolderNameInput.trim().length > 0 && !isCreatingFolder && !isAddingFeed;
+  const formClassName = [
+    styles.form,
+    presentation === "inline" ? primitiveStyles.panel : "",
+    presentation === "dialog" ? styles.formDialog : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const handleInlineFolderInputKeyDown = (
     event: KeyboardEvent<HTMLInputElement>
@@ -126,7 +135,7 @@ export function AddFeedForm({
   };
 
   return (
-    <form className={`${styles.form} ${primitiveStyles.panel}`} onSubmit={onSubmitFeed}>
+    <form className={formClassName} onSubmit={onSubmitFeed}>
       <fieldset className={styles.modeFieldset}>
         <legend className={styles.label}>Input mode</legend>
         <div className={styles.modeOptions}>

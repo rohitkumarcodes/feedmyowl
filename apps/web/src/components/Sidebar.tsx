@@ -11,7 +11,7 @@ import {
   type ReactNode,
   type TransitionEvent,
 } from "react";
-import { AddFeedForm } from "./AddFeedForm";
+import { AddFeedDialog } from "./AddFeedDialog";
 import { FeedItem } from "./FeedItem";
 import type { FeedViewModel, FolderViewModel } from "./feeds-types";
 import { getFeedLabel } from "./feeds-workspace.selectors";
@@ -904,36 +904,6 @@ export function Sidebar({
           )
         ) : null}
 
-        {isAddFeedFormVisible ? (
-          <div className={styles.formWrap}>
-            <AddFeedForm
-              addFeedInputMode={addFeedInputMode}
-              addFeedStage={addFeedStage}
-              discoveryCandidates={discoveryCandidates}
-              selectedDiscoveryCandidateUrl={selectedDiscoveryCandidateUrl}
-              bulkFeedUrlInput={bulkFeedUrlInput}
-              inlineDuplicateMessage={inlineDuplicateMessage}
-              bulkAddResultRows={bulkAddResultRows}
-              bulkAddSummary={bulkAddSummary}
-              feedUrlInput={feedUrlInput}
-              isAddingFeed={isAddingFeed}
-              availableFolders={sortedFolders}
-              selectedFolderIds={addFeedFolderIds}
-              newFolderNameInput={addFeedNewFolderNameInput}
-              isCreatingFolder={isCreatingFolder}
-              onAddFeedInputModeChange={onAddFeedInputModeChange}
-              onFeedUrlChange={onFeedUrlChange}
-              onBulkFeedUrlChange={onBulkFeedUrlChange}
-              onToggleFolder={onToggleAddFeedFolder}
-              onNewFolderNameChange={onAddFeedNewFolderNameChange}
-              onSelectDiscoveryCandidate={onSelectDiscoveryCandidate}
-              onCreateFolderFromForm={onCreateFolderFromAddFeed}
-              onSubmitFeed={onSubmitFeed}
-              onCancelAddFeed={onCancelAddFeed}
-            />
-          </div>
-        ) : null}
-
         {notices.map((notice) => (
           <div
             key={notice.id}
@@ -964,6 +934,33 @@ export function Sidebar({
           </div>
         ))}
       </div>
+
+      <AddFeedDialog
+        open={isAddFeedFormVisible}
+        addFeedInputMode={addFeedInputMode}
+        addFeedStage={addFeedStage}
+        discoveryCandidates={discoveryCandidates}
+        selectedDiscoveryCandidateUrl={selectedDiscoveryCandidateUrl}
+        bulkFeedUrlInput={bulkFeedUrlInput}
+        inlineDuplicateMessage={inlineDuplicateMessage}
+        bulkAddResultRows={bulkAddResultRows}
+        bulkAddSummary={bulkAddSummary}
+        feedUrlInput={feedUrlInput}
+        isAddingFeed={isAddingFeed}
+        availableFolders={sortedFolders}
+        selectedFolderIds={addFeedFolderIds}
+        newFolderNameInput={addFeedNewFolderNameInput}
+        isCreatingFolder={isCreatingFolder}
+        onAddFeedInputModeChange={onAddFeedInputModeChange}
+        onFeedUrlChange={onFeedUrlChange}
+        onBulkFeedUrlChange={onBulkFeedUrlChange}
+        onToggleFolder={onToggleAddFeedFolder}
+        onNewFolderNameChange={onAddFeedNewFolderNameChange}
+        onSelectDiscoveryCandidate={onSelectDiscoveryCandidate}
+        onCreateFolderFromForm={onCreateFolderFromAddFeed}
+        onSubmitFeed={onSubmitFeed}
+        onClose={onCancelAddFeed}
+      />
 
       {/* Unified feed tree: All feeds → uncategorized → user folders */}
       <div className={styles.sections}>
