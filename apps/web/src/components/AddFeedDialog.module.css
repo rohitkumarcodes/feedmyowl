@@ -11,14 +11,13 @@
 
 .dialog {
   background: var(--bg-primary);
-  border: 1px solid var(--border);
   display: grid;
   gap: 12px;
   max-height: min(88vh, 760px);
   max-width: calc(100vw - 32px);
   overflow: auto;
   padding: 14px;
-  width: min(760px, calc(100vw - 32px));
+  width: min(640px, calc(100vw - 32px));
 }
 
 .header {
@@ -59,7 +58,6 @@
 }
 
 .body {
-  border: 1px solid var(--border);
   padding: 12px;
 }
 

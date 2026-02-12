@@ -256,19 +256,15 @@ export function FeedsWorkspace({
 
   const {
     isAddFeedFormVisible,
-    addFeedInputMode,
     addFeedStage,
     addFeedProgressMessage,
     feedUrlInput,
-    bulkFeedUrlInput,
     inlineDuplicateMessage,
     addFeedFolderIds,
     addFeedNewFolderNameInput,
     createdFolderRenameId,
     discoveryCandidates,
     selectedDiscoveryCandidateUrl,
-    bulkAddResultRows,
-    bulkAddSummary,
     showAddAnotherAction,
     isAddingFeed,
     isRefreshingFeeds,
@@ -281,8 +277,6 @@ export function FeedsWorkspace({
     isDeletingUncategorized,
     isMovingUncategorized,
     queuedNotices,
-    setAddFeedInputMode,
-    setBulkFeedUrlInput,
     setFeedUrlInput,
     setAddFeedFolderIds,
     toggleAddFeedFolder,
@@ -294,8 +288,6 @@ export function FeedsWorkspace({
     createFolderFromSidebar,
     handleAddAnother,
     openExistingFeed,
-    handleRetryFailedBulkAdd,
-    handleCopyFailedBulkUrls,
     showAddFeedForm,
     cancelAddFeedForm,
     clearStatusMessages,
@@ -799,17 +791,13 @@ export function FeedsWorkspace({
             onSelectFolder={(folderId) => handleSelectScope({ type: "folder", folderId })}
             onSelectFeed={(feedId) => handleSelectScope({ type: "feed", feedId })}
             isAddFeedFormVisible={isAddFeedFormVisible}
-            addFeedInputMode={addFeedInputMode}
             addFeedStage={addFeedStage}
             feedUrlInput={feedUrlInput}
-            bulkFeedUrlInput={bulkFeedUrlInput}
             inlineDuplicateMessage={inlineDuplicateMessage}
             addFeedFolderIds={addFeedFolderIds}
             addFeedNewFolderNameInput={addFeedNewFolderNameInput}
             discoveryCandidates={discoveryCandidates}
             selectedDiscoveryCandidateUrl={selectedDiscoveryCandidateUrl}
-            bulkAddResultRows={bulkAddResultRows}
-            bulkAddSummary={bulkAddSummary}
             createdFolderRenameId={createdFolderRenameId}
             isAddingFeed={isAddingFeed}
             isRefreshingFeeds={isRefreshingFeeds}
@@ -819,9 +807,7 @@ export function FeedsWorkspace({
               void handleRefresh();
             }}
             onCancelAddFeed={cancelAddFeedForm}
-            onAddFeedInputModeChange={setAddFeedInputMode}
             onFeedUrlChange={setFeedUrlInput}
-            onBulkFeedUrlChange={setBulkFeedUrlInput}
             onToggleAddFeedFolder={toggleAddFeedFolder}
             onSetAddFeedFolders={setAddFeedFolderIds}
             onAddFeedNewFolderNameChange={setAddFeedNewFolderNameInput}
@@ -835,12 +821,6 @@ export function FeedsWorkspace({
             onDismissCreatedFolderRename={dismissCreatedFolderRename}
             onOpenExistingFeed={(url) => {
               openExistingFeed(url);
-            }}
-            onRetryFailedBulkAdd={() => {
-              void handleRetryFailedBulkAdd();
-            }}
-            onCopyFailedBulkUrls={() => {
-              void handleCopyFailedBulkUrls();
             }}
             onSubmitFeed={(event) => {
               void handleAddFeed(event);

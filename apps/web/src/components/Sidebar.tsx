@@ -78,21 +78,6 @@ interface SidebarDiscoveryCandidate {
   existingFeedId: string | null;
 }
 
-interface SidebarBulkAddResultRow {
-  url: string;
-  status: "imported" | "merged" | "duplicate" | "failed";
-  message?: string;
-}
-
-interface SidebarBulkAddSummary {
-  processedCount: number;
-  importedCount: number;
-  mergedCount: number;
-  duplicateUnchangedCount: number;
-  failedCount: number;
-  failedDetails: string[];
-}
-
 interface SidebarProps {
   feeds: FeedViewModel[];
   folders: FolderViewModel[];
@@ -104,17 +89,13 @@ interface SidebarProps {
   onSelectFeed: (feedId: string) => void;
 
   isAddFeedFormVisible: boolean;
-  addFeedInputMode: "single" | "bulk";
   addFeedStage: AddFeedStage | null;
   feedUrlInput: string;
-  bulkFeedUrlInput: string;
   inlineDuplicateMessage: string | null;
   addFeedFolderIds: string[];
   addFeedNewFolderNameInput: string;
   discoveryCandidates: SidebarDiscoveryCandidate[];
   selectedDiscoveryCandidateUrl: string;
-  bulkAddResultRows: SidebarBulkAddResultRow[] | null;
-  bulkAddSummary: SidebarBulkAddSummary | null;
   createdFolderRenameId: string | null;
   isAddingFeed: boolean;
   isRefreshingFeeds: boolean;
@@ -122,9 +103,7 @@ interface SidebarProps {
   onShowAddFeedForm: () => void;
   onRefresh: () => void;
   onCancelAddFeed: () => void;
-  onAddFeedInputModeChange: (mode: "single" | "bulk") => void;
   onFeedUrlChange: (value: string) => void;
-  onBulkFeedUrlChange: (value: string) => void;
   onToggleAddFeedFolder: (folderId: string) => void;
   onAddFeedNewFolderNameChange: (value: string) => void;
   onSelectDiscoveryCandidate: (url: string) => void;
@@ -136,8 +115,6 @@ interface SidebarProps {
   onDismissCreatedFolderRename: () => void;
   onSetAddFeedFolders: (folderIds: string[]) => void;
   onOpenExistingFeed: (url: string) => void;
-  onRetryFailedBulkAdd: () => void;
-  onCopyFailedBulkUrls: () => void;
   onSubmitFeed: (event: FormEvent<HTMLFormElement>) => void;
 
   notices: SidebarNotice[];
@@ -574,17 +551,13 @@ export function Sidebar({
   onSelectFolder,
   onSelectFeed,
   isAddFeedFormVisible,
-  addFeedInputMode,
   addFeedStage,
   feedUrlInput,
-  bulkFeedUrlInput,
   inlineDuplicateMessage,
   addFeedFolderIds,
   addFeedNewFolderNameInput,
   discoveryCandidates,
   selectedDiscoveryCandidateUrl,
-  bulkAddResultRows,
-  bulkAddSummary,
   createdFolderRenameId,
   isAddingFeed,
   isRefreshingFeeds,
@@ -592,9 +565,7 @@ export function Sidebar({
   onShowAddFeedForm,
   onRefresh,
   onCancelAddFeed,
-  onAddFeedInputModeChange,
   onFeedUrlChange,
-  onBulkFeedUrlChange,
   onToggleAddFeedFolder,
   onAddFeedNewFolderNameChange,
   onSelectDiscoveryCandidate,
@@ -603,8 +574,6 @@ export function Sidebar({
   onDismissCreatedFolderRename,
   onSetAddFeedFolders,
   onOpenExistingFeed,
-  onRetryFailedBulkAdd,
-  onCopyFailedBulkUrls,
   onSubmitFeed,
   notices,
   onDismissMessage,
@@ -1210,14 +1179,10 @@ export function Sidebar({
 
       <AddFeedDialog
         open={isAddFeedFormVisible}
-        addFeedInputMode={addFeedInputMode}
         addFeedStage={addFeedStage}
         discoveryCandidates={discoveryCandidates}
         selectedDiscoveryCandidateUrl={selectedDiscoveryCandidateUrl}
-        bulkFeedUrlInput={bulkFeedUrlInput}
         inlineDuplicateMessage={inlineDuplicateMessage}
-        bulkAddResultRows={bulkAddResultRows}
-        bulkAddSummary={bulkAddSummary}
         feedUrlInput={feedUrlInput}
         isAddingFeed={isAddingFeed}
         availableFolders={sortedFolders}
@@ -1225,9 +1190,7 @@ export function Sidebar({
         newFolderNameInput={addFeedNewFolderNameInput}
         isCreatingFolder={isCreatingFolder}
         createdFolderRenameId={createdFolderRenameId}
-        onAddFeedInputModeChange={onAddFeedInputModeChange}
         onFeedUrlChange={onFeedUrlChange}
-        onBulkFeedUrlChange={onBulkFeedUrlChange}
         onToggleFolder={onToggleAddFeedFolder}
         onSetSelectedFolders={onSetAddFeedFolders}
         onNewFolderNameChange={onAddFeedNewFolderNameChange}
@@ -1236,8 +1199,6 @@ export function Sidebar({
         onRenameFolderFromForm={onRenameFolderFromAddFeed}
         onDismissCreatedFolderRename={onDismissCreatedFolderRename}
         onOpenExistingFeed={onOpenExistingFeed}
-        onRetryFailedBulk={onRetryFailedBulkAdd}
-        onCopyFailedUrls={onCopyFailedBulkUrls}
         onSubmitFeed={onSubmitFeed}
         onClose={onCancelAddFeed}
       />

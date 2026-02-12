@@ -9,12 +9,6 @@ import type {
 import type { SidebarScope } from "@/components/Sidebar";
 import type { FeedsWorkspaceMobileView } from "@/hooks/useFeedsWorkspaceMobile";
 import {
-  dedupeBulkFeedLines,
-  getFailedBulkUrls,
-  parseBulkFeedLines,
-  summarizeBulkAddRows,
-} from "@/lib/add-feed-bulk";
-import {
   createFeed as createFeedRequest,
   createFolder as createFolderRequest,
   deleteFeed as deleteFeedRequest,
@@ -50,12 +44,6 @@ export interface FeedDiscoverResponse {
   status?: "single" | "multiple" | "duplicate";
   normalizedInputUrl?: string;
   candidates?: DiscoveryCandidate[];
-}
-
-export interface BulkAddResultRow {
-  url: string;
-  status: "imported" | "merged" | "duplicate" | "failed";
-  message?: string;
 }
 
 interface ApiErrorResponse {
@@ -120,11 +108,7 @@ export function useFeedsWorkspaceActions({
   setNetworkMessage,
 }: UseFeedsWorkspaceActionsOptions) {
   const [isAddFeedFormVisible, setIsAddFeedFormVisible] = useState(false);
-  const [addFeedInputMode, setAddFeedInputMode] = useState<"single" | "bulk">(
-    "single"
-  );
   const [feedUrlInput, setFeedUrlInput] = useState("");
-  const [bulkFeedUrlInput, setBulkFeedUrlInput] = useState("");
   const [addFeedFolderIds, setAddFeedFolderIds] = useState<string[]>([]);
   const [lastUsedAddFeedFolderIds, setLastUsedAddFeedFolderIds] = useState<string[]>(
     []
@@ -139,9 +123,6 @@ export function useFeedsWorkspaceActions({
   >([]);
   const [selectedDiscoveryCandidateUrl, setSelectedDiscoveryCandidateUrl] =
     useState("");
-  const [bulkAddResultRows, setBulkAddResultRows] = useState<
-    BulkAddResultRow[] | null
-  >(null);
 
   const [isAddingFeed, setIsAddingFeed] = useState(false);
   const [isRefreshingFeeds, setIsRefreshingFeeds] = useState(false);
@@ -221,11 +202,10 @@ export function useFeedsWorkspaceActions({
     setAddFeedStage((previous) =>
       previous === "awaiting_selection" ? null : previous
     );
-    if (addFeedInputMode === "single" && addFeedProgressMessage) {
+    if (addFeedProgressMessage) {
       clearProgressNotice();
     }
   }, [
-    addFeedInputMode,
     addFeedProgressMessage,
     clearProgressNotice,
     feedUrlInput,
@@ -535,159 +515,6 @@ export function useFeedsWorkspaceActions({
     [addFeedFolderIds]
   );
 
-  const runBulkImport = useCallback(
-    async (rawLines: string[], previousRows: BulkAddResultRow[] | null) => {
-      const parsedLines = dedupeBulkFeedLines(rawLines);
-      const knownUrls = new Set(normalizedExistingFeedUrls);
-      const rows: BulkAddResultRow[] = [];
-      let hasStateChanges = false;
-
-      for (let index = 0; index < parsedLines.length; index += 1) {
-        const rawLine = parsedLines[index];
-        setAddFeedStage("normalizing");
-        setProgressNotice(`Normalizing URL ${index + 1} of ${parsedLines.length}...`);
-
-        const normalizedLine = normalizeFeedUrl(rawLine);
-        if (!normalizedLine) {
-          rows.push({
-            url: rawLine,
-            status: "failed",
-            message: "This URL does not appear to be valid.",
-          });
-          continue;
-        }
-
-        if (knownUrls.has(normalizedLine)) {
-          rows.push({
-            url: normalizedLine,
-            status: "duplicate",
-            message: "This feed is already in your library.",
-          });
-          continue;
-        }
-
-        setAddFeedStage("discovering");
-        setProgressNotice(`Looking for feed URLs ${index + 1} of ${parsedLines.length}...`);
-        const discoverBody = await discoverFeedForAdd(normalizedLine);
-        if (!discoverBody) {
-          rows.push({
-            url: normalizedLine,
-            status: "failed",
-            message: "Could not discover feed URLs.",
-          });
-          continue;
-        }
-
-        if (discoverBody.error) {
-          rows.push({
-            url: normalizedLine,
-            status: "failed",
-            message: discoverBody.error,
-          });
-          continue;
-        }
-
-        const candidates = discoverBody.candidates ?? [];
-        const addableCandidates = candidates.filter((candidate) => !candidate.duplicate);
-        if (discoverBody.status === "multiple" || addableCandidates.length > 1) {
-          rows.push({
-            url: normalizedLine,
-            status: "failed",
-            message: "Multiple feeds found; add this URL individually to choose one.",
-          });
-          continue;
-        }
-
-        const candidateToCreateUrl =
-          discoverBody.status === "duplicate" || addableCandidates.length === 0
-            ? normalizedLine
-            : addableCandidates[0].url;
-
-        setAddFeedStage("creating");
-        setProgressNotice(`Adding feed ${index + 1} of ${parsedLines.length}...`);
-        const createBody = await createFeedForAdd(candidateToCreateUrl);
-        if (!createBody) {
-          rows.push({
-            url: candidateToCreateUrl,
-            status: "failed",
-            message: "Could not add feed.",
-          });
-          continue;
-        }
-
-        if (createBody.error) {
-          rows.push({
-            url: candidateToCreateUrl,
-            status: "failed",
-            message: createBody.error,
-          });
-          continue;
-        }
-
-        const resolvedCreateUrl = createBody.feed?.url ?? candidateToCreateUrl;
-        const normalizedResolvedCreateUrl =
-          normalizeFeedUrl(resolvedCreateUrl) ?? resolvedCreateUrl;
-
-        if (createBody.duplicate) {
-          const mergedFolderCount = createBody.mergedFolderCount ?? 0;
-          if (mergedFolderCount > 0) {
-            applyUpdatedExistingFeed(createBody.feed);
-            hasStateChanges = true;
-          }
-          rows.push({
-            url: resolvedCreateUrl,
-            status: mergedFolderCount > 0 ? "merged" : "duplicate",
-            message: createBody.message || "This feed is already in your library.",
-          });
-          knownUrls.add(normalizedResolvedCreateUrl);
-          continue;
-        }
-
-        rows.push({
-          url: resolvedCreateUrl,
-          status: "imported",
-        });
-        knownUrls.add(normalizedResolvedCreateUrl);
-        applyCreatedFeed(createBody.feed);
-        hasStateChanges = true;
-      }
-
-      const nextRows =
-        previousRows && previousRows.length > 0
-          ? [
-              ...previousRows.filter((row) => row.status !== "failed"),
-              ...rows,
-            ]
-          : rows;
-
-      const summary = summarizeBulkAddRows(nextRows);
-      setBulkAddResultRows(nextRows);
-      setInfoMessage(
-        `Processed ${summary.processedCount} URL${
-          summary.processedCount === 1 ? "" : "s"
-        }. Imported ${summary.importedCount}, merged ${summary.mergedCount} duplicate assignment${
-          summary.mergedCount === 1 ? "" : "s"
-        }, skipped ${summary.duplicateUnchangedCount} unchanged duplicate${
-          summary.duplicateUnchangedCount === 1 ? "" : "s"
-        }, failed ${summary.failedCount}.`
-      );
-      setAddFeedStage(null);
-      clearProgressNotice();
-
-      return hasStateChanges;
-    },
-    [
-      applyCreatedFeed,
-      applyUpdatedExistingFeed,
-      clearProgressNotice,
-      createFeedForAdd,
-      discoverFeedForAdd,
-      normalizedExistingFeedUrls,
-      setInfoMessage,
-      setProgressNotice,
-    ]
-  );
-
   const handleAddFeed = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -706,25 +533,6 @@ export function useFeedsWorkspaceActions({
       setErrorMessage(null);
       setShowAddAnotherAction(false);
       try {
-
-        if (addFeedInputMode === "bulk") {
-          const parsedLines = dedupeBulkFeedLines(parseBulkFeedLines(bulkFeedUrlInput));
-          if (parsedLines.length === 0) {
-            setErrorMessage("Paste at least one feed or site URL.");
-            setIsAddingFeed(false);
-            return;
-          }
-          setBulkAddResultRows(null);
-
-          const hasStateChanges = await runBulkImport(parsedLines, null);
-          setIsAddingFeed(false);
-
-          if (hasStateChanges) {
-            router.refresh();
-          }
-          return;
-        }
-
         const typedUrl = feedUrlInput.trim();
         if (!typedUrl) {
           setErrorMessage("Feed URL is required.");
@@ -834,7 +642,6 @@ export function useFeedsWorkspaceActions({
         }
 
         setFeedUrlInput("");
-        setBulkFeedUrlInput("");
         setAddFeedNewFolderNameInput("");
         setDiscoveryCandidates([]);
         setSelectedDiscoveryCandidateUrl("");
@@ -880,11 +687,9 @@ export function useFeedsWorkspaceActions({
       }
     },
     [
-      addFeedInputMode,
       addFeedFolderIds,
       applyCreatedFeed,
       applyUpdatedExistingFeed,
-      bulkFeedUrlInput,
       clearProgressNotice,
       createFeedForAdd,
       discoverFeedForAdd,
@@ -893,7 +698,6 @@ export function useFeedsWorkspaceActions({
       isAddingFeed,
       normalizedExistingFeedUrls,
       router,
-      runBulkImport,
       setNetworkMessage,
       setProgressNotice,
       selectedDiscoveryCandidateUrl,
@@ -1352,14 +1156,11 @@ export function useFeedsWorkspaceActions({
 
   const cancelAddFeedForm = useCallback(() => {
     setIsAddFeedFormVisible(false);
-    setAddFeedInputMode("single");
     setFeedUrlInput("");
-    setBulkFeedUrlInput("");
     setAddFeedFolderIds([]);
     setAddFeedNewFolderNameInput("");
     setDiscoveryCandidates([]);
     setSelectedDiscoveryCandidateUrl("");
-    setBulkAddResultRows(null);
     setAddFeedStage(null);
     setCreatedFolderRenameId(null);
     clearProgressNotice();
@@ -1373,28 +1174,13 @@ export function useFeedsWorkspaceActions({
     );
   }, []);
 
-  const updateAddFeedInputMode = useCallback((mode: "single" | "bulk") => {
-    setAddFeedInputMode(mode);
-    setErrorMessage(null);
-    setInfoMessage(null);
-    setBulkAddResultRows(null);
-    setDiscoveryCandidates([]);
-    setSelectedDiscoveryCandidateUrl("");
-    setAddFeedStage(null);
-    setCreatedFolderRenameId(null);
-    clearProgressNotice();
-  }, [clearProgressNotice, setErrorMessage, setInfoMessage]);
-
   const handleAddAnother = useCallback(() => {
     setIsAddFeedFormVisible(true);
-    setAddFeedInputMode("single");
     setFeedUrlInput("");
-    setBulkFeedUrlInput("");
     setAddFeedFolderIds(lastUsedAddFeedFolderIds);
     setAddFeedNewFolderNameInput("");
     setDiscoveryCandidates([]);
     setSelectedDiscoveryCandidateUrl("");
-    setBulkAddResultRows(null);
     setAddFeedStage(null);
     clearProgressNotice();
     setInfoMessage(null);
@@ -1408,55 +1194,6 @@ export function useFeedsWorkspaceActions({
     setInfoMessage,
     setShowAddAnotherAction,
   ]);
-
-  const handleRetryFailedBulkAdd = useCallback(async () => {
-    if (isAddingFeed || !bulkAddResultRows) {
-      return;
-    }
-
-    const failedUrls = getFailedBulkUrls(bulkAddResultRows);
-
-    if (failedUrls.length === 0) {
-      setInfoMessage("No failed rows to retry.");
-      return;
-    }
-
-    setIsAddingFeed(true);
-    setShowAddAnotherAction(false);
-    const hasStateChanges = await runBulkImport(failedUrls, bulkAddResultRows);
-    setIsAddingFeed(false);
-
-    if (hasStateChanges) {
-      router.refresh();
-    }
-  }, [
-    bulkAddResultRows,
-    isAddingFeed,
-    router,
-    runBulkImport,
-    setInfoMessage,
-    setShowAddAnotherAction,
-  ]);
-
-  const handleCopyFailedBulkUrls = useCallback(async () => {
-    if (!bulkAddResultRows) {
-      return;
-    }
-
-    const failedUrls = getFailedBulkUrls(bulkAddResultRows);
-
-    if (failedUrls.length === 0) {
-      setInfoMessage("No failed URLs to copy.");
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(failedUrls.join("\n"));
-      setInfoMessage(`Copied ${failedUrls.length} failed URL${failedUrls.length === 1 ? "" : "s"}.`);
-    } catch {
-      setErrorMessage("Could not copy failed URLs.");
-    }
-  }, [bulkAddResultRows, setErrorMessage, setInfoMessage]);
 
   const renameFolderFromAddFeed = useCallback(
     async (folderId: string, name: string): Promise<boolean> => {
@@ -1478,34 +1215,21 @@ export function useFeedsWorkspaceActions({
     setErrorMessage(null);
   }, [setErrorMessage]);
 
-  const inlineDuplicateMessage =
-    addFeedInputMode === "single" && isSingleInputDuplicate
-      ? "This feed is already in your library."
-      : null;
-
-  const bulkAddSummary = useMemo(() => {
-    if (!bulkAddResultRows) {
-      return null;
-    }
-
-    return summarizeBulkAddRows(bulkAddResultRows);
-  }, [bulkAddResultRows]);
+  const inlineDuplicateMessage = isSingleInputDuplicate
+    ? "This feed is already in your library."
+    : null;
 
   return {
     isAddFeedFormVisible,
-    addFeedInputMode,
     addFeedStage,
     addFeedProgressMessage,
     feedUrlInput,
-    bulkFeedUrlInput,
     inlineDuplicateMessage,
     addFeedFolderIds,
     addFeedNewFolderNameInput,
     createdFolderRenameId,
     discoveryCandidates,
     selectedDiscoveryCandidateUrl,
-    bulkAddResultRows,
-    bulkAddSummary,
     showAddAnotherAction,
     isAddingFeed,
     isRefreshingFeeds,
@@ -1520,8 +1244,6 @@ export function useFeedsWorkspaceActions({
     infoMessage,
     errorMessage,
     queuedNotices,
-    setAddFeedInputMode: updateAddFeedInputMode,
-    setBulkFeedUrlInput,
     setFeedUrlInput,
     setAddFeedFolderIds,
     toggleAddFeedFolder,
@@ -1533,8 +1255,6 @@ export function useFeedsWorkspaceActions({
     createFolderFromSidebar,
     handleAddAnother,
     openExistingFeed,
-    handleRetryFailedBulkAdd,
-    handleCopyFailedBulkUrls,
     showAddFeedForm,
     cancelAddFeedForm,
     clearStatusMessages,

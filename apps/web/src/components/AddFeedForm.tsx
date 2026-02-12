@@ -21,49 +21,20 @@ interface AddFeedDiscoveryCandidate extends DiscoveryBadgeCandidate {
   existingFeedId?: string | null;
 }
 
-interface AddFeedBulkSummary {
-  processedCount: number;
-  importedCount: number;
-  mergedCount: number;
-  duplicateUnchangedCount: number;
-  failedCount: number;
-  failedDetails: string[];
-}
-
-const BULK_STATUS_LABELS: Record<
-  "imported" | "merged" | "duplicate" | "failed",
-  string
-> = {
-  imported: "Imported",
-  merged: "Merged",
-  duplicate: "Duplicate",
-  failed: "Failed",
-};
-
 export interface AddFeedFormProps {
   presentation?: "inline" | "dialog";
-  addFeedInputMode: "single" | "bulk";
   addFeedStage: "normalizing" | "discovering" | "awaiting_selection" | "creating" | null;
   discoveryCandidates: AddFeedDiscoveryCandidate[];
   selectedDiscoveryCandidateUrl: string;
   feedUrlInput: string;
-  bulkFeedUrlInput: string;
   inlineDuplicateMessage: string | null;
-  bulkAddResultRows: Array<{
-    url: string;
-    status: "imported" | "merged" | "duplicate" | "failed";
-    message?: string;
-  }> | null;
-  bulkAddSummary: AddFeedBulkSummary | null;
   isAddingFeed: boolean;
   availableFolders: FolderViewModel[];
   selectedFolderIds: string[];
   newFolderNameInput: string;
   isCreatingFolder: boolean;
   createdFolderRenameId?: string | null;
-  onAddFeedInputModeChange: (mode: "single" | "bulk") => void;
   onFeedUrlChange: (value: string) => void;
-  onBulkFeedUrlChange: (value: string) => void;
   onToggleFolder: (folderId: string) => void;
   onSetSelectedFolders: (folderIds: string[]) => void;
   onNewFolderNameChange: (value: string) => void;
@@ -72,8 +43,6 @@ export interface AddFeedFormProps {
   onRenameFolderFromForm: (folderId: string, name: string) => Promise<boolean> | boolean;
   onDismissCreatedFolderRename: () => void;
   onOpenExistingFeed: (url: string) => void;
-  onRetryFailedBulk: () => void;
-  onCopyFailedUrls: () => void;
   onSubmitFeed: (event: FormEvent<HTMLFormElement>) => void;
   onCancelAddFeed: () => void;
 }
@@ -83,24 +52,18 @@ export interface AddFeedFormProps {
  */
 export function AddFeedForm({
   presentation = "inline",
-  addFeedInputMode,
   addFeedStage,
   discoveryCandidates,
   selectedDiscoveryCandidateUrl,
   feedUrlInput,
-  bulkFeedUrlInput,
   inlineDuplicateMessage,
-  bulkAddResultRows,
-  bulkAddSummary,
   isAddingFeed,
   availableFolders,
   selectedFolderIds,
   newFolderNameInput,
   isCreatingFolder,
   createdFolderRenameId,
-  onAddFeedInputModeChange,
   onFeedUrlChange,
-  onBulkFeedUrlChange,
   onToggleFolder,
   onSetSelectedFolders,
   onNewFolderNameChange,
@@ -109,15 +72,10 @@ export function AddFeedForm({
   onRenameFolderFromForm,
   onDismissCreatedFolderRename,
   onOpenExistingFeed,
-  onRetryFailedBulk,
-  onCopyFailedUrls,
   onSubmitFeed,
   onCancelAddFeed,
 }: AddFeedFormProps) {
   const [folderQuery, setFolderQuery] = useState("");
-  const [expandedFailureUrls, setExpandedFailureUrls] = useState<Record<string, boolean>>(
-    {}
-  );
   const [renameCreatedFolderValue, setRenameCreatedFolderValue] = useState("");
   const [isRenamingCreatedFolder, setIsRenamingCreatedFolder] = useState(false);
   const createdFolderInputRef = useRef<HTMLInputElement>(null);
@@ -125,8 +83,7 @@ export function AddFeedForm({
   const addableDiscoveryCandidates = discoveryCandidates.filter(
     (candidate) => !candidate.duplicate
   );
-  const requiresSelection =
-    addFeedInputMode === "single" && addableDiscoveryCandidates.length > 1;
+  const requiresSelection = addableDiscoveryCandidates.length > 1;
   const hasValidSelection =
     !requiresSelection ||
     addableDiscoveryCandidates.some(
@@ -141,16 +98,12 @@ export function AddFeedForm({
         : addFeedStage === "creating"
           ? "Adding..."
           : "Working..."
-    : addFeedInputMode === "bulk"
-      ? "Add feeds"
-      : requiresSelection
-        ? "Add selected feed"
-        : "Add feed";
+    : requiresSelection
+      ? "Add selected feed"
+      : "Add feed";
 
   const isSubmitDisabled =
-    isAddingFeed ||
-    (addFeedInputMode === "single" && Boolean(inlineDuplicateMessage)) ||
-    !hasValidSelection;
+    isAddingFeed || Boolean(inlineDuplicateMessage) || !hasValidSelection;
 
   const normalizedNewFolderName = newFolderNameInput.trim().toLocaleLowerCase();
   const isNewFolderReserved =
@@ -190,11 +143,6 @@ export function AddFeedForm({
     );
   }, [availableFolders, folderQuery]);
 
-  const failedRows = useMemo(
-    () => (bulkAddResultRows ?? []).filter((row) => row.status === "failed"),
-    [bulkAddResultRows]
-  );
-
   const createdFolder = useMemo(
     () =>
       createdFolderRenameId
@@ -228,13 +176,6 @@ export function AddFeedForm({
     if (canCreateFolder) {
       onCreateFolderFromForm();
     }
-  };
-
-  const toggleFailureDetails = (url: string) => {
-    setExpandedFailureUrls((previous) => ({
-      ...previous,
-      [url]: !previous[url],
-    }));
   };
 
   const handleSelectAllFilteredFolders = () => {
@@ -275,225 +216,83 @@ export function AddFeedForm({
 
   return (
     <form className={formClassName} onSubmit={onSubmitFeed}>
-      <fieldset className={styles.modeFieldset}>
-        <legend className={styles.label}>Input mode</legend>
-        <div className={styles.modeOptions}>
-          <label className={styles.modeOption}>
-            <input
-              type="radio"
-              name="add-feed-mode"
-              value="single"
-              checked={addFeedInputMode === "single"}
-              onChange={() => onAddFeedInputModeChange("single")}
-              disabled={isAddingFeed}
-            />
-            <span>Single URL</span>
-          </label>
-          <label className={styles.modeOption}>
-            <input
-              type="radio"
-              name="add-feed-mode"
-              value="bulk"
-              checked={addFeedInputMode === "bulk"}
-              onChange={() => onAddFeedInputModeChange("bulk")}
-              disabled={isAddingFeed}
-            />
-            <span>Paste many</span>
-          </label>
+      <label className={styles.label} htmlFor="sidebar-feed-url">
+        Feed or site URL
+      </label>
+      <input
+        id="sidebar-feed-url"
+        name="feed-url"
+        type="text"
+        required
+        className={primitiveStyles.input}
+        value={feedUrlInput}
+        onChange={(event) => onFeedUrlChange(event.currentTarget.value)}
+        placeholder="example.com or https://example.com/rss.xml"
+      />
+      {inlineDuplicateMessage ? (
+        <div className={styles.inlineDuplicateRow}>
+          <p className={styles.inlineMessage}>{inlineDuplicateMessage}</p>
+          <button
+            type="button"
+            className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
+            onClick={() => onOpenExistingFeed(feedUrlInput)}
+          >
+            Open existing feed
+          </button>
         </div>
-      </fieldset>
+      ) : null}
 
-      {addFeedInputMode === "single" ? (
-        <>
-          <label className={styles.label} htmlFor="sidebar-feed-url">
-            Feed or site URL
-          </label>
-          <input
-            id="sidebar-feed-url"
-            name="feed-url"
-            type="text"
-            required
-            className={primitiveStyles.input}
-            value={feedUrlInput}
-            onChange={(event) => onFeedUrlChange(event.currentTarget.value)}
-            placeholder="example.com or https://example.com/rss.xml"
-          />
-          {inlineDuplicateMessage ? (
-            <div className={styles.inlineDuplicateRow}>
-              <p className={styles.inlineMessage}>{inlineDuplicateMessage}</p>
-              <button
-                type="button"
-                className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
-                onClick={() => onOpenExistingFeed(feedUrlInput)}
-              >
-                Open existing feed
-              </button>
-            </div>
-          ) : null}
+      {requiresSelection ? (
+        <fieldset className={styles.discoveryFieldset}>
+          <legend className={styles.label}>Choose one discovered feed URL</legend>
+          <div className={styles.discoveryList}>
+            {discoveryCandidates.map((candidate) => {
+              const badgeFlags = getDiscoveryBadgeFlags({
+                candidate,
+                addableCandidateCount: addableDiscoveryCandidates.length,
+              });
 
-          {requiresSelection ? (
-            <fieldset className={styles.discoveryFieldset}>
-              <legend className={styles.label}>Choose one discovered feed URL</legend>
-              <div className={styles.discoveryList}>
-                {discoveryCandidates.map((candidate) => {
-                  const badgeFlags = getDiscoveryBadgeFlags({
-                    candidate,
-                    addableCandidateCount: addableDiscoveryCandidates.length,
-                  });
-
-                  return (
-                    <label key={candidate.url} className={styles.discoveryOption}>
-                      <input
-                        type="radio"
-                        name="discovered-feed"
-                        checked={selectedDiscoveryCandidateUrl === candidate.url}
-                        onChange={() => onSelectDiscoveryCandidate(candidate.url)}
-                        disabled={candidate.duplicate || isAddingFeed}
-                      />
-                      <span className={styles.discoveryText}>
-                        <span>{candidate.title || candidate.url}</span>
-                        <span className={styles.discoveryUrl}>{candidate.url}</span>
-                        <span className={styles.discoveryBadges}>
-                          {badgeFlags.alreadyInLibrary ? (
-                            <span className={styles.badge}>Already in library</span>
-                          ) : null}
-                          {badgeFlags.recommended ? (
-                            <span className={`${styles.badge} ${styles.badgeRecommended}`}>
-                              Recommended
-                            </span>
-                          ) : null}
-                          {badgeFlags.likelyCommentsFeed ? (
-                            <span className={styles.badge}>Likely comments feed</span>
-                          ) : null}
+              return (
+                <label key={candidate.url} className={styles.discoveryOption}>
+                  <input
+                    type="radio"
+                    name="discovered-feed"
+                    checked={selectedDiscoveryCandidateUrl === candidate.url}
+                    onChange={() => onSelectDiscoveryCandidate(candidate.url)}
+                    disabled={candidate.duplicate || isAddingFeed}
+                  />
+                  <span className={styles.discoveryText}>
+                    <span>{candidate.title || candidate.url}</span>
+                    <span className={styles.discoveryUrl}>{candidate.url}</span>
+                    <span className={styles.discoveryBadges}>
+                      {badgeFlags.alreadyInLibrary ? (
+                        <span className={styles.badge}>Already in library</span>
+                      ) : null}
+                      {badgeFlags.recommended ? (
+                        <span className={`${styles.badge} ${styles.badgeRecommended}`}>
+                          Recommended
                         </span>
-                        {candidate.duplicate ? (
-                          <button
-                            type="button"
-                            className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
-                            onClick={() => onOpenExistingFeed(candidate.url)}
-                          >
-                            Open existing feed
-                          </button>
-                        ) : null}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </fieldset>
-          ) : null}
-        </>
-      ) : (
-        <>
-          <label className={styles.label} htmlFor="sidebar-feed-urls">
-            Feed or site URLs (one per line)
-          </label>
-          <textarea
-            id="sidebar-feed-urls"
-            name="feed-urls"
-            required
-            className={`${primitiveStyles.input} ${styles.bulkTextarea}`}
-            value={bulkFeedUrlInput}
-            onChange={(event) => onBulkFeedUrlChange(event.currentTarget.value)}
-            placeholder={"example.com\nhttps://example.com/rss.xml"}
-          />
-          {bulkAddSummary ? (
-            <div className={styles.bulkSummary}>
-              <p>
-                Processed {bulkAddSummary.processedCount} URL
-                {bulkAddSummary.processedCount === 1 ? "" : "s"}. Imported{" "}
-                {bulkAddSummary.importedCount}, merged {bulkAddSummary.mergedCount}{" "}
-                duplicate assignment{bulkAddSummary.mergedCount === 1 ? "" : "s"},
-                skipped {bulkAddSummary.duplicateUnchangedCount} unchanged duplicate
-                {bulkAddSummary.duplicateUnchangedCount === 1 ? "" : "s"}, failed{" "}
-                {bulkAddSummary.failedCount}.
-              </p>
-            </div>
-          ) : null}
-
-          {bulkAddResultRows && bulkAddResultRows.length > 0 ? (
-            <div className={styles.bulkTableWrap}>
-              <div className={styles.bulkTableActions}>
-                <span className={styles.bulkTableCount}>
-                  {bulkAddResultRows.length} result
-                  {bulkAddResultRows.length === 1 ? "" : "s"}
-                </span>
-                <button
-                  type="button"
-                  className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
-                  onClick={onRetryFailedBulk}
-                  disabled={failedRows.length === 0 || isAddingFeed}
-                >
-                  Retry failed ({failedRows.length})
-                </button>
-                <button
-                  type="button"
-                  className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
-                  onClick={onCopyFailedUrls}
-                  disabled={failedRows.length === 0}
-                >
-                  Copy failed URLs ({failedRows.length})
-                </button>
-              </div>
-              <table className={styles.bulkTable}>
-                <thead>
-                  <tr>
-                    <th>URL</th>
-                    <th>Status</th>
-                    <th>Details</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bulkAddResultRows.map((row, index) => {
-                    const isFailed = row.status === "failed";
-                    const isExpanded = Boolean(expandedFailureUrls[row.url]);
-
-                    return (
-                      <tr key={`${row.url}-${row.status}-${index}`}>
-                        <td className={styles.bulkUrlCell}>{row.url}</td>
-                        <td>
-                          <span className={`${styles.statusChip} ${styles[`statusChip${row.status}`]}`}>
-                            {BULK_STATUS_LABELS[row.status]}
-                          </span>
-                        </td>
-                        <td>
-                          {isFailed ? (
-                            <>
-                              <button
-                                type="button"
-                                className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
-                                onClick={() => toggleFailureDetails(row.url)}
-                                aria-expanded={isExpanded}
-                                aria-controls={`bulk-failure-${index}`}
-                              >
-                                {isExpanded ? "Hide error" : "Show error"}
-                              </button>
-                              {isExpanded ? (
-                                <p
-                                  id={`bulk-failure-${index}`}
-                                  className={styles.bulkFailureDetail}
-                                >
-                                  {row.message || "Could not import."}
-                                </p>
-                              ) : null}
-                            </>
-                          ) : (
-                            <span className={styles.bulkDetailMuted}>-</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : null}
-
-          {bulkAddResultRows && bulkAddResultRows.length === 0 ? (
-            <p className={styles.inlineMessage}>No URLs were processed.</p>
-          ) : null}
-        </>
-      )}
+                      ) : null}
+                      {badgeFlags.likelyCommentsFeed ? (
+                        <span className={styles.badge}>Likely comments feed</span>
+                      ) : null}
+                    </span>
+                    {candidate.duplicate ? (
+                      <button
+                        type="button"
+                        className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
+                        onClick={() => onOpenExistingFeed(candidate.url)}
+                      >
+                        Open existing feed
+                      </button>
+                    ) : null}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
+      ) : null}
 
       <fieldset className={styles.folderFieldset}>
         <legend className={styles.label}>Folders</legend>

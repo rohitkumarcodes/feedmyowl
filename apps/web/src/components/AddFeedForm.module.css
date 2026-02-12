@@ -17,30 +17,6 @@
   text-transform: uppercase;
 }
 
-.modeFieldset {
-  border: 1px solid var(--lp-border);
-  margin: 0;
-  min-width: 0;
-  padding: 6px;
-}
-
-.modeOptions {
-  display: flex;
-  gap: 8px;
-}
-
-.modeOption {
-  align-items: center;
-  color: var(--lp-text-main);
-  display: inline-flex;
-  font-size: var(--text-xs);
-  gap: 4px;
-}
-
-.modeOption input {
-  margin: 0;
-}
-
 .actions {
   display: flex;
   gap: 6px;
@@ -153,11 +129,6 @@
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
-.bulkTextarea {
-  min-height: 96px;
-  resize: vertical;
-}
-
 .inlineMessage {
   color: var(--text-secondary);
   font-size: var(--text-xs);
@@ -170,113 +141,6 @@
   justify-content: space-between;
 }
 
-.bulkSummary {
-  border: 1px solid var(--lp-border);
-  color: var(--lp-text-main);
-  display: grid;
-  font-size: var(--text-xs);
-  gap: 4px;
-  margin-top: 2px;
-  padding: 6px;
-}
-
-.bulkFailures {
-  margin: 0;
-  padding-left: 16px;
-}
-
-.bulkTableWrap {
-  border: 1px solid var(--lp-border);
-  display: grid;
-  gap: 6px;
-  max-height: 260px;
-  overflow: auto;
-  padding: 6px;
-}
-
-.bulkTableActions {
-  align-items: center;
-  display: flex;
-  gap: 6px;
-  justify-content: space-between;
-}
-
-.bulkTableCount {
-  color: var(--lp-text-muted);
-  font-size: var(--text-xs);
-}
-
-.bulkTable {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-.bulkTable th,
-.bulkTable td {
-  border-top: 1px solid var(--lp-border);
-  font-size: var(--text-xs);
-  padding: 6px;
-  text-align: left;
-  vertical-align: top;
-}
-
-.bulkTable th {
-  background: var(--lp-surface-0);
-  border-top: 0;
-  color: var(--lp-text-muted);
-  position: sticky;
-  top: 0;
-  text-transform: uppercase;
-  z-index: 1;
-}
-
-.bulkTable tbody tr:hover {
-  background: var(--lp-surface-hover);
-}
-
-.bulkUrlCell {
-  max-width: 320px;
-  word-break: break-all;
-}
-
-.statusChip {
-  border: 1px solid var(--lp-border);
-  display: inline-flex;
-  font-weight: var(--weight-semibold);
-  padding: 1px 6px;
-}
-
-.statusChipimported {
-  background: rgb(0 95 215 / 10%);
-  border-color: rgb(0 95 215 / 40%);
-  color: var(--accent);
-}
-
-.statusChipmerged {
-  background: rgb(0 95 215 / 8%);
-  border-color: rgb(0 95 215 / 28%);
-  color: var(--text-primary);
-}
-
-.statusChipduplicate {
-  background: var(--lp-surface-1);
-  color: var(--lp-text-muted);
-}
-
-.statusChipfailed {
-  background: var(--danger-bg);
-  border-color: var(--danger-border);
-  color: var(--danger-text);
-}
-
-.bulkFailureDetail {
-  color: var(--text-secondary);
-  margin-top: 4px;
-}
-
-.bulkDetailMuted {
-  color: var(--lp-text-muted);
-}
 
 .createdFolderRename {
   border: 1px solid var(--lp-border);
@@ -301,11 +165,5 @@
   .inlineDuplicateRow {
     align-items: stretch;
     display: grid;
-  }
-
-  .bulkTableActions {
-    align-items: stretch;
-    flex-direction: column;
-    justify-content: flex-start;
   }
 }
