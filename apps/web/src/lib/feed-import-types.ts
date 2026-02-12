@@ -4,6 +4,9 @@ export const FEED_IMPORT_MAX_ENTRIES_PER_REQUEST = 50;
 export const FEED_IMPORT_CLIENT_CHUNK_SIZE = 20;
 export const FEED_IMPORT_MAX_TOTAL_ENTRIES = 500;
 
+/** Maximum import file size in bytes (10 MB). */
+export const FEED_IMPORT_MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+
 export interface FeedImportEntry {
   url: string;
   folderNames: string[];
@@ -35,6 +38,8 @@ export interface FeedImportRowResult {
     | "duplicate"
     | "unknown";
   feedId?: string;
+  /** Non-fatal issues encountered while processing this entry. */
+  warnings?: string[];
 }
 
 export interface FeedImportResponse {

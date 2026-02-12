@@ -248,6 +248,37 @@ describe("feed import file helpers", () => {
     });
   });
 
+  it("strips UTF-8 BOM before parsing", () => {
+    const bomPrefix = "\uFEFF";
+    const jsonContent = JSON.stringify({
+      version: 2,
+      sourceApp: "FeedMyOwl",
+      exportedAt: "2026-02-11T00:00:00.000Z",
+      feeds: [{ url: "https://example.com/bom.xml", folders: ["Bom"] }],
+    });
+
+    const parsed = parseImportFileContents("feeds.json", bomPrefix + jsonContent);
+
+    expect(parsed.sourceType).toBe("JSON");
+    expect(parsed.entries).toHaveLength(1);
+    expect(parsed.entries[0].url).toBe("https://example.com/bom.xml");
+  });
+
+  it("strips CDATA sections before parsing OPML outline tags", () => {
+    const opml = `<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <body>
+    <outline text="Notes"><![CDATA[<outline text="Fake" xmlUrl="https://fake.test/cdata.xml" />]]></outline>
+    <outline text="Real Feed" xmlUrl="https://real.test/feed.xml" />
+  </body>
+</opml>`;
+
+    const entries = parseOpmlImportEntries(opml);
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].url).toBe("https://real.test/feed.xml");
+  });
+
   it("parses files by extension and rejects unsupported types", () => {
     const parsed = parseImportFileContents(
       "feeds.json",

@@ -23,4 +23,13 @@ describe("normalizeFeedUrl", () => {
     expect(normalizeFeedUrl("https://")).toBeNull();
     expect(normalizeFeedUrl(null)).toBeNull();
   });
+
+  it("strips embedded credentials from URLs", () => {
+    expect(normalizeFeedUrl("https://user:pass@example.com/feed.xml")).toBe(
+      "https://example.com/feed.xml"
+    );
+    expect(normalizeFeedUrl("http://admin:secret@blog.test/rss")).toBe(
+      "http://blog.test/rss"
+    );
+  });
 });

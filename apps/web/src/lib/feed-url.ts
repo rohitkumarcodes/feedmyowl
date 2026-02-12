@@ -21,6 +21,10 @@ export function normalizeFeedUrl(rawUrl: unknown): string | null {
       return null;
     }
 
+    // Strip embedded credentials — they leak in logs and are a security risk.
+    parsed.username = "";
+    parsed.password = "";
+
     return parsed.toString();
   } catch {
     return null;

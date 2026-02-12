@@ -28,6 +28,14 @@ import { NO_FEED_FOUND_MESSAGE } from "@/lib/feed-messages";
 const IMPORT_WORKER_CONCURRENCY = 4;
 const CUSTOM_TITLE_MAX_LENGTH = 255;
 
+/**
+ * Maximum number of feed-discovery fallback attempts per import batch.
+ * Discovery fetches the URL as HTML and scrapes for feed links, so it is
+ * expensive. After this many attempts the remaining entries only try
+ * direct XML parsing.
+ */
+const IMPORT_MAX_DISCOVERY_ATTEMPTS = 50;
+
 interface ImportCandidate {
   url: string;
   parsedFeed: ParsedFeed;
@@ -38,8 +46,14 @@ interface ImportCandidate {
     | null;
 }
 
+interface FolderResolveResult {
+  folderIds: string[];
+  /** Folder names that could not be created (e.g. limit reached). */
+  warnings: string[];
+}
+
 interface FolderResolver {
-  resolveFolderIds(folderNames: string[]): Promise<string[]>;
+  resolveFolderIds(folderNames: string[]): Promise<FolderResolveResult>;
 }
 
 function normalizeFolderName(value: string): string {
@@ -159,17 +173,26 @@ async function createFolderResolver(userId: string): Promise<FolderResolver> {
   }
 
   return {
-    async resolveFolderIds(folderNames: string[]): Promise<string[]> {
+    async resolveFolderIds(folderNames: string[]): Promise<FolderResolveResult> {
       const resolvedFolderIds: string[] = [];
+      const warnings: string[] = [];
 
       for (const folderName of folderNames) {
         const resolvedFolderId = await ensureFolderId(folderName);
         if (resolvedFolderId) {
           resolvedFolderIds.push(resolvedFolderId);
+        } else {
+          const normalizedName = normalizeFolderName(folderName);
+          if (normalizedName) {
+            warnings.push(`Folder "${normalizedName}" could not be created.`);
+          }
         }
       }
 
-      return normalizeFolderIds(resolvedFolderIds);
+      return {
+        folderIds: normalizeFolderIds(resolvedFolderIds),
+        warnings,
+      };
     },
   };
 }
@@ -272,6 +295,8 @@ async function resolveImportCandidate(params: {
   userId: string;
   normalizedInputUrl: string;
   skipMultiCandidate: boolean;
+  /** Shared counter — when it reaches 0, discovery fallback is skipped. */
+  discoveryBudget: { remaining: number };
 }):
   Promise<
     | {
@@ -341,6 +366,25 @@ async function resolveImportCandidate(params: {
       };
     }
   }
+
+  // Skip discovery if the per-batch budget is exhausted.
+  if (params.discoveryBudget.remaining <= 0) {
+    if (directFailureAfterFallback) {
+      return {
+        status: "failed",
+        code: directFailureAfterFallback.code,
+        message: directFailureAfterFallback.message,
+      };
+    }
+
+    return {
+      status: "failed",
+      code: "invalid_xml",
+      message: NO_FEED_FOUND_MESSAGE,
+    };
+  }
+
+  params.discoveryBudget.remaining -= 1;
 
   const discovery = await discoverFeedCandidates(params.normalizedInputUrl);
   const validatedCandidates: ImportCandidate[] = [];
@@ -434,6 +478,7 @@ async function importOneFeedEntry(params: {
   entry: FeedImportEntry;
   skipMultiCandidate: boolean;
   folderResolver: FolderResolver;
+  discoveryBudget: { remaining: number };
 }): Promise<FeedImportRowResult> {
   const normalizedInputUrl = normalizeFeedUrl(params.entry.url);
   if (!normalizedInputUrl) {
@@ -449,6 +494,7 @@ async function importOneFeedEntry(params: {
     userId: params.userId,
     normalizedInputUrl,
     skipMultiCandidate: params.skipMultiCandidate,
+    discoveryBudget: params.discoveryBudget,
   });
 
   if (candidateResult.status === "failed") {
@@ -470,17 +516,25 @@ async function importOneFeedEntry(params: {
   }
 
   const candidate = candidateResult.candidate;
-  const resolvedFolderIds = await params.folderResolver.resolveFolderIds(
+  const folderResult = await params.folderResolver.resolveFolderIds(
     params.entry.folderNames
   );
+  const resolvedFolderIds = folderResult.folderIds;
+  const folderWarnings = folderResult.warnings.length > 0
+    ? folderResult.warnings
+    : undefined;
 
   if (candidate.existingFeed) {
-    return await mergeDuplicateFeedFolders({
+    const mergeResult = await mergeDuplicateFeedFolders({
       userId: params.userId,
       importUrl: normalizedInputUrl,
       existingFeed: candidate.existingFeed,
       resolvedFolderIds,
     });
+    if (folderWarnings) {
+      mergeResult.warnings = [...(mergeResult.warnings ?? []), ...folderWarnings];
+    }
+    return mergeResult;
   }
 
   try {
@@ -508,6 +562,7 @@ async function importOneFeedEntry(params: {
         candidate.url !== normalizedInputUrl
           ? "Feed found automatically and added."
           : undefined,
+      warnings: folderWarnings,
     };
   } catch (error) {
     const raceDuplicate = await findExistingFeedForUserByUrl(
@@ -516,12 +571,16 @@ async function importOneFeedEntry(params: {
     );
 
     if (raceDuplicate) {
-      return await mergeDuplicateFeedFolders({
+      const mergeResult = await mergeDuplicateFeedFolders({
         userId: params.userId,
         importUrl: normalizedInputUrl,
         existingFeed: raceDuplicate,
         resolvedFolderIds,
       });
+      if (folderWarnings) {
+        mergeResult.warnings = [...(mergeResult.warnings ?? []), ...folderWarnings];
+      }
+      return mergeResult;
     }
 
     const mappedFailure = mapFailureFromFeedError(error);
@@ -545,6 +604,10 @@ export async function importFeedEntriesForUser(params: {
 
   const skipMultiCandidate = params.skipMultiCandidate !== false;
   const folderResolver = await createFolderResolver(params.userId);
+
+  // Shared mutable budget — workers decrement it as they attempt discovery.
+  const discoveryBudget = { remaining: IMPORT_MAX_DISCOVERY_ATTEMPTS };
+
   const workerCount = Math.max(
     1,
     Math.min(IMPORT_WORKER_CONCURRENCY, params.entries.length)
@@ -569,6 +632,7 @@ export async function importFeedEntriesForUser(params: {
           entry,
           skipMultiCandidate,
           folderResolver,
+          discoveryBudget,
         });
       } catch {
         results[nextIndex] = {

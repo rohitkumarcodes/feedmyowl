@@ -29,7 +29,9 @@ import {
 } from "@/lib/feed-import-client";
 import {
   FEED_IMPORT_CLIENT_CHUNK_SIZE,
+  FEED_IMPORT_MAX_FILE_SIZE_BYTES,
   FEED_IMPORT_MAX_TOTAL_ENTRIES,
+  type FeedImportEntry,
   type FeedImportResponse,
   type FeedImportRowResult,
   type FeedImportSourceType,
@@ -86,6 +88,14 @@ interface ImportSummary {
 interface ImportProgress {
   processedCount: number;
   totalCount: number;
+}
+
+interface ImportPreview {
+  fileName: string;
+  sourceType: FeedImportSourceType;
+  entryCount: number;
+  folderCount: number;
+  entries: FeedImportEntry[];
 }
 
 const THEME_MODE_OPTIONS: Array<{
@@ -328,8 +338,12 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
   const [isImportingFeeds, setIsImportingFeeds] = useState(false);
   const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
   const [importRetryDelaySeconds, setImportRetryDelaySeconds] = useState<number | null>(null);
+  const [importRetryCountdown, setImportRetryCountdown] = useState<number | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [importSummary, setImportSummary] = useState<ImportSummary | null>(null);
+  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [draftOwlAscii, setDraftOwlAscii] = useState<OwlAscii>(owlAscii);
   const [savedOwlAscii, setSavedOwlAscii] = useState<OwlAscii>(owlAscii);
   const [isSavingOwl, setIsSavingOwl] = useState(false);
@@ -371,6 +385,28 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
       applyThemeModeToDocument("system");
     });
   }, [draftThemeMode]);
+
+  // Live countdown for rate-limit retry delay.
+  useEffect(() => {
+    if (importRetryDelaySeconds === null) {
+      setImportRetryCountdown(null);
+      return;
+    }
+
+    setImportRetryCountdown(importRetryDelaySeconds);
+    const interval = window.setInterval(() => {
+      setImportRetryCountdown((previous) => {
+        if (previous === null || previous <= 1) {
+          return null;
+        }
+        return previous - 1;
+      });
+    }, 1_000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [importRetryDelaySeconds]);
 
   useEffect(() => {
     if (!isThemePanelExpanded && !isOwlPanelExpanded && !isShortcutsPanelExpanded) {
@@ -534,8 +570,36 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
     }
   }
 
-  function handleExport(format: "opml" | "json") {
-    window.location.assign(`/api/feeds/export?format=${format}`);
+  async function handleExport(format: "opml" | "json") {
+    if (isExporting) return;
+    setExportError(null);
+    setIsExporting(true);
+
+    try {
+      const response = await fetch(`/api/feeds/export?format=${format}`);
+      if (!response.ok) {
+        setExportError("Could not export feeds. Try again.");
+        return;
+      }
+
+      const blob = await response.blob();
+      const disposition = response.headers.get("Content-Disposition") ?? "";
+      const filenameMatch = disposition.match(/filename="?([^";\s]+)"?/);
+      const filename = filenameMatch?.[1] ?? `feedmyowl-export.${format === "json" ? "json" : "opml"}`;
+
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(downloadUrl);
+    } catch {
+      setExportError("Could not connect to the server.");
+    } finally {
+      setIsExporting(false);
+    }
   }
 
   async function handleSaveOwl() {
@@ -615,6 +679,9 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
     }
   }
 
+  /**
+   * Phase 1: Parse the selected file and show a preview before importing.
+   */
   async function handleImportFileChange(event: ChangeEvent<HTMLInputElement>) {
     const selectedFile = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
@@ -627,9 +694,18 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
     setImportSummary(null);
     setImportProgress(null);
     setImportRetryDelaySeconds(null);
-    setIsImportingFeeds(true);
+    setImportPreview(null);
 
     try {
+      // Reject oversized files before reading into memory.
+      if (selectedFile.size > FEED_IMPORT_MAX_FILE_SIZE_BYTES) {
+        const maxMb = Math.round(FEED_IMPORT_MAX_FILE_SIZE_BYTES / (1024 * 1024));
+        setImportError(
+          `This file is too large (${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB). The maximum allowed size is ${maxMb} MB.`
+        );
+        return;
+      }
+
       const parsedFile = parseImportFileContents(
         selectedFile.name,
         await selectedFile.text()
@@ -648,6 +724,41 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
         return;
       }
 
+      // Collect unique folder names for the preview summary.
+      const uniqueFolders = new Set<string>();
+      for (const entry of normalizedEntries) {
+        for (const folderName of entry.folderNames) {
+          if (folderName) uniqueFolders.add(folderName);
+        }
+      }
+
+      setImportPreview({
+        fileName: selectedFile.name,
+        sourceType: parsedFile.sourceType,
+        entryCount: normalizedEntries.length,
+        folderCount: uniqueFolders.size,
+        entries: normalizedEntries,
+      });
+    } catch (error) {
+      setImportError(
+        error instanceof Error
+          ? error.message
+          : "Could not read the selected import file."
+      );
+    }
+  }
+
+  /**
+   * Phase 2: Run the actual import after the user confirms the preview.
+   */
+  async function handleConfirmImport() {
+    if (!importPreview) return;
+
+    const { entries: normalizedEntries, sourceType, fileName } = importPreview;
+    setImportPreview(null);
+    setIsImportingFeeds(true);
+
+    try {
       const chunks = chunkImportEntries(
         normalizedEntries,
         FEED_IMPORT_CLIENT_CHUNK_SIZE
@@ -667,7 +778,7 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                sourceType: parsedFile.sourceType,
+                sourceType,
                 entries: chunk,
                 options: { skipMultiCandidate: true },
               }),
@@ -724,9 +835,9 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
       const summary = summarizeImportRows(allRows);
       const failedRows = allRows.filter(isImportFailureRow);
       setImportSummary({
-        fileName: selectedFile.name,
-        sourceType: parsedFile.sourceType,
-        discoveredCount: parsedFile.entries.length,
+        fileName,
+        sourceType,
+        discoveredCount: normalizedEntries.length,
         summary,
         failedRows,
       });
@@ -745,6 +856,10 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
       setImportProgress(null);
       setImportRetryDelaySeconds(null);
     }
+  }
+
+  function handleCancelImport() {
+    setImportPreview(null);
   }
 
   function handleDownloadFailedImportRows() {
@@ -911,36 +1026,68 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
             <button
               type="button"
               className={styles.linkButton}
-              onClick={() => handleExport("opml")}
+              onClick={() => { void handleExport("opml"); }}
+              disabled={isExporting}
             >
-              Export OPML
+              {isExporting ? "Exporting..." : "Export OPML"}
             </button>
             <button
               type="button"
               className={styles.linkButton}
-              onClick={() => handleExport("json")}
+              onClick={() => { void handleExport("json"); }}
+              disabled={isExporting}
             >
-              Export JSON
+              {isExporting ? "Exporting..." : "Export JSON"}
             </button>
             <button
               type="button"
               className={styles.linkButton}
               onClick={() => importFileInputRef.current?.click()}
-              disabled={isImportingFeeds}
+              disabled={isImportingFeeds || importPreview !== null}
             >
               {importButtonLabel}
             </button>
           </div>
+          {exportError ? <p className={styles.inlineMessage}>{exportError}</p> : null}
+          {importPreview ? (
+            <div className={styles.importSummary} role="status">
+              <p>
+                Found {importPreview.entryCount} feed
+                {importPreview.entryCount === 1 ? "" : "s"}
+                {importPreview.folderCount > 0
+                  ? ` in ${importPreview.folderCount} folder${importPreview.folderCount === 1 ? "" : "s"}`
+                  : ""}
+                . Detected format: {importPreview.sourceType}.
+              </p>
+              <p className={styles.muted}>Source file: {importPreview.fileName}</p>
+              <div className={styles.inlineActions}>
+                <button
+                  type="button"
+                  className={styles.linkButton}
+                  onClick={() => { void handleConfirmImport(); }}
+                >
+                  Import now
+                </button>
+                <button
+                  type="button"
+                  className={styles.linkButton}
+                  onClick={handleCancelImport}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : null}
           {isImportingFeeds && importProgress ? (
             <>
               <p className={styles.importProgress} role="status" aria-live="polite">
                 Importing {importProgress.processedCount} of {importProgress.totalCount} feed URL
                 {importProgress.totalCount === 1 ? "" : "s"}...
               </p>
-              {importRetryDelaySeconds !== null ? (
+              {importRetryCountdown !== null ? (
                 <p className={styles.importProgress} role="status" aria-live="polite">
-                  Rate limit reached. Retrying this chunk in {importRetryDelaySeconds} second
-                  {importRetryDelaySeconds === 1 ? "" : "s"}...
+                  Rate limit reached. Retrying in {importRetryCountdown} second
+                  {importRetryCountdown === 1 ? "" : "s"}...
                 </p>
               ) : null}
             </>

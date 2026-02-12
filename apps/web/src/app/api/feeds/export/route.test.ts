@@ -104,15 +104,20 @@ describe("GET /api/feeds/export", () => {
     expect(body).toContain("<opml version=\"2.0\">");
     expect(body).toContain("xmlUrl=\"https://example.com/feed.xml\"");
     expect(body).toContain("outline text=\"Tech\"");
+    // htmlUrl should not be present (we don't store site URLs).
+    expect(body).not.toContain("htmlUrl=");
+    // ownerEmail from the user record should be in the head.
+    expect(body).toContain("<ownerEmail>user@example.com</ownerEmail>");
   });
 
-  it("returns portable JSON v2 by default", async () => {
+  it("returns portable JSON v2 with all folder names", async () => {
     const response = await GET(
       createRequest("https://app.feedmyowl.test/api/feeds/export?format=json")
     );
     const body = (await response.json()) as {
       version: number;
       sourceApp: string;
+      folders: string[];
       feeds: Array<{
         url: string;
         customTitle: string | null;
@@ -123,6 +128,8 @@ describe("GET /api/feeds/export", () => {
     expect(response.status).toBe(200);
     expect(body.version).toBe(2);
     expect(body.sourceApp).toBe("FeedMyOwl");
+    // All folder names are listed (including empty ones).
+    expect(body.folders).toEqual(["News", "Tech"]);
     expect(body.feeds).toEqual([
       {
         url: "https://example.com/feed.xml",
@@ -130,6 +137,43 @@ describe("GET /api/feeds/export", () => {
         folders: ["News", "Tech"],
       },
     ]);
+  });
+
+  it("exports nested folder hierarchy in OPML from flattened folder names", async () => {
+    const now = new Date("2026-02-11T00:00:00.000Z");
+    mocks.dbQueryUsersFindFirst.mockResolvedValue({
+      id: "user_123",
+      clerkId: "clerk_123",
+      email: "user@example.com",
+      createdAt: now,
+      folders: [
+        { id: "folder_nested", name: "Tech / Web", createdAt: now, updatedAt: now },
+      ],
+      feeds: [
+        {
+          id: "feed_nested",
+          url: "https://example.com/nested.xml",
+          title: "Nested Feed",
+          customTitle: null,
+          description: null,
+          lastFetchedAt: now,
+          createdAt: now,
+          updatedAt: now,
+          folderMemberships: [{ folderId: "folder_nested" }],
+        },
+      ],
+    });
+
+    const response = await GET(
+      createRequest("https://app.feedmyowl.test/api/feeds/export?format=opml")
+    );
+    const body = await response.text();
+
+    expect(response.status).toBe(200);
+    // Should produce nested <outline> elements, not a flat "Tech / Web" folder.
+    expect(body).toContain('outline text="Tech"');
+    expect(body).toContain('outline text="Web"');
+    expect(body).not.toContain('outline text="Tech / Web"');
   });
 
   it("returns 400 for unsupported JSON export version", async () => {

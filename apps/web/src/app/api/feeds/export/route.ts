@@ -58,11 +58,93 @@ function toResolvedFeedFolderIds(feed: FeedRow): string[] {
   return resolveFeedFolderIds(getFeedMembershipFolderIds(feed));
 }
 
+/** The separator used to flatten nested folder paths into a single name. */
+const FOLDER_PATH_SEPARATOR = " / ";
+
+/**
+ * Render a single feed as an OPML outline element.
+ */
+function buildFeedOutline(feed: { url: string; title: string | null; customTitle: string | null }, indent: string): string {
+  const title = escapeXml(feed.customTitle || feed.title || feed.url);
+  const url = escapeXml(feed.url);
+  return `${indent}<outline text="${title}" title="${title}" type="rss" xmlUrl="${url}" />`;
+}
+
+/**
+ * A tree node representing a folder that may contain feeds and sub-folders.
+ * Folder names containing " / " (the flattening separator) are split back
+ * into nested nodes so the OPML export preserves hierarchy for readers that
+ * support it (e.g. Feedly, Inoreader).
+ */
+interface FolderTreeNode {
+  name: string;
+  children: Map<string, FolderTreeNode>;
+  feeds: Array<{ url: string; title: string | null; customTitle: string | null }>;
+}
+
+function getOrCreateChild(parent: FolderTreeNode, childName: string): FolderTreeNode {
+  let child = parent.children.get(childName);
+  if (!child) {
+    child = { name: childName, children: new Map(), feeds: [] };
+    parent.children.set(childName, child);
+  }
+  return child;
+}
+
+/**
+ * Render a folder tree node as nested OPML outline elements.
+ */
+function renderFolderNode(node: FolderTreeNode, depth: number): string {
+  const indent = "  ".repeat(depth + 2);
+  const childIndent = "  ".repeat(depth + 3);
+  const lines: string[] = [];
+
+  // Sort children alphabetically.
+  const sortedChildren = [...node.children.values()].sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
+
+  // Sort feeds alphabetically by display label.
+  const sortedFeeds = [...node.feeds].sort((a, b) => {
+    const aLabel = a.customTitle || a.title || a.url;
+    const bLabel = b.customTitle || b.title || b.url;
+    return aLabel.localeCompare(bLabel);
+  });
+
+  const escapedName = escapeXml(node.name);
+
+  // If this node has no content at all, skip it.
+  if (sortedChildren.length === 0 && sortedFeeds.length === 0) {
+    return "";
+  }
+
+  lines.push(`${indent}<outline text="${escapedName}" title="${escapedName}">`);
+
+  for (const child of sortedChildren) {
+    const childBlock = renderFolderNode(child, depth + 1);
+    if (childBlock) {
+      lines.push(childBlock);
+    }
+  }
+
+  for (const feed of sortedFeeds) {
+    lines.push(buildFeedOutline(feed, childIndent));
+  }
+
+  lines.push(`${indent}</outline>`);
+  return lines.join("\n");
+}
+
 /**
  * Build OPML for feeds grouped by folder assignment.
+ *
+ * Folder names that contain " / " (from flattened nested imports) are
+ * split back into a nested outline hierarchy so that readers which support
+ * sub-folders see the correct structure.
  */
 function buildFolderAwareOpml(params: {
   nowIso: string;
+  ownerEmail?: string;
   folders: Array<{ id: string; name: string }>;
   feeds: Array<{
     url: string;
@@ -71,18 +153,41 @@ function buildFolderAwareOpml(params: {
     folderIds: string[];
   }>;
 }): string {
-  const sortedFolders = [...params.folders].sort((a, b) =>
-    a.name.localeCompare(b.name)
-  );
-
   const sortedFeeds = [...params.feeds].sort((a, b) => {
     const aLabel = a.customTitle || a.title || a.url;
     const bLabel = b.customTitle || b.title || b.url;
     return aLabel.localeCompare(bLabel);
   });
 
-  const feedsByFolder = new Map<string, typeof sortedFeeds>();
+  const folderNameById = new Map(params.folders.map((f) => [f.id, f.name]));
+
+  // Build a tree of folder nodes. Each flattened name like "Tech / Web"
+  // becomes nested nodes: root → Tech → Web.
+  const rootChildren = new Map<string, FolderTreeNode>();
   const uncategorized: typeof sortedFeeds = [];
+
+  function ensurePath(folderName: string): FolderTreeNode {
+    const segments = folderName.split(FOLDER_PATH_SEPARATOR);
+    let current: FolderTreeNode | null = null;
+
+    for (let i = 0; i < segments.length; i++) {
+      const segment = segments[i].trim();
+      if (!segment) continue;
+
+      if (i === 0 || !current) {
+        let root = rootChildren.get(segment);
+        if (!root) {
+          root = { name: segment, children: new Map(), feeds: [] };
+          rootChildren.set(segment, root);
+        }
+        current = root;
+      } else {
+        current = getOrCreateChild(current, segment);
+      }
+    }
+
+    return current!;
+  }
 
   for (const feed of sortedFeeds) {
     if (feed.folderIds.length === 0) {
@@ -91,38 +196,24 @@ function buildFolderAwareOpml(params: {
     }
 
     for (const folderId of feed.folderIds) {
-      const existing = feedsByFolder.get(folderId) ?? [];
-      existing.push(feed);
-      feedsByFolder.set(folderId, existing);
+      const folderName = folderNameById.get(folderId);
+      if (!folderName) continue;
+      const leafNode = ensurePath(folderName);
+      leafNode.feeds.push(feed);
     }
   }
 
+  // Render uncategorized feeds (top-level, no folder).
   const uncategorizedOutlines = uncategorized
-    .map((feed) => {
-      const title = escapeXml(feed.customTitle || feed.title || feed.url);
-      const url = escapeXml(feed.url);
-      return `    <outline text="${title}" title="${title}" type="rss" xmlUrl="${url}" htmlUrl="${url}" />`;
-    })
+    .map((feed) => buildFeedOutline(feed, "    "))
     .join("\n");
 
-  const folderBlocks = sortedFolders
-    .map((folder) => {
-      const folderFeeds = feedsByFolder.get(folder.id) ?? [];
-      if (folderFeeds.length === 0) {
-        return "";
-      }
-
-      const folderName = escapeXml(folder.name);
-      const feedOutlines = folderFeeds
-        .map((feed) => {
-          const title = escapeXml(feed.customTitle || feed.title || feed.url);
-          const url = escapeXml(feed.url);
-          return `      <outline text="${title}" title="${title}" type="rss" xmlUrl="${url}" htmlUrl="${url}" />`;
-        })
-        .join("\n");
-
-      return `    <outline text="${folderName}" title="${folderName}">\n${feedOutlines}\n    </outline>`;
-    })
+  // Render folder tree nodes.
+  const sortedRoots = [...rootChildren.values()].sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
+  const folderBlocks = sortedRoots
+    .map((node) => renderFolderNode(node, 0))
     .filter(Boolean)
     .join("\n");
 
@@ -130,11 +221,15 @@ function buildFolderAwareOpml(params: {
     .filter((block) => block.trim().length > 0)
     .join("\n");
 
+  const ownerEmailLine = params.ownerEmail
+    ? `\n    <ownerEmail>${escapeXml(params.ownerEmail)}</ownerEmail>`
+    : "";
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <opml version="2.0">
   <head>
     <title>FeedMyOwl Export</title>
-    <dateCreated>${params.nowIso}</dateCreated>
+    <dateCreated>${params.nowIso}</dateCreated>${ownerEmailLine}
   </head>
   <body>
 ${bodyLines}
@@ -220,6 +315,7 @@ export async function GET(request: NextRequest) {
     if (format === "opml") {
       const opml = buildFolderAwareOpml({
         nowIso,
+        ownerEmail: user.email,
         folders: folderRows.map((folder) => ({
           id: folder.id,
           name: folder.name,
@@ -243,10 +339,16 @@ export async function GET(request: NextRequest) {
     }
 
     if (format === "json") {
+      // Include all folder names so empty folders survive a round-trip.
+      const allFolderNames = folderRows
+        .map((folder) => folder.name)
+        .sort((a, b) => a.localeCompare(b));
+
       const portableExport = {
         version: 2 as const,
         exportedAt: nowIso,
         sourceApp: "FeedMyOwl" as const,
+        folders: allFolderNames,
         feeds: feedRows
           .map((feed) => {
             const folderNames = toResolvedFeedFolderIds(feed)

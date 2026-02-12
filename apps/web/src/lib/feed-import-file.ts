@@ -96,6 +96,14 @@ function parseOpmlCategoryFolderNames(value: string): string[] {
 }
 
 /**
+ * Strip CDATA sections so the regex tokenizer doesn't match outline tags
+ * that appear inside CDATA blocks (rare but valid in XML).
+ */
+function stripCdataSections(xml: string): string {
+  return xml.replace(/<!\[CDATA\[[\s\S]*?\]\]>/g, "");
+}
+
+/**
  * Parse feed entries from OPML/XML while preserving parent folder context.
  */
 export function parseOpmlImportEntries(contents: string): FeedImportEntry[] {
@@ -104,7 +112,10 @@ export function parseOpmlImportEntries(contents: string): FeedImportEntry[] {
   const outlineContextStack: boolean[] = [];
   const outlineTagPattern = /<\/?outline\b[^>]*>/gi;
 
-  for (const token of contents.matchAll(outlineTagPattern)) {
+  // Strip CDATA blocks so regex doesn't match outline tags inside them.
+  const sanitizedContents = stripCdataSections(contents);
+
+  for (const token of sanitizedContents.matchAll(outlineTagPattern)) {
     const tag = token[0];
     const lowerTag = tag.toLowerCase();
 
@@ -277,22 +288,30 @@ export function normalizeAndMergeImportEntries(entries: FeedImportEntry[]): Feed
 }
 
 /**
+ * Strip a leading UTF-8 BOM if present. Some editors/exporters prepend it.
+ */
+function stripBom(value: string): string {
+  return value.charCodeAt(0) === 0xfeff ? value.slice(1) : value;
+}
+
+/**
  * Parse import file contents from extension-based source format.
  */
 export function parseImportFileContents(fileName: string, contents: string): ParsedImportFile {
+  const cleanedContents = stripBom(contents);
   const lowerName = fileName.toLowerCase();
 
   if (lowerName.endsWith(".json")) {
     return {
       sourceType: "JSON",
-      entries: parseJsonImportEntries(contents),
+      entries: parseJsonImportEntries(cleanedContents),
     };
   }
 
   if (lowerName.endsWith(".opml") || lowerName.endsWith(".xml")) {
     return {
       sourceType: "OPML",
-      entries: parseOpmlImportEntries(contents),
+      entries: parseOpmlImportEntries(cleanedContents),
     };
   }
 
