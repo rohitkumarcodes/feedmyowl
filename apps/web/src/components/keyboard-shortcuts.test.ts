@@ -25,12 +25,16 @@ describe("keyboard-shortcuts definitions", () => {
   });
 
   it("defines all required public-facing shortcut actions", () => {
-    const keys = SHORTCUT_DEFINITIONS.map((shortcut) => shortcut.keys.join("+"));
+    const keys = SHORTCUT_DEFINITIONS.flatMap((shortcut) => shortcut.keys);
 
     expect(keys).toContain("j");
     expect(keys).toContain("k");
     expect(keys).toContain("ArrowDown");
     expect(keys).toContain("ArrowUp");
+    expect(keys).toContain("PageDown");
+    expect(keys).toContain("PageUp");
+    expect(keys).toContain("Space");
+    expect(keys).toContain("Shift+Space");
     expect(keys).toContain("Enter");
     expect(keys).toContain("r");
     expect(keys).toContain("f");
@@ -49,5 +53,17 @@ describe("keyboard-shortcuts definitions", () => {
 
     expect(nextVim?.description).toContain("Open next article");
     expect(previousVim?.description).toContain("Open previous article");
+  });
+
+  it("documents dual Arrow key behavior for list and reader contexts", () => {
+    const listArrowDown = SHORTCUT_DEFINITIONS.find(
+      (shortcut) => shortcut.id === "article.next.arrow"
+    );
+    const readerArrowDown = SHORTCUT_DEFINITIONS.find(
+      (shortcut) => shortcut.id === "reader.scroll.lineDown"
+    );
+
+    expect(listArrowDown?.description).toContain("list");
+    expect(readerArrowDown?.description).toContain("reader");
   });
 });

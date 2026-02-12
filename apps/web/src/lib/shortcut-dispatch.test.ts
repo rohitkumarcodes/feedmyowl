@@ -63,9 +63,10 @@ describe("shortcut-dispatch", () => {
     expect(
       resolveShortcutAction(eventSnapshot("ArrowDown"), {
         ...baseContext,
+        isListContext: true,
         isReaderContext: true,
       })
-    ).toBeNull();
+    ).toBe("article.next.arrow");
   });
 
   it("maps reader scroll keys only in reader context", () => {

@@ -2,6 +2,8 @@
   background: var(--bg-primary);
   height: 100%;
   overflow: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block: 24px;
 }
 
 .content {
