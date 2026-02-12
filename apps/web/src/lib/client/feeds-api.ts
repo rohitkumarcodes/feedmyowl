@@ -84,6 +84,7 @@ export async function createFeed(url: string, folderIds: string[]) {
     error?: string;
     code?: string;
     duplicate?: boolean;
+    mergedFolderCount?: number;
     message?: string;
     feed?: {
       id: string;

@@ -1,4 +1,4 @@
-export type BulkAddRowStatus = "imported" | "duplicate" | "failed";
+export type BulkAddRowStatus = "imported" | "merged" | "duplicate" | "failed";
 
 export interface BulkSummaryRow {
   url: string;
@@ -9,7 +9,8 @@ export interface BulkSummaryRow {
 export interface BulkSummary {
   processedCount: number;
   importedCount: number;
-  duplicateCount: number;
+  mergedCount: number;
+  duplicateUnchangedCount: number;
   failedCount: number;
   failedDetails: string[];
 }
@@ -53,7 +54,8 @@ export function summarizeBulkAddRows(
   const summary: BulkSummary = {
     processedCount: rows.length,
     importedCount: 0,
-    duplicateCount: 0,
+    mergedCount: 0,
+    duplicateUnchangedCount: 0,
     failedCount: 0,
     failedDetails: [],
   };
@@ -65,7 +67,12 @@ export function summarizeBulkAddRows(
     }
 
     if (row.status === "duplicate") {
-      summary.duplicateCount += 1;
+      summary.duplicateUnchangedCount += 1;
+      continue;
+    }
+
+    if (row.status === "merged") {
+      summary.mergedCount += 1;
       continue;
     }
 

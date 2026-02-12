@@ -25,6 +25,7 @@ import { applyRouteRateLimit } from "@/lib/rate-limit";
 import {
   createFeedWithInitialItems,
   findExistingFeedForUserByUrl,
+  setFeedFoldersForUser,
 } from "@/lib/feed-service";
 import { normalizeFolderIds } from "@/lib/folder-memberships";
 import { getFeedFolderIdsForUserFeed } from "@/lib/feed-folder-memberships";
@@ -143,6 +144,60 @@ function parseFolderIdsPayload(payload: Record<string, unknown>): string[] | nul
   }
 
   return normalizeFolderIds(rawFolderIds);
+}
+
+interface DuplicateFeedRecord {
+  id: string;
+  [key: string]: unknown;
+}
+
+async function buildDuplicateFeedCreateResponse(params: {
+  userId: string;
+  feed: DuplicateFeedRecord;
+  requestedFolderIds: string[];
+}) {
+  const currentFolderIds = await getFeedFolderIdsForUserFeed(
+    params.userId,
+    params.feed.id
+  );
+  const mergedFolderIds = normalizeFolderIds([
+    ...currentFolderIds,
+    ...params.requestedFolderIds,
+  ]);
+  let mergedFolderCount = Math.max(0, mergedFolderIds.length - currentFolderIds.length);
+
+  let nextFolderIds = currentFolderIds;
+  if (mergedFolderCount > 0) {
+    const updateResult = await setFeedFoldersForUser(
+      params.userId,
+      params.feed.id,
+      mergedFolderIds
+    );
+
+    if (updateResult.status === "ok") {
+      nextFolderIds = updateResult.folderIds;
+    } else {
+      nextFolderIds = currentFolderIds;
+      mergedFolderCount = 0;
+    }
+  }
+
+  const duplicateMessage =
+    mergedFolderCount > 0
+      ? `This feed is already in your library. Added to ${mergedFolderCount} folder${
+          mergedFolderCount === 1 ? "" : "s"
+        }.`
+      : "This feed is already in your library.";
+
+  return {
+    feed: {
+      ...params.feed,
+      folderIds: nextFolderIds,
+    },
+    duplicate: true,
+    mergedFolderCount,
+    message: duplicateMessage,
+  };
 }
 
 /**
@@ -318,19 +373,13 @@ export async function postFeedsRoute(request: NextRequest) {
     const existingFeed = await findExistingFeedForUserByUrl(appUser.id, nextUrl);
 
     if (existingFeed) {
-      const existingFeedFolderIds = await getFeedFolderIdsForUserFeed(
-        appUser.id,
-        existingFeed.id
+      return NextResponse.json(
+        await buildDuplicateFeedCreateResponse({
+          userId: appUser.id,
+          feed: existingFeed,
+          requestedFolderIds,
+        })
       );
-
-      return NextResponse.json({
-        feed: {
-          ...existingFeed,
-          folderIds: existingFeedFolderIds,
-        },
-        duplicate: true,
-        message: "This feed is already in your library.",
-      });
     }
 
     let parsedFeed: ParsedFeed | null = null;
@@ -364,19 +413,13 @@ export async function postFeedsRoute(request: NextRequest) {
         const duplicateFeed = await findExistingFeedForUserByUrl(appUser.id, candidateUrl);
 
         if (duplicateFeed) {
-          const duplicateFeedFolderIds = await getFeedFolderIdsForUserFeed(
-            appUser.id,
-            duplicateFeed.id
+          return NextResponse.json(
+            await buildDuplicateFeedCreateResponse({
+              userId: appUser.id,
+              feed: duplicateFeed,
+              requestedFolderIds,
+            })
           );
-
-          return NextResponse.json({
-            feed: {
-              ...duplicateFeed,
-              folderIds: duplicateFeedFolderIds,
-            },
-            duplicate: true,
-            message: "This feed is already in your library.",
-          });
         }
 
         try {
@@ -393,19 +436,13 @@ export async function postFeedsRoute(request: NextRequest) {
           );
 
           if (resolvedDuplicate) {
-            const duplicateFeedFolderIds = await getFeedFolderIdsForUserFeed(
-              appUser.id,
-              resolvedDuplicate.id
+            return NextResponse.json(
+              await buildDuplicateFeedCreateResponse({
+                userId: appUser.id,
+                feed: resolvedDuplicate,
+                requestedFolderIds,
+              })
             );
-
-            return NextResponse.json({
-              feed: {
-                ...resolvedDuplicate,
-                folderIds: duplicateFeedFolderIds,
-              },
-              duplicate: true,
-              message: "This feed is already in your library.",
-            });
           }
 
           break;
@@ -448,19 +485,13 @@ export async function postFeedsRoute(request: NextRequest) {
       const raceExistingFeed = await findExistingFeedForUserByUrl(appUser.id, resolvedUrl);
 
       if (raceExistingFeed) {
-        const raceFeedFolderIds = await getFeedFolderIdsForUserFeed(
-          appUser.id,
-          raceExistingFeed.id
+        return NextResponse.json(
+          await buildDuplicateFeedCreateResponse({
+            userId: appUser.id,
+            feed: raceExistingFeed,
+            requestedFolderIds,
+          })
         );
-
-        return NextResponse.json({
-          feed: {
-            ...raceExistingFeed,
-            folderIds: raceFeedFolderIds,
-          },
-          duplicate: true,
-          message: "This feed is already in your library.",
-        });
       }
 
       return NextResponse.json(

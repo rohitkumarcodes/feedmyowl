@@ -53,7 +53,7 @@ export interface FeedDiscoverResponse {
 
 export interface BulkAddResultRow {
   url: string;
-  status: "imported" | "duplicate" | "failed";
+  status: "imported" | "merged" | "duplicate" | "failed";
   message?: string;
 }
 
@@ -79,6 +79,7 @@ interface FeedCreateResponse {
     createdAt?: string;
   };
   duplicate?: boolean;
+  mergedFolderCount?: number;
   message?: string;
 }
 
@@ -423,6 +424,36 @@ export function useFeedsWorkspaceActions({
     [isMobile, setFeeds, setMobileViewWithHistory, setSelectedScope]
   );
 
+  const applyUpdatedExistingFeed = useCallback(
+    (existingFeed: FeedCreateResponse["feed"]) => {
+      if (!existingFeed?.id) {
+        return;
+      }
+
+      setFeeds((previousFeeds) =>
+        previousFeeds.map((feed) =>
+          feed.id === existingFeed.id
+            ? {
+                ...feed,
+                folderIds: existingFeed.folderIds ?? feed.folderIds,
+                customTitle: existingFeed.customTitle ?? feed.customTitle,
+                title: existingFeed.title ?? feed.title,
+                description: existingFeed.description ?? feed.description,
+                lastFetchedAt: existingFeed.lastFetchedAt ?? feed.lastFetchedAt,
+                lastFetchStatus: existingFeed.lastFetchStatus ?? feed.lastFetchStatus,
+                lastFetchErrorCode:
+                  existingFeed.lastFetchErrorCode ?? feed.lastFetchErrorCode,
+                lastFetchErrorMessage:
+                  existingFeed.lastFetchErrorMessage ?? feed.lastFetchErrorMessage,
+                lastFetchErrorAt: existingFeed.lastFetchErrorAt ?? feed.lastFetchErrorAt,
+              }
+            : feed
+        )
+      );
+    },
+    [setFeeds]
+  );
+
   const handleAddFeed = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -551,24 +582,19 @@ export function useFeedsWorkspaceActions({
             continue;
           }
 
-          if (discoverBody.status === "duplicate" || addableCandidates.length === 0) {
-            rows.push({
-              url: normalizedLine,
-              status: "duplicate",
-              message: "This feed is already in your library.",
-            });
-            knownUrls.add(normalizedLine);
-            continue;
-          }
+          const candidateToCreateUrl =
+            discoverBody.status === "duplicate" || addableCandidates.length === 0
+              ? normalizedLine
+              : addableCandidates[0].url;
 
           setAddFeedStage("creating");
           setAddFeedProgressMessage(
             `Adding feed ${index + 1} of ${parsedLines.length}...`
           );
-          const createBody = await createFeed(addableCandidates[0].url);
+          const createBody = await createFeed(candidateToCreateUrl);
           if (!createBody) {
             rows.push({
-              url: addableCandidates[0].url,
+              url: candidateToCreateUrl,
               status: "failed",
               message: "Could not add feed.",
             });
@@ -577,28 +603,37 @@ export function useFeedsWorkspaceActions({
 
           if (createBody.error) {
             rows.push({
-              url: addableCandidates[0].url,
+              url: candidateToCreateUrl,
               status: "failed",
               message: createBody.error,
             });
             continue;
           }
 
+          const resolvedCreateUrl = createBody.feed?.url ?? candidateToCreateUrl;
+          const normalizedResolvedCreateUrl =
+            normalizeFeedUrl(resolvedCreateUrl) ?? resolvedCreateUrl;
+
           if (createBody.duplicate) {
+            const mergedFolderCount = createBody.mergedFolderCount ?? 0;
+            if (mergedFolderCount > 0) {
+              applyUpdatedExistingFeed(createBody.feed);
+              hasStateChanges = true;
+            }
             rows.push({
-              url: addableCandidates[0].url,
-              status: "duplicate",
+              url: resolvedCreateUrl,
+              status: mergedFolderCount > 0 ? "merged" : "duplicate",
               message: createBody.message || "This feed is already in your library.",
             });
-            knownUrls.add(addableCandidates[0].url);
+            knownUrls.add(normalizedResolvedCreateUrl);
             continue;
           }
 
           rows.push({
-            url: addableCandidates[0].url,
+            url: resolvedCreateUrl,
             status: "imported",
           });
-          knownUrls.add(addableCandidates[0].url);
+          knownUrls.add(normalizedResolvedCreateUrl);
           applyCreatedFeed(createBody.feed);
           hasStateChanges = true;
         }
@@ -608,8 +643,10 @@ export function useFeedsWorkspaceActions({
         setInfoMessage(
           `Processed ${summary.processedCount} URL${
             summary.processedCount === 1 ? "" : "s"
-          }. Imported ${summary.importedCount}, skipped ${summary.duplicateCount} duplicate${
-            summary.duplicateCount === 1 ? "" : "s"
+          }. Imported ${summary.importedCount}, merged ${summary.mergedCount} duplicate assignment${
+            summary.mergedCount === 1 ? "" : "s"
+          }, skipped ${summary.duplicateUnchangedCount} unchanged duplicate${
+            summary.duplicateUnchangedCount === 1 ? "" : "s"
           }, failed ${summary.failedCount}.`
         );
         setAddFeedStage(null);
@@ -686,14 +723,6 @@ export function useFeedsWorkspaceActions({
         const candidates = discoverBody.candidates ?? [];
         const addableCandidates = candidates.filter((candidate) => !candidate.duplicate);
 
-        if (discoverBody.status === "duplicate" || addableCandidates.length === 0) {
-          setInfoMessage("This feed is already in your library.");
-          setAddFeedStage(null);
-          setAddFeedProgressMessage(null);
-          setIsAddingFeed(false);
-          return;
-        }
-
         if (discoverBody.status === "multiple" || addableCandidates.length > 1) {
           setDiscoveryCandidates(candidates);
           setSelectedDiscoveryCandidateUrl("");
@@ -705,7 +734,10 @@ export function useFeedsWorkspaceActions({
           return;
         }
 
-        candidateToCreateUrl = addableCandidates[0].url;
+        candidateToCreateUrl =
+          discoverBody.status === "duplicate" || addableCandidates.length === 0
+            ? normalizedSingleUrl
+            : addableCandidates[0].url;
       }
 
       if (!candidateToCreateUrl) {
@@ -735,10 +767,6 @@ export function useFeedsWorkspaceActions({
         return;
       }
 
-      if (createBody.feed?.id) {
-        applyCreatedFeed(createBody.feed);
-      }
-
       setFeedUrlInput("");
       setBulkFeedUrlInput("");
       setAddFeedNewFolderNameInput("");
@@ -749,11 +777,21 @@ export function useFeedsWorkspaceActions({
       setIsAddingFeed(false);
 
       if (createBody.duplicate) {
+        applyUpdatedExistingFeed(createBody.feed);
+        const mergedFolderCount = createBody.mergedFolderCount ?? 0;
         setInfoMessage(createBody.message || "This feed is already in your library.");
+        if (mergedFolderCount > 0) {
+          setShowAddAnotherAction(true);
+          setLastUsedAddFeedFolderIds(addFeedFolderIds);
+        }
         setAddFeedFolderIds([]);
         setIsAddFeedFormVisible(false);
         router.refresh();
         return;
+      }
+
+      if (createBody.feed?.id) {
+        applyCreatedFeed(createBody.feed);
       }
 
       const folderCount = createBody?.feed?.folderIds?.length ?? 0;
@@ -773,6 +811,7 @@ export function useFeedsWorkspaceActions({
       addFeedInputMode,
       addFeedFolderIds,
       applyCreatedFeed,
+      applyUpdatedExistingFeed,
       bulkFeedUrlInput,
       discoveryCandidates.length,
       feedUrlInput,

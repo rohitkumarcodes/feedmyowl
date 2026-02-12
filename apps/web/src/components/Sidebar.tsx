@@ -41,14 +41,15 @@ interface SidebarDiscoveryCandidate {
 
 interface SidebarBulkAddResultRow {
   url: string;
-  status: "imported" | "duplicate" | "failed";
+  status: "imported" | "merged" | "duplicate" | "failed";
   message?: string;
 }
 
 interface SidebarBulkAddSummary {
   processedCount: number;
   importedCount: number;
-  duplicateCount: number;
+  mergedCount: number;
+  duplicateUnchangedCount: number;
   failedCount: number;
   failedDetails: string[];
 }
@@ -648,9 +649,19 @@ export function Sidebar({
   };
 
   const isAddMenuDisabled = isAddingFeed || isCreatingFolder;
+  const canCreateSidebarFolder = sidebarFolderName.trim().length > 0 && !isCreatingFolder;
 
   const sidebarFolderForm = (
-    <div className={`${styles.sidebarFolderForm} ${primitiveStyles.panel}`}>
+    <form
+      className={`${styles.sidebarFolderForm} ${primitiveStyles.panel}`}
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!canCreateSidebarFolder) {
+          return;
+        }
+        void handleCreateFolderFromSidebar();
+      }}
+    >
       <input
         type="text"
         className={primitiveStyles.input}
@@ -662,12 +673,9 @@ export function Sidebar({
       />
       <div className={styles.sidebarFolderActions}>
         <button
-          type="button"
+          type="submit"
           className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
-          onClick={() => {
-            void handleCreateFolderFromSidebar();
-          }}
-          disabled={isCreatingFolder}
+          disabled={!canCreateSidebarFolder}
         >
           {isCreatingFolder ? "Creating folder..." : "Create folder"}
         </button>
@@ -680,7 +688,7 @@ export function Sidebar({
           Cancel
         </button>
       </div>
-    </div>
+    </form>
   );
 
   const renderFeedRows = (folderFeedList: FeedViewModel[]) =>

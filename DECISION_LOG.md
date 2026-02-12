@@ -241,6 +241,17 @@ This log records active product and technical decisions for the current app phas
   - Portable JSON v3 with optional reading-state metadata.
   - Scheduled automatic backups with retention and guided restore.
 
+### D-2026-02-12-01
+- Date: 2026-02-12
+- Status: active
+- Decision: `/feeds` add feed/folder workflows prioritize explicit folder-create keyboard behavior and duplicate-folder merge consistency.
+- Why: Remove silent/no-op interactions and make duplicate add outcomes align with selected folder intent.
+- Details:
+  - Pressing `Enter` in add-folder inputs creates a folder in both add-feed inline and sidebar add-folder forms.
+  - Duplicate `feed.create` responses merge selected folder assignments into the existing subscription when new folders are provided.
+  - Duplicate create responses include additive `mergedFolderCount`.
+  - Bulk add summary distinguishes merged duplicates from unchanged duplicates.
+
 ## Superseded decisions
 
 ### D-2026-02-07-05

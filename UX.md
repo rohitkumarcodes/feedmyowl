@@ -38,6 +38,9 @@ Manual refresh only (background jobs deferred).
 
 ## 4. Folder behavior
 - Create folders from sidebar and add-feed form.
+- `Enter` in add-folder inputs creates the folder:
+  - Inline add-feed folder input: `Enter` creates folder (does not submit add-feed).
+  - Sidebar add-folder form: `Enter` submits folder creation.
 - Rename and delete folders from folder row actions.
 - Delete dialog offers:
   - Delete folder only.
@@ -63,13 +66,14 @@ Manual refresh only (background jobs deferred).
 - Progress and feedback:
   - Stage messages: normalizing, discovering, awaiting selection, creating.
   - Inline duplicate hint disables submit for exact URL duplicates.
+  - Duplicate create with selected folders merges assignments into the existing feed.
   - Successful single add closes form by default and offers `Add another`.
   - Cross-site request rejection shows `403` with `code: "csrf_validation_failed"`.
   - Rate-limit rejection shows `429` with `code: "rate_limited"` and `Retry-After`.
 - Bulk behavior:
   - Rows are processed sequentially.
   - Rows with multiple discovered feeds fail with: `Multiple feeds found; add this URL individually to choose one.`
-  - Summary shows imported, duplicate, failed counts and top failures.
+  - Summary shows imported, merged, unchanged-duplicate, failed counts and top failures.
 - Default without assignments is Uncategorized.
 
 ## 6. Scope behavior

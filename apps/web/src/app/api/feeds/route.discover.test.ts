@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   normalizeFeedError: vi.fn(),
   createFeedWithInitialItems: vi.fn(),
   findExistingFeedForUserByUrl: vi.fn(),
+  setFeedFoldersForUser: vi.fn(),
   markFeedItemReadForUser: vi.fn(),
   purgeOldFeedItemsForUser: vi.fn(),
   assertTrustedWriteOrigin: vi.fn(),
@@ -65,6 +66,7 @@ vi.mock("@/lib/feed-fetcher", () => ({
 vi.mock("@/lib/feed-service", () => ({
   createFeedWithInitialItems: mocks.createFeedWithInitialItems,
   findExistingFeedForUserByUrl: mocks.findExistingFeedForUserByUrl,
+  setFeedFoldersForUser: mocks.setFeedFoldersForUser,
   markFeedItemReadForUser: mocks.markFeedItemReadForUser,
 }));
 

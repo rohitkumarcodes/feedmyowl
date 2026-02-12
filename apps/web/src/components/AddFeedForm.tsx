@@ -2,7 +2,7 @@
  * Inline feed-subscription form shared by sidebar and toolbar triggers.
  */
 
-import type { FormEvent } from "react";
+import type { FormEvent, KeyboardEvent } from "react";
 import type { FolderViewModel } from "./feeds-types";
 import primitiveStyles from "./LeftPanePrimitives.module.css";
 import styles from "./AddFeedForm.module.css";
@@ -16,7 +16,8 @@ interface AddFeedDiscoveryCandidate {
 interface AddFeedBulkSummary {
   processedCount: number;
   importedCount: number;
-  duplicateCount: number;
+  mergedCount: number;
+  duplicateUnchangedCount: number;
   failedCount: number;
   failedDetails: string[];
 }
@@ -31,7 +32,7 @@ interface AddFeedFormProps {
   inlineDuplicateMessage: string | null;
   bulkAddResultRows: Array<{
     url: string;
-    status: "imported" | "duplicate" | "failed";
+    status: "imported" | "merged" | "duplicate" | "failed";
     message?: string;
   }> | null;
   bulkAddSummary: AddFeedBulkSummary | null;
@@ -108,6 +109,21 @@ export function AddFeedForm({
     isAddingFeed ||
     (addFeedInputMode === "single" && Boolean(inlineDuplicateMessage)) ||
     !hasValidSelection;
+  const canCreateFolder =
+    newFolderNameInput.trim().length > 0 && !isCreatingFolder && !isAddingFeed;
+
+  const handleInlineFolderInputKeyDown = (
+    event: KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
+    event.preventDefault();
+    if (canCreateFolder) {
+      onCreateFolderFromForm();
+    }
+  };
 
   return (
     <form className={`${styles.form} ${primitiveStyles.panel}`} onSubmit={onSubmitFeed}>
@@ -203,8 +219,10 @@ export function AddFeedForm({
               <p>
                 Processed {bulkAddSummary.processedCount} URL
                 {bulkAddSummary.processedCount === 1 ? "" : "s"}. Imported{" "}
-                {bulkAddSummary.importedCount}, skipped {bulkAddSummary.duplicateCount}{" "}
-                duplicate{bulkAddSummary.duplicateCount === 1 ? "" : "s"}, failed{" "}
+                {bulkAddSummary.importedCount}, merged {bulkAddSummary.mergedCount}{" "}
+                duplicate assignment{bulkAddSummary.mergedCount === 1 ? "" : "s"},
+                skipped {bulkAddSummary.duplicateUnchangedCount} unchanged duplicate
+                {bulkAddSummary.duplicateUnchangedCount === 1 ? "" : "s"}, failed{" "}
                 {bulkAddSummary.failedCount}.
               </p>
               {bulkAddSummary.failedDetails.length > 0 ? (
@@ -237,6 +255,7 @@ export function AddFeedForm({
                     type="checkbox"
                     checked={isChecked}
                     onChange={() => onToggleFolder(folder.id)}
+                    disabled={isAddingFeed || isCreatingFolder}
                   />
                   <span>{folder.name}</span>
                 </label>
@@ -252,6 +271,7 @@ export function AddFeedForm({
           className={primitiveStyles.input}
           value={newFolderNameInput}
           onChange={(event) => onNewFolderNameChange(event.currentTarget.value)}
+          onKeyDown={handleInlineFolderInputKeyDown}
           placeholder="New folder name"
           maxLength={255}
           disabled={isCreatingFolder || isAddingFeed}
@@ -260,7 +280,7 @@ export function AddFeedForm({
           type="button"
           className={primitiveStyles.button}
           onClick={onCreateFolderFromForm}
-          disabled={isCreatingFolder || isAddingFeed}
+          disabled={!canCreateFolder}
         >
           {isCreatingFolder ? "Creating folder..." : "Create folder"}
         </button>

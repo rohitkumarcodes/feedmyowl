@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   normalizeFeedError: vi.fn(),
   createFeedWithInitialItems: vi.fn(),
   findExistingFeedForUserByUrl: vi.fn(),
+  setFeedFoldersForUser: vi.fn(),
   markFeedItemReadForUser: vi.fn(),
   purgeOldFeedItemsForUser: vi.fn(),
   assertTrustedWriteOrigin: vi.fn(),
@@ -69,6 +70,7 @@ vi.mock("@/lib/feed-fetcher", () => ({
 vi.mock("@/lib/feed-service", () => ({
   createFeedWithInitialItems: mocks.createFeedWithInitialItems,
   findExistingFeedForUserByUrl: mocks.findExistingFeedForUserByUrl,
+  setFeedFoldersForUser: mocks.setFeedFoldersForUser,
   markFeedItemReadForUser: mocks.markFeedItemReadForUser,
 }));
 
@@ -86,13 +88,14 @@ vi.mock("@/lib/rate-limit", () => ({
 
 import { POST } from "@/app/api/feeds/route";
 
-function createFeedCreateRequest(url: string): NextRequest {
+function createFeedCreateRequest(url: string, folderIds: string[] = []): NextRequest {
   return new Request("https://app.feedmyowl.test/api/feeds", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       action: "feed.create",
       url,
+      folderIds,
     }),
   }) as NextRequest;
 }
@@ -104,6 +107,10 @@ describe("POST /api/feeds discovery fallback", () => {
     mocks.dbQueryFoldersFindMany.mockResolvedValue([]);
     mocks.dbQueryFeedFolderMembershipsFindMany.mockResolvedValue([]);
     mocks.findExistingFeedForUserByUrl.mockResolvedValue(null);
+    mocks.setFeedFoldersForUser.mockResolvedValue({
+      status: "ok",
+      folderIds: [],
+    });
 
     mocks.parseFeed.mockRejectedValue(new Error("Input URL is not valid RSS/Atom"));
     mocks.parseFeedWithMetadata.mockRejectedValue(
@@ -253,6 +260,111 @@ describe("POST /api/feeds discovery fallback", () => {
     );
     expect(mocks.createFeedWithInitialItems).not.toHaveBeenCalled();
     expect(mocks.fetchFeedXml).toHaveBeenCalledTimes(2);
+  });
+
+  it("merges selected folders when a direct duplicate feed already exists", async () => {
+    mocks.dbQueryFoldersFindMany.mockResolvedValue([{ id: "folder_news" }]);
+    mocks.dbQueryFeedFolderMembershipsFindMany.mockResolvedValue([
+      { folderId: "folder_existing" },
+    ]);
+    mocks.findExistingFeedForUserByUrl.mockResolvedValue({
+      id: "feed_123",
+      userId: "user_123",
+      url: "https://example.com/feed.xml",
+    });
+    mocks.setFeedFoldersForUser.mockResolvedValue({
+      status: "ok",
+      folderIds: ["folder_existing", "folder_news"],
+    });
+
+    const response = await POST(
+      createFeedCreateRequest("https://example.com/feed.xml", ["folder_news"])
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.duplicate).toBe(true);
+    expect(body.mergedFolderCount).toBe(1);
+    expect(body.message).toBe(
+      "This feed is already in your library. Added to 1 folder."
+    );
+    expect(body.feed.folderIds).toEqual(["folder_existing", "folder_news"]);
+    expect(mocks.setFeedFoldersForUser).toHaveBeenCalledWith(
+      "user_123",
+      "feed_123",
+      ["folder_existing", "folder_news"]
+    );
+    expect(mocks.createFeedWithInitialItems).not.toHaveBeenCalled();
+  });
+
+  it("keeps duplicate folder assignments unchanged when no new folder is selected", async () => {
+    mocks.dbQueryFoldersFindMany.mockResolvedValue([{ id: "folder_existing" }]);
+    mocks.dbQueryFeedFolderMembershipsFindMany.mockResolvedValue([
+      { folderId: "folder_existing" },
+    ]);
+    mocks.findExistingFeedForUserByUrl.mockResolvedValue({
+      id: "feed_123",
+      userId: "user_123",
+      url: "https://example.com/feed.xml",
+    });
+
+    const response = await POST(
+      createFeedCreateRequest("https://example.com/feed.xml", ["folder_existing"])
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.duplicate).toBe(true);
+    expect(body.mergedFolderCount).toBe(0);
+    expect(body.message).toBe("This feed is already in your library.");
+    expect(body.feed.folderIds).toEqual(["folder_existing"]);
+    expect(mocks.setFeedFoldersForUser).not.toHaveBeenCalled();
+  });
+
+  it("merges selected folders when discovery fallback hits an existing candidate feed", async () => {
+    const discoveredCandidate = "https://example.com/feed.xml";
+
+    mocks.dbQueryFoldersFindMany.mockResolvedValue([{ id: "folder_news" }]);
+    mocks.dbQueryFeedFolderMembershipsFindMany.mockResolvedValue([]);
+    mocks.parseFeedWithMetadata.mockRejectedValue(
+      new Error("Input URL is not valid RSS/Atom")
+    );
+    mocks.normalizeFeedError.mockReturnValue({
+      code: "invalid_xml",
+      message: "Not a feed URL.",
+    });
+    mocks.discoverFeedCandidates.mockResolvedValue({
+      candidates: [discoveredCandidate],
+      methodHints: {
+        [discoveredCandidate]: "html_alternate",
+      },
+    });
+    mocks.findExistingFeedForUserByUrl
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: "feed_789",
+        userId: "user_123",
+        url: discoveredCandidate,
+      });
+    mocks.setFeedFoldersForUser.mockResolvedValue({
+      status: "ok",
+      folderIds: ["folder_news"],
+    });
+
+    const response = await POST(
+      createFeedCreateRequest("https://example.com", ["folder_news"])
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.duplicate).toBe(true);
+    expect(body.mergedFolderCount).toBe(1);
+    expect(body.feed.folderIds).toEqual(["folder_news"]);
+    expect(mocks.setFeedFoldersForUser).toHaveBeenCalledWith(
+      "user_123",
+      "feed_789",
+      ["folder_news"]
+    );
   });
 
   it("requires an explicit action", async () => {

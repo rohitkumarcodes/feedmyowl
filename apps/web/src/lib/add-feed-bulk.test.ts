@@ -29,7 +29,12 @@ describe("add-feed bulk helpers", () => {
   it("aggregates row results into counts and failure details", () => {
     const summary = summarizeBulkAddRows([
       { url: "https://a.example/feed.xml", status: "imported" },
-      { url: "https://b.example/feed.xml", status: "duplicate" },
+      {
+        url: "https://b.example/feed.xml",
+        status: "merged",
+        message: "This feed is already in your library. Added to 1 folder.",
+      },
+      { url: "https://e.example/feed.xml", status: "duplicate" },
       {
         url: "https://c.example/feed.xml",
         status: "failed",
@@ -39,9 +44,10 @@ describe("add-feed bulk helpers", () => {
     ]);
 
     expect(summary).toEqual({
-      processedCount: 4,
+      processedCount: 5,
       importedCount: 1,
-      duplicateCount: 1,
+      mergedCount: 1,
+      duplicateUnchangedCount: 1,
       failedCount: 2,
       failedDetails: [
         "https://c.example/feed.xml — Multiple feeds found; add this URL individually to choose one.",
