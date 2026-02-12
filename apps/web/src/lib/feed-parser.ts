@@ -116,13 +116,16 @@ export async function parseFeedWithCache(
   };
 }
 
-export async function parseFeedWithMetadata(url: string): Promise<{
+export async function parseFeedWithMetadata(
+  url: string,
+  options: Omit<FetchRemoteTextOptions, "accept"> = {}
+): Promise<{
   parsedFeed: ParsedFeed;
   etag: string | null;
   lastModified: string | null;
   resolvedUrl: string;
 }> {
-  const result = await parseFeedWithCache(url);
+  const result = await parseFeedWithCache(url, options);
 
   if (result.status === "not_modified") {
     throw new Error("Unexpected 304 response while fetching feed without validators");

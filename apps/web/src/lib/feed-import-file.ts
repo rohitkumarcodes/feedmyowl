@@ -17,7 +17,9 @@ export interface FeedImportRowSummary {
   mergedCount: number;
   failedCount: number;
   skippedMultipleCount: number;
+  warningCount: number;
   failedDetails: string[];
+  warningDetails: string[];
 }
 
 function decodeXmlEntities(value: string): string {
@@ -343,10 +345,24 @@ export function summarizeImportRows(
     mergedCount: 0,
     failedCount: 0,
     skippedMultipleCount: 0,
+    warningCount: 0,
     failedDetails: [],
+    warningDetails: [],
   };
 
   for (const row of rows) {
+    const warnings = row.warnings ?? [];
+    if (warnings.length > 0) {
+      summary.warningCount += warnings.length;
+
+      for (const warning of warnings) {
+        if (summary.warningDetails.length >= maxFailureDetails) {
+          break;
+        }
+        summary.warningDetails.push(`${row.url} — ${warning}`);
+      }
+    }
+
     if (row.status === "imported") {
       summary.importedCount += 1;
       continue;

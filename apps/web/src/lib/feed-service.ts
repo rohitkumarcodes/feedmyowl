@@ -557,6 +557,103 @@ export type SetFeedFoldersForUserResult =
   | { status: "invalid_folder_ids"; invalidFolderIds: string[] }
   | { status: "ok"; folderIds: string[] };
 
+export type AddFeedFoldersForUserResult =
+  | { status: "feed_not_found" }
+  | { status: "invalid_folder_ids"; invalidFolderIds: string[] }
+  | { status: "ok"; addedFolderIds: string[]; folderIds: string[] };
+
+/**
+ * Add folder memberships for one feed without removing existing assignments.
+ */
+export async function addFeedFoldersForUser(
+  userId: string,
+  feedId: string,
+  folderIds: string[]
+): Promise<AddFeedFoldersForUserResult> {
+  const normalizedFolderIds = normalizeFolderIds(folderIds);
+
+  const feed = await db.query.feeds.findFirst({
+    where: and(eq(feeds.id, feedId), eq(feeds.userId, userId)),
+    columns: { id: true },
+  });
+
+  if (!feed) {
+    return { status: "feed_not_found" };
+  }
+
+  if (normalizedFolderIds.length === 0) {
+    const currentMemberships = await db.query.feedFolderMemberships.findMany({
+      where: and(
+        eq(feedFolderMemberships.userId, userId),
+        eq(feedFolderMemberships.feedId, feedId)
+      ),
+      columns: { folderId: true },
+    });
+
+    return {
+      status: "ok",
+      addedFolderIds: [],
+      folderIds: normalizeFolderIds(
+        currentMemberships.map((membership) => membership.folderId)
+      ),
+    };
+  }
+
+  const availableFolders = await db.query.folders.findMany({
+    where: and(eq(folders.userId, userId), inArray(folders.id, normalizedFolderIds)),
+    columns: { id: true },
+  });
+
+  const availableFolderIds = new Set(availableFolders.map((folder) => folder.id));
+  const invalidFolderIds = normalizedFolderIds.filter(
+    (folderId) => !availableFolderIds.has(folderId)
+  );
+
+  if (invalidFolderIds.length > 0) {
+    return { status: "invalid_folder_ids", invalidFolderIds };
+  }
+
+  const now = new Date();
+  const insertedMemberships = await db
+    .insert(feedFolderMemberships)
+    .values(
+      normalizedFolderIds.map((folderId) => ({
+        userId,
+        feedId,
+        folderId,
+        createdAt: now,
+        updatedAt: now,
+      }))
+    )
+    .onConflictDoNothing()
+    .returning({ folderId: feedFolderMemberships.folderId });
+
+  if (insertedMemberships.length > 0) {
+    await db
+      .update(feeds)
+      .set({ updatedAt: now })
+      .where(and(eq(feeds.id, feedId), eq(feeds.userId, userId)));
+  }
+
+  const currentMemberships = await db.query.feedFolderMemberships.findMany({
+    where: and(
+      eq(feedFolderMemberships.userId, userId),
+      eq(feedFolderMemberships.feedId, feedId)
+    ),
+    columns: { folderId: true },
+  });
+
+  return {
+    status: "ok",
+    addedFolderIds: normalizeFolderIds(
+      insertedMemberships.map((membership) => membership.folderId)
+    ),
+    folderIds: normalizeFolderIds(
+      currentMemberships.map((membership) => membership.folderId)
+    ),
+  };
+}
+
 /**
  * Replace folder memberships for one feed belonging to one user.
  */

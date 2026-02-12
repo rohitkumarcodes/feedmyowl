@@ -209,11 +209,16 @@ describe("feed import file helpers", () => {
 
   it("summarizes import rows with merged duplicates and failure details", () => {
     const rows: FeedImportRowResult[] = [
-      { url: "https://a.example/feed.xml", status: "imported" },
+      {
+        url: "https://a.example/feed.xml",
+        status: "imported",
+        warnings: ['Folder "Tech" could not be created.'],
+      },
       {
         url: "https://b.example/feed.xml",
         status: "duplicate_merged",
         code: "duplicate",
+        warnings: ['Folder "News" could not be created.'],
       },
       {
         url: "https://c.example/feed.xml",
@@ -241,9 +246,14 @@ describe("feed import file helpers", () => {
       mergedCount: 1,
       failedCount: 2,
       skippedMultipleCount: 1,
+      warningCount: 2,
       failedDetails: [
         "https://d.example/feed.xml — Choose one feed URL manually.",
         "https://e.example/feed.xml — Could not import.",
+      ],
+      warningDetails: [
+        'https://a.example/feed.xml — Folder "Tech" could not be created.',
+        'https://b.example/feed.xml — Folder "News" could not be created.',
       ],
     });
   });

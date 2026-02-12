@@ -4,6 +4,8 @@ import { captureError, captureMessage } from "@/lib/error-tracking";
 
 const UPSTASH_REDIS_REST_URL = process.env.UPSTASH_REDIS_REST_URL;
 const UPSTASH_REDIS_REST_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+const inMemorySlidingWindowStore = new Map<string, number[]>();
+let hasLoggedInMemoryRateLimitFallback = false;
 
 const SLIDING_WINDOW_LUA = `
 local key = KEYS[1]
@@ -94,38 +96,89 @@ function toRetryAfterSeconds(retryAfterMs: number): number {
   return Math.max(1, Math.ceil(retryAfterMs / 1_000));
 }
 
+function evaluateInMemorySlidingWindowLimit(
+  input: SlidingWindowLimit,
+  nowMs = Date.now()
+): SlidingWindowResult {
+  const key = `${input.keyPrefix}:${input.identifier}`;
+  const oldestAllowedTs = nowMs - input.windowMs;
+  const existingTimestamps = inMemorySlidingWindowStore.get(key) ?? [];
+  const activeTimestamps = existingTimestamps.filter(
+    (timestamp) => timestamp > oldestAllowedTs
+  );
+
+  if (activeTimestamps.length >= input.limit) {
+    const oldestActiveTs = activeTimestamps[0] ?? nowMs;
+    const retryAfterMs = Math.max(0, input.windowMs - (nowMs - oldestActiveTs));
+    inMemorySlidingWindowStore.set(key, activeTimestamps);
+
+    return {
+      allowed: false,
+      limit: input.limit,
+      remaining: 0,
+      retryAfterSeconds: toRetryAfterSeconds(retryAfterMs),
+    };
+  }
+
+  activeTimestamps.push(nowMs);
+  inMemorySlidingWindowStore.set(key, activeTimestamps);
+
+  return {
+    allowed: true,
+    limit: input.limit,
+    remaining: Math.max(0, input.limit - activeTimestamps.length),
+    retryAfterSeconds: 0,
+  };
+}
+
 export async function evaluateSlidingWindowLimit(
   input: SlidingWindowLimit
 ): Promise<SlidingWindowResult> {
   if (!hasRedisConfig()) {
-    return {
-      allowed: true,
-      limit: input.limit,
-      remaining: input.limit,
-      retryAfterSeconds: 0,
-    };
+    if (!hasLoggedInMemoryRateLimitFallback) {
+      captureMessage(
+        "rate_limit.fallback backend=in_memory reason=redis_not_configured",
+        "warning"
+      );
+      hasLoggedInMemoryRateLimitFallback = true;
+    }
+
+    return evaluateInMemorySlidingWindowLimit(input);
   }
 
-  const nowMs = Date.now();
-  const key = `${input.keyPrefix}:${input.identifier}`;
-  const result = (await runUpstashEval(SLIDING_WINDOW_LUA, [key], [
-    String(nowMs),
-    String(input.windowMs),
-    String(input.limit),
-    `${nowMs}:${randomUUID()}`,
-  ])) as [number, number, number];
+  try {
+    const nowMs = Date.now();
+    const key = `${input.keyPrefix}:${input.identifier}`;
+    const result = (await runUpstashEval(SLIDING_WINDOW_LUA, [key], [
+      String(nowMs),
+      String(input.windowMs),
+      String(input.limit),
+      `${nowMs}:${randomUUID()}`,
+    ])) as [number, number, number];
 
-  const allowed = Number(result[0]) === 1;
-  const count = Number(result[1]) || 0;
-  const retryAfterMs = Number(result[2]) || 0;
-  const remaining = Math.max(0, input.limit - count);
+    const allowed = Number(result[0]) === 1;
+    const count = Number(result[1]) || 0;
+    const retryAfterMs = Number(result[2]) || 0;
+    const remaining = Math.max(0, input.limit - count);
 
-  return {
-    allowed,
-    limit: input.limit,
-    remaining,
-    retryAfterSeconds: toRetryAfterSeconds(retryAfterMs),
-  };
+    return {
+      allowed,
+      limit: input.limit,
+      remaining,
+      retryAfterSeconds: toRetryAfterSeconds(retryAfterMs),
+    };
+  } catch (error) {
+    captureError(error, {
+      reason: "rate_limit_upstash_failed",
+      keyPrefix: input.keyPrefix,
+    });
+    captureMessage(
+      "rate_limit.fallback backend=in_memory reason=upstash_error",
+      "warning"
+    );
+
+    return evaluateInMemorySlidingWindowLimit(input);
+  }
 }
 
 export interface RouteRateLimitInput {
@@ -207,11 +260,16 @@ export async function applyRouteRateLimit(
   } catch (error) {
     captureError(error, {
       route: input.routeKey,
-      reason: "rate_limit_fail_open",
+      reason: "rate_limit_unexpected_error",
       userId: input.userId,
       clientIp,
     });
 
     return { allowed: true };
   }
+}
+
+export function __resetInMemoryRateLimitStateForTests(): void {
+  inMemorySlidingWindowStore.clear();
+  hasLoggedInMemoryRateLimitFallback = false;
 }

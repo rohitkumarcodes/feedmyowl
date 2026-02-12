@@ -102,21 +102,38 @@ export function isImportFailureRow(row: FeedImportRowResult): boolean {
 export function buildImportFailureReport(params: {
   fileName: string;
   failedRows: FeedImportRowResult[];
+  warningRows?: FeedImportRowResult[];
   generatedAtIso?: string;
 }): string {
   const generatedAtIso = params.generatedAtIso || new Date().toISOString();
+  const warningRows = params.warningRows ?? [];
   const lines = [
-    "FeedMyOwl import failure report",
+    "FeedMyOwl import diagnostics report",
     `Source file: ${params.fileName}`,
     `Generated at: ${generatedAtIso}`,
     `Failed entries: ${params.failedRows.length}`,
+    `Warning entries: ${warningRows.length}`,
     "",
   ];
 
-  for (const row of params.failedRows) {
-    const code = row.code ? ` [${row.code}]` : "";
-    const message = row.message || "Could not import.";
-    lines.push(`${row.url}${code} - ${message}`);
+  if (params.failedRows.length > 0) {
+    lines.push("Failures:");
+    for (const row of params.failedRows) {
+      const code = row.code ? ` [${row.code}]` : "";
+      const message = row.message || "Could not import.";
+      lines.push(`${row.url}${code} - ${message}`);
+    }
+    lines.push("");
+  }
+
+  if (warningRows.length > 0) {
+    lines.push("Warnings:");
+    for (const row of warningRows) {
+      const warnings = row.warnings ?? [];
+      for (const warning of warnings) {
+        lines.push(`${row.url} [warning] - ${warning}`);
+      }
+    }
   }
 
   return `${lines.join("\n")}\n`;

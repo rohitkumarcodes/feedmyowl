@@ -5,6 +5,8 @@ const mocks = vi.hoisted(() => ({
   requireAuth: vi.fn(),
   ensureUserRecord: vi.fn(),
   dbQueryUsersFindFirst: vi.fn(),
+  applyRouteRateLimit: vi.fn(),
+  captureMessage: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({
@@ -26,6 +28,14 @@ vi.mock("@/lib/database", () => ({
   },
   eq: vi.fn(() => ({})),
   users: {},
+}));
+
+vi.mock("@/lib/rate-limit", () => ({
+  applyRouteRateLimit: mocks.applyRouteRateLimit,
+}));
+
+vi.mock("@/lib/error-tracking", () => ({
+  captureMessage: mocks.captureMessage,
 }));
 
 import { GET } from "@/app/api/feeds/export/route";
@@ -91,6 +101,7 @@ describe("GET /api/feeds/export", () => {
     mocks.requireAuth.mockResolvedValue({ clerkId: "clerk_123" });
     mocks.ensureUserRecord.mockResolvedValue({ id: "user_123", clerkId: "clerk_123" });
     mocks.dbQueryUsersFindFirst.mockResolvedValue(createMockUserRecord());
+    mocks.applyRouteRateLimit.mockResolvedValue({ allowed: true });
   });
 
   it("returns OPML export grouped by folders", async () => {
@@ -194,5 +205,29 @@ describe("GET /api/feeds/export", () => {
 
     expect(response.status).toBe(400);
     expect(body.error).toBe("Unsupported export format");
+  });
+
+  it("returns 429 when export rate limit is exceeded", async () => {
+    mocks.applyRouteRateLimit.mockResolvedValue({
+      allowed: false,
+      response: Response.json(
+        { error: "Rate limit exceeded. Please wait before trying again.", code: "rate_limited" },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": "12",
+          },
+        }
+      ),
+    });
+
+    const response = await GET(
+      createRequest("https://app.feedmyowl.test/api/feeds/export?format=opml")
+    );
+    const body = (await response.json()) as { code?: string };
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("12");
+    expect(body.code).toBe("rate_limited");
   });
 });

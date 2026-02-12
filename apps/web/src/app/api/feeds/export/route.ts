@@ -11,10 +11,12 @@ import { requireAuth } from "@/lib/auth";
 import { db, eq, users } from "@/lib/database";
 import { handleApiRouteError } from "@/lib/api-errors";
 import { ensureUserRecord } from "@/lib/app-user";
+import { captureMessage } from "@/lib/error-tracking";
 import {
   getFeedMembershipFolderIds,
   resolveFeedFolderIds,
 } from "@/lib/folder-memberships";
+import { applyRouteRateLimit } from "@/lib/rate-limit";
 
 interface FolderRow {
   id: string;
@@ -282,12 +284,26 @@ async function queryExportUser(userId: string): Promise<ExportUserRecord | null>
  * Returns OPML or JSON portable data for the authenticated user.
  */
 export async function GET(request: NextRequest) {
+  const startedAtMs = Date.now();
+
   try {
     const { clerkId } = await requireAuth();
     const ensuredUser = await ensureUserRecord(clerkId);
 
     if (!ensuredUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const rateLimit = await applyRouteRateLimit({
+      request,
+      routeKey: "api_feeds_export_get",
+      userId: ensuredUser.id,
+      userLimitPerMinute: 20,
+      ipLimitPerMinute: 120,
+    });
+
+    if (!rateLimit.allowed) {
+      return rateLimit.response;
     }
 
     const format = request.nextUrl.searchParams.get("format") || "opml";
@@ -327,6 +343,10 @@ export async function GET(request: NextRequest) {
           folderIds: toResolvedFeedFolderIds(feed),
         })),
       });
+
+      captureMessage(
+        `feeds.export.completed route=api.feeds.export.get format=opml feeds=${feedRows.length} folders=${folderRows.length} duration_ms=${Date.now() - startedAtMs}`
+      );
 
       return new NextResponse(opml, {
         status: 200,
@@ -368,6 +388,10 @@ export async function GET(request: NextRequest) {
             return aLabel.localeCompare(bLabel);
           }),
       };
+
+      captureMessage(
+        `feeds.export.completed route=api.feeds.export.get format=json feeds=${feedRows.length} folders=${folderRows.length} duration_ms=${Date.now() - startedAtMs}`
+      );
 
       return new NextResponse(JSON.stringify(portableExport, null, 2), {
         status: 200,

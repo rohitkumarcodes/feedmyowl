@@ -91,7 +91,7 @@ describe("feed import client helpers", () => {
     ).toBe(false);
   });
 
-  it("builds a plain-text failure report with all failed rows", () => {
+  it("builds a plain-text diagnostics report with failed rows and warnings", () => {
     const report = buildImportFailureReport({
       fileName: "feeds.opml",
       generatedAtIso: "2026-02-12T00:00:00.000Z",
@@ -109,15 +109,28 @@ describe("feed import client helpers", () => {
           message: "Choose one feed URL manually.",
         },
       ],
+      warningRows: [
+        {
+          url: "https://c.example.com/feed.xml",
+          status: "imported",
+          warnings: ['Folder "Tech" could not be created.'],
+        },
+      ],
     });
 
-    expect(report).toContain("FeedMyOwl import failure report");
+    expect(report).toContain("FeedMyOwl import diagnostics report");
     expect(report).toContain("Source file: feeds.opml");
     expect(report).toContain("Generated at: 2026-02-12T00:00:00.000Z");
     expect(report).toContain("Failed entries: 2");
+    expect(report).toContain("Warning entries: 1");
+    expect(report).toContain("Failures:");
     expect(report).toContain("https://a.example.com/feed.xml [invalid_xml]");
     expect(report).toContain(
       "https://b.example.com/feed.xml [multiple_candidates] - Choose one feed URL manually."
+    );
+    expect(report).toContain("Warnings:");
+    expect(report).toContain(
+      'https://c.example.com/feed.xml [warning] - Folder "Tech" could not be created.'
     );
   });
 });

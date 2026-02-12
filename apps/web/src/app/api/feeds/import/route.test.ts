@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
   createFeedWithInitialItems: vi.fn(),
   findExistingFeedForUserByUrl: vi.fn(),
   renameFeedForUser: vi.fn(),
-  setFeedFoldersForUser: vi.fn(),
+  addFeedFoldersForUser: vi.fn(),
   createFolderForUser: vi.fn(),
   captureMessage: vi.fn(),
   assertTrustedWriteOrigin: vi.fn(),
@@ -61,7 +61,7 @@ vi.mock("@/lib/feed-service", () => ({
   createFeedWithInitialItems: mocks.createFeedWithInitialItems,
   findExistingFeedForUserByUrl: mocks.findExistingFeedForUserByUrl,
   renameFeedForUser: mocks.renameFeedForUser,
-  setFeedFoldersForUser: mocks.setFeedFoldersForUser,
+  addFeedFoldersForUser: mocks.addFeedFoldersForUser,
 }));
 
 vi.mock("@/lib/folder-service", () => ({
@@ -83,13 +83,19 @@ vi.mock("@/lib/rate-limit", () => ({
 
 import { POST } from "@/app/api/feeds/import/route";
 
-function createImportRequest(body: Record<string, unknown>): NextRequest {
+function createImportRequest(
+  body: Record<string, unknown> | string,
+  options?: { headers?: Record<string, string> }
+): NextRequest {
+  const payload = typeof body === "string" ? body : JSON.stringify(body);
+
   return new Request("https://app.feedmyowl.test/api/feeds/import", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...(options?.headers ?? {}),
     },
-    body: JSON.stringify(body),
+    body: payload,
   }) as NextRequest;
 }
 
@@ -120,7 +126,11 @@ describe("POST /api/feeds/import", () => {
       insertedItems: 0,
     });
     mocks.renameFeedForUser.mockResolvedValue({ id: "feed_123" });
-    mocks.setFeedFoldersForUser.mockResolvedValue({ status: "ok", folderIds: [] });
+    mocks.addFeedFoldersForUser.mockResolvedValue({
+      status: "ok",
+      addedFolderIds: [],
+      folderIds: [],
+    });
     mocks.createFolderForUser.mockResolvedValue({
       status: "ok",
       folder: {
@@ -351,8 +361,9 @@ describe("POST /api/feeds/import", () => {
       },
     });
     mocks.dbQueryFeedFolderMembershipsFindMany.mockResolvedValue([]);
-    mocks.setFeedFoldersForUser.mockResolvedValue({
+    mocks.addFeedFoldersForUser.mockResolvedValue({
       status: "ok",
+      addedFolderIds: ["folder_merged"],
       folderIds: ["folder_merged"],
     });
 
@@ -379,7 +390,7 @@ describe("POST /api/feeds/import", () => {
       status: "duplicate_merged",
       code: "duplicate",
     });
-    expect(mocks.setFeedFoldersForUser).toHaveBeenCalledWith(
+    expect(mocks.addFeedFoldersForUser).toHaveBeenCalledWith(
       "user_123",
       "feed_existing",
       ["folder_merged"]
@@ -408,7 +419,7 @@ describe("POST /api/feeds/import", () => {
 
     expect(response.status).toBe(200);
     expect(body.rows[0].status).toBe("duplicate_unchanged");
-    expect(mocks.setFeedFoldersForUser).not.toHaveBeenCalled();
+    expect(mocks.addFeedFoldersForUser).not.toHaveBeenCalled();
   });
 
   it("skips entries with multiple addable discovery candidates", async () => {
@@ -532,6 +543,177 @@ describe("POST /api/feeds/import", () => {
         etag: null,
         lastModified: null,
       }
+    );
+  });
+
+  it("returns 413 when payload exceeds max request bytes", async () => {
+    const response = await POST(
+      createImportRequest(
+        JSON.stringify({
+          sourceType: "JSON",
+          entries: [{ url: "https://example.com/feed.xml", folderNames: [], customTitle: null }],
+        }),
+        {
+          headers: {
+            "Content-Length": "1000001",
+          },
+        }
+      )
+    );
+    const body = (await response.json()) as { code?: string };
+
+    expect(response.status).toBe(413);
+    expect(body.code).toBe("payload_too_large");
+  });
+
+  it("returns invalid_payload when entries are empty", async () => {
+    const response = await POST(
+      createImportRequest({
+        sourceType: "JSON",
+        entries: [],
+      })
+    );
+    const body = (await response.json()) as { code?: string; error?: string };
+
+    expect(response.status).toBe(400);
+    expect(body.code).toBe("invalid_payload");
+    expect(body.error).toContain("entries must include at least one entry");
+  });
+
+  it("returns invalid_payload for overlong URL values", async () => {
+    const response = await POST(
+      createImportRequest({
+        sourceType: "JSON",
+        entries: [
+          {
+            url: `https://example.com/${"a".repeat(2100)}`,
+            folderNames: [],
+            customTitle: null,
+          },
+        ],
+      })
+    );
+    const body = (await response.json()) as { code?: string; error?: string };
+
+    expect(response.status).toBe(400);
+    expect(body.code).toBe("invalid_payload");
+    expect(body.error).toContain("at most 2048 characters");
+  });
+
+  it("returns entry_limit_exceeded when request entries exceed max per request", async () => {
+    const response = await POST(
+      createImportRequest({
+        sourceType: "JSON",
+        entries: Array.from({ length: 51 }, (_, index) => ({
+          url: `https://example.com/${index}.xml`,
+          folderNames: [],
+          customTitle: null,
+        })),
+      })
+    );
+    const body = (await response.json()) as { code?: string };
+
+    expect(response.status).toBe(400);
+    expect(body.code).toBe("entry_limit_exceeded");
+  });
+
+  it("returns timeout_budget_exceeded rows when request budget is exhausted", async () => {
+    const nowSpy = vi.spyOn(Date, "now");
+    let nowCallCount = 0;
+    nowSpy.mockImplementation(() => {
+      nowCallCount += 1;
+      if (nowCallCount <= 2) {
+        return 0;
+      }
+      return 46_000;
+    });
+
+    const response = await POST(
+      createImportRequest({
+        sourceType: "JSON",
+        entries: [{ url: "https://example.com/feed.xml", folderNames: [], customTitle: null }],
+      })
+    );
+    const body = (await response.json()) as {
+      rows: Array<{ status: string; code?: string }>;
+      failedCount: number;
+    };
+
+    nowSpy.mockRestore();
+
+    expect(response.status).toBe(200);
+    expect(body.failedCount).toBe(1);
+    expect(body.rows[0]).toMatchObject({
+      status: "failed",
+      code: "timeout_budget_exceeded",
+    });
+  });
+
+  it("merges duplicate folder assignments additively across repeated duplicate rows", async () => {
+    mocks.findExistingFeedForUserByUrl.mockResolvedValue({
+      id: "feed_existing",
+      folderId: null,
+    });
+    mocks.createFolderForUser.mockImplementation(async (_userId: string, name: string) => ({
+      status: "ok",
+      folder: {
+        id: name === "Alpha" ? "folder_alpha" : "folder_beta",
+        name,
+        createdAt: new Date("2026-02-11T00:00:00.000Z"),
+        updatedAt: new Date("2026-02-11T00:00:00.000Z"),
+      },
+    }));
+    mocks.addFeedFoldersForUser.mockImplementation(
+      async (_userId: string, _feedId: string, folderIds: string[]) => {
+        const isAlpha = folderIds.includes("folder_alpha");
+        return {
+          status: "ok",
+          addedFolderIds: [isAlpha ? "folder_alpha" : "folder_beta"],
+          folderIds: isAlpha
+            ? ["folder_alpha"]
+            : ["folder_alpha", "folder_beta"],
+        };
+      }
+    );
+
+    const response = await POST(
+      createImportRequest({
+        sourceType: "JSON",
+        entries: [
+          {
+            url: "https://existing.example.com/feed.xml",
+            folderNames: ["Alpha"],
+            customTitle: null,
+          },
+          {
+            url: "https://existing.example.com/feed.xml",
+            folderNames: ["Beta"],
+            customTitle: null,
+          },
+        ],
+      })
+    );
+    const body = (await response.json()) as {
+      rows: Array<{ status: string }>;
+      mergedCount: number;
+      duplicateCount: number;
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.mergedCount).toBe(2);
+    expect(body.duplicateCount).toBe(2);
+    expect(body.rows[0].status).toBe("duplicate_merged");
+    expect(body.rows[1].status).toBe("duplicate_merged");
+    expect(mocks.addFeedFoldersForUser).toHaveBeenCalledTimes(2);
+    expect(mocks.addFeedFoldersForUser).toHaveBeenCalledWith(
+      "user_123",
+      "feed_existing",
+      ["folder_alpha"]
+    );
+    expect(mocks.addFeedFoldersForUser).toHaveBeenCalledWith(
+      "user_123",
+      "feed_existing",
+      ["folder_beta"]
     );
   });
 

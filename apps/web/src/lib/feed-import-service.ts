@@ -7,16 +7,21 @@ import { discoverFeedCandidates } from "@/lib/feed-discovery";
 import { normalizeFeedError } from "@/lib/feed-errors";
 import { normalizeFolderIds } from "@/lib/folder-memberships";
 import {
+  addFeedFoldersForUser,
   createFeedWithInitialItems,
   findExistingFeedForUserByUrl,
   renameFeedForUser,
-  setFeedFoldersForUser,
 } from "@/lib/feed-service";
-import { getFeedFolderIdsForUserFeed } from "@/lib/feed-folder-memberships";
 import { parseFeedWithMetadata, type ParsedFeed } from "@/lib/feed-parser";
 import type {
   FeedImportEntry,
   FeedImportRowResult,
+} from "@/lib/feed-import-types";
+import {
+  FEED_IMPORT_BOUNDED_FETCH_MAX_REDIRECTS,
+  FEED_IMPORT_BOUNDED_FETCH_RETRIES,
+  FEED_IMPORT_BOUNDED_FETCH_TIMEOUT_MS,
+  FEED_IMPORT_DEFAULT_DEADLINE_MS,
 } from "@/lib/feed-import-types";
 import {
   createFolderForUser,
@@ -27,6 +32,13 @@ import { NO_FEED_FOUND_MESSAGE } from "@/lib/feed-messages";
 
 const IMPORT_WORKER_CONCURRENCY = 4;
 const CUSTOM_TITLE_MAX_LENGTH = 255;
+const IMPORT_FAILED_TIMEOUT_MESSAGE =
+  "Import timed out before this URL could be processed. Try importing fewer feeds at once.";
+const IMPORT_PARSER_FETCH_OPTIONS = {
+  timeoutMs: FEED_IMPORT_BOUNDED_FETCH_TIMEOUT_MS,
+  retries: FEED_IMPORT_BOUNDED_FETCH_RETRIES,
+  maxRedirects: FEED_IMPORT_BOUNDED_FETCH_MAX_REDIRECTS,
+} as const;
 
 /**
  * Maximum number of feed-discovery fallback attempts per import batch.
@@ -77,18 +89,17 @@ function toFolderNameLookupKey(folderName: string): string {
   return normalizeFolderName(folderName).toLocaleLowerCase();
 }
 
-function areSortedStringListsEqual(a: string[], b: string[]): boolean {
-  if (a.length !== b.length) {
-    return false;
-  }
+function isDeadlineExceeded(deadlineAtMs: number): boolean {
+  return Date.now() >= deadlineAtMs;
+}
 
-  for (let index = 0; index < a.length; index += 1) {
-    if (a[index] !== b[index]) {
-      return false;
-    }
-  }
-
-  return true;
+function toTimeoutExceededRow(url: string): FeedImportRowResult {
+  return {
+    url,
+    status: "failed",
+    code: "timeout_budget_exceeded",
+    message: IMPORT_FAILED_TIMEOUT_MESSAGE,
+  };
 }
 
 async function createFolderResolver(userId: string): Promise<FolderResolver> {
@@ -247,38 +258,29 @@ async function mergeDuplicateFeedFolders(params: {
     };
   }
 
-  const existingFolderIds = normalizeFolderIds(
-    await getFeedFolderIdsForUserFeed(params.userId, params.existingFeed.id)
-  );
-
-  const mergedFolderIds = normalizeFolderIds([
-    ...existingFolderIds,
-    ...params.resolvedFolderIds,
-  ]);
-
-  if (areSortedStringListsEqual(existingFolderIds, mergedFolderIds)) {
-    return {
-      url: params.importUrl,
-      status: "duplicate_unchanged",
-      code: "duplicate",
-      feedId: params.existingFeed.id,
-      message: "This feed is already in your library.",
-    };
-  }
-
-  const folderUpdateResult = await setFeedFoldersForUser(
+  const folderAddResult = await addFeedFoldersForUser(
     params.userId,
     params.existingFeed.id,
-    mergedFolderIds
+    params.resolvedFolderIds
   );
 
-  if (folderUpdateResult.status !== "ok") {
+  if (folderAddResult.status !== "ok") {
     return {
       url: params.importUrl,
       status: "failed",
       code: "unknown",
       message: "Could not merge imported folder assignments.",
       feedId: params.existingFeed.id,
+    };
+  }
+
+  if (folderAddResult.addedFolderIds.length === 0) {
+    return {
+      url: params.importUrl,
+      status: "duplicate_unchanged",
+      code: "duplicate",
+      feedId: params.existingFeed.id,
+      message: "This feed is already in your library.",
     };
   }
 
@@ -297,6 +299,7 @@ async function resolveImportCandidate(params: {
   skipMultiCandidate: boolean;
   /** Shared counter — when it reaches 0, discovery fallback is skipped. */
   discoveryBudget: { remaining: number };
+  deadlineAtMs: number;
 }):
   Promise<
     | {
@@ -313,6 +316,14 @@ async function resolveImportCandidate(params: {
         code: FeedImportRowResult["code"];
       }
   > {
+  if (isDeadlineExceeded(params.deadlineAtMs)) {
+    return {
+      status: "failed",
+      code: "timeout_budget_exceeded",
+      message: IMPORT_FAILED_TIMEOUT_MESSAGE,
+    };
+  }
+
   const directExistingFeed = await findExistingFeedForUserByUrl(
     params.userId,
     params.normalizedInputUrl
@@ -340,7 +351,10 @@ async function resolveImportCandidate(params: {
   }
 
   try {
-    const parsedDirectFeed = await parseFeedWithMetadata(params.normalizedInputUrl);
+    const parsedDirectFeed = await parseFeedWithMetadata(
+      params.normalizedInputUrl,
+      IMPORT_PARSER_FETCH_OPTIONS
+    );
     const resolvedExistingFeed = await findExistingFeedForUserByUrl(
       params.userId,
       parsedDirectFeed.resolvedUrl
@@ -368,6 +382,14 @@ async function resolveImportCandidate(params: {
   }
 
   // Skip discovery if the per-batch budget is exhausted.
+  if (isDeadlineExceeded(params.deadlineAtMs)) {
+    return {
+      status: "failed",
+      code: "timeout_budget_exceeded",
+      message: IMPORT_FAILED_TIMEOUT_MESSAGE,
+    };
+  }
+
   if (params.discoveryBudget.remaining <= 0) {
     if (directFailureAfterFallback) {
       return {
@@ -390,8 +412,19 @@ async function resolveImportCandidate(params: {
   const validatedCandidates: ImportCandidate[] = [];
 
   for (const discoveredUrl of discovery.candidates) {
+    if (isDeadlineExceeded(params.deadlineAtMs)) {
+      return {
+        status: "failed",
+        code: "timeout_budget_exceeded",
+        message: IMPORT_FAILED_TIMEOUT_MESSAGE,
+      };
+    }
+
     try {
-      const parsedCandidateFeed = await parseFeedWithMetadata(discoveredUrl);
+      const parsedCandidateFeed = await parseFeedWithMetadata(
+        discoveredUrl,
+        IMPORT_PARSER_FETCH_OPTIONS
+      );
       const existingFeed = await findExistingFeedForUserByUrl(
         params.userId,
         parsedCandidateFeed.resolvedUrl
@@ -479,7 +512,12 @@ async function importOneFeedEntry(params: {
   skipMultiCandidate: boolean;
   folderResolver: FolderResolver;
   discoveryBudget: { remaining: number };
+  deadlineAtMs: number;
 }): Promise<FeedImportRowResult> {
+  if (isDeadlineExceeded(params.deadlineAtMs)) {
+    return toTimeoutExceededRow(params.entry.url);
+  }
+
   const normalizedInputUrl = normalizeFeedUrl(params.entry.url);
   if (!normalizedInputUrl) {
     return {
@@ -495,6 +533,7 @@ async function importOneFeedEntry(params: {
     normalizedInputUrl,
     skipMultiCandidate: params.skipMultiCandidate,
     discoveryBudget: params.discoveryBudget,
+    deadlineAtMs: params.deadlineAtMs,
   });
 
   if (candidateResult.status === "failed") {
@@ -513,6 +552,10 @@ async function importOneFeedEntry(params: {
       code: "multiple_candidates",
       message: candidateResult.message,
     };
+  }
+
+  if (isDeadlineExceeded(params.deadlineAtMs)) {
+    return toTimeoutExceededRow(normalizedInputUrl);
   }
 
   const candidate = candidateResult.candidate;
@@ -538,6 +581,10 @@ async function importOneFeedEntry(params: {
   }
 
   try {
+    if (isDeadlineExceeded(params.deadlineAtMs)) {
+      return toTimeoutExceededRow(normalizedInputUrl);
+    }
+
     const created = await createFeedWithInitialItems(
       params.userId,
       candidate.url,
@@ -597,12 +644,15 @@ export async function importFeedEntriesForUser(params: {
   userId: string;
   entries: FeedImportEntry[];
   skipMultiCandidate?: boolean;
+  deadlineMs?: number;
 }): Promise<FeedImportRowResult[]> {
   if (params.entries.length === 0) {
     return [];
   }
 
   const skipMultiCandidate = params.skipMultiCandidate !== false;
+  const deadlineMs = Math.max(1_000, params.deadlineMs ?? FEED_IMPORT_DEFAULT_DEADLINE_MS);
+  const deadlineAtMs = Date.now() + deadlineMs;
   const folderResolver = await createFolderResolver(params.userId);
 
   // Shared mutable budget — workers decrement it as they attempt discovery.
@@ -627,12 +677,18 @@ export async function importFeedEntriesForUser(params: {
       const entry = params.entries[nextIndex];
 
       try {
+        if (isDeadlineExceeded(deadlineAtMs)) {
+          results[nextIndex] = toTimeoutExceededRow(entry.url);
+          continue;
+        }
+
         results[nextIndex] = await importOneFeedEntry({
           userId: params.userId,
           entry,
           skipMultiCandidate,
           folderResolver,
           discoveryBudget,
+          deadlineAtMs,
         });
       } catch {
         results[nextIndex] = {

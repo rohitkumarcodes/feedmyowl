@@ -5,7 +5,7 @@ import { handleApiRouteError } from "@/lib/api-errors";
 import { assertTrustedWriteOrigin } from "@/lib/csrf";
 import { captureMessage } from "@/lib/error-tracking";
 import { importFeedEntriesForUser } from "@/lib/feed-import-service";
-import { parseRequestJson } from "@/lib/http/request-json";
+import { parseRequestJsonWithLimit } from "@/lib/http/request-json";
 import { applyRouteRateLimit } from "@/lib/rate-limit";
 import type {
   FeedImportEntry,
@@ -14,20 +14,44 @@ import type {
   FeedImportSourceType,
 } from "@/lib/feed-import-types";
 import { FEED_IMPORT_MAX_ENTRIES_PER_REQUEST } from "@/lib/feed-import-types";
+import {
+  FEED_IMPORT_MAX_CUSTOM_TITLE_LENGTH,
+  FEED_IMPORT_MAX_FOLDER_NAMES_PER_ENTRY,
+  FEED_IMPORT_MAX_REQUEST_BYTES,
+  FEED_IMPORT_MAX_URL_LENGTH,
+} from "@/lib/feed-import-types";
+import { FOLDER_NAME_MAX_LENGTH } from "@/lib/folder-service";
 
 function parseSourceType(value: unknown): FeedImportSourceType | null {
   return value === "OPML" || value === "JSON" ? value : null;
 }
 
-function parseImportEntries(value: unknown): FeedImportEntry[] | null {
+type ParseImportEntriesResult =
+  | { status: "ok"; entries: FeedImportEntry[] }
+  | { status: "invalid_payload"; error: string };
+
+function parseImportEntries(value: unknown): ParseImportEntriesResult {
   if (!Array.isArray(value)) {
-    return null;
+    return {
+      status: "invalid_payload",
+      error: "entries must be an array of { url, folderNames, customTitle } objects.",
+    };
+  }
+
+  if (value.length === 0) {
+    return {
+      status: "invalid_payload",
+      error: "entries must include at least one entry.",
+    };
   }
 
   const entries: FeedImportEntry[] = [];
-  for (const row of value) {
+  for (const [index, row] of value.entries()) {
     if (!row || typeof row !== "object") {
-      return null;
+      return {
+        status: "invalid_payload",
+        error: `entries[${index}] must be an object.`,
+      };
     }
 
     const candidate = row as Record<string, unknown>;
@@ -35,12 +59,39 @@ function parseImportEntries(value: unknown): FeedImportEntry[] | null {
     const folderNames = candidate.folderNames;
     const customTitle = candidate.customTitle;
 
-    if (typeof url !== "string") {
-      return null;
+    if (typeof url !== "string" || !url.trim()) {
+      return {
+        status: "invalid_payload",
+        error: `entries[${index}].url must be a non-empty string.`,
+      };
+    }
+
+    if (url.length > FEED_IMPORT_MAX_URL_LENGTH) {
+      return {
+        status: "invalid_payload",
+        error: `entries[${index}].url must be at most ${FEED_IMPORT_MAX_URL_LENGTH} characters.`,
+      };
     }
 
     if (!Array.isArray(folderNames) || !folderNames.every((name) => typeof name === "string")) {
-      return null;
+      return {
+        status: "invalid_payload",
+        error: `entries[${index}].folderNames must be an array of strings.`,
+      };
+    }
+
+    if (folderNames.length > FEED_IMPORT_MAX_FOLDER_NAMES_PER_ENTRY) {
+      return {
+        status: "invalid_payload",
+        error: `entries[${index}].folderNames can include at most ${FEED_IMPORT_MAX_FOLDER_NAMES_PER_ENTRY} items.`,
+      };
+    }
+
+    if (folderNames.some((folderName) => folderName.length > FOLDER_NAME_MAX_LENGTH)) {
+      return {
+        status: "invalid_payload",
+        error: `entries[${index}].folderNames entries must each be at most ${FOLDER_NAME_MAX_LENGTH} characters.`,
+      };
     }
 
     if (
@@ -48,7 +99,20 @@ function parseImportEntries(value: unknown): FeedImportEntry[] | null {
       customTitle !== undefined &&
       typeof customTitle !== "string"
     ) {
-      return null;
+      return {
+        status: "invalid_payload",
+        error: `entries[${index}].customTitle must be a string or null.`,
+      };
+    }
+
+    if (
+      typeof customTitle === "string" &&
+      customTitle.length > FEED_IMPORT_MAX_CUSTOM_TITLE_LENGTH
+    ) {
+      return {
+        status: "invalid_payload",
+        error: `entries[${index}].customTitle must be at most ${FEED_IMPORT_MAX_CUSTOM_TITLE_LENGTH} characters.`,
+      };
     }
 
     entries.push({
@@ -58,7 +122,20 @@ function parseImportEntries(value: unknown): FeedImportEntry[] | null {
     });
   }
 
-  return entries;
+  return {
+    status: "ok",
+    entries,
+  };
+}
+
+function badRequest(code: "invalid_payload" | "entry_limit_exceeded", error: string) {
+  return NextResponse.json(
+    {
+      error,
+      code,
+    },
+    { status: 400 }
+  );
 }
 
 /**
@@ -66,6 +143,8 @@ function parseImportEntries(value: unknown): FeedImportEntry[] | null {
  * Chunked feed import endpoint used by settings import workflow.
  */
 export async function POST(request: NextRequest) {
+  const startedAtMs = Date.now();
+
   try {
     const csrfFailure = assertTrustedWriteOrigin(request, "api.feeds.import.post");
     if (csrfFailure) {
@@ -91,36 +170,43 @@ export async function POST(request: NextRequest) {
       return rateLimit.response;
     }
 
-    const payload = await parseRequestJson(request);
-    if (!payload) {
-      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    const payloadResult = await parseRequestJsonWithLimit(request, {
+      maxBytes: FEED_IMPORT_MAX_REQUEST_BYTES,
+    });
+    if (payloadResult.status === "payload_too_large") {
+      captureMessage(
+        `feeds.import.rejected route=api.feeds.import.post reason=payload_too_large max_bytes=${FEED_IMPORT_MAX_REQUEST_BYTES}`,
+        "warning"
+      );
+      return NextResponse.json(
+        {
+          error: `Request payload exceeds ${FEED_IMPORT_MAX_REQUEST_BYTES} bytes.`,
+          code: "payload_too_large",
+        },
+        { status: 413 }
+      );
     }
+
+    if (payloadResult.status !== "ok") {
+      return badRequest("invalid_payload", "Invalid JSON body.");
+    }
+    const payload = payloadResult.payload;
 
     const sourceType = parseSourceType(payload.sourceType);
     if (!sourceType) {
-      return NextResponse.json(
-        { error: "sourceType must be either OPML or JSON." },
-        { status: 400 }
-      );
+      return badRequest("invalid_payload", "sourceType must be either OPML or JSON.");
     }
 
-    const entries = parseImportEntries(payload.entries);
-    if (!entries) {
-      return NextResponse.json(
-        {
-          error:
-            "entries must be an array of { url, folderNames, customTitle } objects.",
-        },
-        { status: 400 }
-      );
+    const entriesResult = parseImportEntries(payload.entries);
+    if (entriesResult.status !== "ok") {
+      return badRequest("invalid_payload", entriesResult.error);
     }
+    const entries = entriesResult.entries;
 
     if (entries.length > FEED_IMPORT_MAX_ENTRIES_PER_REQUEST) {
-      return NextResponse.json(
-        {
-          error: `A single import request can process at most ${FEED_IMPORT_MAX_ENTRIES_PER_REQUEST} entries.`,
-        },
-        { status: 400 }
+      return badRequest(
+        "entry_limit_exceeded",
+        `A single import request can process at most ${FEED_IMPORT_MAX_ENTRIES_PER_REQUEST} entries.`
       );
     }
 
@@ -151,6 +237,10 @@ export async function POST(request: NextRequest) {
       ).length,
       rows,
     };
+    const warningCount = rows.reduce(
+      (total, row) => total + (row.warnings?.length ?? 0),
+      0
+    );
 
     const failureCounts: Record<string, number> = {};
     for (const row of rows) {
@@ -161,7 +251,7 @@ export async function POST(request: NextRequest) {
     }
 
     captureMessage(
-      `feeds.import.summary source=${sourceType} processed=${responseBody.processedCount} imported=${responseBody.importedCount} duplicates=${responseBody.duplicateCount} merged=${responseBody.mergedCount} failed=${responseBody.failedCount} codes=${JSON.stringify(
+      `feeds.import.completed route=api.feeds.import.post source=${sourceType} processed=${responseBody.processedCount} imported=${responseBody.importedCount} duplicates=${responseBody.duplicateCount} merged=${responseBody.mergedCount} failed=${responseBody.failedCount} warnings=${warningCount} duration_ms=${Date.now() - startedAtMs} codes=${JSON.stringify(
         failureCounts
       )}`
     );

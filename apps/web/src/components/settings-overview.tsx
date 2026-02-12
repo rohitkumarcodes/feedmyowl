@@ -83,6 +83,7 @@ interface ImportSummary {
   discoveredCount: number;
   summary: FeedImportRowSummary;
   failedRows: FeedImportRowResult[];
+  warningRows: FeedImportRowResult[];
 }
 
 interface ImportProgress {
@@ -834,12 +835,16 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
 
       const summary = summarizeImportRows(allRows);
       const failedRows = allRows.filter(isImportFailureRow);
+      const warningRows = allRows.filter(
+        (row) => Array.isArray(row.warnings) && row.warnings.length > 0
+      );
       setImportSummary({
         fileName,
         sourceType,
         discoveredCount: normalizedEntries.length,
         summary,
         failedRows,
+        warningRows,
       });
 
       if (summary.importedCount > 0 || summary.mergedCount > 0) {
@@ -863,13 +868,17 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
   }
 
   function handleDownloadFailedImportRows() {
-    if (!importSummary || importSummary.failedRows.length === 0) {
+    if (
+      !importSummary ||
+      (importSummary.failedRows.length === 0 && importSummary.warningRows.length === 0)
+    ) {
       return;
     }
 
     const reportText = buildImportFailureReport({
       fileName: importSummary.fileName,
       failedRows: importSummary.failedRows,
+      warningRows: importSummary.warningRows,
     });
     const reportBlob = new Blob([reportText], { type: "text/plain;charset=utf-8" });
     const downloadUrl = URL.createObjectURL(reportBlob);
@@ -878,7 +887,7 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
     const dateStamp = new Date().toISOString().slice(0, 10);
 
     link.href = downloadUrl;
-    link.download = `feedmyowl-import-failures-${baseFileName}-${dateStamp}.txt`;
+    link.download = `feedmyowl-import-diagnostics-${baseFileName}-${dateStamp}.txt`;
     document.body.append(link);
     link.click();
     link.remove();
@@ -897,6 +906,12 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
           ? ` ${importSummary.summary.skippedMultipleCount} entr${
               importSummary.summary.skippedMultipleCount === 1 ? "y" : "ies"
             } require manual feed selection.`
+          : ""
+      }${
+        importSummary.summary.warningCount > 0
+          ? ` Reported ${importSummary.summary.warningCount} warning${
+              importSummary.summary.warningCount === 1 ? "" : "s"
+            }.`
           : ""
       }`
     : null;
@@ -1106,19 +1121,27 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
             <div className={styles.importSummary} role="status">
               <p>{importSummaryText}</p>
               <p className={styles.muted}>Source file: {importSummary.fileName}</p>
-              {importSummary.failedRows.length > 0 ? (
+              {importSummary.failedRows.length > 0 ||
+              importSummary.warningRows.length > 0 ? (
                 <button
                   type="button"
                   className={`${styles.linkButton} ${styles.downloadFailuresButton}`}
                   onClick={handleDownloadFailedImportRows}
                 >
-                  Download failed URLs
+                  Download import diagnostics
                 </button>
               ) : null}
               {importSummary.summary.failedDetails.length > 0 ? (
                 <ul className={styles.importFailureList}>
                   {importSummary.summary.failedDetails.map((detail) => (
                     <li key={detail}>{detail}</li>
+                  ))}
+                </ul>
+              ) : null}
+              {importSummary.summary.warningDetails.length > 0 ? (
+                <ul className={styles.importFailureList}>
+                  {importSummary.summary.warningDetails.map((detail) => (
+                    <li key={`warn-${detail}`}>{detail}</li>
                   ))}
                 </ul>
               ) : null}

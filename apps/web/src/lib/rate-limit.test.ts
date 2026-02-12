@@ -1,6 +1,9 @@
 import type { NextRequest } from "next/server";
-import { describe, expect, it } from "vitest";
-import { applyRouteRateLimit } from "@/lib/rate-limit";
+import { beforeEach, describe, expect, it } from "vitest";
+import {
+  __resetInMemoryRateLimitStateForTests,
+  applyRouteRateLimit,
+} from "@/lib/rate-limit";
 
 function toRequest(): NextRequest {
   return new Request("https://app.feedmyowl.test/api/feeds", {
@@ -14,15 +17,32 @@ function toRequest(): NextRequest {
 }
 
 describe("applyRouteRateLimit", () => {
-  it("fails open when redis is not configured", async () => {
-    const decision = await applyRouteRateLimit({
+  beforeEach(() => {
+    __resetInMemoryRateLimitStateForTests();
+  });
+
+  it("enforces limits with in-memory fallback when redis is not configured", async () => {
+    const firstDecision = await applyRouteRateLimit({
       request: toRequest(),
       routeKey: "api_feeds_post",
       userId: "user_123",
-      userLimitPerMinute: 20,
-      ipLimitPerMinute: 60,
+      userLimitPerMinute: 1,
+      ipLimitPerMinute: 10,
+    });
+    const secondDecision = await applyRouteRateLimit({
+      request: toRequest(),
+      routeKey: "api_feeds_post",
+      userId: "user_123",
+      userLimitPerMinute: 1,
+      ipLimitPerMinute: 10,
     });
 
-    expect(decision.allowed).toBe(true);
+    expect(firstDecision.allowed).toBe(true);
+    expect(secondDecision.allowed).toBe(false);
+
+    if (!secondDecision.allowed) {
+      expect(secondDecision.response.status).toBe(429);
+      expect(secondDecision.response.headers.get("Retry-After")).toBeTruthy();
+    }
   });
 });
