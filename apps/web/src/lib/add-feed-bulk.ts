@@ -15,6 +15,10 @@ export interface BulkSummary {
   failedDetails: string[];
 }
 
+export function getFailedBulkUrls(rows: BulkSummaryRow[]): string[] {
+  return rows.filter((row) => row.status === "failed").map((row) => row.url);
+}
+
 /**
  * Parse newline-separated feed URLs from the bulk add textarea.
  */

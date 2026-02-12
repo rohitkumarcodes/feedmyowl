@@ -42,6 +42,7 @@ export function FeedItem({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [isFoldersOpen, setIsFoldersOpen] = useState(false);
+  const [folderQuery, setFolderQuery] = useState("");
   const [renameValue, setRenameValue] = useState(label);
   const [draftFolderIds, setDraftFolderIds] = useState<string[]>(selectedFolderIds);
   const actionsRef = useRef<HTMLDivElement>(null);
@@ -103,7 +104,17 @@ export function FeedItem({
     }
 
     setDraftFolderIds(selectedFolderIds);
+    setFolderQuery("");
   }, [isFoldersOpen, selectedFolderIds]);
+
+  const filteredFolderOptions = folderOptions.filter((folder) => {
+    const normalizedQuery = folderQuery.trim().toLocaleLowerCase();
+    if (!normalizedQuery) {
+      return true;
+    }
+
+    return folder.name.toLocaleLowerCase().includes(normalizedQuery);
+  });
 
   const handleDelete = () => {
     setIsMenuOpen(false);
@@ -258,19 +269,57 @@ export function FeedItem({
                 {folderOptions.length === 0 ? (
                   <p className={styles.folderEditorEmpty}>Create a folder first.</p>
                 ) : (
-                  <div className={styles.folderEditorList}>
-                    {folderOptions.map((folder) => (
-                      <label key={folder.id} className={styles.folderEditorOption}>
-                        <input
-                          type="checkbox"
-                          checked={draftFolderIds.includes(folder.id)}
-                          onChange={() => toggleDraftFolder(folder.id)}
-                          disabled={isUpdatingFolders}
-                        />
-                        <span>{folder.name}</span>
-                      </label>
-                    ))}
-                  </div>
+                  <>
+                    <input
+                      type="text"
+                      value={folderQuery}
+                      onChange={(event) => setFolderQuery(event.currentTarget.value)}
+                      className={primitiveStyles.input}
+                      placeholder="Search folders"
+                      disabled={isUpdatingFolders}
+                    />
+                    <div className={styles.folderEditorToolbar}>
+                      <button
+                        type="button"
+                        className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
+                        onClick={() => {
+                          const visibleIds = filteredFolderOptions.map((folder) => folder.id);
+                          const nextIds = Array.from(
+                            new Set([...draftFolderIds, ...visibleIds])
+                          );
+                          setDraftFolderIds(nextIds);
+                        }}
+                        disabled={filteredFolderOptions.length === 0 || isUpdatingFolders}
+                      >
+                        Select all
+                      </button>
+                      <button
+                        type="button"
+                        className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
+                        onClick={() => setDraftFolderIds([])}
+                        disabled={draftFolderIds.length === 0 || isUpdatingFolders}
+                      >
+                        Clear
+                      </button>
+                    </div>
+                    {filteredFolderOptions.length === 0 ? (
+                      <p className={styles.folderEditorEmpty}>No folders match your search.</p>
+                    ) : (
+                      <div className={styles.folderEditorList}>
+                        {filteredFolderOptions.map((folder) => (
+                          <label key={folder.id} className={styles.folderEditorOption}>
+                            <input
+                              type="checkbox"
+                              checked={draftFolderIds.includes(folder.id)}
+                              onChange={() => toggleDraftFolder(folder.id)}
+                              disabled={isUpdatingFolders}
+                            />
+                            <span>{folder.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
                 <div className={styles.renameActions}>
                   <button

@@ -264,6 +264,7 @@ export function FeedsWorkspace({
     inlineDuplicateMessage,
     addFeedFolderIds,
     addFeedNewFolderNameInput,
+    createdFolderRenameId,
     discoveryCandidates,
     selectedDiscoveryCandidateUrl,
     bulkAddResultRows,
@@ -278,17 +279,23 @@ export function FeedsWorkspace({
     deletingFolderId,
     renamingFolderId,
     isDeletingUncategorized,
-    infoMessage,
-    errorMessage,
+    isMovingUncategorized,
+    queuedNotices,
     setAddFeedInputMode,
     setBulkFeedUrlInput,
     setFeedUrlInput,
+    setAddFeedFolderIds,
     toggleAddFeedFolder,
     setAddFeedNewFolderNameInput,
     selectDiscoveryCandidate,
     createFolderFromAddFeed,
+    renameFolderFromAddFeed,
+    dismissCreatedFolderRename,
     createFolderFromSidebar,
     handleAddAnother,
+    openExistingFeed,
+    handleRetryFailedBulkAdd,
+    handleCopyFailedBulkUrls,
     showAddFeedForm,
     cancelAddFeedForm,
     clearStatusMessages,
@@ -301,6 +308,8 @@ export function FeedsWorkspace({
     handleRenameFolder,
     handleDeleteFolder,
     handleDeleteUncategorizedFeeds,
+    handleMoveUncategorizedFeeds,
+    dismissNotice,
   } = useFeedsWorkspaceActions({
     allArticles,
     feeds,
@@ -705,19 +714,17 @@ export function FeedsWorkspace({
   const sidebarNotices = useMemo(
     () =>
       buildSidebarNotices({
-        addFeedProgressMessage,
+        progressMessage: addFeedProgressMessage,
         networkMessage,
-        infoMessage,
-        errorMessage,
+        queuedNotices,
         showAddAnotherAction,
         onAddAnother: handleAddAnother,
       }),
     [
       addFeedProgressMessage,
-      errorMessage,
       handleAddAnother,
-      infoMessage,
       networkMessage,
+      queuedNotices,
       showAddAnotherAction,
     ]
   );
@@ -803,6 +810,7 @@ export function FeedsWorkspace({
             selectedDiscoveryCandidateUrl={selectedDiscoveryCandidateUrl}
             bulkAddResultRows={bulkAddResultRows}
             bulkAddSummary={bulkAddSummary}
+            createdFolderRenameId={createdFolderRenameId}
             isAddingFeed={isAddingFeed}
             isRefreshingFeeds={isRefreshingFeeds}
             isCreatingFolder={isCreatingFolder}
@@ -815,16 +823,32 @@ export function FeedsWorkspace({
             onFeedUrlChange={setFeedUrlInput}
             onBulkFeedUrlChange={setBulkFeedUrlInput}
             onToggleAddFeedFolder={toggleAddFeedFolder}
+            onSetAddFeedFolders={setAddFeedFolderIds}
             onAddFeedNewFolderNameChange={setAddFeedNewFolderNameInput}
             onSelectDiscoveryCandidate={selectDiscoveryCandidate}
             onCreateFolderFromAddFeed={() => {
               void createFolderFromAddFeed();
             }}
+            onRenameFolderFromAddFeed={(folderId, name) => {
+              return renameFolderFromAddFeed(folderId, name);
+            }}
+            onDismissCreatedFolderRename={dismissCreatedFolderRename}
+            onOpenExistingFeed={(url) => {
+              openExistingFeed(url);
+            }}
+            onRetryFailedBulkAdd={() => {
+              void handleRetryFailedBulkAdd();
+            }}
+            onCopyFailedBulkUrls={() => {
+              void handleCopyFailedBulkUrls();
+            }}
             onSubmitFeed={(event) => {
               void handleAddFeed(event);
             }}
             notices={sidebarNotices}
-            onDismissMessage={clearStatusMessages}
+            onDismissMessage={(id) => {
+              dismissNotice(id);
+            }}
             deletingFeedId={deletingFeedId}
             renamingFeedId={renamingFeedId}
             updatingFeedFoldersId={updatingFeedFoldersId}
@@ -840,6 +864,7 @@ export function FeedsWorkspace({
             deletingFolderId={deletingFolderId}
             renamingFolderId={renamingFolderId}
             isDeletingUncategorized={isDeletingUncategorized}
+            isMovingUncategorized={isMovingUncategorized}
             onCreateFolder={(name) => {
               return createFolderFromSidebar(name);
             }}
@@ -851,6 +876,9 @@ export function FeedsWorkspace({
             }}
             onRequestUncategorizedDelete={() => {
               return handleDeleteUncategorizedFeeds();
+            }}
+            onRequestUncategorizedMove={(folderId) => {
+              return handleMoveUncategorizedFeeds(folderId);
             }}
             onCollapse={handleSidebarCollapse}
           />

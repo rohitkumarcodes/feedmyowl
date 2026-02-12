@@ -115,8 +115,8 @@
   cursor: pointer;
   display: flex;
   justify-content: center;
-  min-height: 32px;
-  min-width: 32px;
+  min-height: 40px;
+  min-width: 40px;
   padding: 0 6px;
 }
 
@@ -150,7 +150,8 @@
   cursor: pointer;
   display: flex;
   justify-content: center;
-  min-width: 28px;
+  min-height: 40px;
+  min-width: 40px;
   padding: 0 4px;
 }
 

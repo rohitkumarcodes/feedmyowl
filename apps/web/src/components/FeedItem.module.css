@@ -59,6 +59,11 @@
   gap: 8px;
 }
 
+.folderEditorToolbar {
+  display: flex;
+  gap: 6px;
+}
+
 .folderEditorList {
   display: grid;
   gap: 4px;

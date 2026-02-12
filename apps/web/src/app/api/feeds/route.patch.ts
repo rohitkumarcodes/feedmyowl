@@ -6,6 +6,7 @@ import { assertTrustedWriteOrigin } from "@/lib/csrf";
 import {
   deleteUncategorizedFeedsForUser,
   markFeedItemReadForUser,
+  moveUncategorizedFeedsToFolderForUser,
 } from "@/lib/feed-service";
 import { getAppUser, parseRouteJson } from "./route.shared";
 
@@ -15,6 +16,7 @@ import { getAppUser, parseRouteJson } from "./route.shared";
  * Supported actions:
  *   - item.markRead
  *   - uncategorized.delete
+ *   - uncategorized.move_to_folder
  *   - account.delete
  */
 export async function patchFeedsRoute(request: NextRequest) {
@@ -70,6 +72,42 @@ export async function patchFeedsRoute(request: NextRequest) {
 
       const deletedFeedCount = await deleteUncategorizedFeedsForUser(appUser.id);
       return NextResponse.json({ success: true, deletedFeedCount });
+    }
+
+    if (payload.action === "uncategorized.move_to_folder") {
+      const folderId = payload.folderId;
+
+      if (typeof folderId !== "string" || !folderId.trim()) {
+        return NextResponse.json(
+          {
+            error: "Folder ID is required.",
+            code: "invalid_folder_id",
+          },
+          { status: 400 }
+        );
+      }
+
+      const result = await moveUncategorizedFeedsToFolderForUser(
+        appUser.id,
+        folderId
+      );
+
+      if (result.status === "invalid_folder_id") {
+        return NextResponse.json(
+          {
+            error: "Selected folder could not be found.",
+            code: "invalid_folder_id",
+          },
+          { status: 400 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        totalUncategorizedCount: result.totalUncategorizedCount,
+        movedFeedCount: result.movedFeedCount,
+        failedFeedCount: result.failedFeedCount,
+      });
     }
 
     if (payload.action === "account.delete") {

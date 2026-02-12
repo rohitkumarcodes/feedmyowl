@@ -417,6 +417,113 @@ export async function deleteUncategorizedFeedsForUser(userId: string): Promise<n
   return deletedFeeds.length;
 }
 
+export type MoveUncategorizedFeedsToFolderForUserResult =
+  | { status: "invalid_folder_id" }
+  | {
+      status: "ok";
+      totalUncategorizedCount: number;
+      movedFeedCount: number;
+      failedFeedCount: number;
+    };
+
+/**
+ * Assign all currently uncategorized feeds to one folder for one user.
+ *
+ * Best effort: each feed assignment is attempted independently. Failures are
+ * counted and surfaced to the caller while successful moves are preserved.
+ */
+export async function moveUncategorizedFeedsToFolderForUser(
+  userId: string,
+  folderId: string
+): Promise<MoveUncategorizedFeedsToFolderForUserResult> {
+  const targetFolder = await db.query.folders.findFirst({
+    where: and(eq(folders.userId, userId), eq(folders.id, folderId)),
+    columns: { id: true },
+  });
+
+  if (!targetFolder) {
+    return { status: "invalid_folder_id" };
+  }
+
+  const userFeeds = await db.query.feeds.findMany({
+    where: eq(feeds.userId, userId),
+    columns: { id: true },
+  });
+
+  if (userFeeds.length === 0) {
+    return {
+      status: "ok",
+      totalUncategorizedCount: 0,
+      movedFeedCount: 0,
+      failedFeedCount: 0,
+    };
+  }
+
+  const userFeedIds = userFeeds.map((feed) => feed.id);
+  const memberships = await db.query.feedFolderMemberships.findMany({
+    where: and(
+      eq(feedFolderMemberships.userId, userId),
+      inArray(feedFolderMemberships.feedId, userFeedIds)
+    ),
+    columns: { feedId: true },
+  });
+
+  const categorizedFeedIds = new Set(memberships.map((membership) => membership.feedId));
+  const uncategorizedFeedIds = userFeedIds.filter(
+    (feedId) => !categorizedFeedIds.has(feedId)
+  );
+
+  if (uncategorizedFeedIds.length === 0) {
+    return {
+      status: "ok",
+      totalUncategorizedCount: 0,
+      movedFeedCount: 0,
+      failedFeedCount: 0,
+    };
+  }
+
+  const now = new Date();
+  const settledMoves = await Promise.allSettled(
+    uncategorizedFeedIds.map(async (feedId) => {
+      await db.insert(feedFolderMemberships).values({
+        userId,
+        feedId,
+        folderId,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      return feedId;
+    })
+  );
+
+  const movedFeedIds: string[] = [];
+  let failedFeedCount = 0;
+
+  for (const result of settledMoves) {
+    if (result.status === "fulfilled") {
+      movedFeedIds.push(result.value);
+      continue;
+    }
+
+    failedFeedCount += 1;
+  }
+
+  if (movedFeedIds.length > 0) {
+    await db
+      .update(feeds)
+      .set({ updatedAt: now })
+      .where(and(eq(feeds.userId, userId), inArray(feeds.id, movedFeedIds)));
+  }
+
+  return {
+    status: "ok",
+    totalUncategorizedCount: uncategorizedFeedIds.length,
+    movedFeedCount: movedFeedIds.length,
+    failedFeedCount,
+  };
+}
+
 /**
  * Update the user-defined display name for one feed belonging to one user.
  */

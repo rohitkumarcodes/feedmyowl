@@ -76,6 +76,7 @@ interface SidebarProps {
   selectedDiscoveryCandidateUrl: string;
   bulkAddResultRows: SidebarBulkAddResultRow[] | null;
   bulkAddSummary: SidebarBulkAddSummary | null;
+  createdFolderRenameId: string | null;
   isAddingFeed: boolean;
   isRefreshingFeeds: boolean;
   isCreatingFolder: boolean;
@@ -89,10 +90,19 @@ interface SidebarProps {
   onAddFeedNewFolderNameChange: (value: string) => void;
   onSelectDiscoveryCandidate: (url: string) => void;
   onCreateFolderFromAddFeed: () => void;
+  onRenameFolderFromAddFeed: (
+    folderId: string,
+    name: string
+  ) => boolean | Promise<boolean>;
+  onDismissCreatedFolderRename: () => void;
+  onSetAddFeedFolders: (folderIds: string[]) => void;
+  onOpenExistingFeed: (url: string) => void;
+  onRetryFailedBulkAdd: () => void;
+  onCopyFailedBulkUrls: () => void;
   onSubmitFeed: (event: FormEvent<HTMLFormElement>) => void;
 
   notices: SidebarNotice[];
-  onDismissMessage: () => void;
+  onDismissMessage: (id: string) => void;
 
   deletingFeedId: string | null;
   renamingFeedId: string | null;
@@ -107,6 +117,7 @@ interface SidebarProps {
   deletingFolderId: string | null;
   renamingFolderId: string | null;
   isDeletingUncategorized: boolean;
+  isMovingUncategorized: boolean;
   onCreateFolder: (name: string) => boolean | Promise<boolean>;
   onRequestFolderRename: (
     folderId: string,
@@ -117,6 +128,7 @@ interface SidebarProps {
     mode: FolderDeleteMode
   ) => Promise<boolean>;
   onRequestUncategorizedDelete: () => Promise<boolean>;
+  onRequestUncategorizedMove: (folderId: string) => Promise<boolean>;
 
   onCollapse: () => void;
 }
@@ -133,6 +145,8 @@ interface FolderRowProps {
   onSelectFolder: () => void;
   onRenameFolder: (name: string) => Promise<boolean>;
   onPromptDeleteFolder: () => void;
+  forceRenameOpen: boolean;
+  onForceRenameHandled: () => void;
 }
 
 interface ShutterFeedGroupProps {
@@ -173,6 +187,8 @@ function FolderRow({
   onSelectFolder,
   onRenameFolder,
   onPromptDeleteFolder,
+  forceRenameOpen,
+  onForceRenameHandled,
 }: FolderRowProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isRenameOpen, setIsRenameOpen] = useState(false);
@@ -207,6 +223,16 @@ function FolderRow({
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isMenuOpen, isRenameOpen]);
+
+  useEffect(() => {
+    if (!forceRenameOpen) {
+      return;
+    }
+
+    setIsMenuOpen(false);
+    setIsRenameOpen(true);
+    onForceRenameHandled();
+  }, [forceRenameOpen, onForceRenameHandled]);
 
   useEffect(() => {
     if (!isRenameOpen) {
@@ -490,6 +516,7 @@ export function Sidebar({
   selectedDiscoveryCandidateUrl,
   bulkAddResultRows,
   bulkAddSummary,
+  createdFolderRenameId,
   isAddingFeed,
   isRefreshingFeeds,
   isCreatingFolder,
@@ -503,6 +530,12 @@ export function Sidebar({
   onAddFeedNewFolderNameChange,
   onSelectDiscoveryCandidate,
   onCreateFolderFromAddFeed,
+  onRenameFolderFromAddFeed,
+  onDismissCreatedFolderRename,
+  onSetAddFeedFolders,
+  onOpenExistingFeed,
+  onRetryFailedBulkAdd,
+  onCopyFailedBulkUrls,
   onSubmitFeed,
   notices,
   onDismissMessage,
@@ -515,10 +548,12 @@ export function Sidebar({
   deletingFolderId,
   renamingFolderId,
   isDeletingUncategorized,
+  isMovingUncategorized,
   onCreateFolder,
   onRequestFolderRename,
   onRequestFolderDelete,
   onRequestUncategorizedDelete,
+  onRequestUncategorizedMove,
   onCollapse,
 }: SidebarProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -527,9 +562,18 @@ export function Sidebar({
   const [isUncategorizedMenuOpen, setIsUncategorizedMenuOpen] = useState(false);
   const [isUncategorizedDeleteDialogOpen, setIsUncategorizedDeleteDialogOpen] =
     useState(false);
+  const [isUncategorizedMoveDialogOpen, setIsUncategorizedMoveDialogOpen] =
+    useState(false);
+  const [uncategorizedTargetFolderId, setUncategorizedTargetFolderId] = useState("");
+  const [uncategorizedNewFolderName, setUncategorizedNewFolderName] = useState("");
+  const [pendingUncategorizedCreatedFolderName, setPendingUncategorizedCreatedFolderName] =
+    useState<string | null>(null);
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
   const [isSidebarFolderFormVisible, setIsSidebarFolderFormVisible] = useState(false);
   const [sidebarFolderName, setSidebarFolderName] = useState("");
+  const [pendingSidebarAutoRenameFolderName, setPendingSidebarAutoRenameFolderName] =
+    useState<string | null>(null);
+  const [autoRenameFolderId, setAutoRenameFolderId] = useState<string | null>(null);
   const [pendingDeleteFolderId, setPendingDeleteFolderId] = useState<string | null>(null);
   const [isDeletingWithUnsubscribe, setIsDeletingWithUnsubscribe] = useState(false);
   const addMenuRef = useRef<HTMLDivElement>(null);
@@ -546,6 +590,68 @@ export function Sidebar({
       return next;
     });
   }, [folders]);
+
+  useEffect(() => {
+    if (selectedScope.type !== "feed") {
+      return;
+    }
+
+    const selectedFeed = feeds.find((feed) => feed.id === selectedScope.feedId);
+    if (!selectedFeed || selectedFeed.folderIds.length === 0) {
+      return;
+    }
+
+    setExpandedFolderIds((previous) => {
+      const next = { ...previous };
+      for (const folderId of selectedFeed.folderIds) {
+        next[folderId] = true;
+      }
+      return next;
+    });
+  }, [feeds, selectedScope]);
+
+  useEffect(() => {
+    if (!pendingSidebarAutoRenameFolderName) {
+      return;
+    }
+
+    const createdFolder = folders.find(
+      (folder) =>
+        folder.name.trim().toLocaleLowerCase() ===
+        pendingSidebarAutoRenameFolderName.trim().toLocaleLowerCase()
+    );
+
+    if (!createdFolder) {
+      return;
+    }
+
+    setAutoRenameFolderId(createdFolder.id);
+    setPendingSidebarAutoRenameFolderName(null);
+  }, [folders, pendingSidebarAutoRenameFolderName]);
+
+  useEffect(() => {
+    if (isUncategorizedMoveDialogOpen && !uncategorizedTargetFolderId && folders.length > 0) {
+      setUncategorizedTargetFolderId(folders[0].id);
+    }
+  }, [folders, isUncategorizedMoveDialogOpen, uncategorizedTargetFolderId]);
+
+  useEffect(() => {
+    if (!pendingUncategorizedCreatedFolderName) {
+      return;
+    }
+
+    const createdFolder = folders.find(
+      (folder) =>
+        folder.name.trim().toLocaleLowerCase() ===
+        pendingUncategorizedCreatedFolderName.trim().toLocaleLowerCase()
+    );
+    if (!createdFolder) {
+      return;
+    }
+
+    setUncategorizedTargetFolderId(createdFolder.id);
+    setPendingUncategorizedCreatedFolderName(null);
+  }, [folders, pendingUncategorizedCreatedFolderName]);
 
   useEffect(() => {
     if (!isAddMenuOpen) {
@@ -643,6 +749,7 @@ export function Sidebar({
 
     setIsUncategorizedMenuOpen(false);
     setIsUncategorizedDeleteDialogOpen(false);
+    setIsUncategorizedMoveDialogOpen(false);
   }, [uncategorizedFeeds.length]);
 
   const pendingDeleteStats = useMemo(() => {
@@ -669,6 +776,7 @@ export function Sidebar({
 
     const created = await onCreateFolder(nextName);
     if (created) {
+      setPendingSidebarAutoRenameFolderName(nextName);
       setSidebarFolderName("");
       setIsSidebarFolderFormVisible(false);
     }
@@ -692,7 +800,45 @@ export function Sidebar({
   };
 
   const isAddMenuDisabled = isAddingFeed || isCreatingFolder;
-  const canCreateSidebarFolder = sidebarFolderName.trim().length > 0 && !isCreatingFolder;
+  const sidebarFolderDuplicate = folders.find(
+    (folder) =>
+      folder.name.trim().toLocaleLowerCase() ===
+      sidebarFolderName.trim().toLocaleLowerCase() &&
+      sidebarFolderName.trim().length > 0
+  );
+  const canCreateSidebarFolder =
+    sidebarFolderName.trim().length > 0 && !isCreatingFolder && !sidebarFolderDuplicate;
+  const uncategorizedNewFolderDuplicate = folders.find(
+    (folder) =>
+      folder.name.trim().toLocaleLowerCase() ===
+      uncategorizedNewFolderName.trim().toLocaleLowerCase() &&
+      uncategorizedNewFolderName.trim().length > 0
+  );
+  const canCreateUncategorizedFolder =
+    uncategorizedNewFolderName.trim().length > 0 &&
+    !uncategorizedNewFolderDuplicate &&
+    !isCreatingFolder;
+
+  const handleCreateFolderFromUncategorizedMove = async () => {
+    const folderName = uncategorizedNewFolderName.trim();
+    if (!folderName || isCreatingFolder) {
+      return;
+    }
+
+    if (uncategorizedNewFolderDuplicate) {
+      setUncategorizedTargetFolderId(uncategorizedNewFolderDuplicate.id);
+      setUncategorizedNewFolderName("");
+      return;
+    }
+
+    const created = await onCreateFolder(folderName);
+    if (!created) {
+      return;
+    }
+
+    setUncategorizedNewFolderName("");
+    setPendingUncategorizedCreatedFolderName(folderName);
+  };
 
   const sidebarFolderForm = (
     <form
@@ -731,6 +877,24 @@ export function Sidebar({
           Cancel
         </button>
       </div>
+      {sidebarFolderDuplicate ? (
+        <div className={styles.sidebarDuplicateRow}>
+          <span className={styles.sidebarDuplicateText}>
+            A folder named "{sidebarFolderDuplicate.name}" already exists.
+          </span>
+          <button
+            type="button"
+            className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
+            onClick={() => {
+              closeSidebarFolderForm();
+              onSelectFolder(sidebarFolderDuplicate.id);
+            }}
+            disabled={isCreatingFolder}
+          >
+            Use existing
+          </button>
+        </div>
+      ) : null}
     </form>
   );
 
@@ -765,6 +929,12 @@ export function Sidebar({
     progress: styles.sidebarMessageProgress,
     offline: styles.sidebarMessageOffline,
     info: styles.sidebarMessageInfo,
+  };
+  const noticeKindIcons: Record<SidebarNotice["kind"], string> = {
+    error: "!",
+    progress: "…",
+    offline: "⦿",
+    info: "i",
   };
 
   return (
@@ -911,6 +1081,9 @@ export function Sidebar({
             role={notice.role}
             aria-live={notice.ariaLive}
           >
+            <span className={styles.sidebarMessageIcon} aria-hidden="true">
+              {noticeKindIcons[notice.kind]}
+            </span>
             <span className={styles.sidebarMessageText}>{notice.text}</span>
             {notice.action ? (
               <button
@@ -925,7 +1098,7 @@ export function Sidebar({
               <button
                 type="button"
                 className={styles.sidebarMessageDismiss}
-                onClick={onDismissMessage}
+                onClick={() => onDismissMessage(notice.id)}
                 aria-label={`Dismiss ${notice.kind} message`}
               >
                 x
@@ -951,13 +1124,20 @@ export function Sidebar({
         selectedFolderIds={addFeedFolderIds}
         newFolderNameInput={addFeedNewFolderNameInput}
         isCreatingFolder={isCreatingFolder}
+        createdFolderRenameId={createdFolderRenameId}
         onAddFeedInputModeChange={onAddFeedInputModeChange}
         onFeedUrlChange={onFeedUrlChange}
         onBulkFeedUrlChange={onBulkFeedUrlChange}
         onToggleFolder={onToggleAddFeedFolder}
+        onSetSelectedFolders={onSetAddFeedFolders}
         onNewFolderNameChange={onAddFeedNewFolderNameChange}
         onSelectDiscoveryCandidate={onSelectDiscoveryCandidate}
         onCreateFolderFromForm={onCreateFolderFromAddFeed}
+        onRenameFolderFromForm={onRenameFolderFromAddFeed}
+        onDismissCreatedFolderRename={onDismissCreatedFolderRename}
+        onOpenExistingFeed={onOpenExistingFeed}
+        onRetryFailedBulk={onRetryFailedBulkAdd}
+        onCopyFailedUrls={onCopyFailedBulkUrls}
         onSubmitFeed={onSubmitFeed}
         onClose={onCancelAddFeed}
       />
@@ -1032,7 +1212,7 @@ export function Sidebar({
                   onClick={() => setIsUncategorizedMenuOpen((previous) => !previous)}
                   aria-label="Open actions for Uncategorized"
                   aria-expanded={isUncategorizedMenuOpen}
-                  disabled={isDeletingUncategorized}
+                  disabled={isDeletingUncategorized || isMovingUncategorized}
                 >
                   ⋯
                 </button>
@@ -1044,11 +1224,22 @@ export function Sidebar({
                       className={primitiveStyles.menuItem}
                       onClick={() => {
                         setIsUncategorizedMenuOpen(false);
+                        setIsUncategorizedMoveDialogOpen(true);
+                      }}
+                      disabled={isDeletingUncategorized || isMovingUncategorized}
+                    >
+                      Move all to folder...
+                    </button>
+                    <button
+                      type="button"
+                      className={primitiveStyles.menuItem}
+                      onClick={() => {
+                        setIsUncategorizedMenuOpen(false);
                         setIsUncategorizedDeleteDialogOpen(true);
                       }}
-                      disabled={isDeletingUncategorized}
+                      disabled={isDeletingUncategorized || isMovingUncategorized}
                     >
-                      Delete
+                      Delete uncategorized feeds
                     </button>
                   </div>
                 ) : null}
@@ -1061,6 +1252,18 @@ export function Sidebar({
             >
               {renderFeedRows(uncategorizedFeeds)}
             </ShutterFeedGroup>
+            {sortedFolders.length === 0 ? (
+              <div className={styles.uncategorizedCta}>
+                <p>No folders yet. Create one to organize uncategorized feeds.</p>
+                <button
+                  type="button"
+                  className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
+                  onClick={openAddFolderFlow}
+                >
+                  Create folder
+                </button>
+              </div>
+            ) : null}
           </div>
         ) : null}
 
@@ -1095,6 +1298,12 @@ export function Sidebar({
                   setPendingDeleteFolderId(folder.id);
                   setIsDeletingWithUnsubscribe(false);
                 }}
+                forceRenameOpen={autoRenameFolderId === folder.id}
+                onForceRenameHandled={() =>
+                  setAutoRenameFolderId((previous) =>
+                    previous === folder.id ? null : previous
+                  )
+                }
               />
 
               <ShutterFeedGroup
@@ -1135,13 +1344,15 @@ export function Sidebar({
           >
             <h3>Delete folder</h3>
             <p>
-              This folder contains {pendingDeleteStats.total} feed
+              You are deleting a folder with {pendingDeleteStats.total} feed
               {pendingDeleteStats.total === 1 ? "" : "s"}.
             </p>
             <p>
+              {pendingDeleteStats.crossListed} feed
+              {pendingDeleteStats.crossListed === 1 ? "" : "s"} are also in other folders.
+              {" "}
               {pendingDeleteStats.exclusive} feed
-              {pendingDeleteStats.exclusive === 1 ? "" : "s"} are exclusive and{" "}
-              {pendingDeleteStats.crossListed} are cross-listed in other folders.
+              {pendingDeleteStats.exclusive === 1 ? " is" : "s are"} only in this folder.
             </p>
             <div className={styles.deleteDialogActions}>
               <button
@@ -1166,7 +1377,7 @@ export function Sidebar({
                 }}
                 disabled={deletingFolderId === pendingDeleteFolderId}
               >
-                Delete folder only
+                Delete folder only (keep all feeds)
               </button>
               <button
                 type="button"
@@ -1187,7 +1398,7 @@ export function Sidebar({
               >
                 {isDeletingWithUnsubscribe
                   ? "Deleting..."
-                  : "Delete folder and unsubscribe exclusive feeds"}
+                  : "Delete folder and unsubscribe feeds only in this folder"}
               </button>
             </div>
           </div>
@@ -1203,10 +1414,10 @@ export function Sidebar({
             role="dialog"
             aria-modal="true"
           >
-            <h3>Delete uncategorized</h3>
+            <h3>Delete uncategorized feeds</h3>
             <p>
-              Deleting uncategorized folder will delete both the folder and the feeds.
-              Are you sure you want to delete?
+              This will unsubscribe and remove all feeds that are currently uncategorized.
+              This cannot be undone.
             </p>
             <div className={styles.deleteDialogActions}>
               <button
@@ -1230,6 +1441,112 @@ export function Sidebar({
                 disabled={isDeletingUncategorized}
               >
                 {isDeletingUncategorized ? "Deleting..." : "Yes, delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {isUncategorizedMoveDialogOpen ? (
+        <div
+          className={`${primitiveStyles.dialogBackdrop} ${primitiveStyles.dialogBackdropBottom}`}
+        >
+          <div
+            className={`${primitiveStyles.dialog} ${primitiveStyles.dialogMobileBottom} ${styles.deleteDialog}`}
+            role="dialog"
+            aria-modal="true"
+          >
+            <h3>Move uncategorized feeds</h3>
+            <p>Select a folder for all uncategorized feeds.</p>
+            {sortedFolders.length === 0 ? (
+              <p>No folders exist yet. Create one below.</p>
+            ) : null}
+
+            {sortedFolders.length > 0 ? (
+              <label className={styles.inlineField}>
+                <span>Destination folder</span>
+                <select
+                  className={primitiveStyles.input}
+                  value={uncategorizedTargetFolderId}
+                  onChange={(event) => setUncategorizedTargetFolderId(event.currentTarget.value)}
+                  disabled={isMovingUncategorized}
+                >
+                  {sortedFolders.map((folder) => (
+                    <option key={folder.id} value={folder.id}>
+                      {folder.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+
+            <label className={styles.inlineField}>
+              <span>Create folder inline</span>
+              <input
+                type="text"
+                className={primitiveStyles.input}
+                value={uncategorizedNewFolderName}
+                onChange={(event) => setUncategorizedNewFolderName(event.currentTarget.value)}
+                placeholder="Folder name"
+                disabled={isCreatingFolder || isMovingUncategorized}
+                maxLength={255}
+              />
+            </label>
+            <div className={styles.deleteDialogActions}>
+              <button
+                type="button"
+                className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
+                onClick={() => {
+                  void handleCreateFolderFromUncategorizedMove();
+                }}
+                disabled={!canCreateUncategorizedFolder || isMovingUncategorized}
+              >
+                {isCreatingFolder ? "Creating..." : "Create folder"}
+              </button>
+              {uncategorizedNewFolderDuplicate ? (
+                <button
+                  type="button"
+                  className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
+                  onClick={() =>
+                    setUncategorizedTargetFolderId(uncategorizedNewFolderDuplicate.id)
+                  }
+                  disabled={isMovingUncategorized}
+                >
+                  Use existing
+                </button>
+              ) : null}
+            </div>
+
+            <div className={styles.deleteDialogActions}>
+              <button
+                type="button"
+                className={primitiveStyles.button}
+                onClick={() => {
+                  setIsUncategorizedMoveDialogOpen(false);
+                  setUncategorizedNewFolderName("");
+                }}
+                disabled={isMovingUncategorized}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={`${primitiveStyles.button} ${primitiveStyles.buttonDanger}`}
+                onClick={() => {
+                  if (!uncategorizedTargetFolderId) {
+                    return;
+                  }
+
+                  void onRequestUncategorizedMove(uncategorizedTargetFolderId).then((moved) => {
+                    if (moved) {
+                      setIsUncategorizedMoveDialogOpen(false);
+                      setUncategorizedNewFolderName("");
+                    }
+                  });
+                }}
+                disabled={!uncategorizedTargetFolderId || isMovingUncategorized}
+              >
+                {isMovingUncategorized ? "Moving..." : "Move all"}
               </button>
             </div>
           </div>

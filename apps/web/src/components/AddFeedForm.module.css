@@ -63,16 +63,18 @@
 
 .discoveryList {
   display: grid;
-  gap: 4px;
-  max-height: 140px;
+  gap: 8px;
+  max-height: 220px;
   overflow: auto;
 }
 
 .discoveryOption {
   align-items: flex-start;
+  border: 1px solid var(--lp-border);
   color: var(--lp-text-main);
   display: flex;
   gap: 6px;
+  padding: 6px;
 }
 
 .discoveryOption input {
@@ -81,13 +83,44 @@
 
 .discoveryText {
   display: grid;
-  gap: 2px;
+  gap: 4px;
+  min-width: 0;
 }
 
 .discoveryUrl {
   color: var(--lp-text-muted);
   font-size: var(--text-xs);
   word-break: break-all;
+}
+
+.discoveryBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.badge {
+  background: var(--lp-surface-hover);
+  border: 1px solid var(--lp-border);
+  color: var(--lp-text-main);
+  display: inline-flex;
+  font-size: var(--text-xs);
+  padding: 1px 6px;
+}
+
+.badgeRecommended {
+  border-color: var(--lp-focus);
+}
+
+.folderTools {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.folderToolActions {
+  display: flex;
+  gap: 6px;
 }
 
 .folderList {
@@ -130,6 +163,13 @@
   font-size: var(--text-xs);
 }
 
+.inlineDuplicateRow {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
 .bulkSummary {
   border: 1px solid var(--lp-border);
   color: var(--lp-text-main);
@@ -143,4 +183,103 @@
 .bulkFailures {
   margin: 0;
   padding-left: 16px;
+}
+
+.bulkTableWrap {
+  border: 1px solid var(--lp-border);
+  display: grid;
+  gap: 6px;
+  max-height: 260px;
+  overflow: auto;
+  padding: 6px;
+}
+
+.bulkTableActions {
+  display: flex;
+  gap: 6px;
+}
+
+.bulkTable {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.bulkTable th,
+.bulkTable td {
+  border-top: 1px solid var(--lp-border);
+  font-size: var(--text-xs);
+  padding: 6px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.bulkTable th {
+  border-top: 0;
+  color: var(--lp-text-muted);
+  text-transform: uppercase;
+}
+
+.bulkUrlCell {
+  max-width: 320px;
+  word-break: break-all;
+}
+
+.statusChip {
+  border: 1px solid var(--lp-border);
+  display: inline-flex;
+  padding: 1px 6px;
+  text-transform: capitalize;
+}
+
+.statusChipimported {
+  background: var(--lp-surface-hover);
+}
+
+.statusChipmerged {
+  background: var(--lp-surface-hover);
+}
+
+.statusChipduplicate {
+  background: var(--lp-surface-1);
+}
+
+.statusChipfailed {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+  color: var(--danger-text);
+}
+
+.bulkFailureDetail {
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.bulkDetailMuted {
+  color: var(--lp-text-muted);
+}
+
+.createdFolderRename {
+  border: 1px solid var(--lp-border);
+  display: grid;
+  gap: 6px;
+  padding: 6px;
+}
+
+.createdFolderRenameRow {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+@media (max-width: 640px) {
+  .inlineFolderCreate,
+  .createdFolderRenameRow,
+  .inlineDuplicateRow {
+    grid-template-columns: 1fr;
+  }
+
+  .inlineDuplicateRow {
+    align-items: stretch;
+    display: grid;
+  }
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   dedupeBulkFeedLines,
+  getFailedBulkUrls,
   parseBulkFeedLines,
   summarizeBulkAddRows,
 } from "@/lib/add-feed-bulk";
@@ -54,5 +55,18 @@ describe("add-feed bulk helpers", () => {
         "https://d.example/feed.xml — Could not import.",
       ],
     });
+  });
+
+  it("extracts failed URLs for retry/copy workflows", () => {
+    const rows = [
+      { url: "https://a.example/feed.xml", status: "imported" as const },
+      { url: "https://b.example/feed.xml", status: "failed" as const },
+      { url: "https://c.example/feed.xml", status: "failed" as const },
+    ];
+
+    expect(getFailedBulkUrls(rows)).toEqual([
+      "https://b.example/feed.xml",
+      "https://c.example/feed.xml",
+    ]);
   });
 });

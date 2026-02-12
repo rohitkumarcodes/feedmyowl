@@ -20,10 +20,15 @@ export interface SidebarNotice {
 }
 
 interface BuildSidebarNoticesOptions {
-  addFeedProgressMessage: string | null;
+  progressMessage: string | null;
   networkMessage: string | null;
-  infoMessage: string | null;
-  errorMessage: string | null;
+  queuedNotices: Array<{
+    id: string;
+    kind: "info" | "error";
+    text: string;
+    dismissible: boolean;
+    action?: SidebarNoticeAction;
+  }>;
   showAddAnotherAction: boolean;
   onAddAnother: () => void;
 }
@@ -32,20 +37,19 @@ interface BuildSidebarNoticesOptions {
  * Convert legacy message fields into a typed notice list for the sidebar UI.
  */
 export function buildSidebarNotices({
-  addFeedProgressMessage,
+  progressMessage,
   networkMessage,
-  infoMessage,
-  errorMessage,
+  queuedNotices,
   showAddAnotherAction,
   onAddAnother,
 }: BuildSidebarNoticesOptions): SidebarNotice[] {
   const notices: SidebarNotice[] = [];
 
-  if (addFeedProgressMessage) {
+  if (progressMessage) {
     notices.push({
-      id: "add-feed-progress",
+      id: "progress",
       kind: "progress",
-      text: addFeedProgressMessage,
+      text: progressMessage,
       role: "status",
       ariaLive: "polite",
       dismissible: false,
@@ -63,31 +67,34 @@ export function buildSidebarNotices({
     });
   }
 
-  if (infoMessage) {
-    notices.push({
-      id: "info",
-      kind: "info",
-      text: infoMessage,
-      role: "status",
-      ariaLive: "polite",
-      dismissible: true,
-      action: showAddAnotherAction
-        ? {
-            label: "Add another",
-            onAction: onAddAnother,
-          }
-        : undefined,
-    });
-  }
+  let addAnotherActionAttached = false;
 
-  if (errorMessage) {
+  for (const queuedNotice of queuedNotices) {
+    const shouldAttachAddAnother =
+      !addAnotherActionAttached &&
+      showAddAnotherAction &&
+      queuedNotice.kind === "info" &&
+      queuedNotice.action === undefined;
+
+    if (shouldAttachAddAnother) {
+      addAnotherActionAttached = true;
+    }
+
     notices.push({
-      id: "error",
-      kind: "error",
-      text: errorMessage,
-      role: "alert",
-      ariaLive: "assertive",
-      dismissible: true,
+      id: queuedNotice.id,
+      kind: queuedNotice.kind,
+      text: queuedNotice.text,
+      role: queuedNotice.kind === "error" ? "alert" : "status",
+      ariaLive: queuedNotice.kind === "error" ? "assertive" : "polite",
+      dismissible: queuedNotice.dismissible,
+      action:
+        queuedNotice.action ??
+        (shouldAttachAddAnother
+          ? {
+              label: "Add another",
+              onAction: onAddAnother,
+            }
+          : undefined),
     });
   }
 

@@ -49,6 +49,24 @@ export async function deleteUncategorizedFeeds(confirm: boolean) {
   );
 }
 
+export async function moveUncategorizedFeedsToFolder(folderId: string) {
+  return await callJson<{
+    success?: boolean;
+    totalUncategorizedCount?: number;
+    movedFeedCount?: number;
+    failedFeedCount?: number;
+    error?: string;
+    code?: string;
+  }>("/api/feeds", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "uncategorized.move_to_folder",
+      folderId,
+    }),
+  });
+}
+
 export async function refreshFeeds() {
   return await callJson<{ error?: string; results?: Array<{ status: string; newItemCount: number }> }>(
     "/api/refresh",

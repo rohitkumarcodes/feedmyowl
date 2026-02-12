@@ -2,15 +2,17 @@
  * Inline feed-subscription form shared by sidebar and toolbar triggers.
  */
 
-import type { FormEvent, KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import {
+  getDiscoveryBadgeFlags,
+  type DiscoveryBadgeCandidate,
+} from "./add-feed-discovery-badges";
 import type { FolderViewModel } from "./feeds-types";
 import primitiveStyles from "./LeftPanePrimitives.module.css";
 import styles from "./AddFeedForm.module.css";
 
-interface AddFeedDiscoveryCandidate {
-  url: string;
-  title: string | null;
-  duplicate: boolean;
+interface AddFeedDiscoveryCandidate extends DiscoveryBadgeCandidate {
+  existingFeedId?: string | null;
 }
 
 interface AddFeedBulkSummary {
@@ -42,13 +44,20 @@ export interface AddFeedFormProps {
   selectedFolderIds: string[];
   newFolderNameInput: string;
   isCreatingFolder: boolean;
+  createdFolderRenameId?: string | null;
   onAddFeedInputModeChange: (mode: "single" | "bulk") => void;
   onFeedUrlChange: (value: string) => void;
   onBulkFeedUrlChange: (value: string) => void;
   onToggleFolder: (folderId: string) => void;
+  onSetSelectedFolders: (folderIds: string[]) => void;
   onNewFolderNameChange: (value: string) => void;
   onSelectDiscoveryCandidate: (url: string) => void;
   onCreateFolderFromForm: () => void;
+  onRenameFolderFromForm: (folderId: string, name: string) => Promise<boolean> | boolean;
+  onDismissCreatedFolderRename: () => void;
+  onOpenExistingFeed: (url: string) => void;
+  onRetryFailedBulk: () => void;
+  onCopyFailedUrls: () => void;
   onSubmitFeed: (event: FormEvent<HTMLFormElement>) => void;
   onCancelAddFeed: () => void;
 }
@@ -72,16 +81,31 @@ export function AddFeedForm({
   selectedFolderIds,
   newFolderNameInput,
   isCreatingFolder,
+  createdFolderRenameId,
   onAddFeedInputModeChange,
   onFeedUrlChange,
   onBulkFeedUrlChange,
   onToggleFolder,
+  onSetSelectedFolders,
   onNewFolderNameChange,
   onSelectDiscoveryCandidate,
   onCreateFolderFromForm,
+  onRenameFolderFromForm,
+  onDismissCreatedFolderRename,
+  onOpenExistingFeed,
+  onRetryFailedBulk,
+  onCopyFailedUrls,
   onSubmitFeed,
   onCancelAddFeed,
 }: AddFeedFormProps) {
+  const [folderQuery, setFolderQuery] = useState("");
+  const [expandedFailureUrls, setExpandedFailureUrls] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [renameCreatedFolderValue, setRenameCreatedFolderValue] = useState("");
+  const [isRenamingCreatedFolder, setIsRenamingCreatedFolder] = useState(false);
+  const createdFolderInputRef = useRef<HTMLInputElement>(null);
+
   const addableDiscoveryCandidates = discoveryCandidates.filter(
     (candidate) => !candidate.duplicate
   );
@@ -111,8 +135,21 @@ export function AddFeedForm({
     isAddingFeed ||
     (addFeedInputMode === "single" && Boolean(inlineDuplicateMessage)) ||
     !hasValidSelection;
+
+  const normalizedNewFolderName = newFolderNameInput.trim().toLocaleLowerCase();
+  const duplicateFolder =
+    normalizedNewFolderName.length > 0
+      ? availableFolders.find(
+          (folder) => folder.name.trim().toLocaleLowerCase() === normalizedNewFolderName
+        )
+      : undefined;
+
   const canCreateFolder =
-    newFolderNameInput.trim().length > 0 && !isCreatingFolder && !isAddingFeed;
+    newFolderNameInput.trim().length > 0 &&
+    !duplicateFolder &&
+    !isCreatingFolder &&
+    !isAddingFeed;
+
   const formClassName = [
     styles.form,
     presentation === "inline" ? primitiveStyles.panel : "",
@@ -120,6 +157,45 @@ export function AddFeedForm({
   ]
     .filter(Boolean)
     .join(" ");
+
+  const filteredFolders = useMemo(() => {
+    const query = folderQuery.trim().toLocaleLowerCase();
+
+    if (!query) {
+      return availableFolders;
+    }
+
+    return availableFolders.filter((folder) =>
+      folder.name.toLocaleLowerCase().includes(query)
+    );
+  }, [availableFolders, folderQuery]);
+
+  const failedRows = useMemo(
+    () => (bulkAddResultRows ?? []).filter((row) => row.status === "failed"),
+    [bulkAddResultRows]
+  );
+
+  const createdFolder = useMemo(
+    () =>
+      createdFolderRenameId
+        ? availableFolders.find((folder) => folder.id === createdFolderRenameId) ?? null
+        : null,
+    [availableFolders, createdFolderRenameId]
+  );
+
+  useEffect(() => {
+    if (!createdFolder) {
+      setRenameCreatedFolderValue("");
+      setIsRenamingCreatedFolder(false);
+      return;
+    }
+
+    setRenameCreatedFolderValue(createdFolder.name);
+    window.setTimeout(() => {
+      createdFolderInputRef.current?.focus();
+      createdFolderInputRef.current?.select();
+    }, 0);
+  }, [createdFolder]);
 
   const handleInlineFolderInputKeyDown = (
     event: KeyboardEvent<HTMLInputElement>
@@ -131,6 +207,49 @@ export function AddFeedForm({
     event.preventDefault();
     if (canCreateFolder) {
       onCreateFolderFromForm();
+    }
+  };
+
+  const toggleFailureDetails = (url: string) => {
+    setExpandedFailureUrls((previous) => ({
+      ...previous,
+      [url]: !previous[url],
+    }));
+  };
+
+  const handleSelectAllFilteredFolders = () => {
+    const filteredFolderIds = filteredFolders.map((folder) => folder.id);
+    const nextFolderIds = Array.from(new Set([...selectedFolderIds, ...filteredFolderIds]));
+    onSetSelectedFolders(nextFolderIds);
+  };
+
+  const handleClearAllFolders = () => {
+    onSetSelectedFolders([]);
+  };
+
+  const handleUseExistingFolder = () => {
+    if (!duplicateFolder) {
+      return;
+    }
+
+    if (!selectedFolderIds.includes(duplicateFolder.id)) {
+      onToggleFolder(duplicateFolder.id);
+    }
+
+    onNewFolderNameChange("");
+  };
+
+  const handleRenameCreatedFolder = async () => {
+    if (!createdFolder || isRenamingCreatedFolder) {
+      return;
+    }
+
+    setIsRenamingCreatedFolder(true);
+    const renamed = await onRenameFolderFromForm(createdFolder.id, renameCreatedFolderValue);
+    setIsRenamingCreatedFolder(false);
+
+    if (renamed) {
+      onDismissCreatedFolderRename();
     }
   };
 
@@ -180,31 +299,66 @@ export function AddFeedForm({
             placeholder="example.com or https://example.com/rss.xml"
           />
           {inlineDuplicateMessage ? (
-            <p className={styles.inlineMessage}>{inlineDuplicateMessage}</p>
+            <div className={styles.inlineDuplicateRow}>
+              <p className={styles.inlineMessage}>{inlineDuplicateMessage}</p>
+              <button
+                type="button"
+                className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
+                onClick={() => onOpenExistingFeed(feedUrlInput)}
+              >
+                Open existing feed
+              </button>
+            </div>
           ) : null}
 
           {requiresSelection ? (
             <fieldset className={styles.discoveryFieldset}>
               <legend className={styles.label}>Choose one discovered feed URL</legend>
               <div className={styles.discoveryList}>
-                {discoveryCandidates.map((candidate) => (
-                  <label key={candidate.url} className={styles.discoveryOption}>
-                    <input
-                      type="radio"
-                      name="discovered-feed"
-                      checked={selectedDiscoveryCandidateUrl === candidate.url}
-                      onChange={() => onSelectDiscoveryCandidate(candidate.url)}
-                      disabled={candidate.duplicate || isAddingFeed}
-                    />
-                    <span className={styles.discoveryText}>
-                      <span>{candidate.title || candidate.url}</span>
-                      <span className={styles.discoveryUrl}>
-                        {candidate.url}
-                        {candidate.duplicate ? " — already in library" : ""}
+                {discoveryCandidates.map((candidate) => {
+                  const badgeFlags = getDiscoveryBadgeFlags({
+                    candidate,
+                    addableCandidateCount: addableDiscoveryCandidates.length,
+                  });
+
+                  return (
+                    <label key={candidate.url} className={styles.discoveryOption}>
+                      <input
+                        type="radio"
+                        name="discovered-feed"
+                        checked={selectedDiscoveryCandidateUrl === candidate.url}
+                        onChange={() => onSelectDiscoveryCandidate(candidate.url)}
+                        disabled={candidate.duplicate || isAddingFeed}
+                      />
+                      <span className={styles.discoveryText}>
+                        <span>{candidate.title || candidate.url}</span>
+                        <span className={styles.discoveryUrl}>{candidate.url}</span>
+                        <span className={styles.discoveryBadges}>
+                          {badgeFlags.alreadyInLibrary ? (
+                            <span className={styles.badge}>Already in library</span>
+                          ) : null}
+                          {badgeFlags.recommended ? (
+                            <span className={`${styles.badge} ${styles.badgeRecommended}`}>
+                              Recommended
+                            </span>
+                          ) : null}
+                          {badgeFlags.likelyCommentsFeed ? (
+                            <span className={styles.badge}>Likely comments feed</span>
+                          ) : null}
+                        </span>
+                        {candidate.duplicate ? (
+                          <button
+                            type="button"
+                            className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
+                            onClick={() => onOpenExistingFeed(candidate.url)}
+                          >
+                            Open existing feed
+                          </button>
+                        ) : null}
                       </span>
-                    </span>
-                  </label>
-                ))}
+                    </label>
+                  );
+                })}
               </div>
             </fieldset>
           ) : null}
@@ -234,15 +388,78 @@ export function AddFeedForm({
                 {bulkAddSummary.duplicateUnchangedCount === 1 ? "" : "s"}, failed{" "}
                 {bulkAddSummary.failedCount}.
               </p>
-              {bulkAddSummary.failedDetails.length > 0 ? (
-                <ul className={styles.bulkFailures}>
-                  {bulkAddSummary.failedDetails.map((detail) => (
-                    <li key={detail}>{detail}</li>
-                  ))}
-                </ul>
-              ) : null}
             </div>
           ) : null}
+
+          {bulkAddResultRows && bulkAddResultRows.length > 0 ? (
+            <div className={styles.bulkTableWrap}>
+              <div className={styles.bulkTableActions}>
+                <button
+                  type="button"
+                  className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
+                  onClick={onRetryFailedBulk}
+                  disabled={failedRows.length === 0 || isAddingFeed}
+                >
+                  Retry failed
+                </button>
+                <button
+                  type="button"
+                  className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
+                  onClick={onCopyFailedUrls}
+                  disabled={failedRows.length === 0}
+                >
+                  Copy failed URLs
+                </button>
+              </div>
+              <table className={styles.bulkTable}>
+                <thead>
+                  <tr>
+                    <th>URL</th>
+                    <th>Status</th>
+                    <th>Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bulkAddResultRows.map((row) => {
+                    const isFailed = row.status === "failed";
+                    const isExpanded = Boolean(expandedFailureUrls[row.url]);
+
+                    return (
+                      <tr key={`${row.url}-${row.status}`}>
+                        <td className={styles.bulkUrlCell}>{row.url}</td>
+                        <td>
+                          <span className={`${styles.statusChip} ${styles[`statusChip${row.status}`]}`}>
+                            {row.status}
+                          </span>
+                        </td>
+                        <td>
+                          {isFailed ? (
+                            <>
+                              <button
+                                type="button"
+                                className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
+                                onClick={() => toggleFailureDetails(row.url)}
+                              >
+                                {isExpanded ? "Hide" : "Show"}
+                              </button>
+                              {isExpanded ? (
+                                <p className={styles.bulkFailureDetail}>
+                                  {row.message || "Could not import."}
+                                </p>
+                              ) : null}
+                            </>
+                          ) : (
+                            <span className={styles.bulkDetailMuted}>-</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+
           {bulkAddResultRows && bulkAddResultRows.length === 0 ? (
             <p className={styles.inlineMessage}>No URLs were processed.</p>
           ) : null}
@@ -251,11 +468,42 @@ export function AddFeedForm({
 
       <fieldset className={styles.folderFieldset}>
         <legend className={styles.label}>Folders</legend>
+        <div className={styles.folderTools}>
+          <input
+            type="text"
+            className={primitiveStyles.input}
+            value={folderQuery}
+            onChange={(event) => setFolderQuery(event.currentTarget.value)}
+            placeholder="Search folders"
+            disabled={isAddingFeed || isCreatingFolder || availableFolders.length === 0}
+          />
+          <div className={styles.folderToolActions}>
+            <button
+              type="button"
+              className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
+              onClick={handleSelectAllFilteredFolders}
+              disabled={filteredFolders.length === 0 || isAddingFeed || isCreatingFolder}
+            >
+              Select all
+            </button>
+            <button
+              type="button"
+              className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
+              onClick={handleClearAllFolders}
+              disabled={selectedFolderIds.length === 0 || isAddingFeed || isCreatingFolder}
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+
         {availableFolders.length === 0 ? (
           <p className={styles.folderEmpty}>No folders yet. Create one below.</p>
+        ) : filteredFolders.length === 0 ? (
+          <p className={styles.folderEmpty}>No folders match your search.</p>
         ) : (
           <div className={styles.folderList}>
-            {availableFolders.map((folder) => {
+            {filteredFolders.map((folder) => {
               const isChecked = selectedFolderIds.includes(folder.id);
 
               return (
@@ -294,6 +542,56 @@ export function AddFeedForm({
           {isCreatingFolder ? "Creating folder..." : "Create folder"}
         </button>
       </div>
+
+      {duplicateFolder ? (
+        <div className={styles.inlineDuplicateRow}>
+          <p className={styles.inlineMessage}>
+            A folder named "{duplicateFolder.name}" already exists.
+          </p>
+          <button
+            type="button"
+            className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
+            onClick={handleUseExistingFolder}
+          >
+            Use existing
+          </button>
+        </div>
+      ) : null}
+
+      {createdFolder ? (
+        <div className={styles.createdFolderRename}>
+          <p className={styles.inlineMessage}>Folder created. Rename now (optional).</p>
+          <div className={styles.createdFolderRenameRow}>
+            <input
+              ref={createdFolderInputRef}
+              type="text"
+              className={primitiveStyles.input}
+              value={renameCreatedFolderValue}
+              onChange={(event) => setRenameCreatedFolderValue(event.currentTarget.value)}
+              maxLength={255}
+              disabled={isRenamingCreatedFolder}
+            />
+            <button
+              type="button"
+              className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
+              onClick={() => {
+                void handleRenameCreatedFolder();
+              }}
+              disabled={isRenamingCreatedFolder}
+            >
+              {isRenamingCreatedFolder ? "Saving..." : "Save"}
+            </button>
+            <button
+              type="button"
+              className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
+              onClick={onDismissCreatedFolderRename}
+              disabled={isRenamingCreatedFolder}
+            >
+              Skip
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <div className={styles.actions}>
         <button type="submit" className={primitiveStyles.button} disabled={isSubmitDisabled}>

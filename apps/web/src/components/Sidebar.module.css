@@ -1,8 +1,8 @@
 .root {
   --sidebar-feed-indent: 16px;
-  --sidebar-tree-toggle-col: 28px;
+  --sidebar-tree-toggle-col: 40px;
   --sidebar-tree-count-col: 33px;
-  --sidebar-tree-actions-col: 35px;
+  --sidebar-tree-actions-col: 40px;
   background: var(--lp-surface-0);
   display: grid;
   grid-template-rows: auto 1fr auto;
@@ -80,6 +80,18 @@
   justify-content: flex-end;
 }
 
+.sidebarDuplicateRow {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+}
+
+.sidebarDuplicateText {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
 .sections {
   border-top: 1px solid var(--lp-border);
   margin-top: 0;
@@ -109,6 +121,17 @@
   color: var(--lp-text-main);
   flex: 1;
   font-size: var(--text-xs);
+}
+
+.sidebarMessageIcon {
+  align-items: center;
+  border: 1px solid var(--lp-border);
+  display: inline-flex;
+  font-size: var(--text-xs);
+  height: 16px;
+  justify-content: center;
+  margin-top: 1px;
+  width: 16px;
 }
 
 .sidebarMessageInfo {
@@ -319,6 +342,8 @@
 
 .paneToggleButton {
   color: var(--lp-text-main);
+  min-height: 40px;
+  min-width: 40px;
 }
 
 .paneToggleButton svg {
@@ -328,7 +353,7 @@
 @media (max-width: 767px) {
   .root {
     --sidebar-tree-count-col: 30px;
-    --sidebar-tree-actions-col: 32px;
+    --sidebar-tree-actions-col: 40px;
   }
 
   .top {
@@ -339,7 +364,7 @@
 @media (min-width: 768px) and (max-width: 1120px) {
   .root {
     --sidebar-tree-count-col: 31px;
-    --sidebar-tree-actions-col: 33px;
+    --sidebar-tree-actions-col: 40px;
   }
 }
 
@@ -357,4 +382,26 @@
   display: grid;
   gap: 6px;
   margin-top: 4px;
+}
+
+.uncategorizedCta {
+  border-top: 1px solid var(--lp-border);
+  color: var(--text-secondary);
+  display: grid;
+  gap: 6px;
+  padding: 8px 12px;
+}
+
+.uncategorizedCta p {
+  font-size: var(--text-xs);
+}
+
+.inlineField {
+  display: grid;
+  gap: 4px;
+}
+
+.inlineField span {
+  color: var(--lp-text-muted);
+  font-size: var(--text-xs);
 }
