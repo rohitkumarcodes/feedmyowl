@@ -27,6 +27,58 @@ import styles from "./Sidebar.module.css";
  */
 const RESERVED_FOLDER_NAMES = new Set(["all feeds", "uncategorized"]);
 
+const folderIcon = (
+  <svg
+    className={styles.buttonIcon}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M3 7V17C3 18.1 3.9 19 5 19H19C20.1 19 21 18.1 21 17V9C21 7.9 20.1 7 19 7H11L9 5H5C3.9 5 3 5.9 3 7Z"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const trashIcon = (
+  <svg
+    className={styles.buttonIcon}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M4 7H20"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M9 7V5.8C9 5.36 9.36 5 9.8 5H14.2C14.64 5 15 5.36 15 5.8V7"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M7.5 7L8.2 18.2C8.25 18.96 8.88 19.55 9.65 19.55H14.35C15.12 19.55 15.75 18.96 15.8 18.2L16.5 7"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path d="M10 10.2V16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    <path d="M14 10.2V16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+  </svg>
+);
+
 const EXPANDED_FOLDERS_STORAGE_KEY = "feedmyowl:expandedFolders";
 
 /**
@@ -1518,7 +1570,7 @@ export function Sidebar({
                     className={`${styles.deleteDialogOptionCard} ${selectedDeleteOption === "keep" ? styles.deleteDialogOptionCardSelected : ""}`}
                     onClick={() => setSelectedDeleteOption("keep")}
                   >
-                    <div className={styles.deleteDialogOptionIcon}>📁</div>
+                    <div className={styles.deleteDialogOptionIcon}>{folderIcon}</div>
                     <div className={styles.deleteDialogOptionContent}>
                       <strong>Keep all feeds</strong>
                       <span>Feeds will remain in your library, just without this folder</span>
@@ -1529,7 +1581,7 @@ export function Sidebar({
                     className={`${styles.deleteDialogOptionCard} ${selectedDeleteOption === "unsubscribe" ? styles.deleteDialogOptionCardSelected : ""}`}
                     onClick={() => setSelectedDeleteOption("unsubscribe")}
                   >
-                    <div className={styles.deleteDialogOptionIcon}>🗑️</div>
+                    <div className={styles.deleteDialogOptionIcon}>{trashIcon}</div>
                     <div className={styles.deleteDialogOptionContent}>
                       <strong>Remove from this folder only</strong>
                       <span>Removes folder and unsubscribes from {pendingDeleteStats.exclusive} feed{pendingDeleteStats.exclusive === 1 ? "" : "s"} that are only here</span>

@@ -506,8 +506,8 @@
 }
 
 .deleteDialogOptionIcon {
-  font-size: 20px;
   flex-shrink: 0;
+  color: var(--lp-text-secondary);
 }
 
 .deleteDialogOptionContent {
@@ -524,4 +524,10 @@
 .deleteDialogOptionContent span {
   font-size: var(--text-sm);
   color: var(--text-secondary);
+}
+
+.buttonIcon {
+  flex: 0 0 auto;
+  height: 14px;
+  width: 14px;
 }
