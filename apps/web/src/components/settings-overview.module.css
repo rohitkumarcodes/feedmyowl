@@ -4,14 +4,13 @@
   margin: 0 auto;
   max-width: 36rem;
   padding: 24px 16px;
-  border-left: 1px solid var(--border);
-  border-right: 1px solid var(--border);
 }
 
 .header {
   display: grid;
   gap: 6px;
-  padding-bottom: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
 }
 
 .header h1 {
@@ -30,6 +29,9 @@
 .settingsOptions {
   display: grid;
   gap: 24px;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  padding: 0 16px;
 }
 
 .panel {
