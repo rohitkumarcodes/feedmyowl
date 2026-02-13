@@ -1,4 +1,5 @@
-import { getCurrentUser } from "@/lib/auth";
+import { cache } from "react";
+import { getCurrentUser, requireAuth } from "@/lib/auth";
 import { db, eq, users } from "@/lib/database";
 
 const userCompatColumns = {
@@ -58,3 +59,18 @@ export async function ensureUserRecord(clerkId: string) {
     });
   }
 }
+
+type AppUser = Awaited<ReturnType<typeof ensureUserRecord>>;
+
+/**
+ * Request-scoped helper for authenticated server components/routes.
+ * Resolves Clerk identity once and returns the corresponding app user row.
+ */
+export const getAuthenticatedAppUser = cache(async (): Promise<{
+  clerkId: string;
+  appUser: AppUser;
+}> => {
+  const { clerkId } = await requireAuth();
+  const appUser = await ensureUserRecord(clerkId);
+  return { clerkId, appUser };
+});

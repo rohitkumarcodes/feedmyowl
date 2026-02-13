@@ -8,10 +8,21 @@
  * Docs: https://clerk.com/docs/components/authentication/sign-in
  */
 
-import { SignInForm } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { getAuthUserId, SignInForm } from "@/lib/auth";
 import styles from "@/app/auth-page.module.css";
 
-export default function SignInPage() {
+/**
+ * This page reads auth state at request time — never statically prerender.
+ */
+export const dynamic = "force-dynamic";
+
+export default async function SignInPage() {
+  const userId = await getAuthUserId();
+  if (userId) {
+    redirect("/feeds");
+  }
+
   return (
     <div className={styles.root}>
       <div className={styles.frame}>

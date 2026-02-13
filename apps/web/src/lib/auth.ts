@@ -98,13 +98,22 @@ export async function getCurrentUser() {
 }
 
 /**
+ * Get the current authenticated Clerk user ID.
+ * Returns null when no user is signed in.
+ */
+export async function getAuthUserId(): Promise<string | null> {
+  const { userId } = await auth();
+  return userId ?? null;
+}
+
+/**
  * Require authentication — throws a redirect to sign-in if not authenticated.
  * Use this in pages/routes that should never be accessible without auth.
  *
  * Returns the authenticated user's Clerk ID.
  */
 export async function requireAuth() {
-  const { userId } = await auth();
+  const userId = await getAuthUserId();
 
   if (!userId) {
     throw new AuthRequiredError();

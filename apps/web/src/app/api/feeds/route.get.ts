@@ -5,7 +5,7 @@ import {
   getFeedMembershipFolderIds,
   resolveFeedFolderIds,
 } from "@/lib/folder-memberships";
-import { purgeOldFeedItemsForUser } from "@/lib/retention";
+import { isUserRetentionPurgeNeeded, purgeOldFeedItemsForUser } from "@/lib/retention";
 import { getAppUser } from "./route.shared";
 
 /**
@@ -21,7 +21,9 @@ export async function getFeedsRoute() {
     }
 
     // Keep 50-items-per-feed cap enforced even during read-heavy sessions.
-    await purgeOldFeedItemsForUser(appUser.id);
+    if (await isUserRetentionPurgeNeeded(appUser.id)) {
+      await purgeOldFeedItemsForUser(appUser.id);
+    }
 
     const user = (await db.query.users.findFirst({
       where: eq(users.id, appUser.id),

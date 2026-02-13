@@ -16,7 +16,12 @@ type DeleteResult = {
   rowCount?: number;
 } | Array<{ id: string }>;
 
-function getDeletedCount(result: DeleteResult): number {
+type QueryResult = {
+  rows?: Array<Record<string, unknown>>;
+  rowCount?: number;
+} | Array<Record<string, unknown>>;
+
+function getResultRowCount(result: QueryResult): number {
   if (Array.isArray(result)) {
     return result.length;
   }
@@ -30,6 +35,23 @@ function getDeletedCount(result: DeleteResult): number {
   }
 
   return 0;
+}
+
+/**
+ * Return true when at least one user-owned feed currently exceeds the retention cap.
+ */
+export async function isUserRetentionPurgeNeeded(userId: string): Promise<boolean> {
+  const overLimitFeed = (await db.execute(sql`
+    SELECT 1
+    FROM feed_items fi
+    INNER JOIN feeds f ON f.id = fi.feed_id
+    WHERE f.user_id = ${userId}
+    GROUP BY fi.feed_id
+    HAVING COUNT(*) > ${FEED_ITEMS_PER_FEED_LIMIT}
+    LIMIT 1
+  `)) as QueryResult;
+
+  return getResultRowCount(overLimitFeed) > 0;
 }
 
 /**
@@ -61,7 +83,7 @@ export async function purgeOldFeedItemsForUser(userId: string): Promise<number> 
     RETURNING id
   `)) as DeleteResult;
 
-  return getDeletedCount(deleted);
+  return getResultRowCount(deleted);
 }
 
 /**
@@ -98,5 +120,5 @@ export async function purgeOldFeedItemsForFeed(params: {
     RETURNING id
   `)) as DeleteResult;
 
-  return getDeletedCount(deleted);
+  return getResultRowCount(deleted);
 }

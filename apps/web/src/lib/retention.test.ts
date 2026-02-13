@@ -16,6 +16,7 @@ vi.mock("@/lib/database", () => ({
 
 import {
   FEED_ITEMS_PER_FEED_LIMIT,
+  isUserRetentionPurgeNeeded,
   purgeOldFeedItemsForFeed,
   purgeOldFeedItemsForUser,
 } from "@/lib/retention";
@@ -76,5 +77,30 @@ describe("retention helpers", () => {
     });
 
     expect(deletedCount).toBe(2);
+  });
+
+  it("returns false when no feed exceeds the retention cap", async () => {
+    mocks.dbExecute.mockResolvedValue({ rows: [] });
+
+    const shouldPurge = await isUserRetentionPurgeNeeded("user_123");
+
+    expect(shouldPurge).toBe(false);
+    expect(mocks.dbExecute).toHaveBeenCalledTimes(1);
+    expect(mocks.dbExecute.mock.calls[0][0]?.values).toEqual([
+      "user_123",
+      FEED_ITEMS_PER_FEED_LIMIT,
+    ]);
+  });
+
+  it("returns true when at least one feed exceeds the retention cap", async () => {
+    mocks.dbExecute.mockResolvedValue({ rows: [{ "?column?": 1 }] });
+
+    const shouldPurge = await isUserRetentionPurgeNeeded("user_123");
+
+    expect(shouldPurge).toBe(true);
+    expect(mocks.dbExecute.mock.calls[0][0]?.values).toEqual([
+      "user_123",
+      FEED_ITEMS_PER_FEED_LIMIT,
+    ]);
   });
 });

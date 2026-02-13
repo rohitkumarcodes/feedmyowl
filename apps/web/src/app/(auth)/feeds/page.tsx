@@ -2,9 +2,8 @@
  * Server-rendered feeds page that loads feeds and article items for
  * the authenticated user and passes them to the client workspace shell.
  */
-import { requireAuth } from "@/lib/auth";
 import { db, eq, users } from "@/lib/database";
-import { ensureUserRecord } from "@/lib/app-user";
+import { getAuthenticatedAppUser } from "@/lib/app-user";
 import { FeedsWorkspace } from "@/components/feeds-workspace";
 import { createInitialPaginationByScopeKey } from "@/components/article-pagination-state";
 import type {
@@ -21,7 +20,7 @@ import {
   getFeedMembershipFolderIds,
   resolveFeedFolderIds,
 } from "@/lib/folder-memberships";
-import { purgeOldFeedItemsForUser } from "@/lib/retention";
+import { isUserRetentionPurgeNeeded, purgeOldFeedItemsForUser } from "@/lib/retention";
 import { listArticlePageForUser } from "@/lib/article-service";
 
 /**
@@ -45,8 +44,7 @@ function createEmptyInitialPaginationByScopeKey() {
  * Loads authenticated feed data and renders the interactive workspace.
  */
 export default async function FeedsPage() {
-  const { clerkId } = await requireAuth();
-  const ensuredUser = await ensureUserRecord(clerkId);
+  const { appUser: ensuredUser } = await getAuthenticatedAppUser();
 
   if (!ensuredUser) {
     return (
@@ -58,8 +56,10 @@ export default async function FeedsPage() {
     );
   }
 
-  // Enforce 50-items-per-feed cap during normal feed workspace loads.
-  await purgeOldFeedItemsForUser(ensuredUser.id);
+  // Enforce 50-items-per-feed cap only when at least one feed is over the limit.
+  if (await isUserRetentionPurgeNeeded(ensuredUser.id)) {
+    await purgeOldFeedItemsForUser(ensuredUser.id);
+  }
 
   const user = (await db.query.users.findFirst({
     where: eq(users.id, ensuredUser.id),

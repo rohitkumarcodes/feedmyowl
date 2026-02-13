@@ -14,8 +14,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   chunkImportEntries,
-  normalizeAndMergeImportEntries,
-  parseImportFileContents,
   summarizeImportRows,
   type FeedImportRowSummary,
 } from "@/lib/feed-import-file";
@@ -30,10 +28,7 @@ import {
 import {
   FEED_IMPORT_CLIENT_CHUNK_SIZE,
   FEED_IMPORT_MAX_FILE_SIZE_BYTES,
-  FEED_IMPORT_MAX_TOTAL_ENTRIES,
-  type FeedImportEntry,
   type FeedImportPreview,
-  type FeedImportPreviewEntry,
   type FeedImportResponse,
   type FeedImportRowResult,
   type FeedImportSourceType,
@@ -316,7 +311,7 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
   const [importError, setImportError] = useState<string | null>(null);
   const [importSummary, setImportSummary] = useState<ImportSummary | null>(null);
   const [importPreview, setImportPreview] = useState<FeedImportPreview | null>(null);
-  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [, setIsLoadingPreview] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const [draftOwlAscii, setDraftOwlAscii] = useState<OwlAscii>(owlAscii);
