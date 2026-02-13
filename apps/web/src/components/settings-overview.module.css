@@ -4,6 +4,8 @@
   margin: 0 auto;
   max-width: 36rem;
   padding: 24px 16px;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
 }
 
 .header {
