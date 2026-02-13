@@ -32,6 +32,8 @@ import {
   FEED_IMPORT_MAX_FILE_SIZE_BYTES,
   FEED_IMPORT_MAX_TOTAL_ENTRIES,
   type FeedImportEntry,
+  type FeedImportPreview,
+  type FeedImportPreviewEntry,
   type FeedImportResponse,
   type FeedImportRowResult,
   type FeedImportSourceType,
@@ -89,14 +91,6 @@ interface ImportSummary {
 interface ImportProgress {
   processedCount: number;
   totalCount: number;
-}
-
-interface ImportPreview {
-  fileName: string;
-  sourceType: FeedImportSourceType;
-  entryCount: number;
-  folderCount: number;
-  entries: FeedImportEntry[];
 }
 
 const THEME_MODE_OPTIONS: Array<{
@@ -321,7 +315,8 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
   const [importRetryCountdown, setImportRetryCountdown] = useState<number | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [importSummary, setImportSummary] = useState<ImportSummary | null>(null);
-  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
+  const [importPreview, setImportPreview] = useState<FeedImportPreview | null>(null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const [draftOwlAscii, setDraftOwlAscii] = useState<OwlAscii>(owlAscii);
@@ -660,7 +655,7 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
   }
 
   /**
-   * Phase 1: Parse the selected file and show a preview before importing.
+   * Phase 1: Parse the selected file and get a preview from the server.
    */
   async function handleImportFileChange(event: ChangeEvent<HTMLInputElement>) {
     const selectedFile = event.currentTarget.files?.[0];
@@ -675,6 +670,7 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
     setImportProgress(null);
     setImportRetryDelaySeconds(null);
     setImportPreview(null);
+    setIsLoadingPreview(true);
 
     try {
       // Reject oversized files before reading into memory.
@@ -686,45 +682,36 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
         return;
       }
 
-      const parsedFile = parseImportFileContents(
-        selectedFile.name,
-        await selectedFile.text()
-      );
-      const normalizedEntries = normalizeAndMergeImportEntries(parsedFile.entries);
+      const fileContents = await selectedFile.text();
 
-      if (normalizedEntries.length === 0) {
-        setImportError("No valid feed URLs were found in the selected file.");
-        return;
-      }
-
-      if (normalizedEntries.length > FEED_IMPORT_MAX_TOTAL_ENTRIES) {
-        setImportError(
-          `This file contains ${normalizedEntries.length} unique valid URLs. Import up to ${FEED_IMPORT_MAX_TOTAL_ENTRIES} at a time.`
-        );
-        return;
-      }
-
-      // Collect unique folder names for the preview summary.
-      const uniqueFolders = new Set<string>();
-      for (const entry of normalizedEntries) {
-        for (const folderName of entry.folderNames) {
-          if (folderName) uniqueFolders.add(folderName);
-        }
-      }
-
-      setImportPreview({
-        fileName: selectedFile.name,
-        sourceType: parsedFile.sourceType,
-        entryCount: normalizedEntries.length,
-        folderCount: uniqueFolders.size,
-        entries: normalizedEntries,
+      // Send to preview API for server-side validation
+      const response = await fetch("/api/feeds/import-preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          file: {
+            fileName: selectedFile.name,
+            fileContents,
+          },
+        }),
       });
+
+      if (!response.ok) {
+        const errorBody = await response.json();
+        setImportError(errorBody.error || "Could not generate import preview.");
+        return;
+      }
+
+      const preview = await response.json();
+      setImportPreview(preview);
     } catch (error) {
       setImportError(
         error instanceof Error
           ? error.message
           : "Could not read the selected import file."
       );
+    } finally {
+      setIsLoadingPreview(false);
     }
   }
 
@@ -1046,10 +1033,10 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
           {importPreview ? (
             <div className={styles.importSummary} role="status">
               <p>
-                Found {importPreview.entryCount} feed
-                {importPreview.entryCount === 1 ? "" : "s"}
-                {importPreview.folderCount > 0
-                  ? ` in ${importPreview.folderCount} folder${importPreview.folderCount === 1 ? "" : "s"}`
+                Found {importPreview.totalCount} feed
+                {importPreview.totalCount === 1 ? "" : "s"}
+                {importPreview.folderNames.length > 0
+                  ? ` in ${importPreview.folderNames.length} folder${importPreview.folderNames.length === 1 ? "" : "s"}`
                   : ""}
                 . Detected format: {importPreview.sourceType}.
               </p>

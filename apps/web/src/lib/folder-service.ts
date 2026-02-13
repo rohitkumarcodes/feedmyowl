@@ -29,6 +29,21 @@ export interface FolderRecord {
   updatedAt: Date;
 }
 
+/**
+ * List folders for one user.
+ */
+export async function getFoldersForUser(userId: string): Promise<FolderRecord[]> {
+  return await db.query.folders.findMany({
+    where: eq(folders.userId, userId),
+    columns: {
+      id: true,
+      name: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+}
+
 export type CreateFolderForUserResult =
   | { status: "invalid_name" }
   | { status: "reserved_name" }

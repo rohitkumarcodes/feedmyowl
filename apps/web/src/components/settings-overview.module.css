@@ -245,6 +245,148 @@ button.linkButton:hover:enabled {
   padding: 8px;
 }
 
+/* Import Preview Styles */
+.importPreview {
+  background: var(--bg-primary);
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.importPreviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.importPreviewTitle {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.importPreviewMeta {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.importPreviewCounts {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.importPreviewCount {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-sm);
+}
+
+.importPreviewCountNew {
+  color: var(--accent);
+}
+
+.importPreviewCountDuplicate {
+  color: var(--text-secondary);
+}
+
+.importPreviewCountError {
+  color: var(--text-error);
+}
+
+.importPreviewList {
+  display: grid;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.importPreviewEntry {
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  font-size: var(--text-sm);
+}
+
+.importPreviewEntryStatus {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: var(--weight-semibold);
+}
+
+.importPreviewEntryNew {
+  color: var(--accent);
+}
+
+.importPreviewEntryDuplicate {
+  color: var(--text-secondary);
+}
+
+.importPreviewEntryError {
+  color: var(--text-error);
+}
+
+.importPreviewEntryUrl {
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.importPreviewEntryTitle {
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
+}
+
+.importPreviewEntryFolders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.importPreviewFolder {
+  display: inline-block;
+  padding: 2px 6px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.importPreviewFolderChange {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.importPreviewEntryErrorMsg {
+  color: var(--text-error);
+  font-size: var(--text-xs);
+}
+
+.importPreviewActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.importPreviewLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: var(--text-secondary);
+}
+
 .importFailureList {
   color: var(--text-secondary);
   display: grid;

@@ -59,3 +59,35 @@ export interface FeedImportResponse {
   failedCount: number;
   rows: FeedImportRowResult[];
 }
+
+/**
+ * Status of a single feed entry in the import preview.
+ */
+export type FeedImportPreviewStatus = "new" | "duplicate" | "error";
+
+/**
+ * Single feed entry for the import preview.
+ */
+export interface FeedImportPreviewEntry {
+  url: string;
+  customTitle: string | null;
+  folderNames: string[];
+  status: FeedImportPreviewStatus;
+  existingFeedId?: string;
+  existingFolderNames?: string[];
+  errorMessage?: string;
+}
+
+/**
+ * Import preview result showing all feeds with their status.
+ */
+export interface FeedImportPreview {
+  sourceType: FeedImportSourceType;
+  fileName: string;
+  totalCount: number;
+  newCount: number;
+  duplicateCount: number;
+  errorCount: number;
+  folderNames: string[];
+  entries: FeedImportPreviewEntry[];
+}
