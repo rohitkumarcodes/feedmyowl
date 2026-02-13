@@ -906,7 +906,7 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
       <header className={styles.header}>
         <div className={styles.headerTopRow}>
           <h1>Account</h1>
-          <Link href="/feeds" className={`${styles.linkButton} ${styles.compactButton}`}>
+          <Link href="/feeds" className={`${styles.linkButton} ${styles.compactButtonSecondary}`}>
             <span className={styles.iconButtonContent}>
               {backIcon}
               <span>Return to feeds</span>
