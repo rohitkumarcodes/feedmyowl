@@ -616,6 +616,8 @@ export function Sidebar({
   const [autoRenameFolderId, setAutoRenameFolderId] = useState<string | null>(null);
   const [pendingDeleteFeedId, setPendingDeleteFeedId] = useState<string | null>(null);
   const [pendingDeleteFolderId, setPendingDeleteFolderId] = useState<string | null>(null);
+  const [deleteFolderStep, setDeleteFolderStep] = useState<"preview" | "confirm">("preview");
+  const [selectedDeleteOption, setSelectedDeleteOption] = useState<"keep" | "unsubscribe" | null>(null);
   const [isDeletingWithUnsubscribe, setIsDeletingWithUnsubscribe] = useState(false);
   const addMenuRef = useRef<HTMLDivElement>(null);
   const uncategorizedActionsRef = useRef<HTMLDivElement>(null);
@@ -698,6 +700,13 @@ export function Sidebar({
     setUncategorizedTargetFolderId(createdFolder.id);
     setPendingUncategorizedCreatedFolderName(null);
   }, [folders, pendingUncategorizedCreatedFolderName]);
+
+  useEffect(() => {
+    if (!pendingDeleteFolderId) {
+      setDeleteFolderStep("preview");
+      setSelectedDeleteOption(null);
+    }
+  }, [pendingDeleteFolderId]);
 
   useEffect(() => {
     if (!isAddMenuOpen) {
@@ -1448,94 +1457,116 @@ export function Sidebar({
             aria-modal="true"
           >
             <h3>Delete folder</h3>
-            {pendingDeleteStats.total === 0 ? (
+            
+            {deleteFolderStep === "preview" ? (
               <>
-                <p>This folder is empty. Delete it?</p>
+                {pendingDeleteStats.total === 0 ? (
+                  <p>This folder is empty. Delete it?</p>
+                ) : (
+                  <>
+                    <p className={styles.deleteDialogSummary}>
+                      This folder contains <strong>{pendingDeleteStats.total} feed{pendingDeleteStats.total === 1 ? "" : "s"}</strong>.
+                    </p>
+                    <div className={styles.deleteDialogFeedList}>
+                      {feedsByFolderId.get(pendingDeleteFolderId)?.map((feed) => {
+                        const isExclusive = feed.folderIds.length <= 1;
+                        return (
+                          <div 
+                            key={feed.id} 
+                            className={styles.deleteDialogFeedItem}
+                          >
+                            <span className={`${styles.feedIndicator} ${isExclusive ? styles.feedIndicatorExclusive : styles.feedIndicatorShared}`} />
+                            <span className={styles.feedName}>{getFeedLabel(feed)}</span>
+                            {!isExclusive && (
+                              <span className={styles.feedIndicatorLabel}>also in other folders</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className={styles.deleteDialogHint}>
+                      {pendingDeleteStats.exclusive} feed{pendingDeleteStats.exclusive === 1 ? " is" : "s are"} only in this folder. 
+                      {pendingDeleteStats.crossListed > 0 && ` ${pendingDeleteStats.crossListed} feed${pendingDeleteStats.crossListed === 1 ? "" : "s"} appear elsewhere too.`}
+                    </p>
+                  </>
+                )}
                 <div className={styles.deleteDialogActions}>
                   <button
                     type="button"
                     className={primitiveStyles.button}
                     onClick={() => setPendingDeleteFolderId(null)}
-                    disabled={deletingFolderId === pendingDeleteFolderId}
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
                     className={`${primitiveStyles.button} ${primitiveStyles.buttonDanger}`}
-                    onClick={() => {
-                      void onRequestFolderDelete(pendingDeleteFolderId, "remove_only").then(
-                        (deleted) => {
-                          if (deleted) {
-                            setPendingDeleteFolderId(null);
-                          }
-                        }
-                      );
-                    }}
-                    disabled={deletingFolderId === pendingDeleteFolderId}
+                    onClick={() => setDeleteFolderStep("confirm")}
                   >
-                    Delete folder
+                    Continue
                   </button>
                 </div>
               </>
             ) : (
               <>
-                <p>
-                  You are deleting a folder with {pendingDeleteStats.total} feed
-                  {pendingDeleteStats.total === 1 ? "" : "s"}.
+                <p className={styles.deleteDialogSummary}>
+                  How would you like to handle the {pendingDeleteStats.total} feed{pendingDeleteStats.total === 1 ? "" : "s"} in this folder?
                 </p>
-                <p>
-                  {pendingDeleteStats.crossListed} feed
-                  {pendingDeleteStats.crossListed === 1 ? "" : "s"} are also in other folders.
-                  {" "}
-                  {pendingDeleteStats.exclusive} feed
-                  {pendingDeleteStats.exclusive === 1 ? " is" : "s are"} only in this folder.
-                </p>
+                <div className={styles.deleteDialogOptionCards}>
+                  <button
+                    type="button"
+                    className={`${styles.deleteDialogOptionCard} ${selectedDeleteOption === "keep" ? styles.deleteDialogOptionCardSelected : ""}`}
+                    onClick={() => setSelectedDeleteOption("keep")}
+                  >
+                    <div className={styles.deleteDialogOptionIcon}>📁</div>
+                    <div className={styles.deleteDialogOptionContent}>
+                      <strong>Keep all feeds</strong>
+                      <span>Feeds will remain in your library, just without this folder</span>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.deleteDialogOptionCard} ${selectedDeleteOption === "unsubscribe" ? styles.deleteDialogOptionCardSelected : ""}`}
+                    onClick={() => setSelectedDeleteOption("unsubscribe")}
+                  >
+                    <div className={styles.deleteDialogOptionIcon}>🗑️</div>
+                    <div className={styles.deleteDialogOptionContent}>
+                      <strong>Remove from this folder only</strong>
+                      <span>Removes folder and unsubscribes from {pendingDeleteStats.exclusive} feed{pendingDeleteStats.exclusive === 1 ? "" : "s"} that are only here</span>
+                    </div>
+                  </button>
+                </div>
                 <div className={styles.deleteDialogActions}>
                   <button
                     type="button"
                     className={primitiveStyles.button}
-                    onClick={() => setPendingDeleteFolderId(null)}
-                    disabled={deletingFolderId === pendingDeleteFolderId}
+                    onClick={() => setDeleteFolderStep("preview")}
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    className={primitiveStyles.button}
-                    onClick={() => {
-                      void onRequestFolderDelete(pendingDeleteFolderId, "remove_only").then(
-                        (deleted) => {
-                          if (deleted) {
-                            setPendingDeleteFolderId(null);
-                          }
-                        }
-                      );
-                    }}
-                    disabled={deletingFolderId === pendingDeleteFolderId}
-                  >
-                    Delete folder only (keep all feeds)
+                    Back
                   </button>
                   <button
                     type="button"
                     className={`${primitiveStyles.button} ${primitiveStyles.buttonDanger}`}
                     onClick={() => {
-                      setIsDeletingWithUnsubscribe(true);
-                      void onRequestFolderDelete(
-                        pendingDeleteFolderId,
-                        "remove_and_unsubscribe_exclusive"
-                      ).then((deleted) => {
-                        if (deleted) {
-                          setPendingDeleteFolderId(null);
-                        }
-                        setIsDeletingWithUnsubscribe(false);
-                      });
+                      if (selectedDeleteOption === "keep") {
+                        void onRequestFolderDelete(pendingDeleteFolderId, "remove_only").then((deleted) => {
+                          if (deleted) {
+                            setPendingDeleteFolderId(null);
+                          }
+                        });
+                      } else if (selectedDeleteOption === "unsubscribe") {
+                        setIsDeletingWithUnsubscribe(true);
+                        void onRequestFolderDelete(pendingDeleteFolderId, "remove_and_unsubscribe_exclusive").then((deleted) => {
+                          if (deleted) {
+                            setPendingDeleteFolderId(null);
+                          }
+                          setIsDeletingWithUnsubscribe(false);
+                        });
+                      }
                     }}
-                    disabled={deletingFolderId === pendingDeleteFolderId}
+                    disabled={!selectedDeleteOption || isDeletingWithUnsubscribe}
                   >
-                    {isDeletingWithUnsubscribe
-                      ? "Deleting..."
-                      : "Delete folder and unsubscribe feeds only in this folder"}
+                    {isDeletingWithUnsubscribe ? "Deleting..." : "Delete"}
                   </button>
                 </div>
               </>
