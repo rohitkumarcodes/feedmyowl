@@ -27,6 +27,7 @@
 
 .listPane {
   background: var(--bg-primary);
+  border-right: 1px solid var(--border);
   display: grid;
   grid-template-rows: 1fr auto;
   min-width: 0;
