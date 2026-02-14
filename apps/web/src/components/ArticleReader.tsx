@@ -118,7 +118,7 @@ export function ArticleReader({ article }: ArticleReaderProps) {
       }
 
       iframe.setAttribute("loading", "lazy");
-      iframe.setAttribute("referrerpolicy", "no-referrer");
+      iframe.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
       iframe.classList.add(styles.safeEmbed);
     }
 
@@ -204,8 +204,8 @@ export function ArticleReader({ article }: ArticleReaderProps) {
               src={`https://www.youtube-nocookie.com/embed/${youtubeVideoId}`}
               title="YouTube video"
               loading="lazy"
-              referrerPolicy="no-referrer"
-              allow="encrypted-media; picture-in-picture; fullscreen"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
             />
           ) : (
