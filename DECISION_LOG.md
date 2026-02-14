@@ -63,7 +63,7 @@ This log records active product and technical decisions for the current app phas
 - Decision: App branding uses configurable per-user ASCII owl with explicit save from Settings.
 - Why: Preserve playful brand identity while allowing user personalization without changing reading flows.
 - Details:
-  - Brand text remains fixed as `Feed my owl`.
+  - Brand text remains fixed as `feed my owl`.
   - Default owl for unsaved/new users is `{o,o}`.
   - Selection is persisted account-wide in `users.owl_ascii`.
   - Browser tab icon (favicon) mirrors the selected owl.

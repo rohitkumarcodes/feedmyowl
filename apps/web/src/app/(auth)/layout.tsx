@@ -66,7 +66,7 @@ export default async function AuthLayout({
       <AuthThemeBootstrap initialThemeMode={themeMode} />
       <div className={styles.brandSlot}>
         <Link href="/feeds" className={styles.brand}>
-          <span className={styles.brandText}>Feed my owl</span>
+          <span className={styles.brandText}>feed my owl</span>
           <span className={styles.brandOwl}>{owlAscii}</span>
         </Link>
       </div>

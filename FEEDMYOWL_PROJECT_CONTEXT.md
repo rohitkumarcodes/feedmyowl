@@ -68,7 +68,7 @@ Core loop:
   - Significant snippet/author matches add source labels (`Matched in ...`).
 - One-time shortcuts tip appears in the sidebar until dismissed/opened.
 - Authenticated chrome brand:
-  - Fixed text `Feed my owl`.
+  - Fixed text `feed my owl`.
   - Per-user ASCII owl variant (default `{o,o}`), also used for favicon.
 
 ### Mobile

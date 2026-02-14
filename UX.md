@@ -30,7 +30,7 @@ Manual refresh only (background jobs deferred).
   - Status message stack
   - Feed tree
 - Brand slot:
-  - Shows fixed text `Feed my owl`.
+  - Shows fixed text `feed my owl`.
   - Shows selected ASCII owl (default `{o,o}`).
 - Connectivity message:
   - Show `You’re offline. You can still read cached articles.` only when offline.
