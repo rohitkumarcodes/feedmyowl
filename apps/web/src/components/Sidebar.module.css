@@ -251,7 +251,7 @@
   align-items: center;
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--sidebar-tree-count-col);
-  padding: var(--lp-pad-y) 8px var(--lp-pad-y) 2px;
+  padding: var(--lp-pad-y) 8px var(--lp-pad-y) 0;
 }
 
 .folderRow:hover {
@@ -323,8 +323,21 @@
 }
 
 .folderToggle {
+  justify-content: flex-end;
   min-width: var(--sidebar-tree-toggle-col);
+  padding: 0 2px;
   width: var(--sidebar-tree-toggle-col);
+}
+
+.folderToggleContent {
+  align-items: center;
+  display: inline-flex;
+  gap: 2px;
+}
+
+.folderToggleChevron {
+  font-size: 12px;
+  line-height: 1;
 }
 
 .folderToggleSpacer {
