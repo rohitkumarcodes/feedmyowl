@@ -33,7 +33,7 @@ As of 2026-02-12, add-feed discovery is more deterministic for site URLs: if a n
 - Import supports OPML/XML and FeedMyOwl JSON.
 - If your OPML file uses folder paths like `/Tech/Web`, feedmyowl flattens that into one folder label: `Tech / Web`.
 - If one imported feed belongs to multiple folder paths, it can be assigned to multiple folders.
-- Upcoming improvements include: preview-before-import, selective export, clearer duplicate rules, richer portable JSON, and scheduled backups.
+- Import includes a preview-before-import step. Upcoming improvements include: selective export, clearer duplicate rules, richer portable JSON, and scheduled backups.
 
 The goal is simple: help you read without distraction.
 

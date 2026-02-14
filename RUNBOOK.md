@@ -6,15 +6,21 @@ Operational guide for the reading-first app with folder organization and configu
 ## 2. Local development
 From repo root:
 - `pnpm dev:web`
+- `pnpm dev:blog`
 - `pnpm test:web`
 - `pnpm lint:web`
 - `pnpm build:web`
+- `pnpm build:blog`
+- `pnpm db:generate`
+- `pnpm db:migrate`
+- `pnpm db:studio`
 
 ## 3. User-facing surface
 - Add/rename/delete feed.
 - Create/rename/delete folder.
 - Assign feeds to multiple folders.
-- Delete the virtual `Uncategorized` scope from sidebar actions (single confirmation; deletes uncategorized feeds).
+- Move all uncategorized feeds to a folder from sidebar actions.
+- Delete uncategorized feeds from sidebar actions (confirmation dialog).
 - Discover feed candidates from site URLs before create.
 - Discovery fallback can probe `www.<host>` site variants when the typed host is unreachable.
 - Bulk add feed/site URLs from sidebar add form.
@@ -26,9 +32,10 @@ From repo root:
 - One-time shortcuts hint in sidebar (dismissible, browser-local persistence).
 - Semantic sidebar notices (`progress`, `offline`, `info`, `error`) with consistent behavior.
 - Account logo selection (ASCII owl + favicon) from Settings.
-- Settings feed import progress indicator (`Importing (x/y)...` + inline progress text).
+- Settings feed import preview + progress indicator (`Importing x of y feed URLs...`) with optional import diagnostics download.
 - Settings import rate-limit handling retries `429` chunk responses up to 2 times using `Retry-After`.
-- Settings keyboard shortcuts toggle panel (collapsed by default) with docs link.
+- Settings keyboard shortcuts toggle panel (collapsed by default).
+- Settings feed export downloads (OPML or JSON).
 - Account deletion.
 
 ## 4. Active API routes
@@ -42,10 +49,15 @@ From repo root:
 - `PATCH /api/folders/[id]`
 - `DELETE /api/folders/[id]`
 - `POST /api/refresh`
+- `POST /api/feeds/import-preview`
 - `POST /api/feeds/import`
 - `GET /api/feeds/export`
+- `POST /api/billing/checkout`
+- `POST /api/billing/portal`
 - `PATCH /api/settings/logo`
 - `PATCH /api/settings/theme`
+- `POST /api/webhooks/clerk`
+- `POST /api/webhooks/stripe`
 
 ## 5. Security and reliability defaults (2026-02-11)
 - Manual refresh only (background jobs deferred).
@@ -118,10 +130,12 @@ From repo root:
 ### Rate limit rejection
 1. Affected routes in this phase:
    - `POST /api/feeds`
+   - `POST /api/feeds/import-preview`
    - `POST /api/feeds/import`
    - `POST /api/refresh`
 2. Confirm response shape: status `429`, header `Retry-After`, body `code="rate_limited"`.
 3. Import route limits:
+   - `POST /api/feeds/import-preview`: user `25` requests/minute, IP `100` requests/minute.
    - `POST /api/feeds/import`: user `25` requests/minute, IP `100` requests/minute.
    - With import chunk size `20`, this supports up to `500` feed URLs/minute per user.
 4. Validate user-level and IP-level request rates over the previous minute.
@@ -170,7 +184,9 @@ From repo root:
    - In feed scope, `j/k` should continue across adjacent feed lists at boundaries (with wrap-around).
    - In `all`, `uncategorized`, and `folder` scopes, `j/k` should stop at boundaries.
    - While search is active, `j/k` should stay within search results.
-   - Arrow keys and `Enter` should work only in list context.
+   - Arrow keys should select next/previous in list context and scroll 3 lines in reader context.
+   - `Space`/`PageDown` and `Shift+Space`/`PageUp` should page-scroll in reader context.
+   - `Enter` should open selected article in list context.
 5. Verify `f` cycles pane focus in order:
    - collapse sidebar -> collapse list -> expand list -> expand sidebar.
 6. Verify `r` triggers refresh when not typing.
@@ -183,7 +199,7 @@ From repo root:
 3. Confirm toggle order is caret icon first, then keyboard icon.
 4. Expand and confirm shutter motion is used.
 5. Confirm opened panel width matches the toggle button width.
-6. Confirm grouped key rows are displayed and docs link is still present.
+6. Confirm grouped key rows are displayed.
 
 ### Search behavior looks incorrect
 1. Confirm search input is visible at the top of the article list pane.
@@ -266,7 +282,7 @@ From repo root:
 14. Delete a folder in both modes and verify expected outcomes.
 15. Open Settings, change owl option, click `Save owl`, and verify sidebar brand + favicon update.
 16. Reload, sign in again, and confirm owl choice persists.
-17. Start a feed import from OPML/JSON and verify progress appears as numeric counts (`x/y`).
+17. Start a feed import from OPML/JSON, confirm preview appears, then verify import progress shows numeric counts and a progress bar.
 18. On mobile viewport, verify in-app back transitions `Reader -> Articles -> Feeds`.
 19. On mobile viewport, verify top spacing is compact and fixed brand slot is hidden.
 20. On settings page, verify first-step delete action is text-labeled (`Delete account...`).
@@ -277,12 +293,12 @@ From repo root:
     collapse sidebar -> collapse list -> expand list -> expand sidebar.
 25. Press `r` and verify feed refresh still triggers.
 26. Verify `j/k` open next/previous articles in list and reader contexts, and in feed scope cross list boundaries with wrap-around.
-27. Verify arrow keys move selection only in list context; reader keeps native arrow scrolling.
+27. Verify arrow keys move selection in list context; in reader context `ArrowUp/ArrowDown` scroll 3 lines and `Space`/`PageDown` page-scroll down (with overlap).
 28. Trigger success info message and verify auto-clear after ~8 seconds.
 29. Trigger actionable info message (`Add another`) and verify it does not auto-clear immediately.
 30. Trigger an error and verify assertive rendering/dismiss behavior.
 31. Verify article rows retain dot marker and show stronger unread vs read title tone.
-32. On settings page, verify `Keyboard shortcuts` toggle is collapsed by default and docs link is present.
+32. On settings page, verify `Keyboard shortcuts` toggle is collapsed by default and grouped key rows render after expand.
 33. On website pages, verify global nav includes `About` with correct active state on `/about/`.
 34. In article list, search with a 1-character query and confirm non-search hint is shown.
 35. Search with a 2+ character query and confirm global ranked results are shown.
@@ -292,12 +308,10 @@ From repo root:
 39. Search `heart` and confirm exact match appears with contiguous highlight.
 40. Search typo `heaet` and confirm typo fallback returns the `Heart` result.
 41. Confirm typo fallback results do not show fragmented highlight noise for unrelated titles.
-42. In `Read all feeds`, scroll repeatedly and confirm additional pages auto-load until `You’re all caught up.`
+42. In `All feeds`, scroll repeatedly and confirm additional pages auto-load until `You’re all caught up.`
 43. Switch between `all`, `uncategorized`, one folder, and one feed; confirm each scope initializes its own cursor paging and remains stable when returning to a previous scope.
 
 ## 9. Import/export roadmap (beginner-friendly)
-- Import preview before apply:
-  - Display detected feeds, folder mapping, duplicates, and failures before write.
 - Selective export:
   - Export full library or only selected folders/feeds.
 - Duplicate conflict policy controls:

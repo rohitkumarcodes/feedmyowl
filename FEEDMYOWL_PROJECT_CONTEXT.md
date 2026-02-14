@@ -20,6 +20,7 @@ Core loop:
 - Feed subscription create, rename, delete.
 - Folder create, rename, delete.
 - Many-to-many feed-folder assignment.
+- Uncategorized actions (move all to folder; delete uncategorized feeds).
 - Manual refresh only (background jobs deferred).
 - CSRF same-origin checks on mutating non-webhook routes.
 - Rate limits enforced with Redis/Upstash; fail-open if Redis unavailable.
@@ -32,11 +33,11 @@ Core loop:
 - Offline snapshot fallback for previously loaded data.
 - Offline-only connectivity status message in workspace.
 - Account settings (including configurable ASCII owl logo) and account deletion.
-- Account appearance mode toggle (`light` / `dark`) for authenticated routes.
-- Feed import progress feedback in settings.
+- Account appearance mode toggle (`system` / `light` / `dark`) for authenticated routes.
+- Feed import preview + progress feedback in settings.
 - Desktop/tablet keyboard shortcuts with in-app help modal and one-time hint.
 - Semantic sidebar notices (`error`, `progress`, `offline`, `info`) with accessibility roles.
-- Settings keyboard shortcuts toggle panel (collapsed by default) + docs link.
+- Settings keyboard shortcuts toggle panel (collapsed by default).
 
 ## 4. Out of scope
 - Nested folders.
@@ -102,23 +103,29 @@ Notes:
 - `GET /api/feeds` -> feeds + folders
 - `GET /api/articles` -> cursor-paginated article page for one scope
 - `POST /api/feeds` -> action-based feed operations (`feed.discover`, `feed.create`)
-- `PATCH /api/feeds` -> `item.markRead`, `account.delete`
+- `PATCH /api/feeds` -> `item.markRead`, `uncategorized.delete`, `uncategorized.move_to_folder`, `account.delete`
 - `PATCH /api/feeds/[id]` -> rename feed or set folders
 - `DELETE /api/feeds/[id]` -> delete feed
 - `POST /api/folders` -> create folder
 - `PATCH /api/folders/[id]` -> rename folder
 - `DELETE /api/folders/[id]` -> delete folder by mode
 - `POST /api/refresh` -> manual refresh all user feeds
+- `POST /api/feeds/import-preview` -> validate import file + generate preview (no writes)
 - `POST /api/feeds/import` -> chunked feed import from OPML/XML/JSON entries
 - `GET /api/feeds/export` -> OPML export or JSON export
 - `PATCH /api/settings/logo` -> persist selected user ASCII owl logo
-- `PATCH /api/settings/theme` -> persist selected authenticated appearance mode
+- `PATCH /api/settings/theme` -> persist selected authenticated appearance mode (`system`, `light`, `dark`)
+- `POST /api/billing/checkout` -> create Stripe Checkout session (paid upgrade)
+- `POST /api/billing/portal` -> open Stripe customer portal
+- `POST /api/webhooks/clerk` -> sync Clerk users to DB
+- `POST /api/webhooks/stripe` -> sync Stripe subscription status to DB
 
 Behavior notes:
 - Mutating non-webhook routes enforce same-origin checks and can return
   `403` with `code: "csrf_validation_failed"`.
 - Rate-limited write routes can return `429` with `code: "rate_limited"` and
   `Retry-After`.
+- `POST /api/feeds/import-preview` shares the same rate limits as `POST /api/feeds/import`.
 - `POST /api/feeds/import` rate limits:
   - User: 25 requests/minute.
   - IP: 100 requests/minute.
@@ -148,7 +155,7 @@ Behavior notes:
 - Reliable dedupe: GUID + content fingerprint with DB uniqueness.
 - Article retention is count-based: keep at most 50 items per feed, ranked by
   `COALESCE(published_at, created_at) DESC, id DESC`.
-- Authenticated routes support account-synced appearance mode (`light` / `dark`).
+- Authenticated routes support account-synced appearance mode (`system` / `light` / `dark`).
 - Offline snapshot keeps previously loaded data available during disconnects.
 - Offline message copy is fixed to: `You’re offline. You can still read cached articles.`
 - Reconnect clears the offline message silently (no separate online banner).
@@ -166,7 +173,12 @@ Behavior notes:
   - In feed scope, `j/k` continue to adjacent feed lists at boundaries (with wrap-around).
   - In `all`, `uncategorized`, and `folder` scopes, `j/k` stop at list boundaries.
   - While search is active, `j/k` stay within search results only.
-  - Arrow keys + `Enter` are list-only.
+  - `ArrowUp/ArrowDown`:
+    - In list context: select previous/next article.
+    - In reader context: scroll up/down 3 lines.
+  - `Space` / `PageDown`: scroll down one reading page with overlap (reader context).
+  - `Shift+Space` / `PageUp`: scroll up one reading page with overlap (reader context).
+  - `Enter`: open selected article (list-only).
   - `r` refreshes feeds.
   - `f` cycles pane focus in four steps: collapse sidebar -> collapse list -> expand list -> expand sidebar.
   - `/` focuses article search.
@@ -177,12 +189,16 @@ Behavior notes:
 ## 10. Operational scripts
 From repo root:
 - `pnpm dev:web`
+- `pnpm dev:blog`
 - `pnpm test:web`
 - `pnpm lint:web`
 - `pnpm build:web`
+- `pnpm build:blog`
+- `pnpm db:generate`
+- `pnpm db:migrate`
+- `pnpm db:studio`
 
 ## 11. Import/export roadmap (beginner-friendly)
-- Import dry-run preview so users can validate folder mapping and duplicates before writing.
 - Selective export so users can export all feeds or only chosen folders/feeds.
 - Duplicate-conflict options so users can pick skip/merge/overwrite behavior.
 - Portable JSON v3 with optional reading-state metadata for richer migrations.

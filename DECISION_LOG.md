@@ -27,7 +27,7 @@ This log records active product and technical decisions for the current app phas
 ### D-2026-02-08-03
 - Date: 2026-02-08
 - Status: active
-- Decision: Sidebar scopes include `Read all feeds`, `Uncategorized`, folder scopes, and feed scopes.
+- Decision: Sidebar scopes include `All feeds`, `Uncategorized`, folder scopes, and feed scopes.
 - Why: Keep navigation explicit and scannable.
 
 ### D-2026-02-08-04
@@ -94,7 +94,8 @@ This log records active product and technical decisions for the current app phas
 - Decision: Settings import and account deletion flows emphasize explicit progress and clarity.
 - Why: Improve trust and reduce ambiguity in long-running and destructive actions.
 - Details:
-  - Feed import shows numeric progress while processing.
+  - Feed import is preview-before-import and shows numeric progress while processing.
+  - Import failures/warnings are downloadable as a plain-text diagnostics report.
   - Initial account deletion entry point is text-labeled (`Delete account...`) before confirmation.
 
 ### D-2026-02-10-05
@@ -113,7 +114,10 @@ This log records active product and technical decisions for the current app phas
   - In feed scope, `j/k` continue across adjacent feed lists at boundaries (with wrap-around).
   - In `all`, `uncategorized`, and `folder` scopes, `j/k` stop at boundaries.
   - While search is active, `j/k` stay within search results.
-  - Arrow keys and `Enter` are list-only.
+  - `ArrowUp/ArrowDown` select previous/next in list context and scroll 3 lines in reader context.
+  - `Space`/`PageDown` page-scroll down (with overlap) in reader context.
+  - `Shift+Space`/`PageUp` page-scroll up (with overlap) in reader context.
+  - `Enter` opens the selected article (list context only).
   - `r` refreshes feeds workspace-wide when not typing.
   - `f` cycles pane focus in order: collapse sidebar -> collapse list -> expand list -> expand sidebar.
   - `/` focuses article search.
@@ -193,11 +197,12 @@ This log records active product and technical decisions for the current app phas
 ### D-2026-02-11-03
 - Date: 2026-02-11
 - Status: active
-- Decision: Authenticated routes support an account-synced `light` / `dark` appearance mode.
+- Decision: Authenticated routes support an account-synced `system` / `light` / `dark` appearance mode.
 - Why: Let users adjust reading comfort while keeping preference consistent across devices.
 - Details:
   - Theme is persisted in `users.theme_mode`.
   - Settings toggles theme with instant apply + auto-save.
+  - `system` resolves to the OS appearance mode on the client.
   - Authenticated routes apply the chosen mode; public/auth-entry pages remain light.
   - Clerk account surfaces follow the selected mode via shared appearance variables.
 
@@ -235,8 +240,9 @@ This log records active product and technical decisions for the current app phas
 - Status: active
 - Decision: Import/export improvements are tracked as a beginner-friendly roadmap.
 - Why: New users need safer migration flows and clearer recovery options.
-- Roadmap:
+- Shipped:
   - Import preview mode before writing changes.
+- Roadmap (remaining):
   - Selective export by folder/feed instead of full-library only.
   - Explicit duplicate-conflict choices during import.
   - Portable JSON v3 with optional reading-state metadata.
@@ -259,9 +265,9 @@ This log records active product and technical decisions for the current app phas
 - Decision: `Uncategorized` in `/feeds` has a destructive delete action with one explicit confirmation prompt.
 - Why: Users requested a direct cleanup path for unassigned subscriptions while keeping behavior predictable.
 - Details:
-  - `Uncategorized` row shows an actions menu with `Delete` when uncategorized feeds exist.
-  - Confirmation copy is fixed to: `Deleting uncategorized folder will delete both the folder and the feeds. Are you sure you want to delete?`
-  - Confirming delete unsubscribes all feeds that currently have zero folder assignments.
+  - `Uncategorized` row shows an actions menu with `Move all to folder...` and `Delete uncategorized feeds` when uncategorized feeds exist.
+  - Confirmation dialog copy is fixed to: `This will unsubscribe and remove all feeds that are currently uncategorized. This cannot be undone.`
+  - Confirming delete unsubscribes and removes all feeds that currently have zero folder assignments.
   - `Uncategorized` remains existence-based: hidden when empty, automatically visible again when a new unassigned feed appears.
 
 ### D-2026-02-12-03

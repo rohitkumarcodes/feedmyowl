@@ -20,7 +20,7 @@ Three stacked views:
 - Small-screen layout hides fixed brand chrome and uses a reduced sidebar top reserve.
 
 ## 3. Sidebar information hierarchy
-- Global scopes first (`Read all feeds`, `Uncategorized`)
+- Global scopes first (`All feeds`, `Uncategorized`)
 - Toolbar actions (`Refresh`, `Add feed/folder`, `Shortcuts (?)` on desktop/tablet)
 - One-time shortcuts hint area (dismissible on desktop/tablet)
 - Sidebar message stack (progress/offline/info/error)
@@ -51,7 +51,7 @@ Three stacked views:
   - `info` is dismissible and auto-clears after 8s unless actionable.
   - `error` is dismissible and shown with stronger contrast.
 - Add-feed submit must never fail silently; unexpected client exceptions surface explicit error notice text.
-- Settings import shows numeric progress while processing feed URLs.
+- Settings feed import is preview-before-import and shows numeric progress while processing feed URLs.
 - Settings delete entry point is text-first (`Delete account...`) before confirmation.
 - Settings keyboard shortcuts use a collapsed-by-default toggle (caret then keyboard icon)
   that expands with shutter motion into a boxed grouped reference.
@@ -81,11 +81,15 @@ Three stacked views:
   - In feed scope, `j/k` continue to adjacent feed lists at boundaries (with wrap-around).
   - In `all`, `uncategorized`, and `folder` scopes, `j/k` stop at boundaries.
   - While search is active, `j/k` stay within search results only.
-  - `ArrowDown`: next article (list context only)
-  - `ArrowUp`: previous article (list context only)
+  - `ArrowDown`: select next article (list context)
+  - `ArrowUp`: select previous article (list context)
+  - `ArrowDown`: scroll down 3 lines (reader context)
+  - `ArrowUp`: scroll up 3 lines (reader context)
+  - `Space` / `PageDown`: scroll down one reading page with overlap (reader context)
+  - `Shift+Space` / `PageUp`: scroll up one reading page with overlap (reader context)
   - `Enter`: open selected article (list context only)
   - `r`: refresh feeds
-  - `f`: cycle pane focus (`sidebar -> list -> reader -> all panes`)
+  - `f`: cycle pane focus (collapse sidebar -> collapse list -> expand list -> expand sidebar)
   - `/`: focus article search input
   - `?`: open shortcuts help modal
   - `Escape`: close shortcuts help modal or clear search input when focused
@@ -136,6 +140,7 @@ Three stacked views:
 
 ## 12. Import/export behavior
 - Import accepts OPML/XML and FeedMyOwl JSON.
+- Import is preview-before-apply: selecting an import file generates a server-side preview (new/duplicate/error) before writing subscriptions.
 - OPML folder mapping supports:
   - Nested outline context (flattened to one folder label such as `Tech / Web`).
   - `category` path values (for example `/Tech/Web`) mapped to the same flat folder label model.
@@ -143,8 +148,6 @@ Three stacked views:
 - This remains compatible with the current single-level folder UI and many-to-many feed-folder model.
 
 ## 13. Import/export roadmap (beginner-friendly)
-- Import dry-run preview:
-  - Show detected feeds, folder mapping, duplicates, and failures before writing.
 - Selective export:
   - Let users export all data, one folder, or selected feeds.
 - Import conflict controls:

@@ -8,7 +8,7 @@
 2. Add a feed URL or site URL.
 3. Optionally assign one or more folders during add.
 4. Refresh feeds.
-5. Choose scope (`Read all`, `Uncategorized`, folder, or feed).
+5. Choose scope (`All feeds`, `Uncategorized`, folder, or feed).
 6. Optionally search all loaded articles from the article list pane.
 7. Open and read an article.
 
@@ -20,7 +20,7 @@ Manual refresh only (background jobs deferred).
   - `Add feed/folder`
   - `Shortcuts (?)` (desktop/tablet only)
 - Scope entries:
-  - `Read all feeds`
+  - `All feeds`
   - `Uncategorized`
   - Folder rows (collapsible)
   - Feed rows under each folder
@@ -42,10 +42,15 @@ Manual refresh only (background jobs deferred).
   - Inline add-feed folder input: `Enter` creates folder (does not submit add-feed).
   - Sidebar add-folder form: `Enter` submits folder creation.
 - Rename and delete folders from folder row actions.
-- `Uncategorized` row includes an actions menu with a destructive `Delete` action.
-- Deleting `Uncategorized` uses one confirmation prompt:
-  - `Deleting uncategorized folder will delete both the folder and the feeds. Are you sure you want to delete?`
-- Confirming uncategorized delete unsubscribes all currently uncategorized feeds.
+- `Uncategorized` row includes an actions menu:
+  - `Move all to folder...` (moves all uncategorized feeds into one folder)
+  - `Delete uncategorized feeds` (destructive)
+- Deleting uncategorized feeds shows one confirmation dialog:
+  - `This will unsubscribe and remove all feeds that are currently uncategorized. This cannot be undone.`
+- Confirming uncategorized delete unsubscribes and removes all currently uncategorized feeds.
+- Moving uncategorized feeds:
+  - User selects a destination folder, or creates one inline.
+  - `Enter` in the inline-create field creates the folder (does not submit the move).
 - Delete dialog offers:
   - Delete folder only.
   - Delete folder and unsubscribe exclusive feeds.
@@ -84,7 +89,7 @@ Manual refresh only (background jobs deferred).
 - Default without assignments is Uncategorized.
 
 ## 6. Scope behavior
-- `Read all`: all articles.
+- `All feeds`: all articles.
 - `Uncategorized`: only feeds with no folder assignments.
 - `Uncategorized` appears only when at least one feed has zero folder assignments.
 - After deleting uncategorized feeds, the `Uncategorized` row disappears until a new unassigned feed exists.
@@ -133,11 +138,15 @@ Manual refresh only (background jobs deferred).
   - In feed scope, `j/k` continue across adjacent feed lists at boundaries (with wrap-around).
   - In `all`, `uncategorized`, and `folder` scopes, `j/k` stop at boundaries.
   - While search is active, `j/k` stay within search results only.
-  - `ArrowDown`: next article (list context only)
-  - `ArrowUp`: previous article (list context only)
+  - `ArrowDown`: select next article (list context)
+  - `ArrowUp`: select previous article (list context)
+  - `ArrowDown`: scroll down 3 lines (reader context)
+  - `ArrowUp`: scroll up 3 lines (reader context)
+  - `Space` / `PageDown`: scroll down one reading page with overlap (reader context)
+  - `Shift+Space` / `PageUp`: scroll up one reading page with overlap (reader context)
   - `Enter`: open selected article (list context only)
   - `r`: refresh feeds
-  - `f`: cycle pane focus (`sidebar -> list -> reader -> all panes`)
+  - `f`: cycle pane focus (collapse sidebar -> collapse list -> expand list -> expand sidebar)
   - `/`: focus article search input
   - `?`: open shortcuts help modal
   - `Escape`: close shortcuts modal and clear search input when focused
@@ -148,34 +157,46 @@ Manual refresh only (background jobs deferred).
     remains viewport-capped.
 
 ## 10. Settings behavior
-- Settings includes four section groups with consistent spacing:
-  - `Feeds`
+- Settings includes section groups with consistent spacing:
+  - `Appearance`
+  - `Import feeds`
+  - `Export feeds`
   - `Keyboard shortcuts`
   - `Hoot hoot`
   - `Delete account`
-- Feeds import:
-  - Import button shows numeric progress while processing (`Importing (x/y)...`).
-  - Inline status text shows processed progress during the active import.
-  - If import hits rate limits (`429`), the current chunk auto-retries up to 2 times using `Retry-After`.
-  - While waiting to retry, settings shows a short inline status (`Retrying this chunk in Ns...`).
-  - Import help text explicitly calls out `FeedMyOwl JSON v2`.
-  - After import, users can download all failed rows as a plain-text report (`Download failed URLs`).
+- Appearance:
+  - Theme mode selection lives behind a collapsed disclosure panel.
+  - Options include `Your system default`, `Light`, and `Dark`.
+  - Selection applies instantly, auto-saves, and triggers a route refresh on success.
+- Feed import:
+  - Upload control supports click-to-upload and drag-and-drop (`.opml`, `.xml`, `.json`; max 10 MB).
+  - Import is two-phase:
+    - Preview: settings posts the file to `POST /api/feeds/import-preview` and shows `new` / `duplicate` / `error` counts.
+    - Confirm + import: user clicks `Import now`, then settings runs chunked imports via `POST /api/feeds/import`.
+  - Import progress:
+    - Shows numeric progress (`Importing x of y feed URLs...`) and a progress bar.
+    - If import hits rate limits (`429`), the current chunk auto-retries up to 2 times using `Retry-After`.
+    - While waiting to retry, settings shows a short inline status (`Server busy. Retrying in Ns...`).
+  - After import:
+    - Shows summary counts (new, merged, failed).
+    - If there are failures/warnings, users can download a plain-text report (`Download import diagnostics`).
   - OPML folders are preserved from:
     - Nested outlines (flattened into one folder label, example `Tech / Web`).
     - OPML `category` paths (example `/Tech/Web` -> `Tech / Web`).
   - If one OPML feed has multiple categories, FeedMyOwl assigns that feed to multiple folders.
+- Feed export:
+  - Settings offers OPML and JSON export downloads.
 - Keyboard shortcuts settings section:
   - Shows a toggle button under `Keyboard shortcuts` with caret then keyboard icon.
   - Default state is collapsed.
   - Expands with shutter motion into boxed grouped shortcut reference
     (`Navigation`, `Reading actions`, `App actions`) styled like the feeds shortcuts modal.
   - Toggle button width matches the opened shortcuts box width.
-  - Includes docs link to `/docs/#keyboard-shortcuts`.
 - Owl chooser prompt: `Choose an owl to digest your feeds.`
 - User selects one ASCII owl option:
   - `[o-o] Hooty Potter: The owl who lived (to read your feeds).`
   - `{O,O} Owlbert Einstein: Reading at the speed of light.`
-  - `{o,o} Jane Owl-sten: "Pride and Prejudice and RSS."`
+  - `{o,o} Jane Owl-sten: Pride and Prejudice and RSS.`
   - `{o,q} Sherlock Hoolmes: Solving the case of the unread items.`
   - `</o,o> The Devel-owl-per: while(awake) { read_feeds(); }`
 - Owl chooser width behavior:
@@ -214,8 +235,6 @@ Manual refresh only (background jobs deferred).
   - `"not_modified"` when ETag/Last-Modified validators match and no new items are inserted.
 
 ## 13. Import/export improvements (beginner-friendly roadmap)
-- Import preview before apply:
-  - Show exactly what will be imported and where it will be placed before changing account data.
 - Export selection controls:
   - Export all feeds or only selected folders/feeds when users want smaller or focused exports.
 - Duplicate handling choices:
