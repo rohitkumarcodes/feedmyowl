@@ -88,6 +88,12 @@ interface ImportProgress {
   totalCount: number;
 }
 
+interface ExportFormat {
+  format: "opml" | "json";
+  label: string;
+  sublabel: string;
+}
+
 const THEME_MODE_OPTIONS: Array<{
   mode: ThemeMode;
   label: string;
@@ -108,6 +114,11 @@ const THEME_MODE_OPTIONS: Array<{
     label: "Dark",
     description: "Dimmer workspace for low-light reading sessions.",
   },
+];
+
+const EXPORT_FORMAT_OPTIONS: ExportFormat[] = [
+  { format: "opml", label: "OPML", sublabel: "Works with most feed readers" },
+  { format: "json", label: "JSON", sublabel: "Full backup including folders" },
 ];
 
 function OwlOptionsShutter({
@@ -284,6 +295,70 @@ const keyboardIcon = (
   </svg>
 );
 
+const uploadIcon = (
+  <svg
+    className={styles.buttonIcon}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M21 15V19C21 20.1 20.1 21 19 21H5C3.9 21 3 20.1 3 19V15"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M17 8L12 3L7 8"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M12 3V15"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const downloadIcon = (
+  <svg
+    className={styles.buttonIcon}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M21 15V19C21 20.1 20.1 21 19 21H5C3.9 21 3 20.1 3 19V15"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M7 10L12 15L17 10"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M12 15V3"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 /**
  * Renders minimal account settings for the reading MVP.
  */
@@ -332,6 +407,9 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
   const [shortcutsControlsWidthPx, setShortcutsControlsWidthPx] = useState<number | null>(
     null
   );
+  const [selectedExportFormat, setSelectedExportFormat] = useState<"opml" | "json">("opml");
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [showPreviewList, setShowPreviewList] = useState(false);
 
   const landingUrl = getLandingPageUrl();
 
@@ -772,7 +850,7 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
               continue;
             }
 
-            const requestErrorMessage = body?.error || "Could not import this chunk.";
+            const requestErrorMessage = body?.error || `Failed to import ${chunk.length} feeds. Download diagnostics for details.`;
             chunkRows = buildChunkFallbackRows(chunk, requestErrorMessage);
             break;
           } catch {
@@ -828,6 +906,43 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
     setImportPreview(null);
   }
 
+  function handleDragOver(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setIsDraggingFile(true);
+  }
+
+  function handleDragLeave(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setIsDraggingFile(false);
+  }
+
+  function handleDrop(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setIsDraggingFile(false);
+
+    const files = event.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      
+      const input = importFileInputRef.current;
+      if (input) {
+        input.files = dataTransfer.files;
+        const changeEvent = {
+          currentTarget: input,
+        } as ChangeEvent<HTMLInputElement>;
+        void handleImportFileChange(changeEvent);
+      }
+    }
+  }
+
+  function handleDoneImport() {
+    setImportSummary(null);
+    setImportPreview(null);
+    router.refresh();
+  }
+
   function handleDownloadFailedImportRows() {
     if (
       !importSummary ||
@@ -881,7 +996,7 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
     ? importProgress
       ? `Importing (${importProgress.processedCount}/${importProgress.totalCount})...`
       : "Importing..."
-    : "Import feeds";
+    : "Import from file";
 
   return (
     <div className={styles.root}>
@@ -994,37 +1109,44 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
         </section>
 
         <section className={styles.panel}>
-          <h2>Feeds</h2>
-          <p className={styles.muted}>
-            Export your library or import feeds from OPML/XML or FeedMyOwl JSON v2.
+          <h2>Import feeds</h2>
+          <p className={styles.feedsSectionDescription}>
+            Supports OPML, XML, or JSON files.
           </p>
-          <div className={styles.inlineActions}>
-            <button
-              type="button"
-              className={styles.linkButton}
-              onClick={() => { void handleExport("opml"); }}
-              disabled={isExporting}
-            >
-              {isExporting ? "Exporting..." : "Export OPML"}
-            </button>
-            <button
-              type="button"
-              className={styles.linkButton}
-              onClick={() => { void handleExport("json"); }}
-              disabled={isExporting}
-            >
-              {isExporting ? "Exporting..." : "Export JSON"}
-            </button>
-            <button
-              type="button"
-              className={styles.linkButton}
+          <div className={styles.feedsImportSection}>
+            <div
+              className={`${styles.dropZone} ${isDraggingFile ? styles.dropZoneDragOver : ""}`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
               onClick={() => importFileInputRef.current?.click()}
-              disabled={isImportingFeeds || importPreview !== null}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  importFileInputRef.current?.click();
+                }
+              }}
             >
-              {importButtonLabel}
-            </button>
+              <p className={styles.dropZoneText}>
+                <span className={styles.dropZoneTextAccent}>Click to upload</span> or drag and drop
+              </p>
+              <p className={styles.dropZoneText}>OPML, XML, or JSON (max 10 MB)</p>
+            </div>
+            <div className={styles.inlineActions}>
+              <button
+                type="button"
+                className={styles.linkButton}
+                onClick={() => importFileInputRef.current?.click()}
+                disabled={isImportingFeeds || importPreview !== null}
+              >
+                <span className={styles.iconButtonContent}>
+                  {uploadIcon}
+                  <span>{importButtonLabel}</span>
+                </span>
+              </button>
+            </div>
           </div>
-          {exportError ? <p className={styles.inlineMessage}>{exportError}</p> : null}
           {importPreview ? (
             <div className={styles.importSummary} role="status">
               <p>
@@ -1036,6 +1158,42 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
                 . Detected format: {importPreview.sourceType}.
               </p>
               <p className={styles.muted}>Source file: {importPreview.fileName}</p>
+              {importPreview.totalCount > 0 && (
+                <button
+                  type="button"
+                  className={styles.linkButton}
+                  onClick={() => setShowPreviewList(!showPreviewList)}
+                >
+                  {showPreviewList ? "Hide" : "Show"} feed list ({importPreview.totalCount})
+                </button>
+              )}
+              {showPreviewList && (
+                <div className={styles.importPreviewList}>
+                  {importPreview.entries.slice(0, 50).map((entry, index) => (
+                    <div key={index} className={styles.importPreviewEntry}>
+                      <div className={styles.importPreviewEntryStatus}>
+                        {entry.status === "new" && <span className={styles.importPreviewEntryNew}>New</span>}
+                        {entry.status === "duplicate" && <span className={styles.importPreviewEntryDuplicate}>Duplicate</span>}
+                        {entry.status === "error" && <span className={styles.importPreviewEntryError}>Error</span>}
+                      </div>
+                      <div className={styles.importPreviewEntryUrl}>{entry.url}</div>
+                      {entry.customTitle && (
+                        <div className={styles.importPreviewEntryTitle}>{entry.customTitle}</div>
+                      )}
+                      {entry.folderNames.length > 0 && (
+                        <div className={styles.importPreviewEntryFolders}>
+                          {entry.folderNames.map((folder) => (
+                            <span key={folder} className={styles.importPreviewFolder}>{folder}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {importPreview.entries.length > 50 && (
+                    <p className={styles.muted}>...and {importPreview.entries.length - 50} more feeds</p>
+                  )}
+                </div>
+              )}
               <div className={styles.inlineActions}>
                 <button
                   type="button"
@@ -1060,9 +1218,15 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
                 Importing {importProgress.processedCount} of {importProgress.totalCount} feed URL
                 {importProgress.totalCount === 1 ? "" : "s"}...
               </p>
+              <div className={styles.progressBarContainer} role="progressbar" aria-valuenow={importProgress.processedCount} aria-valuemin={0} aria-valuemax={importProgress.totalCount}>
+                <div
+                  className={styles.progressBar}
+                  style={{ width: `${(importProgress.processedCount / importProgress.totalCount) * 100}%` }}
+                />
+              </div>
               {importRetryCountdown !== null ? (
                 <p className={styles.importProgress} role="status" aria-live="polite">
-                  Rate limit reached. Retrying in {importRetryCountdown} second
+                  Server busy. Retrying in {importRetryCountdown} second
                   {importRetryCountdown === 1 ? "" : "s"}...
                 </p>
               ) : null}
@@ -1080,8 +1244,33 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
           {importError ? <p className={styles.inlineMessage}>{importError}</p> : null}
           {importSummary && importSummaryText ? (
             <div className={styles.importSummary} role="status">
-              <p>{importSummaryText}</p>
               <p className={styles.muted}>Source file: {importSummary.fileName}</p>
+              <div className={styles.importSummaryList}>
+                {importSummary.summary.importedCount > 0 && (
+                  <span className={`${styles.importSummaryItem} ${styles.importSummaryItemSuccess}`}>
+                    {importSummary.summary.importedCount} new
+                  </span>
+                )}
+                {importSummary.summary.mergedCount > 0 && (
+                  <span className={`${styles.importSummaryItem} ${styles.importSummaryItemWarning}`}>
+                    {importSummary.summary.mergedCount} merged
+                  </span>
+                )}
+                {importSummary.summary.failedCount > 0 && (
+                  <span className={`${styles.importSummaryItem} ${styles.importSummaryItemError}`}>
+                    {importSummary.summary.failedCount} failed
+                  </span>
+                )}
+              </div>
+              {(importSummary.summary.processedCount === 0 || importSummary.summary.importedCount > 0 || importSummary.summary.mergedCount > 0) && (
+                <button
+                  type="button"
+                  className={styles.doneButton}
+                  onClick={handleDoneImport}
+                >
+                  Done
+                </button>
+              )}
               {importSummary.failedRows.length > 0 ||
               importSummary.warningRows.length > 0 ? (
                 <button
@@ -1108,6 +1297,49 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
               ) : null}
             </div>
           ) : null}
+        </section>
+
+        <section className={styles.panel}>
+          <h2>Export your feeds</h2>
+          <p className={styles.feedsSectionDescription}>
+            Download a backup of your subscriptions.
+          </p>
+          <div className={styles.feedsExportSection}>
+            <div className={styles.exportFormatSelector} role="radiogroup" aria-label="Export format">
+              {EXPORT_FORMAT_OPTIONS.map((option) => (
+                <label
+                  key={option.format}
+                  className={`${styles.exportFormatOption} ${
+                    selectedExportFormat === option.format ? styles.exportFormatOptionSelected : ""
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="export-format"
+                    value={option.format}
+                    checked={selectedExportFormat === option.format}
+                    onChange={() => setSelectedExportFormat(option.format)}
+                  />
+                  <span className={styles.exportFormatLabel}>{option.label}</span>
+                  <span className={styles.exportFormatSublabel}>{option.sublabel}</span>
+                </label>
+              ))}
+            </div>
+            <div className={styles.inlineActions}>
+              <button
+                type="button"
+                className={styles.linkButton}
+                onClick={() => { void handleExport(selectedExportFormat); }}
+                disabled={isExporting}
+              >
+                <span className={styles.iconButtonContent}>
+                  {downloadIcon}
+                  <span>{isExporting ? "Exporting..." : `Export ${selectedExportFormat.toUpperCase()}`}</span>
+                </span>
+              </button>
+            </div>
+          </div>
+          {exportError ? <p className={styles.inlineMessage}>{exportError}</p> : null}
         </section>
 
         <section className={styles.panel}>

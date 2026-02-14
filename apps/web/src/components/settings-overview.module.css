@@ -400,6 +400,164 @@ button.linkButton:hover:enabled {
   justify-self: start;
 }
 
+.feedsSectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.feedsImportSection {
+  display: grid;
+  gap: 12px;
+}
+
+.feedsExportSection {
+  display: grid;
+  gap: 8px;
+}
+
+.feedsSectionDescription {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+.exportFormatSelector {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.exportFormatOption {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  display: grid;
+  gap: 2px;
+  padding: 10px 14px;
+  text-align: left;
+  transition: border-color 80ms ease, background-color 80ms ease;
+}
+
+.exportFormatOption:hover {
+  background: var(--bg-tertiary);
+}
+
+.exportFormatOptionSelected {
+  border-color: var(--accent);
+}
+
+.exportFormatOptionSelected .exportFormatLabel {
+  color: var(--accent);
+}
+
+.exportFormatOption input {
+  display: none;
+}
+
+.exportFormatLabel {
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.exportFormatSublabel {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.dropZone {
+  border: 2px dashed var(--border);
+  border-radius: 6px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 80ms ease, background-color 80ms ease;
+}
+
+.dropZone:hover {
+  border-color: var(--text-muted);
+  background: var(--bg-secondary);
+}
+
+.dropZoneDragOver {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.dropZoneText {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.dropZoneTextAccent {
+  color: var(--accent);
+  font-weight: var(--weight-semibold);
+}
+
+.progressBarContainer {
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  height: 8px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.progressBar {
+  background: var(--accent);
+  height: 100%;
+  transition: width 200ms ease;
+}
+
+.importSummaryList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.importSummaryItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-sm);
+}
+
+.importSummaryItemSuccess {
+  color: var(--accent);
+}
+
+.importSummaryItemWarning {
+  color: var(--text-secondary);
+}
+
+.importSummaryItemError {
+  color: var(--text-error);
+}
+
+.doneButton {
+  background: var(--accent);
+  border: 0;
+  border-radius: 4px;
+  color: var(--bg-primary);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  min-height: 32px;
+  padding: 6px 14px;
+}
+
+.doneButton:hover {
+  opacity: 0.9;
+}
+
+.doneButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .shortcutsControls {
   background: var(--bg-primary);
   display: grid;
@@ -630,5 +788,19 @@ button.linkButton:hover:enabled {
   .shortcutsPanelRow {
     gap: 8px;
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .feedsImportSection {
+    display: grid;
+    gap: 16px;
+  }
+
+  .feedsExportSection {
+    display: grid;
+    gap: 12px;
+  }
+
+  .exportFormatSelector {
+    flex-direction: column;
   }
 }
