@@ -178,6 +178,7 @@
 .panel {
   background: var(--lp-surface-0);
   border: 1px solid var(--lp-border);
+  border-radius: var(--radius-control);
 }
 
 .input {
@@ -248,6 +249,7 @@
 .menu {
   background: var(--lp-surface-1);
   border: 1px solid var(--lp-border);
+  border-radius: var(--radius-control);
   display: grid;
   min-width: 148px;
   padding: 2px;
@@ -260,6 +262,7 @@
 .menuItem {
   background: transparent;
   border: 0;
+  border-radius: calc(var(--radius-control) - 2px);
   color: var(--lp-text-main);
   cursor: pointer;
   font-size: var(--text-sm);
@@ -288,6 +291,7 @@
 .popover {
   background: var(--lp-surface-1);
   border: 1px solid var(--lp-border);
+  border-radius: var(--radius-control);
   min-width: 204px;
   padding: 8px;
 }
@@ -314,6 +318,8 @@
   border-bottom: 0;
   border-left: 0;
   border-right: 0;
+  border-top-left-radius: var(--radius-control);
+  border-top-right-radius: var(--radius-control);
   bottom: 0;
   left: 0;
   max-height: min(70vh, 420px);
@@ -339,6 +345,7 @@
 .dialog {
   background: var(--lp-surface-1);
   border: 1px solid var(--lp-border);
+  border-radius: var(--radius-control);
   display: grid;
   gap: 8px;
   max-width: min(92vw, 360px);

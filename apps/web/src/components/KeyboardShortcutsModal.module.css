@@ -12,6 +12,7 @@
 .dialog {
   background: var(--bg-primary);
   border: 1px solid var(--border);
+  border-radius: var(--radius-control);
   display: grid;
   gap: 12px;
   max-height: min(88vh, 640px);
@@ -69,6 +70,7 @@
 
 .groups {
   border: 1px solid var(--border);
+  border-radius: var(--radius-control);
   display: grid;
   gap: 12px;
   padding: 12px;
@@ -106,6 +108,7 @@
 .key {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
+  border-radius: calc(var(--radius-control) - 2px);
   color: var(--text-primary);
   font-family: var(--font-mono);
   font-size: var(--text-xs);

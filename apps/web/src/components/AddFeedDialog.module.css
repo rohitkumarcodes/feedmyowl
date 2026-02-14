@@ -11,6 +11,8 @@
 
 .dialog {
   background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
   display: grid;
   gap: 12px;
   max-height: min(88vh, 760px);
