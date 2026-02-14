@@ -344,7 +344,7 @@ function FolderRow({
 
       <button
         type="button"
-        className={`${primitiveStyles.row} ${primitiveStyles.rowStrong} ${styles.folderRow} ${
+        className={`${primitiveStyles.row} ${primitiveStyles.rowRegular} ${styles.folderRow} ${
           isActive ? primitiveStyles.rowActive : ""
         }`}
         onClick={onSelectFolder}
@@ -1256,7 +1256,7 @@ export function Sidebar({
           <div className={styles.folderToggleSpacer} aria-hidden="true" />
           <button
             type="button"
-            className={`${primitiveStyles.row} ${primitiveStyles.rowStrong} ${styles.folderRow} ${
+            className={`${primitiveStyles.row} ${primitiveStyles.rowRegular} ${styles.folderRow} ${
               selectedScope.type === "all" ? primitiveStyles.rowActive : ""
             }`}
             onClick={onSelectAll}
@@ -1296,7 +1296,7 @@ export function Sidebar({
                 </button>
                 <button
                   type="button"
-                  className={`${primitiveStyles.row} ${primitiveStyles.rowStrong} ${styles.folderRow} ${
+                  className={`${primitiveStyles.row} ${primitiveStyles.rowRegular} ${styles.folderRow} ${
                     selectedScope.type === "uncategorized" ? primitiveStyles.rowActive : ""
                   }`}
                   onClick={onSelectUncategorized}
@@ -1426,10 +1426,10 @@ export function Sidebar({
         ) : null}
       </div>
 
-      <div className={styles.collapseBar}>
+      <div className={styles.sidebarCollapseToggle}>
         <button
           type="button"
-          className={`${primitiveStyles.iconButton} ${styles.paneToggleButton}`}
+          className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.paneToggleButton}`}
           onClick={onCollapse}
           aria-label="Collapse sidebar"
           title="Collapse sidebar"

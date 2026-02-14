@@ -20,7 +20,7 @@
 }
 
 .sidebarPane {
-  background: var(--bg-secondary);
+  background: var(--bg-primary);
   border-right: 1px solid var(--border);
   overflow: hidden;
 }
@@ -29,9 +29,10 @@
   background: var(--bg-primary);
   border-right: 1px solid var(--border);
   display: grid;
-  grid-template-rows: 1fr auto;
+  grid-template-rows: 1fr;
   min-width: 0;
   overflow: hidden;
+  position: relative;
 }
 
 .listPaneContent {
@@ -70,13 +71,14 @@
   grid-template-columns: 0px 0px minmax(0, 1fr);
 }
 
-/* --- Collapse bars (bottom of each panel) --- */
+/* --- Floating collapse toggle (expanded list pane) --- */
 
-.collapseBar {
-  border-top: 1px solid var(--lp-border);
-  display: flex;
-  justify-content: center;
-  padding: 8px;
+.listCollapseToggle {
+  bottom: 8px;
+  left: 50%;
+  position: absolute;
+  transform: translateX(-50%);
+  z-index: 39;
 }
 
 /* --- Expand tabs (appear when panel is collapsed) --- */
