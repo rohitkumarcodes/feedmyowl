@@ -102,13 +102,6 @@
   border-top: 1px solid var(--lp-border);
   margin-top: 0;
   overflow: auto;
-  scrollbar-gutter: stable;
-}
-
-@supports not (scrollbar-gutter: stable) {
-  .sections {
-    overflow-y: scroll;
-  }
 }
 
 .emptyLabel {

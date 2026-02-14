@@ -2,13 +2,6 @@
   background: var(--bg-primary);
   height: 100%;
   overflow: auto;
-  scrollbar-gutter: stable;
-}
-
-@supports not (scrollbar-gutter: stable) {
-  .root {
-    overflow-y: scroll;
-  }
 }
 
 .searchBar {
