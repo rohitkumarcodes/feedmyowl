@@ -332,7 +332,7 @@
 .folderToggleContent {
   align-items: center;
   display: inline-flex;
-  gap: 2px;
+  gap: 10px;
 }
 
 .folderToggleChevron {
