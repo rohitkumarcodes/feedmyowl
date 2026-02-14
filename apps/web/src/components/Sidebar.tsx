@@ -1259,16 +1259,18 @@ export function Sidebar({
             selectedScope.type === "all" ? styles.folderRowWrapActive : ""
           }`}
         >
-          <div className={styles.folderToggleSpacer} aria-hidden="true" />
           <button
             type="button"
             className={`${primitiveStyles.row} ${primitiveStyles.rowRegular} ${styles.folderRow} ${
-              selectedScope.type === "all" ? primitiveStyles.rowActive : ""
-            }`}
+              styles.allFeedsRow
+            } ${selectedScope.type === "all" ? primitiveStyles.rowActive : ""}`}
             onClick={onSelectAll}
             aria-current={selectedScope.type === "all" ? "true" : undefined}
           >
             <span className={styles.folderNameWrap}>
+              <span className={styles.allFeedsLabelShim} aria-hidden="true">
+                <span className={styles.folderToggleChevronPlaceholder}>▸</span>
+              </span>
               <span className={styles.folderLabel}>All feeds</span>
             </span>
             <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
