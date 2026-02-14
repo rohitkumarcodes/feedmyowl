@@ -1,5 +1,7 @@
 .root {
   background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
   height: 100%;
   overflow: auto;
 }
@@ -97,8 +99,9 @@
 .emptyWrap {
   align-items: center;
   display: flex;
-  height: 100%;
+  flex: 1;
   justify-content: center;
+  min-height: 0;
   padding: 24px;
 }
 
