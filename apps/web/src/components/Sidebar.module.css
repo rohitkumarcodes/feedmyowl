@@ -275,8 +275,8 @@
 .folderRowIcon {
   color: var(--lp-text-main);
   flex: 0 0 auto;
-  height: 13px;
-  width: 13px;
+  height: 16px;
+  width: 16px;
 }
 
 .folderIconSpacer {
@@ -325,18 +325,18 @@
 .folderToggle {
   justify-content: flex-end;
   min-width: var(--sidebar-tree-toggle-col);
-  padding: 0 2px;
+  padding: 0 10px 0 2px;
   width: var(--sidebar-tree-toggle-col);
 }
 
 .folderToggleContent {
   align-items: center;
   display: inline-flex;
-  gap: 10px;
+  gap: 6px;
 }
 
 .folderToggleChevron {
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1;
 }
 

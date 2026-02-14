@@ -1,7 +1,6 @@
 .row {
   background: transparent;
   border: 0;
-  border-bottom: 1px solid var(--border);
   border-left: 2px solid transparent;
   color: inherit;
   cursor: pointer;
