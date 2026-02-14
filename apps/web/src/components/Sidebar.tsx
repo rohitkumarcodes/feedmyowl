@@ -1061,7 +1061,7 @@ export function Sidebar({
         <div className={styles.toolbar}>
           <button
             type="button"
-            className={`${primitiveStyles.toolbarButton} ${primitiveStyles.toolbarButtonPrimary}`}
+            className={`${primitiveStyles.toolbarButton} ${primitiveStyles.toolbarButtonPrimary} ${styles.toolbarRefresh}`}
             onClick={onRefresh}
             disabled={isRefreshingFeeds}
             aria-label={isRefreshingFeeds ? "Refreshing feeds" : "Refresh feeds"}

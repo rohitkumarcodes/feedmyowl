@@ -16,15 +16,20 @@
 
 .toolbar {
   align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 8px 8px;
+  display: grid;
+  grid-template-columns: minmax(8px, 1fr) auto minmax(8px, 1fr) auto minmax(8px, 1fr);
+  padding: 8px 0;
+}
+
+.toolbarRefresh {
+  grid-column: 2;
+  justify-self: start;
 }
 
 .toolbarAction {
-  margin-left: auto;
+  grid-column: 4;
   position: relative;
+  justify-self: start;
 }
 
 .toolbarIcon {
@@ -330,18 +335,6 @@
   min-width: var(--sidebar-tree-actions-col);
   position: relative;
   width: var(--sidebar-tree-actions-col);
-}
-
-.folderActionsButton {
-  border-color: transparent;
-  min-height: 100%;
-  min-width: 100%;
-  padding: 0;
-}
-
-.folderActionsButton:hover:enabled {
-  background: transparent;
-  border-color: transparent;
 }
 
 .folderActionsSpacer {

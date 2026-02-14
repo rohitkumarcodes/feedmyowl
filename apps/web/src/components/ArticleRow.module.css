@@ -39,10 +39,6 @@
   font-weight: var(--weight-normal);
 }
 
-.dot {
-  margin-right: 6px;
-}
-
 .meta {
   color: var(--text-muted);
   font-size: var(--text-sm);

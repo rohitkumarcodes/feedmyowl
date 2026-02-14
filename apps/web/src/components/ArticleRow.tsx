@@ -107,7 +107,6 @@ export function ArticleRow({
       aria-current={isOpen ? "true" : undefined}
     >
       <p className={`${styles.title} ${isRead ? styles.titleRead : ""}`}>
-        <span className={styles.dot}>●</span>
         {renderHighlightedText(article.title, highlights?.title)}
       </p>
       {showFeedTitle ? (
