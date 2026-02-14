@@ -327,6 +327,11 @@ function FolderRow({
     }
   };
 
+  const handleFolderRowClick = () => {
+    onSelectFolder();
+    onToggleExpand();
+  };
+
   return (
     <div className={`${styles.folderRowWrap} ${isActive ? styles.folderRowWrapActive : ""}`}>
       <button
@@ -347,8 +352,9 @@ function FolderRow({
         className={`${primitiveStyles.row} ${primitiveStyles.rowRegular} ${styles.folderRow} ${
           isActive ? primitiveStyles.rowActive : ""
         }`}
-        onClick={onSelectFolder}
+        onClick={handleFolderRowClick}
         aria-current={isActive ? "true" : undefined}
+        aria-expanded={isExpanded}
       >
         <span className={styles.folderNameWrap}>
           <span className={styles.folderLabel}>{folder.name}</span>
@@ -1275,44 +1281,48 @@ export function Sidebar({
         {/* Uncategorized feeds — directly after All feeds, only when present */}
         {uncategorizedFeeds.length > 0 ? (
           <div className={styles.folderGroup}>
-            <div
-              className={`${styles.folderRowWrap} ${
-                selectedScope.type === "uncategorized" ? styles.folderRowWrapActive : ""
-              }`}
-            >
-              <button
-                type="button"
-                  className={`${primitiveStyles.treeToggle} ${styles.folderToggle}`}
-                  onClick={() => setIsUncategorizedExpanded((previous) => !previous)}
-                  aria-label={`${isUncategorizedExpanded ? "Collapse" : "Expand"} Uncategorized`}
-                  aria-expanded={isUncategorizedExpanded}
-                >
-                  <span className={styles.folderToggleContent} aria-hidden="true">
-                    <span className={styles.folderToggleChevron}>
-                      {isUncategorizedExpanded ? "▾" : "▸"}
-                    </span>
-                    <FolderRowIcon />
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className={`${primitiveStyles.row} ${primitiveStyles.rowRegular} ${styles.folderRow} ${
-                    selectedScope.type === "uncategorized" ? primitiveStyles.rowActive : ""
-                  }`}
-                  onClick={onSelectUncategorized}
-                  aria-current={selectedScope.type === "uncategorized" ? "true" : undefined}
-                >
-                  <span className={styles.folderNameWrap}>
-                    <span className={styles.folderLabel}>Uncategorized</span>
-                  </span>
-                  <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
-                    {uncategorizedFeeds.length}
-                </span>
-              </button>
-              <div className={styles.folderActions} ref={uncategorizedActionsRef}>
-                <button
-                  type="button"
-                  className={`${primitiveStyles.iconButton} ${styles.folderActionsButton}`}
+	            <div
+	              className={`${styles.folderRowWrap} ${
+	                selectedScope.type === "uncategorized" ? styles.folderRowWrapActive : ""
+	              }`}
+	            >
+	              <button
+	                type="button"
+	                className={`${primitiveStyles.treeToggle} ${styles.folderToggle}`}
+	                onClick={() => setIsUncategorizedExpanded((previous) => !previous)}
+	                aria-label={`${isUncategorizedExpanded ? "Collapse" : "Expand"} Uncategorized`}
+	                aria-expanded={isUncategorizedExpanded}
+	              >
+	                <span className={styles.folderToggleContent} aria-hidden="true">
+	                  <span className={styles.folderToggleChevron}>
+	                    {isUncategorizedExpanded ? "▾" : "▸"}
+	                  </span>
+	                  <FolderRowIcon />
+	                </span>
+	              </button>
+	              <button
+	                type="button"
+	                className={`${primitiveStyles.row} ${primitiveStyles.rowRegular} ${styles.folderRow} ${
+	                  selectedScope.type === "uncategorized" ? primitiveStyles.rowActive : ""
+	                }`}
+	                onClick={() => {
+	                  onSelectUncategorized();
+	                  setIsUncategorizedExpanded((previous) => !previous);
+	                }}
+	                aria-current={selectedScope.type === "uncategorized" ? "true" : undefined}
+	                aria-expanded={isUncategorizedExpanded}
+	              >
+	                <span className={styles.folderNameWrap}>
+	                  <span className={styles.folderLabel}>Uncategorized</span>
+	                </span>
+	                <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
+	                  {uncategorizedFeeds.length}
+	                </span>
+	              </button>
+	              <div className={styles.folderActions} ref={uncategorizedActionsRef}>
+	                <button
+	                  type="button"
+	                  className={`${primitiveStyles.iconButton} ${styles.folderActionsButton}`}
                   onClick={() => setIsUncategorizedMenuOpen((previous) => !previous)}
                   aria-label="Open actions for Uncategorized"
                   aria-expanded={isUncategorizedMenuOpen}

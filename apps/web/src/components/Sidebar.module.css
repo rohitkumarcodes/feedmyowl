@@ -251,7 +251,7 @@
   align-items: center;
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--sidebar-tree-count-col);
-  padding: var(--lp-pad-y) 8px var(--lp-pad-y) 0;
+  padding: var(--lp-pad-y) 8px var(--lp-pad-y) 4px;
 }
 
 .folderRow:hover {
@@ -325,14 +325,14 @@
 .folderToggle {
   justify-content: flex-start;
   min-width: var(--sidebar-tree-toggle-col);
-  padding: 0 6px 0 4px;
+  padding: 0 4px 0 8px;
   width: var(--sidebar-tree-toggle-col);
 }
 
 .folderToggleContent {
   align-items: center;
   display: inline-flex;
-  gap: 6px;
+  gap: 4px;
 }
 
 .folderToggleChevron {

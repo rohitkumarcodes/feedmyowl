@@ -54,7 +54,7 @@
   color: var(--text-primary);
   display: inline-flex;
   flex-direction: column;
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-normal);
   gap: 8px;
   justify-content: center;
   max-width: calc(100% - 32px);
@@ -74,7 +74,7 @@
 .brandOwl {
   font-family: var(--font-mono);
   font-size: 1.4rem;
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-normal);
   letter-spacing: 0.01em;
   line-height: 1;
   white-space: nowrap;
