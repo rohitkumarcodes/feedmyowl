@@ -29,6 +29,7 @@ import {
 } from "@/lib/folder-service";
 import { normalizeFeedUrl } from "@/lib/feed-url";
 import { NO_FEED_FOUND_MESSAGE } from "@/lib/feed-messages";
+import { resolveYouTubeChannelFeedUrl } from "@/lib/youtube-channel-feed";
 
 const IMPORT_WORKER_CONCURRENCY = 4;
 const CUSTOM_TITLE_MAX_LENGTH = 255;
@@ -324,10 +325,20 @@ async function resolveImportCandidate(params: {
     };
   }
 
-  const directExistingFeed = await findExistingFeedForUserByUrl(
+  const preferredUrl =
+    (await resolveYouTubeChannelFeedUrl(params.normalizedInputUrl)) ??
+    params.normalizedInputUrl;
+
+  let directExistingFeed = await findExistingFeedForUserByUrl(
     params.userId,
-    params.normalizedInputUrl
+    preferredUrl
   );
+  if (!directExistingFeed && preferredUrl !== params.normalizedInputUrl) {
+    directExistingFeed = await findExistingFeedForUserByUrl(
+      params.userId,
+      params.normalizedInputUrl
+    );
+  }
   let directFailureAfterFallback: {
     code: FeedImportRowResult["code"];
     message: string;
@@ -337,7 +348,7 @@ async function resolveImportCandidate(params: {
     return {
       status: "candidate",
       candidate: {
-        url: params.normalizedInputUrl,
+        url: preferredUrl,
         parsedFeed: {
           title: undefined,
           description: undefined,
@@ -352,7 +363,7 @@ async function resolveImportCandidate(params: {
 
   try {
     const parsedDirectFeed = await parseFeedWithMetadata(
-      params.normalizedInputUrl,
+      preferredUrl,
       IMPORT_PARSER_FETCH_OPTIONS
     );
     const resolvedExistingFeed = await findExistingFeedForUserByUrl(

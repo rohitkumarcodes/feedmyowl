@@ -22,6 +22,7 @@ import {
 } from "@/lib/feed-parser";
 import { normalizeFeedUrl } from "@/lib/feed-url";
 import { applyRouteRateLimit } from "@/lib/rate-limit";
+import { resolveYouTubeChannelFeedUrl } from "@/lib/youtube-channel-feed";
 import {
   createFeedWithInitialItems,
   findExistingFeedForUserByUrl,
@@ -258,22 +259,26 @@ export async function postFeedsRoute(request: NextRequest) {
       );
     }
 
+    const preferredUrl = (await resolveYouTubeChannelFeedUrl(nextUrl)) ?? nextUrl;
+
     if (action === "feed.discover") {
       const validatedCandidates: ValidatedDiscoverCandidate[] = [];
       const seenCandidateUrls = new Set<string>();
       let directErrorAfterFallback: ApiError | null = null;
+      let directParseSucceeded = false;
 
       try {
-        const parsedDirectFeed = await parseFeed(nextUrl);
+        const parsedDirectFeed = await parseFeed(preferredUrl);
         const directCandidate = await buildValidatedCandidateForUser({
           userId: appUser.id,
-          candidateUrl: nextUrl,
+          candidateUrl: preferredUrl,
           method: "direct",
           parsedFeed: parsedDirectFeed,
         });
 
         validatedCandidates.push(directCandidate);
         seenCandidateUrls.add(directCandidate.url);
+        directParseSucceeded = true;
       } catch (error) {
         const normalizedError = normalizeFeedError(error, "create");
 
@@ -285,25 +290,27 @@ export async function postFeedsRoute(request: NextRequest) {
         }
       }
 
-      const discovery = await discoverFeedCandidates(nextUrl);
-      for (const candidateUrl of discovery.candidates) {
-        if (seenCandidateUrls.has(candidateUrl)) {
-          continue;
+      if (!directParseSucceeded || preferredUrl === nextUrl) {
+        const discovery = await discoverFeedCandidates(nextUrl);
+        for (const candidateUrl of discovery.candidates) {
+          if (seenCandidateUrls.has(candidateUrl)) {
+            continue;
+          }
+
+          const method = discovery.methodHints[candidateUrl] ?? "heuristic_path";
+          const validatedCandidate = await validateCandidateXmlForUser({
+            userId: appUser.id,
+            candidateUrl,
+            method,
+          });
+
+          if (!validatedCandidate) {
+            continue;
+          }
+
+          seenCandidateUrls.add(validatedCandidate.url);
+          validatedCandidates.push(validatedCandidate);
         }
-
-        const method = discovery.methodHints[candidateUrl] ?? "heuristic_path";
-        const validatedCandidate = await validateCandidateXmlForUser({
-          userId: appUser.id,
-          candidateUrl,
-          method,
-        });
-
-        if (!validatedCandidate) {
-          continue;
-        }
-
-        seenCandidateUrls.add(validatedCandidate.url);
-        validatedCandidates.push(validatedCandidate);
       }
 
       if (validatedCandidates.length === 0) {
@@ -372,7 +379,10 @@ export async function postFeedsRoute(request: NextRequest) {
       }
     }
 
-    const existingFeed = await findExistingFeedForUserByUrl(appUser.id, nextUrl);
+    let existingFeed = await findExistingFeedForUserByUrl(appUser.id, preferredUrl);
+    if (!existingFeed && preferredUrl !== nextUrl) {
+      existingFeed = await findExistingFeedForUserByUrl(appUser.id, nextUrl);
+    }
 
     if (existingFeed) {
       return NextResponse.json(
@@ -391,11 +401,12 @@ export async function postFeedsRoute(request: NextRequest) {
     let discoveredFromSiteUrl = false;
 
     try {
-      const parsedDirect = await parseFeedWithMetadata(nextUrl);
+      const parsedDirect = await parseFeedWithMetadata(preferredUrl);
       parsedFeed = parsedDirect.parsedFeed;
       resolvedEtag = parsedDirect.etag;
       resolvedLastModified = parsedDirect.lastModified;
       resolvedUrl = parsedDirect.resolvedUrl;
+      discoveredFromSiteUrl = preferredUrl !== nextUrl;
     } catch (error) {
       const normalizedError = normalizeFeedError(error, "create");
 
