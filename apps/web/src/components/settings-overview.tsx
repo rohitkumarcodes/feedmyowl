@@ -359,6 +359,62 @@ const downloadIcon = (
   </svg>
 );
 
+const successIcon = (
+  <svg
+    className={styles.inlineMessageIcon}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M20 6L9 17l-5-5"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const alertIcon = (
+  <svg
+    className={styles.inlineMessageIcon}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+    <path
+      d="M12 7v6"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+    <circle cx="12" cy="17" r="1" fill="currentColor" />
+  </svg>
+);
+
+const infoIcon = (
+  <svg
+    className={styles.inlineMessageIcon}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+    <path
+      d="M12 11v5"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+    <circle cx="12" cy="8" r="1" fill="currentColor" />
+  </svg>
+);
+
 /**
  * Renders minimal account settings for the reading MVP.
  */
@@ -389,6 +445,7 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
   const [, setIsLoadingPreview] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [exportMessage, setExportMessage] = useState<string | null>(null);
   const [draftOwlAscii, setDraftOwlAscii] = useState<OwlAscii>(owlAscii);
   const [savedOwlAscii, setSavedOwlAscii] = useState<OwlAscii>(owlAscii);
   const [isSavingOwl, setIsSavingOwl] = useState(false);
@@ -433,6 +490,48 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
       applyThemeModeToDocument("system");
     });
   }, [draftThemeMode]);
+
+  useEffect(() => {
+    if (!themeSaveMessage) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setThemeSaveMessage(null);
+    }, 3_500);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [themeSaveMessage]);
+
+  useEffect(() => {
+    if (!owlSaveMessage) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setOwlSaveMessage(null);
+    }, 3_500);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [owlSaveMessage]);
+
+  useEffect(() => {
+    if (!exportMessage) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setExportMessage(null);
+    }, 3_500);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [exportMessage]);
 
   // Live countdown for rate-limit retry delay.
   useEffect(() => {
@@ -621,6 +720,7 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
   async function handleExport(format: "opml" | "json") {
     if (isExporting) return;
     setExportError(null);
+    setExportMessage(null);
     setIsExporting(true);
 
     try {
@@ -643,6 +743,7 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
       link.click();
       link.remove();
       URL.revokeObjectURL(downloadUrl);
+      setExportMessage("Download started.");
     } catch {
       setExportError("Could not connect to the server.");
     } finally {
@@ -925,7 +1026,7 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
       const file = files[0];
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(file);
-      
+
       const input = importFileInputRef.current;
       if (input) {
         input.files = dataTransfer.files;
@@ -998,6 +1099,85 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
       : "Importing..."
     : "Import from file";
 
+  const currentThemeLabel =
+    THEME_MODE_OPTIONS.find((option) => option.mode === draftThemeMode)?.label ??
+    draftThemeMode;
+
+  const hasUnsavedOwlSelection = draftOwlAscii !== savedOwlAscii;
+
+  const previewImportableCount = importPreview
+    ? Math.max(0, importPreview.totalCount - importPreview.errorCount)
+    : 0;
+
+  const previewMergeCandidateCount = importPreview
+    ? importPreview.entries.reduce((count, entry) => {
+        if (entry.status !== "duplicate") {
+          return count;
+        }
+
+        const desiredFolders = entry.folderNames.map((name) => name.trim()).filter(Boolean);
+        const existingFolders = (entry.existingFolderNames ?? [])
+          .map((name) => name.trim())
+          .filter(Boolean);
+
+        if (desiredFolders.length === 0 || existingFolders.length === 0) {
+          return count;
+        }
+
+        const existingSet = new Set(existingFolders);
+        const wouldMerge = desiredFolders.some((name) => !existingSet.has(name));
+        return wouldMerge ? count + 1 : count;
+      }, 0)
+    : 0;
+
+  const importPreviewIntentText = (() => {
+    if (!importPreview) {
+      return null;
+    }
+
+    const parts: string[] = [];
+
+    if (importPreview.newCount > 0) {
+      parts.push(
+        `add ${importPreview.newCount} new feed${importPreview.newCount === 1 ? "" : "s"}`
+      );
+    }
+
+    if (previewMergeCandidateCount > 0) {
+      parts.push(
+        `merge folder assignments for up to ${previewMergeCandidateCount} existing feed${
+          previewMergeCandidateCount === 1 ? "" : "s"
+        }`
+      );
+    } else if (importPreview.duplicateCount > 0) {
+      parts.push(
+        `check ${importPreview.duplicateCount} existing feed${
+          importPreview.duplicateCount === 1 ? "" : "s"
+        } for folder updates`
+      );
+    }
+
+    if (importPreview.errorCount > 0) {
+      parts.push(
+        `skip ${importPreview.errorCount} error${importPreview.errorCount === 1 ? "" : "s"}`
+      );
+    }
+
+    if (parts.length === 0) {
+      return null;
+    }
+
+    if (parts.length === 1) {
+      return `This will ${parts[0]}.`;
+    }
+
+    if (parts.length === 2) {
+      return `This will ${parts[0]} and ${parts[1]}.`;
+    }
+
+    return `This will ${parts.slice(0, -1).join(", ")}, and ${parts[parts.length - 1]}.`;
+  })();
+
   return (
     <div className={styles.root}>
       <header className={styles.header}>
@@ -1013,9 +1193,33 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
         <p className={styles.muted}>Signed in as {email}</p>
       </header>
 
+      <nav className={styles.pageNav} aria-label="Settings sections">
+        <a className={styles.pageNavLink} href="#appearance">
+          Appearance
+        </a>
+        <a className={styles.pageNavLink} href="#feeds-import">
+          Import
+        </a>
+        <a className={styles.pageNavLink} href="#feeds-export">
+          Export
+        </a>
+        <a className={styles.pageNavLink} href="#shortcuts">
+          Shortcuts
+        </a>
+        <a className={styles.pageNavLink} href="#owl">
+          Owl
+        </a>
+        <a className={styles.pageNavLink} href="#account">
+          Account
+        </a>
+      </nav>
+
       <div className={styles.settingsOptions}>
-        <section className={styles.panel}>
-          <h2>Appearance</h2>
+        <section id="appearance" className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <h2>Appearance</h2>
+            <p className={styles.panelDescription}>Theme and reading comfort.</p>
+          </div>
           <div ref={themeWidthProbeRef} className={styles.owlWidthProbe} aria-hidden="true">
             <button type="button" className={styles.owlToggle} tabIndex={-1}>
               <span className={styles.owlToggleCaret}>▸</span>
@@ -1049,10 +1253,11 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
               onClick={() => {
                 setIsThemePanelExpanded((previous) => !previous);
               }}
-            >
-              <span className={styles.owlToggleCaret}>{isThemePanelExpanded ? "▾" : "▸"}</span>
-              <span>Choose your reading mode.</span>
-            </button>
+	            >
+	              <span className={styles.owlToggleCaret}>{isThemePanelExpanded ? "▾" : "▸"}</span>
+	              <span>Reading mode</span>
+	              <span className={styles.toggleValue}>{currentThemeLabel}</span>
+	            </button>
             <OwlOptionsShutter
               expanded={isThemePanelExpanded}
               prefersReducedMotion={prefersReducedMotion}
@@ -1091,28 +1296,39 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
                   );
                 })}
               </div>
-              {isSavingTheme ? (
-                <p className={styles.inlineMessage} role="status">
-                  Saving theme...
-                </p>
-              ) : null}
-              {themeSaveMessage ? (
-                <p className={styles.inlineMessage} role="status">
-                  {themeSaveMessage}
-                </p>
-              ) : null}
-              {themeSaveError ? (
-                <p className={styles.inlineMessage}>{themeSaveError}</p>
-              ) : null}
-            </OwlOptionsShutter>
-          </div>
-        </section>
+	              {isSavingTheme ? (
+	                <p className={styles.inlineMessage} role="status">
+	                  {infoIcon}
+	                  <span>Saving theme...</span>
+	                </p>
+	              ) : null}
+	              {themeSaveMessage ? (
+	                <p
+	                  className={`${styles.inlineMessage} ${styles.inlineMessageSuccess}`}
+	                  role="status"
+	                >
+	                  {successIcon}
+	                  <span>{themeSaveMessage}</span>
+	                </p>
+	              ) : null}
+	              {themeSaveError ? (
+	                <p
+	                  className={`${styles.inlineMessage} ${styles.inlineMessageError}`}
+	                  role="alert"
+	                >
+	                  {alertIcon}
+	                  <span>{themeSaveError}</span>
+	                </p>
+	              ) : null}
+	            </OwlOptionsShutter>
+	          </div>
+	        </section>
 
-        <section className={styles.panel}>
-          <h2>Import feeds</h2>
-          <p className={styles.feedsSectionDescription}>
-            Supports OPML, XML, or JSON files.
-          </p>
+        <section id="feeds-import" className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <h2>Import feeds</h2>
+            <p className={styles.panelDescription}>Supports OPML, XML, or JSON files.</p>
+          </div>
           <div className={styles.feedsImportSection}>
             <div
               className={`${styles.dropZone} ${isDraggingFile ? styles.dropZoneDragOver : ""}`}
@@ -1148,17 +1364,38 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
             </div>
           </div>
           {importPreview ? (
-            <div className={styles.importSummary} role="status">
-              <p>
-                Found {importPreview.totalCount} feed
-                {importPreview.totalCount === 1 ? "" : "s"}
-                {importPreview.folderNames.length > 0
-                  ? ` in ${importPreview.folderNames.length} folder${importPreview.folderNames.length === 1 ? "" : "s"}`
-                  : ""}
-                . Detected format: {importPreview.sourceType}.
-              </p>
-              <p className={styles.muted}>Source file: {importPreview.fileName}</p>
-              {importPreview.totalCount > 0 && (
+            <div className={styles.importPreview} role="status" aria-live="polite">
+              <div className={styles.importPreviewHeader}>
+                <p className={styles.importPreviewTitle}>Import preview</p>
+                <p className={styles.importPreviewMeta}>
+                  {importPreview.totalCount} feed{importPreview.totalCount === 1 ? "" : "s"} ·{" "}
+                  {importPreview.folderNames.length} folder
+                  {importPreview.folderNames.length === 1 ? "" : "s"} · {importPreview.sourceType}
+                </p>
+              </div>
+              <p className={styles.importPreviewMeta}>Source file: {importPreview.fileName}</p>
+              <div className={styles.importPreviewCounts} aria-label="Preview counts">
+                <span
+                  className={`${styles.importPreviewCount} ${styles.importPreviewCountNew}`}
+                >
+                  {importPreview.newCount} new
+                </span>
+                <span
+                  className={`${styles.importPreviewCount} ${styles.importPreviewCountDuplicate}`}
+                >
+                  {importPreview.duplicateCount} duplicate
+                  {importPreview.duplicateCount === 1 ? "" : "s"}
+                </span>
+                <span
+                  className={`${styles.importPreviewCount} ${styles.importPreviewCountError}`}
+                >
+                  {importPreview.errorCount} error{importPreview.errorCount === 1 ? "" : "s"}
+                </span>
+              </div>
+              {importPreviewIntentText ? (
+                <p className={styles.panelDescription}>{importPreviewIntentText}</p>
+              ) : null}
+              {importPreview.totalCount > 0 ? (
                 <button
                   type="button"
                   className={styles.linkButton}
@@ -1166,46 +1403,94 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
                 >
                   {showPreviewList ? "Hide" : "Show"} feed list ({importPreview.totalCount})
                 </button>
-              )}
-              {showPreviewList && (
+              ) : null}
+              {showPreviewList ? (
                 <div className={styles.importPreviewList}>
-                  {importPreview.entries.slice(0, 50).map((entry, index) => (
-                    <div key={index} className={styles.importPreviewEntry}>
-                      <div className={styles.importPreviewEntryStatus}>
-                        {entry.status === "new" && <span className={styles.importPreviewEntryNew}>New</span>}
-                        {entry.status === "duplicate" && <span className={styles.importPreviewEntryDuplicate}>Duplicate</span>}
-                        {entry.status === "error" && <span className={styles.importPreviewEntryError}>Error</span>}
-                      </div>
-                      <div className={styles.importPreviewEntryUrl}>{entry.url}</div>
-                      {entry.customTitle && (
-                        <div className={styles.importPreviewEntryTitle}>{entry.customTitle}</div>
-                      )}
-                      {entry.folderNames.length > 0 && (
-                        <div className={styles.importPreviewEntryFolders}>
-                          {entry.folderNames.map((folder) => (
-                            <span key={folder} className={styles.importPreviewFolder}>{folder}</span>
-                          ))}
+                  {importPreview.entries.slice(0, 50).map((entry, index) => {
+                    const existingFolderSet =
+                      entry.status === "duplicate" && entry.existingFolderNames
+                        ? new Set(
+                            entry.existingFolderNames
+                              .map((name) => name.trim())
+                              .filter(Boolean)
+                          )
+                        : null;
+
+                    return (
+                      <div key={index} className={styles.importPreviewEntry}>
+                        <div className={styles.importPreviewEntryStatus}>
+                          {entry.status === "new" ? (
+                            <span className={styles.importPreviewEntryNew}>New</span>
+                          ) : null}
+                          {entry.status === "duplicate" ? (
+                            <span className={styles.importPreviewEntryDuplicate}>Duplicate</span>
+                          ) : null}
+                          {entry.status === "error" ? (
+                            <span className={styles.importPreviewEntryError}>Error</span>
+                          ) : null}
                         </div>
-                      )}
-                    </div>
-                  ))}
-                  {importPreview.entries.length > 50 && (
-                    <p className={styles.muted}>...and {importPreview.entries.length - 50} more feeds</p>
-                  )}
+                        <div className={styles.importPreviewEntryUrl}>{entry.url}</div>
+                        {entry.customTitle ? (
+                          <div className={styles.importPreviewEntryTitle}>{entry.customTitle}</div>
+                        ) : null}
+                        {entry.status === "error" && entry.errorMessage ? (
+                          <div className={styles.importPreviewEntryErrorMsg}>
+                            {entry.errorMessage}
+                          </div>
+                        ) : null}
+                        {entry.folderNames.length > 0 ? (
+                          <div className={styles.importPreviewEntryFolders}>
+                            {entry.folderNames.map((folder) => {
+                              const trimmedFolder = folder.trim();
+                              const isFolderChange =
+                                entry.status === "duplicate" &&
+                                existingFolderSet !== null &&
+                                trimmedFolder !== "" &&
+                                !existingFolderSet.has(trimmedFolder);
+
+                              return (
+                                <span
+                                  key={`${index}-${folder}`}
+                                  className={`${styles.importPreviewFolder} ${
+                                    isFolderChange ? styles.importPreviewFolderChange : ""
+                                  }`}
+                                >
+                                  {folder}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                  {importPreview.entries.length > 50 ? (
+                    <p className={styles.muted}>
+                      ...and {importPreview.entries.length - 50} more feeds
+                    </p>
+                  ) : null}
                 </div>
-              )}
+              ) : null}
               <div className={styles.inlineActions}>
                 <button
                   type="button"
                   className={styles.linkButton}
-                  onClick={() => { void handleConfirmImport(); }}
+                  onClick={() => {
+                    void handleConfirmImport();
+                  }}
+                  disabled={previewImportableCount === 0 || isImportingFeeds}
                 >
-                  Import now
+                  {previewImportableCount > 0
+                    ? `Import ${previewImportableCount} feed${
+                        previewImportableCount === 1 ? "" : "s"
+                      }`
+                    : "Nothing to import"}
                 </button>
                 <button
                   type="button"
                   className={styles.linkButton}
                   onClick={handleCancelImport}
+                  disabled={isImportingFeeds}
                 >
                   Cancel
                 </button>
@@ -1241,7 +1526,12 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
               void handleImportFileChange(event);
             }}
           />
-          {importError ? <p className={styles.inlineMessage}>{importError}</p> : null}
+          {importError ? (
+            <p className={`${styles.inlineMessage} ${styles.inlineMessageError}`} role="alert">
+              {alertIcon}
+              <span>{importError}</span>
+            </p>
+          ) : null}
           {importSummary && importSummaryText ? (
             <div className={styles.importSummary} role="status">
               <p className={styles.muted}>Source file: {importSummary.fileName}</p>
@@ -1299,11 +1589,11 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
           ) : null}
         </section>
 
-        <section className={styles.panel}>
-          <h2>Export your feeds</h2>
-          <p className={styles.feedsSectionDescription}>
-            Download a backup of your subscriptions.
-          </p>
+        <section id="feeds-export" className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <h2>Export your feeds</h2>
+            <p className={styles.panelDescription}>Download a backup of your subscriptions.</p>
+          </div>
           <div className={styles.feedsExportSection}>
             <div className={styles.exportFormatSelector} role="radiogroup" aria-label="Export format">
               {EXPORT_FORMAT_OPTIONS.map((option) => (
@@ -1339,11 +1629,25 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
               </button>
             </div>
           </div>
-          {exportError ? <p className={styles.inlineMessage}>{exportError}</p> : null}
+          {exportMessage ? (
+            <p className={`${styles.inlineMessage} ${styles.inlineMessageSuccess}`} role="status">
+              {successIcon}
+              <span>{exportMessage}</span>
+            </p>
+          ) : null}
+          {exportError ? (
+            <p className={`${styles.inlineMessage} ${styles.inlineMessageError}`} role="alert">
+              {alertIcon}
+              <span>{exportError}</span>
+            </p>
+          ) : null}
         </section>
 
-        <section className={styles.panel}>
-          <h2>Keyboard shortcuts</h2>
+        <section id="shortcuts" className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <h2>Keyboard shortcuts</h2>
+            <p className={styles.panelDescription}>Quick navigation while reading.</p>
+          </div>
           <div
             ref={shortcutsWidthProbeRef}
             className={styles.shortcutsWidthProbe}
@@ -1438,8 +1742,13 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
           </div>
         </section>
 
-        <section className={styles.panel}>
-          <h2>Hoot hoot</h2>
+        <section id="owl" className={styles.panel}>
+          <div className={styles.panelHeader}>
+            <h2>Owl mascot</h2>
+            <p className={styles.panelDescription}>
+              Picks the owl used in your header and favicon.
+            </p>
+          </div>
           <div ref={owlWidthProbeRef} className={styles.owlWidthProbe} aria-hidden="true">
             <button type="button" className={styles.owlToggle} tabIndex={-1}>
               <span className={styles.owlToggleCaret}>▸</span>
@@ -1477,10 +1786,16 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
               onClick={() => {
                 setIsOwlPanelExpanded((previous) => !previous);
               }}
-            >
-              <span className={styles.owlToggleCaret}>{isOwlPanelExpanded ? "▾" : "▸"}</span>
-              <span>Choose an owl to digest your feeds.</span>
-            </button>
+	            >
+	              <span className={styles.owlToggleCaret}>{isOwlPanelExpanded ? "▾" : "▸"}</span>
+	              <span>Owl selection</span>
+	              <span className={styles.toggleValue}>
+	                <span className={styles.toggleValueMono}>{draftOwlAscii}</span>
+	                {hasUnsavedOwlSelection ? (
+	                  <span className={styles.toggleUnsavedBadge}>Not saved</span>
+	                ) : null}
+	              </span>
+	            </button>
             <OwlOptionsShutter
               expanded={isOwlPanelExpanded}
               prefersReducedMotion={prefersReducedMotion}
@@ -1538,21 +1853,35 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
                 </button>
               </div>
               {owlSaveMessage ? (
-                <p className={styles.inlineMessage} role="status">
-                  {owlSaveMessage}
+                <p
+                  className={`${styles.inlineMessage} ${styles.inlineMessageSuccess}`}
+                  role="status"
+                >
+                  {successIcon}
+                  <span>{owlSaveMessage}</span>
                 </p>
               ) : null}
-              {owlSaveError ? <p className={styles.inlineMessage}>{owlSaveError}</p> : null}
+              {owlSaveError ? (
+                <p className={`${styles.inlineMessage} ${styles.inlineMessageError}`} role="alert">
+                  {alertIcon}
+                  <span>{owlSaveError}</span>
+                </p>
+              ) : null}
             </OwlOptionsShutter>
           </div>
         </section>
 
-        <section className={styles.panel}>
-          <h2>Delete account</h2>
+        <section id="account" className={`${styles.panel} ${styles.dangerPanel}`}>
+          <div className={styles.panelHeader}>
+            <h2>Danger zone</h2>
+            <p className={styles.panelDescription}>
+              Permanently delete your account and all data. This cannot be undone.
+            </p>
+          </div>
           {!showDeleteConfirm ? (
             <button
               type="button"
-              className={`${styles.linkButton} ${styles.compactButton} ${styles.deleteAccountButton}`}
+              className={`${styles.linkButton} ${styles.compactButton} ${styles.deleteAccountButton} ${styles.dangerButton}`}
               onClick={() => setShowDeleteConfirm(true)}
             >
               <span className={styles.iconButtonContent}>
@@ -1562,11 +1891,13 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
             </button>
           ) : (
             <div className={styles.deleteConfirm}>
-              <p>This will permanently delete your account and all data. This cannot be undone.</p>
+              <p>
+                This will permanently delete your account and all data. This cannot be undone.
+              </p>
               <div className={styles.inlineActions}>
                 <button
                   type="button"
-                  className={`${styles.linkButton} ${styles.compactButton}`}
+                  className={`${styles.linkButton} ${styles.compactButton} ${styles.dangerPrimaryButton}`}
                   onClick={() => {
                     void handleDeleteAccount();
                   }}
@@ -1589,7 +1920,12 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
                   Cancel
                 </button>
               </div>
-              {deleteError ? <p className={styles.inlineMessage}>{deleteError}</p> : null}
+              {deleteError ? (
+                <p className={`${styles.inlineMessage} ${styles.inlineMessageError}`} role="alert">
+                  {alertIcon}
+                  <span>{deleteError}</span>
+                </p>
+              ) : null}
             </div>
           )}
         </section>
