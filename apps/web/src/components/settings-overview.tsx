@@ -97,22 +97,18 @@ interface ExportFormat {
 const THEME_MODE_OPTIONS: Array<{
   mode: ThemeMode;
   label: string;
-  description: string;
 }> = [
   {
     mode: "system",
-    label: "System",
-    description: "Matches your device appearance setting automatically.",
+    label: "Your system default",
   },
   {
     mode: "light",
     label: "Light",
-    description: "Bright workspace with high daylight contrast.",
   },
   {
     mode: "dark",
     label: "Dark",
-    description: "Dimmer workspace for low-light reading sessions.",
   },
 ];
 
@@ -295,70 +291,6 @@ const keyboardIcon = (
   </svg>
 );
 
-const uploadIcon = (
-  <svg
-    className={styles.buttonIcon}
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    aria-hidden="true"
-  >
-    <path
-      d="M21 15V19C21 20.1 20.1 21 19 21H5C3.9 21 3 20.1 3 19V15"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M17 8L12 3L7 8"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M12 3V15"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-const downloadIcon = (
-  <svg
-    className={styles.buttonIcon}
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    aria-hidden="true"
-  >
-    <path
-      d="M21 15V19C21 20.1 20.1 21 19 21H5C3.9 21 3 20.1 3 19V15"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M7 10L12 15L17 10"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M12 15V3"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
 /**
  * Renders minimal account settings for the reading MVP.
  */
@@ -407,7 +339,6 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
   const [shortcutsControlsWidthPx, setShortcutsControlsWidthPx] = useState<number | null>(
     null
   );
-  const [selectedExportFormat, setSelectedExportFormat] = useState<"opml" | "json">("opml");
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [showPreviewList, setShowPreviewList] = useState(false);
 
@@ -650,7 +581,13 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
     }
   }
 
-  async function handleSaveOwl() {
+  async function handleOwlAsciiChange(nextOwlAscii: OwlAscii) {
+    if (isSavingOwl || nextOwlAscii === savedOwlAscii) {
+      return;
+    }
+
+    const previousOwlAscii = savedOwlAscii;
+    setDraftOwlAscii(nextOwlAscii);
     setOwlSaveError(null);
     setOwlSaveMessage(null);
     setIsSavingOwl(true);
@@ -659,25 +596,27 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
       const response = await fetch("/api/settings/logo", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ owlAscii: draftOwlAscii }),
+        body: JSON.stringify({ owlAscii: nextOwlAscii }),
       });
 
       const body = await parseResponseJson<SaveOwlResponseBody>(response);
 
       if (!response.ok) {
+        setDraftOwlAscii(previousOwlAscii);
         setOwlSaveError(body?.error || "Could not save owl selection.");
         return;
       }
 
       const persistedOwl = body?.owlAscii
         ? coerceOwlAscii(body.owlAscii)
-        : draftOwlAscii;
+        : nextOwlAscii;
 
       setDraftOwlAscii(persistedOwl);
       setSavedOwlAscii(persistedOwl);
       setOwlSaveMessage("Owl updated.");
       router.refresh();
     } catch {
+      setDraftOwlAscii(previousOwlAscii);
       setOwlSaveError("Could not connect to the server.");
     } finally {
       setIsSavingOwl(false);
@@ -992,12 +931,6 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
       }`
     : null;
 
-  const importButtonLabel = isImportingFeeds
-    ? importProgress
-      ? `Importing (${importProgress.processedCount}/${importProgress.totalCount})...`
-      : "Importing..."
-    : "Import from file";
-
   return (
     <div className={styles.root}>
       <header className={styles.header}>
@@ -1025,11 +958,8 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
               {THEME_MODE_OPTIONS.map((option) => (
                 <label key={`probe-theme-${option.mode}`} className={styles.themeModeOption}>
                   <input type="radio" name="theme-mode-probe" tabIndex={-1} />
-                  <span className={styles.themeModeOptionLabel}>{option.label}</span>
-                  <span
-                    className={`${styles.themeModeOptionDescription} ${styles.owlWidthProbeText}`}
-                  >
-                    {option.description}
+                  <span className={`${styles.themeModeOptionLabel} ${styles.owlWidthProbeText}`}>
+                    {option.label}
                   </span>
                 </label>
               ))}
@@ -1084,9 +1014,6 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
                         disabled={isSavingTheme}
                       />
                       <span className={styles.themeModeOptionLabel}>{option.label}</span>
-                      <span className={styles.themeModeOptionDescription}>
-                        {option.description}
-                      </span>
                     </label>
                   );
                 })}
@@ -1131,20 +1058,7 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
               <p className={styles.dropZoneText}>
                 <span className={styles.dropZoneTextAccent}>Click to upload</span> or drag and drop
               </p>
-              <p className={styles.dropZoneText}>OPML, XML, or JSON (max 10 MB)</p>
-            </div>
-            <div className={styles.inlineActions}>
-              <button
-                type="button"
-                className={styles.linkButton}
-                onClick={() => importFileInputRef.current?.click()}
-                disabled={isImportingFeeds || importPreview !== null}
-              >
-                <span className={styles.iconButtonContent}>
-                  {uploadIcon}
-                  <span>{importButtonLabel}</span>
-                </span>
-              </button>
+              <p className={styles.dropZoneText}>(max 10 MB)</p>
             </div>
           </div>
           {importPreview ? (
@@ -1300,43 +1214,26 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
         </section>
 
         <section className={styles.panel}>
-          <h2>Export your feeds</h2>
+          <h2>Export feeds</h2>
           <p className={styles.feedsSectionDescription}>
             Download a backup of your subscriptions.
           </p>
           <div className={styles.feedsExportSection}>
-            <div className={styles.exportFormatSelector} role="radiogroup" aria-label="Export format">
+            <div className={styles.exportFormatSelector} aria-label="Export format">
               {EXPORT_FORMAT_OPTIONS.map((option) => (
-                <label
+                <button
                   key={option.format}
-                  className={`${styles.exportFormatOption} ${
-                    selectedExportFormat === option.format ? styles.exportFormatOptionSelected : ""
-                  }`}
+                  type="button"
+                  className={styles.exportFormatOption}
+                  onClick={() => {
+                    void handleExport(option.format);
+                  }}
+                  disabled={isExporting}
                 >
-                  <input
-                    type="radio"
-                    name="export-format"
-                    value={option.format}
-                    checked={selectedExportFormat === option.format}
-                    onChange={() => setSelectedExportFormat(option.format)}
-                  />
                   <span className={styles.exportFormatLabel}>{option.label}</span>
                   <span className={styles.exportFormatSublabel}>{option.sublabel}</span>
-                </label>
+                </button>
               ))}
-            </div>
-            <div className={styles.inlineActions}>
-              <button
-                type="button"
-                className={styles.linkButton}
-                onClick={() => { void handleExport(selectedExportFormat); }}
-                disabled={isExporting}
-              >
-                <span className={styles.iconButtonContent}>
-                  {downloadIcon}
-                  <span>{isExporting ? "Exporting..." : `Export ${selectedExportFormat.toUpperCase()}`}</span>
-                </span>
-              </button>
             </div>
           </div>
           {exportError ? <p className={styles.inlineMessage}>{exportError}</p> : null}
@@ -1506,10 +1403,9 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
                         name="owl-ascii"
                         value={option.ascii}
                         checked={isSelected}
+                        disabled={isSavingOwl}
                         onChange={() => {
-                          setDraftOwlAscii(option.ascii);
-                          setOwlSaveError(null);
-                          setOwlSaveMessage(null);
+                          void handleOwlAsciiChange(option.ascii);
                         }}
                       />
                       <span className={styles.owlOptionAscii}>{option.ascii}</span>
@@ -1524,18 +1420,6 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
                     </label>
                   );
                 })}
-              </div>
-              <div className={styles.inlineActions}>
-                <button
-                  type="button"
-                  className={`${styles.linkButton} ${styles.compactButton}`}
-                  onClick={() => {
-                    void handleSaveOwl();
-                  }}
-                  disabled={isSavingOwl || draftOwlAscii === savedOwlAscii}
-                >
-                  {isSavingOwl ? "Saving..." : "Save owl"}
-                </button>
               </div>
               {owlSaveMessage ? (
                 <p className={styles.inlineMessage} role="status">

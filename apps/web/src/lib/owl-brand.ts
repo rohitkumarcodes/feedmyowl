@@ -27,6 +27,11 @@ export const OWL_ART_OPTIONS: readonly OwlArtOption[] = [
     description: "Reading at the speed of light.",
   },
   {
+    ascii: "</o,o>",
+    name: "The Devel-owl-per",
+    description: "while(awake) { read_feeds(); }",
+  },
+  {
     ascii: "{o,o}",
     name: "Jane Owl-sten",
     description: "Pride and Prejudice and RSS.",
@@ -36,11 +41,6 @@ export const OWL_ART_OPTIONS: readonly OwlArtOption[] = [
     ascii: "{o,q}",
     name: "Sherlock Hoolmes",
     description: "Solving the case of the unread items.",
-  },
-  {
-    ascii: "</o,o>",
-    name: "The Devel-owl-per",
-    description: "while(awake) { read_feeds(); }",
   },
 ] as const;
 
