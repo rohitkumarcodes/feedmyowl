@@ -8,9 +8,13 @@
 }
 
 .frame {
-  background: var(--bg-secondary);
+  background: var(--brand-light);
   border: 1px solid var(--border);
   padding: 8px;
+}
+
+:global(html[data-theme="dark"]) .frame {
+  background: var(--bg-secondary);
 }
 
 @media (max-width: 640px) {

@@ -99,9 +99,13 @@
 }
 
 .sections {
-  border-top: 1px solid var(--lp-border);
+  border-top: 1px solid rgb(132 128 181 / 20%);
   margin-top: 0;
   overflow: auto;
+}
+
+:global(html[data-theme="dark"]) .sections {
+  border-top-color: var(--lp-border);
 }
 
 .emptyLabel {

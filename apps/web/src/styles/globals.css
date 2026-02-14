@@ -1,13 +1,18 @@
 :root {
+  /* Brand palette — deep indigo / muted lavender / pale lavender */
+  --brand-deep: #3d396e;
+  --brand-mid: #8480b5;
+  --brand-light: #ebeaf4;
+
   --bg-primary: #f7f7f8;
   --bg-secondary: #eeeff1;
   --bg-tertiary: #e5e8ec;
-  --bg-selected: #e8eef8;
+  --bg-selected: var(--brand-light);
   --text-primary: #1f2328;
   --text-secondary: #5f6670;
   --text-muted: #77808a;
   --border: #c7cdd4;
-  --accent: #005fd7;
+  --accent: var(--brand-deep);
   --danger-bg: rgb(177 44 44 / 8%);
   --danger-border: #a34d4d;
   --danger-text: #7a2f2f;
@@ -64,12 +69,12 @@ html[data-theme="dark"] {
   --bg-primary: #16181b;
   --bg-secondary: #1d2024;
   --bg-tertiary: #2a2f36;
-  --bg-selected: #24344d;
+  --bg-selected: #2d2b45;
   --text-primary: #e6e9ed;
   --text-secondary: #c1c8d0;
   --text-muted: #9aa3ae;
   --border: #3b434d;
-  --accent: #6aa8ff;
+  --accent: var(--brand-mid);
   --danger-bg: rgb(220 88 88 / 20%);
   --danger-border: #d27575;
   --danger-text: #f2b7b7;
