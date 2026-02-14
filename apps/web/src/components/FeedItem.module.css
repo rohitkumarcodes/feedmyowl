@@ -1,5 +1,4 @@
 .rowWrap {
-  border-bottom: 1px solid var(--lp-border);
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--sidebar-tree-actions-col);
   position: relative;
