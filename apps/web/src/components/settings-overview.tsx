@@ -117,6 +117,19 @@ const EXPORT_FORMAT_OPTIONS: ExportFormat[] = [
   { format: "json", label: "JSON", sublabel: "Full backup including folders" },
 ];
 
+function applyThemeModeToAuthShell(mode: ThemeMode): void {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  const shell = document.querySelector<HTMLElement>("[data-theme-mode]");
+  if (!shell) {
+    return;
+  }
+
+  shell.dataset.themeMode = mode;
+}
+
 function OwlOptionsShutter({
   expanded,
   prefersReducedMotion,
@@ -306,6 +319,7 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
   const themeWidthProbeRef = useRef<HTMLDivElement | null>(null);
   const owlWidthProbeRef = useRef<HTMLDivElement | null>(null);
   const shortcutsWidthProbeRef = useRef<HTMLDivElement | null>(null);
+  const savedThemeModeRef = useRef<ThemeMode>(themeMode);
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -352,7 +366,21 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
   useEffect(() => {
     setDraftThemeMode(themeMode);
     setSavedThemeMode(themeMode);
+    savedThemeModeRef.current = themeMode;
+    applyThemeModeToAuthShell(themeMode);
   }, [themeMode]);
+
+  useEffect(() => {
+    savedThemeModeRef.current = savedThemeMode;
+  }, [savedThemeMode]);
+
+  useEffect(() => {
+    return () => {
+      // Previewed theme selections should not leak beyond the settings page.
+      applyThemeModeToDocument(savedThemeModeRef.current);
+      applyThemeModeToAuthShell(savedThemeModeRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (draftThemeMode !== "system") {
@@ -581,13 +609,21 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
     }
   }
 
-  async function handleOwlAsciiChange(nextOwlAscii: OwlAscii) {
-    if (isSavingOwl || nextOwlAscii === savedOwlAscii) {
+  function handleDraftOwlAsciiChange(nextOwlAscii: OwlAscii) {
+    if (isSavingOwl || nextOwlAscii === draftOwlAscii) {
       return;
     }
 
-    const previousOwlAscii = savedOwlAscii;
     setDraftOwlAscii(nextOwlAscii);
+    setOwlSaveError(null);
+    setOwlSaveMessage(null);
+  }
+
+  async function handleSaveOwlAscii() {
+    if (isSavingOwl || draftOwlAscii === savedOwlAscii) {
+      return;
+    }
+
     setOwlSaveError(null);
     setOwlSaveMessage(null);
     setIsSavingOwl(true);
@@ -596,70 +632,74 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
       const response = await fetch("/api/settings/logo", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ owlAscii: nextOwlAscii }),
+        body: JSON.stringify({ owlAscii: draftOwlAscii }),
       });
 
       const body = await parseResponseJson<SaveOwlResponseBody>(response);
 
       if (!response.ok) {
-        setDraftOwlAscii(previousOwlAscii);
         setOwlSaveError(body?.error || "Could not save owl selection.");
         return;
       }
 
       const persistedOwl = body?.owlAscii
         ? coerceOwlAscii(body.owlAscii)
-        : nextOwlAscii;
+        : draftOwlAscii;
 
       setDraftOwlAscii(persistedOwl);
       setSavedOwlAscii(persistedOwl);
       setOwlSaveMessage("Owl updated.");
       router.refresh();
     } catch {
-      setDraftOwlAscii(previousOwlAscii);
       setOwlSaveError("Could not connect to the server.");
     } finally {
       setIsSavingOwl(false);
     }
   }
 
-  async function handleThemeModeChange(nextThemeMode: ThemeMode) {
+  function handleDraftThemeModeChange(nextThemeMode: ThemeMode) {
     if (isSavingTheme || nextThemeMode === draftThemeMode) {
       return;
     }
 
-    const previousThemeMode = savedThemeMode;
     setDraftThemeMode(nextThemeMode);
     setThemeSaveError(null);
     setThemeSaveMessage(null);
-    setIsSavingTheme(true);
     applyThemeModeToDocument(nextThemeMode);
+    applyThemeModeToAuthShell(nextThemeMode);
+  }
+
+  async function handleSaveThemeMode() {
+    if (isSavingTheme || draftThemeMode === savedThemeMode) {
+      return;
+    }
+
+    setThemeSaveError(null);
+    setThemeSaveMessage(null);
+    setIsSavingTheme(true);
 
     try {
       const response = await fetch("/api/settings/theme", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ themeMode: nextThemeMode }),
+        body: JSON.stringify({ themeMode: draftThemeMode }),
       });
 
       const body = await parseResponseJson<SaveThemeResponseBody>(response);
 
       if (!response.ok) {
-        setDraftThemeMode(previousThemeMode);
-        applyThemeModeToDocument(previousThemeMode);
         setThemeSaveError(body?.error || "Could not save theme selection.");
         return;
       }
 
-      const persistedThemeMode = coerceThemeMode(body?.themeMode ?? nextThemeMode);
+      const persistedThemeMode = coerceThemeMode(body?.themeMode ?? draftThemeMode);
       setDraftThemeMode(persistedThemeMode);
       setSavedThemeMode(persistedThemeMode);
       applyThemeModeToDocument(persistedThemeMode);
+      applyThemeModeToAuthShell(persistedThemeMode);
       setThemeSaveMessage("Theme updated.");
       router.refresh();
     } catch {
-      setDraftThemeMode(previousThemeMode);
-      applyThemeModeToDocument(previousThemeMode);
       setThemeSaveError("Could not connect to the server.");
     } finally {
       setIsSavingTheme(false);
@@ -909,6 +949,9 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
     URL.revokeObjectURL(downloadUrl);
   }
 
+  const isThemeDirty = draftThemeMode !== savedThemeMode;
+  const isOwlDirty = draftOwlAscii !== savedOwlAscii;
+
   const importSummaryText = importSummary
     ? `Processed ${importSummary.summary.processedCount} unique valid URL${
         importSummary.summary.processedCount === 1 ? "" : "s"
@@ -1009,7 +1052,7 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
                         value={option.mode}
                         checked={isSelected}
                         onChange={() => {
-                          void handleThemeModeChange(option.mode);
+                          handleDraftThemeModeChange(option.mode);
                         }}
                         disabled={isSavingTheme}
                       />
@@ -1017,6 +1060,18 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
                     </label>
                   );
                 })}
+              </div>
+              <div className={styles.inlineActions}>
+                <button
+                  type="button"
+                  className={styles.saveButton}
+                  onClick={() => {
+                    void handleSaveThemeMode();
+                  }}
+                  disabled={isSavingTheme || !isThemeDirty}
+                >
+                  Save
+                </button>
               </div>
               {isSavingTheme ? (
                 <p className={styles.inlineMessage} role="status">
@@ -1405,7 +1460,7 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
                         checked={isSelected}
                         disabled={isSavingOwl}
                         onChange={() => {
-                          void handleOwlAsciiChange(option.ascii);
+                          handleDraftOwlAsciiChange(option.ascii);
                         }}
                       />
                       <span className={styles.owlOptionAscii}>{option.ascii}</span>
@@ -1421,6 +1476,23 @@ export function SettingsOverview({ email, owlAscii, themeMode }: SettingsOvervie
                   );
                 })}
               </div>
+              <div className={styles.inlineActions}>
+                <button
+                  type="button"
+                  className={styles.saveButton}
+                  onClick={() => {
+                    void handleSaveOwlAscii();
+                  }}
+                  disabled={isSavingOwl || !isOwlDirty}
+                >
+                  Save
+                </button>
+              </div>
+              {isSavingOwl ? (
+                <p className={styles.inlineMessage} role="status">
+                  Saving owl...
+                </p>
+              ) : null}
               {owlSaveMessage ? (
                 <p className={styles.inlineMessage} role="status">
                   {owlSaveMessage}
