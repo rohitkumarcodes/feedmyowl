@@ -158,26 +158,37 @@
 .sidebarMessageAction {
   background: transparent;
   border: 1px solid var(--lp-border);
+  border-radius: var(--radius-control);
   color: var(--lp-text-main);
   cursor: pointer;
   font-size: var(--text-xs);
   padding: 2px 6px;
+  transition:
+    border-color var(--transition-control),
+    background-color var(--transition-control),
+    color var(--transition-control);
 }
 
 .sidebarMessageDismiss {
   background: transparent;
   border: 0;
+  border-radius: var(--radius-control);
   color: var(--lp-text-muted);
   cursor: pointer;
   font-size: var(--text-xs);
   padding: 0;
+  transition:
+    background-color var(--transition-control),
+    color var(--transition-control);
 }
 
 .sidebarMessageDismiss:hover {
+  background: var(--lp-surface-hover);
   color: var(--lp-text-main);
 }
 
 .sidebarMessageAction:hover {
+  background: var(--lp-surface-hover);
   border-color: var(--lp-focus);
 }
 
@@ -209,11 +220,11 @@
     minmax(0, 1fr)
     var(--sidebar-tree-actions-col);
   position: relative;
+  transition: background-color var(--transition-control);
 }
 
 .folderRowWrap:hover:not(.folderRowWrapActive) {
   background: var(--lp-surface-hover);
-  transition: background-color 90ms ease;
 }
 
 .folderRowWrap:hover:not(.folderRowWrapActive) .folderToggle,
@@ -426,7 +437,7 @@
   max-height: 200px;
   overflow-y: auto;
   border: 1px solid var(--lp-border);
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   margin-bottom: 12px;
 }
 
@@ -489,20 +500,22 @@
   gap: 12px;
   padding: 12px;
   border: 2px solid var(--lp-border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   background: none;
   cursor: pointer;
   text-align: left;
-  transition: border-color 0.15s, background-color 0.15s;
+  transition:
+    border-color var(--transition-control),
+    background-color var(--transition-control);
 }
 
 .deleteDialogOptionCard:hover {
-  background-color: var(--lp-bg-secondary);
+  background-color: var(--lp-surface-hover);
 }
 
 .deleteDialogOptionCardSelected {
-  border-color: var(--lp-color-focus);
-  background-color: var(--lp-bg-secondary);
+  border-color: var(--lp-focus);
+  background-color: var(--lp-surface-active);
 }
 
 .deleteDialogOptionIcon {

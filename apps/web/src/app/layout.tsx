@@ -29,7 +29,7 @@ const clerkAppearance = {
     colorBorder: "var(--border)",
     fontFamily: "var(--font-sans)",
     fontSize: "0.9375rem",
-    borderRadius: "0px",
+    borderRadius: "var(--radius-control)",
   },
   layout: {
     animations: false,

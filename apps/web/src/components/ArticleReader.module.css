@@ -28,7 +28,6 @@
 
 .titleLink:hover .title {
   color: var(--accent);
-  transition: color 80ms ease;
 }
 
 .title {
@@ -38,6 +37,7 @@
   font-weight: var(--weight-semibold);
   line-height: var(--leading-tight);
   margin-top: 8px;
+  transition: color var(--transition-control);
 }
 
 .meta {

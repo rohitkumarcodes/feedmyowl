@@ -29,7 +29,7 @@
   display: grid;
   gap: 24px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   padding: 16px;
 }
 
@@ -161,6 +161,7 @@
 .linkButton {
   background: var(--bg-primary);
   border: 0;
+  border-radius: var(--radius-control);
   color: var(--text-primary);
   cursor: pointer;
   display: inline-block;
@@ -170,12 +171,15 @@
   padding: 6px 10px;
   text-align: left;
   text-decoration: none;
+  transition:
+    border-color var(--transition-control),
+    background-color var(--transition-control),
+    color var(--transition-control);
 }
 
 a.linkButton:hover,
 button.linkButton:hover:enabled {
-  background: var(--bg-tertiary);
-  transition: background-color 80ms ease;
+  background: var(--hover-surface);
 }
 
 .linkButton:focus-visible {
@@ -191,18 +195,21 @@ button.linkButton:hover:enabled {
 .saveButton {
   background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   color: var(--text-primary);
   cursor: pointer;
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
   min-height: 32px;
   padding: 6px 14px;
+  transition:
+    border-color var(--transition-control),
+    background-color var(--transition-control),
+    color var(--transition-control);
 }
 
 .saveButton:hover:enabled {
-  background: var(--bg-tertiary);
-  transition: background-color 80ms ease;
+  background: var(--hover-surface);
 }
 
 .saveButton:focus-visible {
@@ -463,17 +470,19 @@ button.linkButton:hover:enabled {
 .exportFormatOption {
   background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   cursor: pointer;
   display: grid;
   gap: 2px;
   padding: 10px 14px;
   text-align: left;
-  transition: border-color 80ms ease, background-color 80ms ease;
+  transition:
+    border-color var(--transition-control),
+    background-color var(--transition-control);
 }
 
 .exportFormatOption:hover {
-  background: var(--bg-tertiary);
+  background: var(--hover-surface);
 }
 
 .exportFormatOption:focus-visible {
@@ -503,16 +512,18 @@ button.linkButton:hover:enabled {
 
 .dropZone {
   border: 2px dashed var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   padding: 20px;
   text-align: center;
   cursor: pointer;
-  transition: border-color 80ms ease, background-color 80ms ease;
+  transition:
+    border-color var(--transition-control),
+    background-color var(--transition-control);
 }
 
 .dropZone:hover {
   border-color: var(--text-muted);
-  background: var(--bg-secondary);
+  background: var(--hover-surface);
 }
 
 .dropZoneDragOver {
@@ -572,13 +583,14 @@ button.linkButton:hover:enabled {
 .doneButton {
   background: var(--accent);
   border: 0;
-  border-radius: 4px;
+  border-radius: var(--radius-control);
   color: var(--bg-primary);
   cursor: pointer;
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
   min-height: 32px;
   padding: 6px 14px;
+  transition: opacity var(--transition-control);
 }
 
 .doneButton:hover {
@@ -602,6 +614,7 @@ button.linkButton:hover:enabled {
   align-items: center;
   background: transparent;
   border: 0;
+  border-radius: var(--radius-control);
   color: var(--text-primary);
   cursor: pointer;
   display: inline-flex;
@@ -610,12 +623,15 @@ button.linkButton:hover:enabled {
   min-height: 32px;
   padding: 6px 10px;
   text-align: left;
+  transition:
+    border-color var(--transition-control),
+    background-color var(--transition-control),
+    color var(--transition-control);
   width: 100%;
 }
 
 .shortcutsToggle:hover {
-  background: var(--bg-tertiary);
-  transition: background-color 80ms ease;
+  background: var(--hover-surface);
 }
 
 .shortcutsToggle:focus-visible {
@@ -682,6 +698,7 @@ button.linkButton:hover:enabled {
   align-items: center;
   background: var(--bg-primary);
   border: 0;
+  border-radius: var(--radius-control);
   color: var(--text-primary);
   cursor: pointer;
   display: inline-flex;
@@ -690,11 +707,14 @@ button.linkButton:hover:enabled {
   min-height: 32px;
   padding: 6px 10px;
   text-align: left;
+  transition:
+    border-color var(--transition-control),
+    background-color var(--transition-control),
+    color var(--transition-control);
 }
 
 .owlToggle:hover {
-  background: var(--bg-tertiary);
-  transition: background-color 80ms ease;
+  background: var(--hover-surface);
 }
 
 .owlToggle:focus-visible {

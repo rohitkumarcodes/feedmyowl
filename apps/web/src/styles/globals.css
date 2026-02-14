@@ -12,6 +12,10 @@
   --danger-border: #a34d4d;
   --danger-text: #7a2f2f;
 
+  --radius-control: 6px;
+  --hover-surface: var(--bg-tertiary);
+  --transition-control: 80ms ease;
+
   /* Shared feeds-shell sizing so brand slot and sidebar reserve stay aligned. */
   --sidebar-pane-width: 240px;
   --sidebar-pane-width-compact: 220px;

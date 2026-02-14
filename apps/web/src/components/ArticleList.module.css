@@ -26,11 +26,15 @@
 .searchInput {
   background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: 0;
+  border-radius: var(--radius-control);
   color: var(--text-primary);
   font-size: var(--text-sm);
   min-height: 34px;
   padding: 6px 32px 6px 8px;
+  transition:
+    border-color var(--transition-control),
+    background-color var(--transition-control),
+    color var(--transition-control);
   width: 100%;
 }
 
@@ -43,7 +47,7 @@
   align-items: center;
   background: transparent;
   border: 0;
-  border-radius: 0;
+  border-radius: var(--radius-control);
   color: var(--text-primary);
   cursor: pointer;
   display: inline-flex;
@@ -56,12 +60,14 @@
   right: 6px;
   top: 50%;
   transform: translateY(-50%);
+  transition:
+    background-color var(--transition-control),
+    color var(--transition-control);
   width: 24px;
 }
 
 .clearButton:hover:enabled {
-  background: var(--bg-tertiary);
-  transition: background-color 80ms ease, color 80ms ease;
+  background: var(--hover-surface);
 }
 
 .clearButton:focus-visible {
@@ -139,16 +145,20 @@
 .paginationRetry {
   background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: 0;
+  border-radius: var(--radius-control);
   color: var(--text-primary);
   cursor: pointer;
   font-size: var(--text-xs);
   min-height: 28px;
   padding: 2px 10px;
+  transition:
+    border-color var(--transition-control),
+    background-color var(--transition-control),
+    color var(--transition-control);
 }
 
 .paginationRetry:hover:enabled {
-  background: var(--bg-tertiary);
+  background: var(--hover-surface);
 }
 
 .paginationRetry:focus-visible {

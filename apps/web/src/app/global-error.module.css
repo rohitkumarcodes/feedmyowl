@@ -30,17 +30,21 @@
 .button {
   background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: 0;
+  border-radius: var(--radius-control);
   color: var(--text-primary);
   cursor: pointer;
   font-size: var(--text-sm);
   justify-self: start;
   min-height: 32px;
   padding: 5px 10px;
+  transition:
+    border-color var(--transition-control),
+    background-color var(--transition-control),
+    color var(--transition-control);
 }
 
 .button:hover {
-  background: var(--bg-tertiary);
+  background: var(--hover-surface);
 }
 
 .button:focus-visible {

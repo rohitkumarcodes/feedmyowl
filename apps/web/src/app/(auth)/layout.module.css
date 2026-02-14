@@ -61,6 +61,7 @@
   padding: 6px 14px;
   text-align: center;
   text-decoration: none;
+  transition: color var(--transition-control);
   width: fit-content;
 }
 
@@ -81,7 +82,6 @@
 
 .brand:hover {
   color: var(--accent);
-  transition: color 80ms ease;
 }
 
 .brand:focus-visible {
@@ -111,7 +111,7 @@
   align-items: center;
   background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   color: var(--text-primary);
   cursor: pointer;
   display: inline-flex;
@@ -119,13 +119,16 @@
   justify-content: center;
   padding: 0;
   position: relative;
+  transition:
+    border-color var(--transition-control),
+    background-color var(--transition-control),
+    color var(--transition-control);
   width: var(--options-trigger-size);
   z-index: 2;
 }
 
 .optionsTrigger:hover {
-  background: var(--bg-tertiary);
-  transition: background-color 80ms ease;
+  background: var(--hover-surface);
 }
 
 .optionsTrigger:focus-visible {
@@ -174,7 +177,7 @@
 .optionsActionsBox {
   background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: 0;
+  border-radius: var(--radius-control);
   padding: 6px;
 }
 
@@ -206,7 +209,7 @@
   align-items: center;
   background: var(--bg-primary);
   border: 0;
-  border-radius: 0;
+  border-radius: var(--radius-control);
   color: var(--text-primary);
   cursor: pointer;
   display: inline-flex;
@@ -217,6 +220,9 @@
   min-height: 34px;
   padding: 7px 10px;
   text-decoration: none;
+  transition:
+    background-color var(--transition-control),
+    color var(--transition-control);
   width: 100%;
 }
 
@@ -232,8 +238,7 @@
 }
 
 .optionsActionButton:hover {
-  background: var(--bg-tertiary);
-  transition: background-color 90ms ease;
+  background: var(--hover-surface);
 }
 
 @media (max-width: 1120px) {

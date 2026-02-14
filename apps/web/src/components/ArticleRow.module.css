@@ -9,12 +9,12 @@
   gap: 4px;
   padding: 14px 12px;
   text-align: left;
+  transition: background-color var(--transition-control);
   width: 100%;
 }
 
 .row:hover {
-  background: var(--bg-tertiary);
-  transition: background-color 80ms ease;
+  background: var(--hover-surface);
 }
 
 .row:focus-visible {

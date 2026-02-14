@@ -3,11 +3,11 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--sidebar-tree-actions-col);
   position: relative;
+  transition: background-color var(--transition-control);
 }
 
 .rowWrap:hover:not(.rowWrapActive) {
   background: var(--lp-surface-hover);
-  transition: background-color 90ms ease;
 }
 
 .rowWrapActive {

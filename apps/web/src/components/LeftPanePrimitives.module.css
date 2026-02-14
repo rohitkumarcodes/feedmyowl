@@ -6,7 +6,7 @@
   --lp-border: var(--border);
   --lp-surface-0: var(--bg-secondary);
   --lp-surface-1: var(--bg-primary);
-  --lp-surface-hover: var(--bg-tertiary);
+  --lp-surface-hover: var(--hover-surface);
   --lp-surface-active: var(--bg-selected);
   --lp-text-main: var(--text-primary);
   --lp-text-muted: var(--text-muted);
@@ -26,12 +26,12 @@
   min-height: var(--lp-row-height);
   padding: var(--lp-pad-y) var(--lp-pad-x);
   text-align: left;
+  transition: background-color var(--transition-control);
   width: 100%;
 }
 
 .row:hover {
   background: var(--lp-surface-hover);
-  transition: background-color 90ms ease;
 }
 
 .row:focus-visible {
@@ -64,7 +64,7 @@
   align-items: center;
   background: var(--lp-surface-1);
   border: 1px solid var(--lp-border);
-  border-radius: 0;
+  border-radius: var(--radius-control);
   color: var(--lp-text-main);
   cursor: pointer;
   display: inline-flex;
@@ -75,12 +75,15 @@
   justify-content: center;
   min-height: 30px;
   padding: 4px 8px;
+  transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control),
+    color var(--transition-control);
   white-space: nowrap;
 }
 
 .toolbarButton:hover:enabled {
   background: var(--lp-surface-hover);
-  transition: background-color 90ms ease, border-color 90ms ease, color 90ms ease;
 }
 
 .toolbarButton:focus-visible {
@@ -110,7 +113,7 @@
   align-items: center;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 0;
+  border-radius: var(--radius-control);
   color: var(--lp-text-muted);
   cursor: pointer;
   display: flex;
@@ -118,13 +121,16 @@
   min-height: 40px;
   min-width: 40px;
   padding: 0 6px;
+  transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control),
+    color var(--transition-control);
 }
 
 .iconButton:hover:enabled {
   background: var(--lp-surface-hover);
   border-color: var(--lp-border);
   color: var(--lp-text-main);
-  transition: background-color 90ms ease, border-color 90ms ease, color 90ms ease;
 }
 
 .iconButton:focus-visible {
@@ -146,6 +152,7 @@
   align-items: center;
   background: transparent;
   border: 0;
+  border-radius: var(--radius-control);
   color: var(--lp-text-muted);
   cursor: pointer;
   display: flex;
@@ -153,9 +160,13 @@
   min-height: 40px;
   min-width: 40px;
   padding: 0 4px;
+  transition:
+    background-color var(--transition-control),
+    color var(--transition-control);
 }
 
 .treeToggle:hover {
+  background: var(--lp-surface-hover);
   color: var(--lp-text-main);
 }
 
@@ -172,11 +183,15 @@
 .input {
   background: var(--lp-surface-1);
   border: 1px solid var(--lp-border);
-  border-radius: 0;
+  border-radius: var(--radius-control);
   color: var(--lp-text-main);
   font-size: var(--text-sm);
   min-height: 36px;
   padding: 6px 8px;
+  transition:
+    border-color var(--transition-control),
+    background-color var(--transition-control),
+    color var(--transition-control);
   width: 100%;
 }
 
@@ -193,17 +208,20 @@
 .button {
   background: var(--lp-surface-1);
   border: 1px solid var(--lp-border);
-  border-radius: 0;
+  border-radius: var(--radius-control);
   color: var(--lp-text-main);
   cursor: pointer;
   font-size: var(--text-sm);
   min-height: 32px;
   padding: 4px 10px;
+  transition:
+    border-color var(--transition-control),
+    background-color var(--transition-control),
+    color var(--transition-control);
 }
 
 .button:hover:enabled {
   background: var(--lp-surface-hover);
-  transition: background-color 90ms ease, color 90ms ease;
 }
 
 .button:focus-visible {
@@ -248,6 +266,9 @@
   min-height: 32px;
   padding: 6px 10px;
   text-align: left;
+  transition:
+    background-color var(--transition-control),
+    color var(--transition-control);
 }
 
 .menuItem:hover:enabled {
