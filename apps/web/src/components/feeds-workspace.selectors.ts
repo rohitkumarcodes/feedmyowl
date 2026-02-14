@@ -7,6 +7,33 @@ import type {
 import { extractArticleSnippet } from "@/utils/articleText";
 
 /**
+ * Returns true when an article belongs to the selected sidebar scope.
+ * Kept as a single source of truth so list/reader behaviors stay in sync.
+ */
+export function doesArticleMatchSidebarScope(
+  article: ArticleViewModel,
+  selectedScope: SidebarScope
+): boolean {
+  if (selectedScope.type === "none") {
+    return false;
+  }
+
+  if (selectedScope.type === "all") {
+    return true;
+  }
+
+  if (selectedScope.type === "feed") {
+    return article.feedId === selectedScope.feedId;
+  }
+
+  if (selectedScope.type === "folder") {
+    return article.feedFolderIds.includes(selectedScope.folderId);
+  }
+
+  return article.feedFolderIds.length === 0;
+}
+
+/**
  * Builds a readable feed label from title or URL fallback.
  */
 export function getFeedLabel(feed: FeedViewModel): string {
@@ -76,25 +103,9 @@ export function selectVisibleArticles(
   allArticles: ArticleViewModel[],
   selectedScope: SidebarScope
 ): ArticleViewModel[] {
-  if (selectedScope.type === "none") {
-    return [];
-  }
-
-  if (selectedScope.type === "feed") {
-    return allArticles.filter((article) => article.feedId === selectedScope.feedId);
-  }
-
-  if (selectedScope.type === "folder") {
-    return allArticles.filter((article) =>
-      article.feedFolderIds.includes(selectedScope.folderId)
-    );
-  }
-
-  if (selectedScope.type === "uncategorized") {
-    return allArticles.filter((article) => article.feedFolderIds.length === 0);
-  }
-
-  return allArticles;
+  return allArticles.filter((article) =>
+    doesArticleMatchSidebarScope(article, selectedScope)
+  );
 }
 
 /**

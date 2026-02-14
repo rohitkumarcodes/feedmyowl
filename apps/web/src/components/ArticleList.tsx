@@ -67,12 +67,12 @@ export function ArticleList({
 
   const searchResultLabel = searchIsActive
     ? searchIsCapped
-      ? `Showing top ${searchMaxResults} of ${searchTotalMatchCount} results for "${normalizedQuery}".`
-      : `${searchTotalMatchCount} result${searchTotalMatchCount === 1 ? "" : "s"} for "${normalizedQuery}".`
+      ? `Showing top ${searchMaxResults} of ${searchTotalMatchCount} results across all feeds for "${normalizedQuery}".`
+      : `${searchTotalMatchCount} result${searchTotalMatchCount === 1 ? "" : "s"} across all feeds for "${normalizedQuery}".`
     : null;
 
   const resolvedEmptyStateMessage = isSearchEmpty
-    ? `No results for "${normalizedQuery}".`
+    ? `No results across all feeds for "${normalizedQuery}".`
     : emptyStateMessage;
 
   useEffect(() => {

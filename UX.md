@@ -102,7 +102,8 @@ Manual refresh only (background jobs deferred).
   - If strict search returns no matches and query length is 4+ characters, fallback
     search runs one-edit typo matching on title and feed title tokens.
   - Active search ignores selected scope for results, but scope selection stays visible.
-  - Changing scope while search is active keeps search active and keeps the current reader article open.
+  - Changing scope while search is active clears the query, exits search mode, and navigates immediately.
+  - If a reader article is open when exiting search via scope selection, keep it open only when it belongs to the newly selected scope; otherwise close it.
   - Results are ranked by relevance, then recency, and capped to top 50 matches.
   - Match highlighting appears in article title and feed title using significant contiguous ranges only.
   - Typo fallback highlights the full matching title/feed token.

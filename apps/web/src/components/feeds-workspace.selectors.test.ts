@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { FeedViewModel, FolderViewModel } from "./feeds-types";
 import {
+  doesArticleMatchSidebarScope,
   selectAllArticles,
   selectListStatusMessage,
   selectScopeLabel,
@@ -104,6 +105,51 @@ const feeds: FeedViewModel[] = [
 ];
 
 describe("feeds-workspace selectors", () => {
+  it("matches articles against sidebar scopes", () => {
+    const allArticles = selectAllArticles(feeds);
+
+    const articleFromA = allArticles.find((article) => article.feedId === "feed-a");
+    const articleFromB = allArticles.find((article) => article.feedId === "feed-b");
+    const articleFromC = allArticles.find((article) => article.feedId === "feed-c");
+
+    expect(articleFromA).toBeTruthy();
+    expect(articleFromB).toBeTruthy();
+    expect(articleFromC).toBeTruthy();
+
+    expect(doesArticleMatchSidebarScope(articleFromA!, { type: "none" })).toBe(false);
+
+    expect(doesArticleMatchSidebarScope(articleFromA!, { type: "all" })).toBe(true);
+    expect(doesArticleMatchSidebarScope(articleFromB!, { type: "all" })).toBe(true);
+    expect(doesArticleMatchSidebarScope(articleFromC!, { type: "all" })).toBe(true);
+
+    expect(
+      doesArticleMatchSidebarScope(articleFromA!, { type: "feed", feedId: "feed-a" })
+    ).toBe(true);
+    expect(
+      doesArticleMatchSidebarScope(articleFromB!, { type: "feed", feedId: "feed-a" })
+    ).toBe(false);
+
+    expect(
+      doesArticleMatchSidebarScope(articleFromB!, {
+        type: "folder",
+        folderId: "folder-news",
+      })
+    ).toBe(true);
+    expect(
+      doesArticleMatchSidebarScope(articleFromA!, {
+        type: "folder",
+        folderId: "folder-news",
+      })
+    ).toBe(false);
+
+    expect(doesArticleMatchSidebarScope(articleFromC!, { type: "uncategorized" })).toBe(
+      true
+    );
+    expect(doesArticleMatchSidebarScope(articleFromA!, { type: "uncategorized" })).toBe(
+      false
+    );
+  });
+
   it("filters visible articles by folder scope", () => {
     const allArticles = selectAllArticles(feeds);
 

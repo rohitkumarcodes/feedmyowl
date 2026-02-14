@@ -34,6 +34,7 @@ import {
 import { buildSidebarNotices } from "./sidebar-messages";
 import type { FeedViewModel, FolderViewModel } from "./feeds-types";
 import {
+  doesArticleMatchSidebarScope,
   selectAllArticles,
   selectEmptyStateMessage,
   selectListStatusMessage,
@@ -716,9 +717,18 @@ export function FeedsWorkspace({
 
   const handleSelectScope = useCallback(
     (nextScope: SidebarScope) => {
+      const wasSearchActive = isSearchActive;
+      const openArticle = selectOpenArticle(allArticles, openArticleId);
+
       setSelectedScope(nextScope);
 
-      if (!isSearchActive) {
+      if (wasSearchActive) {
+        setSearchQuery("");
+
+        if (!openArticle || !doesArticleMatchSidebarScope(openArticle, nextScope)) {
+          setOpenArticleId(null);
+        }
+      } else {
         setOpenArticleId(null);
       }
 
@@ -728,7 +738,15 @@ export function FeedsWorkspace({
         setMobileViewWithHistory("articles", true);
       }
     },
-    [focusArticleList, isMobile, isSearchActive, setMobileViewWithHistory]
+    [
+      allArticles,
+      focusArticleList,
+      isMobile,
+      isSearchActive,
+      openArticleId,
+      setMobileViewWithHistory,
+      setSearchQuery,
+    ]
   );
 
   const sidebarNotices = useMemo(
@@ -779,13 +797,13 @@ export function FeedsWorkspace({
   useEffect(() => {
     if (isSearchActive) {
       if (searchResults.totalMatchCount === 0) {
-        setLiveMessage(`No results for "${searchResults.query}".`);
+        setLiveMessage(`No results across all feeds for "${searchResults.query}".`);
         return;
       }
 
       const searchMessage = searchResults.isCapped
-        ? `Showing top ${searchResults.maxResults} of ${searchResults.totalMatchCount} search results for "${searchResults.query}".`
-        : `${searchResults.totalMatchCount} search result${searchResults.totalMatchCount === 1 ? "" : "s"} for "${searchResults.query}".`;
+        ? `Showing top ${searchResults.maxResults} of ${searchResults.totalMatchCount} results across all feeds for "${searchResults.query}".`
+        : `${searchResults.totalMatchCount} result${searchResults.totalMatchCount === 1 ? "" : "s"} across all feeds for "${searchResults.query}".`;
       setLiveMessage(searchMessage);
       return;
     }
