@@ -1454,11 +1454,11 @@ export function Sidebar({
         const pendingFeed = feeds.find((feed) => feed.id === pendingDeleteFeedId);
         const pendingFeedLabel = pendingFeed ? getFeedLabel(pendingFeed) : "this feed";
         return (
+        <div
+          className={primitiveStyles.dialogBackdrop}
+        >
           <div
-            className={`${primitiveStyles.dialogBackdrop} ${primitiveStyles.dialogBackdropBottom}`}
-          >
-            <div
-              className={`${primitiveStyles.dialog} ${primitiveStyles.dialogMobileBottom} ${styles.deleteDialog}`}
+            className={`${primitiveStyles.dialog} ${styles.deleteDialog}`}
               role="dialog"
               aria-modal="true"
             >
@@ -1495,10 +1495,10 @@ export function Sidebar({
 
       {pendingDeleteFolderId && pendingDeleteStats ? (
         <div
-          className={`${primitiveStyles.dialogBackdrop} ${primitiveStyles.dialogBackdropBottom}`}
+          className={primitiveStyles.dialogBackdrop}
         >
           <div
-            className={`${primitiveStyles.dialog} ${primitiveStyles.dialogMobileBottom} ${styles.deleteDialog}`}
+            className={`${primitiveStyles.dialog} ${styles.deleteDialog}`}
             role="dialog"
             aria-modal="true"
           >
@@ -1561,24 +1561,24 @@ export function Sidebar({
                 <div className={styles.deleteDialogOptionCards}>
                   <button
                     type="button"
-                    className={`${styles.deleteDialogOptionCard} ${selectedDeleteOption === "keep" ? styles.deleteDialogOptionCardSelected : ""}`}
-                    onClick={() => setSelectedDeleteOption("keep")}
-                  >
-                    <div className={styles.deleteDialogOptionIcon}>{folderIcon}</div>
-                    <div className={styles.deleteDialogOptionContent}>
-                      <strong>Keep all feeds</strong>
-                      <span>Feeds will remain in your library, just without this folder</span>
-                    </div>
-                  </button>
-                  <button
-                    type="button"
                     className={`${styles.deleteDialogOptionCard} ${selectedDeleteOption === "unsubscribe" ? styles.deleteDialogOptionCardSelected : ""}`}
                     onClick={() => setSelectedDeleteOption("unsubscribe")}
                   >
                     <div className={styles.deleteDialogOptionIcon}>{trashIcon}</div>
                     <div className={styles.deleteDialogOptionContent}>
-                      <strong>Remove from this folder only</strong>
-                      <span>Removes folder and unsubscribes from {pendingDeleteStats.exclusive} feed{pendingDeleteStats.exclusive === 1 ? "" : "s"} that are only here</span>
+                      <strong>Delete folder & its feeds</strong>
+                      <span>If a feed is also present in any other folder, it will get deleted from here but will stay there.</span>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.deleteDialogOptionCard} ${selectedDeleteOption === "keep" ? styles.deleteDialogOptionCardSelected : ""}`}
+                    onClick={() => setSelectedDeleteOption("keep")}
+                  >
+                    <div className={styles.deleteDialogOptionIcon}>{folderIcon}</div>
+                    <div className={styles.deleteDialogOptionContent}>
+                      <strong>Delete folder, keep feeds</strong>
+                      <span>This folder will get deleted, but its feeds will move to the Uncategorized folder.</span>
                     </div>
                   </button>
                 </div>
