@@ -29,7 +29,7 @@ import * as schema from "@/db/schema";
  * Re-export Drizzle query operators through this module boundary.
  * API routes import these from "@/lib/server/database" — never from "drizzle-orm" directly.
  */
-export { eq, and, or, not, desc, asc, inArray, lt, sql } from "drizzle-orm";
+export { eq, and, or, not, desc, asc, inArray, isNull, lt, sql } from "drizzle-orm";
 
 /**
  * Re-export schema table references through this module boundary.

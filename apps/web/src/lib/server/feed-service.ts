@@ -9,7 +9,9 @@ import {
   feeds,
   folders,
   inArray,
+  isNull,
   not,
+  sql,
   users,
 } from "@/lib/server/database";
 import { computeFeedItemFingerprint } from "@/lib/server/feed-item-fingerprint";
@@ -750,4 +752,98 @@ export async function setFeedFoldersForUser(
     .where(and(eq(feeds.id, feedId), eq(feeds.userId, userId)));
 
   return { status: "ok", folderIds: normalizedFolderIds };
+}
+
+export type MarkAllReadScope =
+  | { type: "all" }
+  | { type: "unread" }
+  | { type: "uncategorized" }
+  | { type: "folder"; id: string }
+  | { type: "feed"; id: string };
+
+export type MarkAllFeedItemsReadResult =
+  | { status: "ok"; markedCount: number }
+  | { status: "scope_not_found" };
+
+/**
+ * Mark all unread feed items as read for one user, optionally scoped to a
+ * specific feed, folder, or the uncategorized group.
+ */
+export async function markAllFeedItemsReadForUser(
+  userId: string,
+  scope: MarkAllReadScope,
+): Promise<MarkAllFeedItemsReadResult> {
+  /* Resolve which feedIds are affected by this scope. */
+  let targetFeedIds: string[];
+
+  if (scope.type === "all" || scope.type === "unread") {
+    const userFeeds = await db.query.feeds.findMany({
+      where: eq(feeds.userId, userId),
+      columns: { id: true },
+    });
+    targetFeedIds = userFeeds.map((feed) => feed.id);
+  } else if (scope.type === "feed") {
+    const feed = await db.query.feeds.findFirst({
+      where: and(eq(feeds.id, scope.id), eq(feeds.userId, userId)),
+      columns: { id: true },
+    });
+    if (!feed) {
+      return { status: "scope_not_found" };
+    }
+    targetFeedIds = [feed.id];
+  } else if (scope.type === "folder") {
+    const folder = await db.query.folders.findFirst({
+      where: and(eq(folders.id, scope.id), eq(folders.userId, userId)),
+      columns: { id: true },
+    });
+    if (!folder) {
+      return { status: "scope_not_found" };
+    }
+    const memberships = await db.query.feedFolderMemberships.findMany({
+      where: and(
+        eq(feedFolderMemberships.userId, userId),
+        eq(feedFolderMemberships.folderId, scope.id),
+      ),
+      columns: { feedId: true },
+    });
+    targetFeedIds = memberships.map((membership) => membership.feedId);
+  } else {
+    /* uncategorized — feeds with no folder memberships */
+    const userFeeds = await db.query.feeds.findMany({
+      where: eq(feeds.userId, userId),
+      columns: { id: true },
+    });
+    const userFeedIds = userFeeds.map((feed) => feed.id);
+    if (userFeedIds.length === 0) {
+      return { status: "ok", markedCount: 0 };
+    }
+    const memberships = await db.query.feedFolderMemberships.findMany({
+      where: and(
+        eq(feedFolderMemberships.userId, userId),
+        inArray(feedFolderMemberships.feedId, userFeedIds),
+      ),
+      columns: { feedId: true },
+    });
+    const categorizedFeedIds = new Set(
+      memberships.map((membership) => membership.feedId),
+    );
+    targetFeedIds = userFeedIds.filter(
+      (feedId) => !categorizedFeedIds.has(feedId),
+    );
+  }
+
+  if (targetFeedIds.length === 0) {
+    return { status: "ok", markedCount: 0 };
+  }
+
+  const now = new Date();
+  const updated = await db
+    .update(feedItems)
+    .set({ readAt: now, updatedAt: now })
+    .where(
+      and(inArray(feedItems.feedId, targetFeedIds), isNull(feedItems.readAt)),
+    )
+    .returning({ id: feedItems.id });
+
+  return { status: "ok", markedCount: updated.length };
 }

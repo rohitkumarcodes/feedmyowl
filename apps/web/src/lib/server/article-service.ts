@@ -9,6 +9,7 @@ import {
   feeds,
   folders,
   inArray,
+  isNull,
   sql,
 } from "@/lib/server/database";
 import {
@@ -111,7 +112,8 @@ async function resolveScopeFeedIdsForUser(
   userId: string,
   scope: ArticleScope,
 ): Promise<ResolveScopeFeedIdsResult> {
-  if (scope.type === "all") {
+  if (scope.type === "all" || scope.type === "unread") {
+    // "unread" uses all feeds — the readAt IS NULL filter is applied later in the query.
     const userFeeds = await db.query.feeds.findMany({
       where: eq(feeds.userId, userId),
       columns: {
@@ -199,12 +201,19 @@ export async function listArticlePageForUser(params: {
 
   const cursorTimestamp = params.cursor ? toDate(params.cursor.sortKeyIso) : null;
 
+  // Build the base filter: feed scope + optional unread-only restriction.
+  const feedFilter = inArray(feedItems.feedId, resolved.feedIds);
+  const baseScopeFilter =
+    params.scope.type === "unread"
+      ? and(feedFilter, isNull(feedItems.readAt))
+      : feedFilter;
+
   const whereClause = params.cursor
     ? and(
-        inArray(feedItems.feedId, resolved.feedIds),
+        baseScopeFilter,
         sql`(${sortKeyExpression} < ${cursorTimestamp} OR (${sortKeyExpression} = ${cursorTimestamp} AND ${feedItems.id} < ${params.cursor.itemId}))`,
       )
-    : inArray(feedItems.feedId, resolved.feedIds);
+    : baseScopeFilter;
 
   const rows = await db
     .select({

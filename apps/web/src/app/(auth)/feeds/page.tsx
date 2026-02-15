@@ -25,6 +25,7 @@ import {
   purgeOldFeedItemsForUser,
 } from "@/lib/server/retention";
 import { listArticlePageForUser } from "@/lib/server/article-service";
+import { coerceReadingMode, DEFAULT_READING_MODE } from "@/lib/shared/reading-mode";
 
 /**
  * This page reads per-user data at request time — never statically prerender.
@@ -55,6 +56,7 @@ export default async function FeedsPage() {
         initialFeeds={[]}
         initialFolders={[]}
         initialPaginationByScopeKey={createEmptyInitialPaginationByScopeKey()}
+        initialReadingMode={DEFAULT_READING_MODE}
       />
     );
   }
@@ -70,6 +72,7 @@ export default async function FeedsPage() {
       id: true,
       clerkId: true,
       email: true,
+      readingMode: true,
       subscriptionTier: true,
       stripeCustomerId: true,
       stripeSubscriptionId: true,
@@ -96,9 +99,14 @@ export default async function FeedsPage() {
         initialFeeds={[]}
         initialFolders={[]}
         initialPaginationByScopeKey={createEmptyInitialPaginationByScopeKey()}
+        initialReadingMode={DEFAULT_READING_MODE}
       />
     );
   }
+
+  const userReadingMode = coerceReadingMode(
+    (user as Record<string, unknown>).readingMode,
+  );
 
   const allScope: ArticleScope = { type: "all" };
   const initialArticlePage = await listArticlePageForUser({
@@ -209,6 +217,7 @@ export default async function FeedsPage() {
       initialFeeds={feeds}
       initialFolders={folders}
       initialPaginationByScopeKey={initialPaginationByScopeKey}
+      initialReadingMode={userReadingMode}
     />
   );
 }

@@ -3,6 +3,7 @@ import { db, eq, users } from "@/lib/server/database";
 import { ensureUserRecord } from "@/lib/server/app-user";
 import { SettingsOverview } from "@/features/settings/components/SettingsOverview";
 import { coerceOwlAscii, DEFAULT_OWL_ASCII } from "@/lib/shared/owl-brand";
+import { coerceReadingMode, DEFAULT_READING_MODE } from "@/lib/shared/reading-mode";
 import { coerceThemeMode, DEFAULT_THEME_MODE } from "@/lib/shared/theme-mode";
 
 /**
@@ -20,6 +21,7 @@ export default async function SettingsPage() {
         email="Unknown"
         owlAscii={DEFAULT_OWL_ASCII}
         themeMode={DEFAULT_THEME_MODE}
+        readingMode={DEFAULT_READING_MODE}
       />
     );
   }
@@ -30,18 +32,21 @@ export default async function SettingsPage() {
       email: true,
       owlAscii: true,
       themeMode: true,
+      readingMode: true,
     },
   });
 
   const safeEmail = user?.email ?? ensuredUser.email;
   const safeOwlAscii = user ? coerceOwlAscii(user.owlAscii) : DEFAULT_OWL_ASCII;
   const safeThemeMode = user ? coerceThemeMode(user.themeMode) : DEFAULT_THEME_MODE;
+  const safeReadingMode = user ? coerceReadingMode(user.readingMode) : DEFAULT_READING_MODE;
 
   return (
     <SettingsOverview
       email={safeEmail}
       owlAscii={safeOwlAscii}
       themeMode={safeThemeMode}
+      readingMode={safeReadingMode}
     />
   );
 }

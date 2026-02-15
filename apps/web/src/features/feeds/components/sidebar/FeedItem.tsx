@@ -16,6 +16,8 @@ interface FeedItemProps {
   isUpdatingFolders: boolean;
   folderOptions: FolderViewModel[];
   selectedFolderIds: string[];
+  /** Unread article count for this feed — shown as a badge in checker mode. Null in reader mode. */
+  unreadCount: number | null;
   onSelect: () => void;
   onDelete: () => void;
   onRename: (name: string) => boolean | Promise<boolean>;
@@ -34,6 +36,7 @@ export function FeedItem({
   isUpdatingFolders,
   folderOptions,
   selectedFolderIds,
+  unreadCount,
   onSelect,
   onDelete,
   onRename,
@@ -182,6 +185,14 @@ export function FeedItem({
         aria-current={isActive ? "true" : undefined}
       >
         <span className={styles.label}>{label}</span>
+        {unreadCount !== null && unreadCount > 0 ? (
+          <span
+            className={styles.unreadBadge}
+            title={`${unreadCount} unread`}
+          >
+            {unreadCount}
+          </span>
+        ) : null}
         {selectedFolderIds.length > 1 ? (
           <span
             className={styles.multiFolderBadge}

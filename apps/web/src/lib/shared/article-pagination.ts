@@ -3,6 +3,7 @@ export const MAX_ARTICLE_PAGE_LIMIT = 80;
 
 export type ArticleScope =
   | { type: "all" }
+  | { type: "unread" }
   | { type: "uncategorized" }
   | { type: "folder"; id: string }
   | { type: "feed"; id: string };
@@ -32,6 +33,7 @@ export interface ArticlePageResponseBody {
   limit: number;
   scope:
     | { type: "all" }
+    | { type: "unread" }
     | { type: "uncategorized" }
     | { type: "folder"; id: string }
     | { type: "feed"; id: string };
@@ -142,6 +144,10 @@ export function scopeToKey(scope: ArticleScope): string {
     return "all";
   }
 
+  if (scope.type === "unread") {
+    return "unread";
+  }
+
   if (scope.type === "uncategorized") {
     return "uncategorized";
   }
@@ -166,6 +172,10 @@ export function parseScopeFromSearchParams(
     return { ok: true, value: { type: "all" } };
   }
 
+  if (scopeType === "unread") {
+    return { ok: true, value: { type: "unread" } };
+  }
+
   if (scopeType === "uncategorized") {
     return { ok: true, value: { type: "uncategorized" } };
   }
@@ -173,7 +183,7 @@ export function parseScopeFromSearchParams(
   if (scopeType !== "folder" && scopeType !== "feed") {
     return {
       ok: false,
-      error: "scopeType must be one of: all, uncategorized, folder, feed.",
+      error: "scopeType must be one of: all, unread, uncategorized, folder, feed.",
       code: "invalid_scope_type",
     };
   }

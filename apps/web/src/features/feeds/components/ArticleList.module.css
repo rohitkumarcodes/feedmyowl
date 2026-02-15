@@ -89,6 +89,40 @@
   font-size: var(--text-xs);
 }
 
+/* "Mark all as read" bar — shown in checker mode when unread articles exist. */
+.markAllReadBar {
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: center;
+  padding: 6px 12px;
+}
+
+.markAllReadButton {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: var(--text-xs);
+  min-height: 28px;
+  padding: 4px 12px;
+  transition:
+    border-color var(--transition-control),
+    background-color var(--transition-control),
+    color var(--transition-control);
+}
+
+.markAllReadButton:hover {
+  background: var(--hover-surface);
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.markAllReadButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .statusMessage {
   border-bottom: 1px solid var(--border);
   color: var(--text-secondary);

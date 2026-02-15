@@ -2,6 +2,7 @@ import type { IsoDateString } from "./common";
 
 export type ArticleScopeDto =
   | { type: "all" }
+  | { type: "unread" }
   | { type: "uncategorized" }
   | { type: "folder"; id: string }
   | { type: "feed"; id: string };

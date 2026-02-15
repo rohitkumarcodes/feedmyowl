@@ -103,6 +103,7 @@ export type FeedsCreateResponseBody =
 
 export type FeedsPatchRequestBody =
   | { action: "item.markRead"; itemId: string }
+  | { action: "items.markAllRead"; scopeType: string; scopeId?: string }
   | { action: "uncategorized.delete"; confirm: boolean }
   | { action: "uncategorized.move_to_folder"; folderId: string }
   | { action: "account.delete"; confirm: boolean };
@@ -125,12 +126,18 @@ export interface UncategorizedMoveResponseBody {
   failedFeedCount: number;
 }
 
+export interface MarkAllReadResponseBody {
+  success: true;
+  markedCount: number;
+}
+
 export interface AccountDeleteResponseBody {
   success: true;
 }
 
 export type FeedsPatchResponseBody =
   | MarkReadResponseBody
+  | MarkAllReadResponseBody
   | UncategorizedDeleteResponseBody
   | UncategorizedMoveResponseBody
   | AccountDeleteResponseBody;

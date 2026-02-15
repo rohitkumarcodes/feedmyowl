@@ -6,12 +6,15 @@ import { useEffect, useRef, type RefObject } from "react";
 import { ArticleRow } from "./ArticleRow";
 import type { ArticleSearchHighlights } from "@/features/feeds/state/article-search";
 import type { ArticleViewModel } from "@/features/feeds/types/view-models";
+import type { ReadingMode } from "@/lib/shared/reading-mode";
 import styles from "./ArticleList.module.css";
 
 interface ArticleListProps {
   articles: ArticleViewModel[];
   selectedArticleId: string | null;
   openArticleId: string | null;
+  /** Current reading mode — passed through to ArticleRow for conditional styling. */
+  readingMode: ReadingMode;
   statusMessage: string | null;
   emptyStateMessage: string;
   isInitialScopeEmpty: boolean;
@@ -30,6 +33,8 @@ interface ArticleListProps {
   onSearchQueryChange: (value: string) => void;
   onRequestLoadMore: () => void;
   onSelectArticle: (articleId: string) => void;
+  /** Callback to mark all articles in the current scope as read (checker mode only). */
+  onMarkAllRead?: () => void;
 }
 
 /**
@@ -39,6 +44,7 @@ export function ArticleList({
   articles,
   selectedArticleId,
   openArticleId,
+  readingMode,
   statusMessage,
   emptyStateMessage,
   isInitialScopeEmpty,
@@ -57,6 +63,7 @@ export function ArticleList({
   onSearchQueryChange,
   onRequestLoadMore,
   onSelectArticle,
+  onMarkAllRead,
 }: ArticleListProps) {
   const listRootRef = useRef<HTMLElement>(null);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
@@ -64,6 +71,8 @@ export function ArticleList({
   const hasQuery = normalizedQuery.length > 0;
   const showMinLengthHint = hasQuery && !searchIsActive;
   const isSearchEmpty = searchIsActive && searchTotalMatchCount === 0;
+  const hasUnreadArticles = articles.some((article) => article.readAt === null);
+  const showMarkAllRead = Boolean(onMarkAllRead) && hasUnreadArticles && !searchIsActive;
 
   const searchResultLabel = searchIsActive
     ? searchIsCapped
@@ -183,6 +192,18 @@ export function ArticleList({
         ) : null}
       </div>
 
+      {showMarkAllRead ? (
+        <div className={styles.markAllReadBar}>
+          <button
+            type="button"
+            className={styles.markAllReadButton}
+            onClick={onMarkAllRead}
+          >
+            Mark all as read
+          </button>
+        </div>
+      ) : null}
+
       {statusMessage ? (
         <p className={styles.statusMessage} role="status" aria-live="polite">
           {statusMessage}
@@ -203,6 +224,7 @@ export function ArticleList({
             isSelected={selectedArticleId === article.id}
             isOpen={openArticleId === article.id}
             showFeedTitle={showFeedTitle}
+            readingMode={readingMode}
             highlights={searchHighlightsByArticleId[article.id]}
             onSelect={() => onSelectArticle(article.id)}
           />

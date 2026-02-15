@@ -12,6 +12,8 @@ import {
 import type { FolderDeleteMode } from "@/contracts/api/folders";
 import type { FeedViewModel, FolderViewModel } from "@/features/feeds/types/view-models";
 import type { SidebarScope } from "@/features/feeds/types/scopes";
+import type { ReadingMode } from "@/lib/shared/reading-mode";
+import type { UnreadCounts } from "@/features/feeds/state/unread-counts";
 import { getFeedLabel } from "@/features/feeds/state/feeds-workspace.selectors";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { isReservedFolderName } from "@/lib/shared/folders";
@@ -27,7 +29,13 @@ interface FolderTreeProps {
   folders: FolderViewModel[];
   selectedScope: SidebarScope;
   isMobile: boolean;
+  /** Current reading mode — controls whether unread badges/scope row are shown. */
+  readingMode: ReadingMode;
+  /** Unread counts per feed/folder — null in reader mode. */
+  unreadCounts: UnreadCounts | null;
   onSelectAll: () => void;
+  /** Select the "Unread" virtual scope (checker mode only). */
+  onSelectUnread: () => void;
   onSelectUncategorized: () => void;
   onSelectFolder: (folderId: string) => void;
   onSelectFeed: (feedId: string) => void;
@@ -67,6 +75,8 @@ interface FolderRowProps {
   siblingFolders: FolderViewModel[];
   isMobile: boolean;
   feedCount: number;
+  /** Unread article count for this folder — shown instead of feedCount in checker mode. */
+  unreadCount: number | null;
   isActive: boolean;
   isExpanded: boolean;
   isDeleting: boolean;
@@ -90,6 +100,7 @@ function FolderRow({
   siblingFolders,
   isMobile,
   feedCount,
+  unreadCount,
   isActive,
   isExpanded,
   isDeleting,
@@ -229,7 +240,7 @@ function FolderRow({
           <span className={styles.folderLabel}>{folder.name}</span>
         </span>
         <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
-          {feedCount}
+          {unreadCount !== null ? unreadCount : feedCount}
         </span>
       </button>
 
@@ -412,7 +423,10 @@ export function FolderTree({
   folders,
   selectedScope,
   isMobile,
+  readingMode,
+  unreadCounts,
   onSelectAll,
+  onSelectUnread,
   onSelectUncategorized,
   onSelectFolder,
   onSelectFeed,
@@ -657,6 +671,8 @@ export function FolderTree({
     folderFeedList.map((feed) => {
       const label = getFeedLabel(feed);
       const isActive = selectedScope.type === "feed" && selectedScope.feedId === feed.id;
+      /** Per-feed unread count — only provided in checker mode. */
+      const feedUnreadCount = unreadCounts?.byFeedId.get(feed.id) ?? null;
 
       return (
         <FeedItem
@@ -669,6 +685,7 @@ export function FolderTree({
           isUpdatingFolders={updatingFeedFoldersId === feed.id}
           folderOptions={sortedFolders}
           selectedFolderIds={feed.folderIds}
+          unreadCount={feedUnreadCount}
           onSelect={() => onSelectFeed(feed.id)}
           onDelete={() => setPendingDeleteFeedId(feed.id)}
           onRename={(name) => onRequestFeedRename(feed.id, name)}
@@ -707,6 +724,35 @@ export function FolderTree({
           </button>
           <div className={styles.folderActionsSpacer} aria-hidden="true" />
         </div>
+
+        {/* "Unread" virtual scope row — only visible in checker mode. */}
+        {readingMode === "checker" ? (
+          <div
+            className={`${styles.folderRowWrap} ${
+              selectedScope.type === "unread" ? styles.folderRowWrapActive : ""
+            }`}
+          >
+            <button
+              type="button"
+              className={`${primitiveStyles.row} ${primitiveStyles.rowRegular} ${styles.folderRow} ${
+                styles.allFeedsRow
+              } ${selectedScope.type === "unread" ? primitiveStyles.rowActive : ""}`}
+              onClick={onSelectUnread}
+              aria-current={selectedScope.type === "unread" ? "true" : undefined}
+            >
+              <span className={styles.folderNameWrap}>
+                <span className={styles.allFeedsLabelShim} aria-hidden="true">
+                  <span className={styles.folderToggleChevronPlaceholder}>▸</span>
+                </span>
+                <span className={styles.folderLabel}>Unread</span>
+              </span>
+              <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
+                {unreadCounts?.total ?? 0}
+              </span>
+            </button>
+            <div className={styles.folderActionsSpacer} aria-hidden="true" />
+          </div>
+        ) : null}
 
         {uncategorizedFeeds.length > 0 ? (
           <div className={styles.folderGroup}>
@@ -823,6 +869,7 @@ export function FolderTree({
                 siblingFolders={sortedFolders}
                 isMobile={isMobile}
                 feedCount={folderFeeds.length}
+                unreadCount={unreadCounts?.byFolderId.get(folder.id) ?? null}
                 isActive={isFolderActive}
                 isExpanded={isExpanded}
                 isDeleting={deletingFolderId === folder.id}

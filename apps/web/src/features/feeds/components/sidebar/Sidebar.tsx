@@ -9,6 +9,8 @@ import type { FeedViewModel, FolderViewModel } from "@/features/feeds/types/view
 import type { SidebarScope } from "@/features/feeds/types/scopes";
 import type { FolderDeleteMode } from "@/contracts/api/folders";
 import type { SidebarNotice } from "./sidebar-messages";
+import type { ReadingMode } from "@/lib/shared/reading-mode";
+import type { UnreadCounts } from "@/features/feeds/state/unread-counts";
 import primitiveStyles from "../LeftPanePrimitives.module.css";
 import { AddFeedSection } from "./AddFeedSection";
 import { FolderTree } from "./FolderTree";
@@ -22,7 +24,13 @@ interface SidebarProps {
   folders: FolderViewModel[];
   selectedScope: SidebarScope;
   isMobile: boolean;
+  /** Current reading mode — controls whether unread badges/scope are shown. */
+  readingMode: ReadingMode;
+  /** Unread counts per feed/folder — null in reader mode. */
+  unreadCounts: UnreadCounts | null;
   onSelectAll: () => void;
+  /** Select the "Unread" virtual scope (checker mode only). */
+  onSelectUnread: () => void;
   onSelectUncategorized: () => void;
   onSelectFolder: (folderId: string) => void;
   onSelectFeed: (feedId: string) => void;
@@ -90,7 +98,10 @@ export function Sidebar({
   folders,
   selectedScope,
   isMobile,
+  readingMode,
+  unreadCounts,
   onSelectAll,
+  onSelectUnread,
   onSelectUncategorized,
   onSelectFolder,
   onSelectFeed,
@@ -208,7 +219,10 @@ export function Sidebar({
         folders={folders}
         selectedScope={selectedScope}
         isMobile={isMobile}
+        readingMode={readingMode}
+        unreadCounts={unreadCounts}
         onSelectAll={onSelectAll}
+        onSelectUnread={onSelectUnread}
         onSelectUncategorized={onSelectUncategorized}
         onSelectFolder={onSelectFolder}
         onSelectFeed={onSelectFeed}

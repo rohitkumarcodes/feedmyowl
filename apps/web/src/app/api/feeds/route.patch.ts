@@ -5,14 +5,17 @@ import { handleApiRouteError } from "@/lib/server/api-errors";
 import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
 import type {
   AccountDeleteResponseBody,
+  MarkAllReadResponseBody,
   MarkReadResponseBody,
   UncategorizedDeleteResponseBody,
   UncategorizedMoveResponseBody,
 } from "@/contracts/api/feeds";
 import {
   deleteUncategorizedFeedsForUser,
+  markAllFeedItemsReadForUser,
   markFeedItemReadForUser,
   moveUncategorizedFeedsToFolderForUser,
+  type MarkAllReadScope,
 } from "@/lib/server/feed-service";
 import { getAppUser, parseRouteJson } from "./route.shared";
 
@@ -21,6 +24,7 @@ import { getAppUser, parseRouteJson } from "./route.shared";
  *
  * Supported actions:
  *   - item.markRead
+ *   - items.markAllRead
  *   - uncategorized.delete
  *   - uncategorized.move_to_folder
  *   - account.delete
@@ -68,6 +72,52 @@ export async function patchFeedsRoute(request: NextRequest) {
         itemId: result.itemId,
         readAt: result.readAt,
       } satisfies MarkReadResponseBody);
+    }
+
+    if (payload.action === "items.markAllRead") {
+      const scopeType = payload.scopeType;
+      if (typeof scopeType !== "string") {
+        return NextResponse.json(
+          { error: "scopeType is required." },
+          { status: 400 },
+        );
+      }
+
+      const validScopeTypes = ["all", "unread", "uncategorized", "folder", "feed"];
+      if (!validScopeTypes.includes(scopeType)) {
+        return NextResponse.json(
+          { error: "Invalid scopeType." },
+          { status: 400 },
+        );
+      }
+
+      let scope: MarkAllReadScope;
+      if (scopeType === "folder" || scopeType === "feed") {
+        const scopeId = payload.scopeId;
+        if (typeof scopeId !== "string" || !scopeId.trim()) {
+          return NextResponse.json(
+            { error: "scopeId is required for folder and feed scopes." },
+            { status: 400 },
+          );
+        }
+        scope = { type: scopeType, id: scopeId };
+      } else {
+        scope = { type: scopeType as "all" | "unread" | "uncategorized" };
+      }
+
+      const result = await markAllFeedItemsReadForUser(appUser.id, scope);
+
+      if (result.status === "scope_not_found") {
+        return NextResponse.json(
+          { error: "Scope not found." },
+          { status: 404 },
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        markedCount: result.markedCount,
+      } satisfies MarkAllReadResponseBody);
     }
 
     if (payload.action === "uncategorized.delete") {

@@ -5,6 +5,7 @@ import type { ArticleViewModel, FeedViewModel } from "@/features/feeds/types/vie
 import type { SidebarScope } from "@/features/feeds/types/scopes";
 import {
   deleteFeed as deleteFeedRequest,
+  markAllItemsRead as markAllItemsReadRequest,
   markItemRead as markItemReadRequest,
   refreshFeeds as refreshFeedsRequest,
   renameFeed as renameFeedRequest,
@@ -75,6 +76,45 @@ export function useFeedCrudActions({
       }
     },
     [allArticles, setErrorMessage, setFeeds],
+  );
+
+  /**
+   * Mark all unread articles in the given scope as read.
+   * Optimistically updates client state then persists on the server.
+   */
+  const markAllArticlesAsRead = useCallback(
+    async (scopeType: string, scopeId?: string) => {
+      /* Optimistic: set readAt on all unread items locally. */
+      const optimisticReadAt = new Date().toISOString();
+      setFeeds((previousFeeds) =>
+        previousFeeds.map((feed) => ({
+          ...feed,
+          items: feed.items.map((item) =>
+            item.readAt === null ? { ...item, readAt: optimisticReadAt } : item,
+          ),
+        })),
+      );
+
+      const result = await markAllItemsReadRequest(scopeType, scopeId);
+      if (!result.ok) {
+        if (result.networkError) {
+          setErrorMessage("Could not connect to the server.");
+          return;
+        }
+
+        setErrorMessage(result.body?.error || "Could not mark all as read.");
+        return;
+      }
+
+      const markedCount =
+        result.body && "markedCount" in result.body ? result.body.markedCount : 0;
+      setInfoMessage(
+        markedCount > 0
+          ? `Marked ${markedCount} article${markedCount === 1 ? "" : "s"} as read.`
+          : "All articles are already read.",
+      );
+    },
+    [setErrorMessage, setFeeds, setInfoMessage],
   );
 
   const handleRefresh = useCallback(async () => {
@@ -280,6 +320,7 @@ export function useFeedCrudActions({
     renamingFeedId,
     updatingFeedFoldersId,
     markArticleAsRead,
+    markAllArticlesAsRead,
     handleRefresh,
     handleDeleteFeed,
     handleRenameFeed,

@@ -6,6 +6,7 @@ import type {
   FeedsCreateResponseBody,
   FeedsDiscoverResponseBody,
   FeedsGetResponseBody,
+  MarkAllReadResponseBody,
   MarkReadResponseBody,
   UncategorizedDeleteResponseBody,
   UncategorizedMoveResponseBody,
@@ -54,6 +55,23 @@ export async function markItemRead(itemId: string) {
       body: JSON.stringify({ action: "item.markRead", itemId }),
     },
   );
+}
+
+export async function markAllItemsRead(
+  scopeType: string,
+  scopeId?: string,
+) {
+  return await callJson<
+    (MarkAllReadResponseBody & Partial<ApiErrorBody>) | ApiErrorBody
+  >("/api/feeds", {
+    method: "PATCH",
+    headers: JSON_HEADERS,
+    body: JSON.stringify({
+      action: "items.markAllRead",
+      scopeType,
+      ...(scopeId ? { scopeId } : {}),
+    }),
+  });
 }
 
 export async function deleteUncategorizedFeeds(confirm: boolean) {

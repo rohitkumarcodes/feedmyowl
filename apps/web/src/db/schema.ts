@@ -62,6 +62,9 @@ export const users = pgTable("users", {
   /** Selected app appearance mode (`light`, `dark`, or `system`) */
   themeMode: varchar("theme_mode", { length: 10 }).default("system").notNull(),
 
+  /** Reading mode: "reader" (calm, no unread indicators) or "checker" (traditional RSS) */
+  readingMode: varchar("reading_mode", { length: 20 }).default("reader").notNull(),
+
   /** Subscription tier: "free" (default) or "paid" */
   subscriptionTier: varchar("subscription_tier", { length: 50 })
     .default("free")
