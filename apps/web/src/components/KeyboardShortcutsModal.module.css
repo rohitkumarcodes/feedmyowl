@@ -106,7 +106,7 @@
 }
 
 .key {
-  background: var(--bg-secondary);
+  background: var(--brand-light);
   border: 1px solid var(--border);
   border-radius: calc(var(--radius-control) - 2px);
   color: var(--text-primary);
@@ -116,6 +116,10 @@
   min-width: 24px;
   padding: 4px 6px;
   text-align: center;
+}
+
+:global(html[data-theme="dark"]) .key {
+  background: var(--bg-secondary);
 }
 
 .rowDescription {

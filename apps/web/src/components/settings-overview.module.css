@@ -676,7 +676,7 @@ button.linkButton:hover:enabled {
 }
 
 .shortcutsPanelKey {
-  background: var(--bg-secondary);
+  background: var(--brand-light);
   border: 0;
   color: var(--text-primary);
   font-family: var(--font-mono);
@@ -685,6 +685,10 @@ button.linkButton:hover:enabled {
   min-width: 24px;
   padding: 5px 8px;
   text-align: center;
+}
+
+:global(html[data-theme="dark"]) .shortcutsPanelKey {
+  background: var(--bg-secondary);
 }
 
 .shortcutsPanelDescription {

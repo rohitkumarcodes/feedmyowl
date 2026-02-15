@@ -353,7 +353,11 @@
 }
 
 .sectionDivider {
-  border-bottom: 1px solid var(--lp-border);
+  border-bottom: 1px solid rgb(132 128 181 / 20%);
+}
+
+:global(html[data-theme="dark"]) .sectionDivider {
+  border-bottom-color: var(--lp-border);
 }
 
 @media (prefers-reduced-motion: reduce) {

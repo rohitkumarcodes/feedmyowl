@@ -110,7 +110,7 @@
 }
 
 .empty {
-  color: var(--text-muted);
+  color: var(--brand-mid);
   font-size: var(--text-base);
 }
 
