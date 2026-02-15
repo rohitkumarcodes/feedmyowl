@@ -427,7 +427,8 @@
 }
 
 .deleteDialog {
-  max-width: min(92vw, 480px);
+  max-width: 480px !important;
+  width: 480px;
 }
 
 .deleteDialog h3 {
