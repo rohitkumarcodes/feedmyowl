@@ -445,6 +445,7 @@
   display: grid;
   gap: 6px;
   margin-top: 4px;
+  max-width: 200px;
 }
 
 .uncategorizedCta {
