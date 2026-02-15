@@ -18,6 +18,7 @@ import { getFeedLabel } from "@/features/feeds/state/feeds-workspace.selectors";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { isReservedFolderName } from "@/lib/shared/folders";
 import { BookmarkRibbonIcon } from "@/features/feeds/components/BookmarkRibbonIcon";
+import { StackedLayersIcon } from "@/features/feeds/components/StackedLayersIcon";
 import primitiveStyles from "../LeftPanePrimitives.module.css";
 import { PaneToggleIcon } from "../PaneToggleIcon";
 import { FeedItem } from "./FeedItem";
@@ -728,13 +729,12 @@ export function FolderTree({
             aria-current={selectedScope.type === "saved" ? "true" : undefined}
           >
             <span className={styles.folderNameWrap}>
-              <span className={styles.allFeedsLabelShim} aria-hidden="true">
-                <span className={styles.folderToggleChevronPlaceholder}>▸</span>
-                <BookmarkRibbonIcon
-                  className={`${styles.folderRowIcon} ${styles.scopeRowIcon}`}
-                  filled
-                />
-              </span>
+                <span className={styles.allFeedsLabelShim} aria-hidden="true">
+                  <span className={styles.folderToggleChevronPlaceholder}>▸</span>
+                  <BookmarkRibbonIcon
+                    className={`${styles.folderRowIcon} ${styles.scopeRowIcon}`}
+                  />
+                </span>
               <span className={styles.folderLabel}>Saved</span>
             </span>
             <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
@@ -744,31 +744,36 @@ export function FolderTree({
           <div className={styles.folderActionsSpacer} aria-hidden="true" />
         </div>
 
-        <div
-          className={`${styles.folderRowWrap} ${
-            selectedScope.type === "all" ? styles.folderRowWrapActive : ""
-          }`}
-        >
-          <button
-            type="button"
-            className={`${primitiveStyles.row} ${primitiveStyles.rowRegular} ${styles.folderRow} ${
-              styles.allFeedsRow
-            } ${selectedScope.type === "all" ? primitiveStyles.rowActive : ""}`}
-            onClick={onSelectAll}
-            aria-current={selectedScope.type === "all" ? "true" : undefined}
+        {readingMode === "checker" ? (
+          <div
+            className={`${styles.folderRowWrap} ${
+              selectedScope.type === "all" ? styles.folderRowWrapActive : ""
+            }`}
           >
-            <span className={styles.folderNameWrap}>
-              <span className={styles.allFeedsLabelShim} aria-hidden="true">
-                <span className={styles.folderToggleChevronPlaceholder}>▸</span>
+            <button
+              type="button"
+              className={`${primitiveStyles.row} ${primitiveStyles.rowRegular} ${styles.folderRow} ${
+                styles.allFeedsRow
+              } ${selectedScope.type === "all" ? primitiveStyles.rowActive : ""}`}
+              onClick={onSelectAll}
+              aria-current={selectedScope.type === "all" ? "true" : undefined}
+            >
+              <span className={styles.folderNameWrap}>
+                <span className={styles.allFeedsLabelShim} aria-hidden="true">
+                  <span className={styles.folderToggleChevronPlaceholder}>▸</span>
+                  <StackedLayersIcon
+                    className={`${styles.folderRowIcon} ${styles.scopeRowIcon}`}
+                  />
+                </span>
+                <span className={styles.folderLabel}>All feeds</span>
               </span>
-              <span className={styles.folderLabel}>All feeds</span>
-            </span>
-            <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
-              {feeds.length}
-            </span>
-          </button>
-          <div className={styles.folderActionsSpacer} aria-hidden="true" />
-        </div>
+              <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
+                {feeds.length}
+              </span>
+            </button>
+            <div className={styles.folderActionsSpacer} aria-hidden="true" />
+          </div>
+        ) : null}
 
         {/* "Unread" virtual scope row — only visible in checker mode. */}
         {readingMode === "checker" ? (
