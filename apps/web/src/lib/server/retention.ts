@@ -52,6 +52,7 @@ export async function isUserRetentionPurgeNeeded(userId: string): Promise<boolea
     FROM feed_items fi
     INNER JOIN feeds f ON f.id = fi.feed_id
     WHERE f.user_id = ${userId}
+      AND fi.saved_at IS NULL
     GROUP BY fi.feed_id
     HAVING COUNT(*) > ${FEED_ITEMS_PER_FEED_LIMIT}
     LIMIT 1
@@ -78,6 +79,7 @@ export async function purgeOldFeedItemsForUser(userId: string): Promise<number> 
       FROM feed_items fi
       INNER JOIN feeds f ON f.id = fi.feed_id
       WHERE f.user_id = ${userId}
+        AND fi.saved_at IS NULL
     ),
     to_delete AS (
       SELECT id
@@ -115,6 +117,7 @@ export async function purgeOldFeedItemsForFeed(params: {
       INNER JOIN feeds f ON f.id = fi.feed_id
       WHERE f.user_id = ${params.userId}
         AND fi.feed_id = ${params.feedId}
+        AND fi.saved_at IS NULL
     ),
     to_delete AS (
       SELECT id

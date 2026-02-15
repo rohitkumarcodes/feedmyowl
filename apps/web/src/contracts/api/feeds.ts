@@ -17,6 +17,7 @@ export interface FeedItemDto {
   author: string | null;
   publishedAt: IsoDateString | null;
   readAt: IsoDateString | null;
+  savedAt: IsoDateString | null;
   createdAt: IsoDateString;
   updatedAt: IsoDateString;
 }
@@ -103,6 +104,7 @@ export type FeedsCreateResponseBody =
 
 export type FeedsPatchRequestBody =
   | { action: "item.markRead"; itemId: string }
+  | { action: "item.setSaved"; itemId: string; saved: boolean }
   | { action: "items.markAllRead"; scopeType: string; scopeId?: string }
   | { action: "uncategorized.delete"; confirm: boolean }
   | { action: "uncategorized.move_to_folder"; folderId: string }
@@ -112,6 +114,12 @@ export interface MarkReadResponseBody {
   itemId: string;
   readAt: IsoDateString;
   alreadyRead?: boolean;
+}
+
+export interface ItemSetSavedResponseBody {
+  itemId: string;
+  savedAt: IsoDateString | null;
+  alreadySet?: boolean;
 }
 
 export interface UncategorizedDeleteResponseBody {
@@ -137,6 +145,7 @@ export interface AccountDeleteResponseBody {
 
 export type FeedsPatchResponseBody =
   | MarkReadResponseBody
+  | ItemSetSavedResponseBody
   | MarkAllReadResponseBody
   | UncategorizedDeleteResponseBody
   | UncategorizedMoveResponseBody

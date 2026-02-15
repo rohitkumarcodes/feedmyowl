@@ -31,6 +31,7 @@ interface SidebarProps {
   onSelectAll: () => void;
   /** Select the "Unread" virtual scope (checker mode only). */
   onSelectUnread: () => void;
+  onSelectSaved: () => void;
   onSelectUncategorized: () => void;
   onSelectFolder: (folderId: string) => void;
   onSelectFeed: (feedId: string) => void;
@@ -102,6 +103,7 @@ export function Sidebar({
   unreadCounts,
   onSelectAll,
   onSelectUnread,
+  onSelectSaved,
   onSelectUncategorized,
   onSelectFolder,
   onSelectFeed,
@@ -223,6 +225,7 @@ export function Sidebar({
         unreadCounts={unreadCounts}
         onSelectAll={onSelectAll}
         onSelectUnread={onSelectUnread}
+        onSelectSaved={onSelectSaved}
         onSelectUncategorized={onSelectUncategorized}
         onSelectFolder={onSelectFolder}
         onSelectFeed={onSelectFeed}

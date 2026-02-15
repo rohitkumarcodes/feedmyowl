@@ -5,6 +5,7 @@ import { handleApiRouteError } from "@/lib/server/api-errors";
 import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
 import type {
   AccountDeleteResponseBody,
+  ItemSetSavedResponseBody,
   MarkAllReadResponseBody,
   MarkReadResponseBody,
   UncategorizedDeleteResponseBody,
@@ -15,6 +16,7 @@ import {
   markAllFeedItemsReadForUser,
   markFeedItemReadForUser,
   moveUncategorizedFeedsToFolderForUser,
+  setFeedItemSavedForUser,
   type MarkAllReadScope,
 } from "@/lib/server/feed-service";
 import { getAppUser, parseRouteJson } from "./route.shared";
@@ -24,6 +26,7 @@ import { getAppUser, parseRouteJson } from "./route.shared";
  *
  * Supported actions:
  *   - item.markRead
+ *   - item.setSaved
  *   - items.markAllRead
  *   - uncategorized.delete
  *   - uncategorized.move_to_folder
@@ -74,6 +77,38 @@ export async function patchFeedsRoute(request: NextRequest) {
       } satisfies MarkReadResponseBody);
     }
 
+    if (payload.action === "item.setSaved") {
+      const itemId = payload.itemId;
+      const saved = payload.saved;
+
+      if (typeof itemId !== "string" || !itemId.trim()) {
+        return NextResponse.json({ error: "Item ID is required" }, { status: 400 });
+      }
+
+      if (typeof saved !== "boolean") {
+        return NextResponse.json({ error: "saved must be a boolean" }, { status: 400 });
+      }
+
+      const result = await setFeedItemSavedForUser(appUser.id, itemId, saved);
+
+      if (result.status === "not_found") {
+        return NextResponse.json({ error: "Article not found" }, { status: 404 });
+      }
+
+      if (result.status === "already_set") {
+        return NextResponse.json({
+          itemId: result.itemId,
+          savedAt: result.savedAt,
+          alreadySet: true,
+        } satisfies ItemSetSavedResponseBody);
+      }
+
+      return NextResponse.json({
+        itemId: result.itemId,
+        savedAt: result.savedAt,
+      } satisfies ItemSetSavedResponseBody);
+    }
+
     if (payload.action === "items.markAllRead") {
       const scopeType = payload.scopeType;
       if (typeof scopeType !== "string") {
@@ -83,7 +118,7 @@ export async function patchFeedsRoute(request: NextRequest) {
         );
       }
 
-      const validScopeTypes = ["all", "unread", "uncategorized", "folder", "feed"];
+      const validScopeTypes = ["all", "unread", "saved", "uncategorized", "folder", "feed"];
       if (!validScopeTypes.includes(scopeType)) {
         return NextResponse.json(
           { error: "Invalid scopeType." },
@@ -102,7 +137,7 @@ export async function patchFeedsRoute(request: NextRequest) {
         }
         scope = { type: scopeType, id: scopeId };
       } else {
-        scope = { type: scopeType as "all" | "unread" | "uncategorized" };
+        scope = { type: scopeType as "all" | "unread" | "saved" | "uncategorized" };
       }
 
       const result = await markAllFeedItemsReadForUser(appUser.id, scope);

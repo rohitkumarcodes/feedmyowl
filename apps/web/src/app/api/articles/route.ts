@@ -85,6 +85,7 @@ export async function GET(request: NextRequest) {
         author: item.author,
         publishedAt: item.publishedAt?.toISOString() ?? null,
         readAt: item.readAt?.toISOString() ?? null,
+        savedAt: item.savedAt?.toISOString() ?? null,
         createdAt: item.createdAt.toISOString(),
       })),
       nextCursor: page.nextCursor,

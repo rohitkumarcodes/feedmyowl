@@ -10,6 +10,7 @@ import {
   refreshFeeds as refreshFeedsRequest,
   renameFeed as renameFeedRequest,
   setFeedFolders as setFeedFoldersRequest,
+  setItemSaved as setItemSavedRequest,
 } from "@/lib/client/feeds";
 import { OFFLINE_CACHED_ARTICLES_MESSAGE } from "@/lib/shared/network-messages";
 
@@ -40,6 +41,7 @@ export function useFeedCrudActions({
   const [deletingFeedId, setDeletingFeedId] = useState<string | null>(null);
   const [renamingFeedId, setRenamingFeedId] = useState<string | null>(null);
   const [updatingFeedFoldersId, setUpdatingFeedFoldersId] = useState<string | null>(null);
+  const [savingItemId, setSavingItemId] = useState<string | null>(null);
 
   const markArticleAsRead = useCallback(
     async (articleId: string) => {
@@ -84,15 +86,34 @@ export function useFeedCrudActions({
    */
   const markAllArticlesAsRead = useCallback(
     async (scopeType: string, scopeId?: string) => {
-      /* Optimistic: set readAt on all unread items locally. */
+      /* Optimistic: set readAt on unread items locally in the specified scope. */
       const optimisticReadAt = new Date().toISOString();
       setFeeds((previousFeeds) =>
-        previousFeeds.map((feed) => ({
-          ...feed,
-          items: feed.items.map((item) =>
-            item.readAt === null ? { ...item, readAt: optimisticReadAt } : item,
-          ),
-        })),
+        previousFeeds.map((feed) => {
+          const feedMatchesScope =
+            scopeType === "all" ||
+            scopeType === "unread" ||
+            scopeType === "saved" ||
+            (scopeType === "feed" && feed.id === scopeId) ||
+            (scopeType === "folder" && scopeId ? feed.folderIds.includes(scopeId) : false) ||
+            (scopeType === "uncategorized" && feed.folderIds.length === 0);
+
+          if (!feedMatchesScope) {
+            return feed;
+          }
+
+          return {
+            ...feed,
+            items: feed.items.map((item) => {
+              const shouldMarkSavedOnly = scopeType === "saved";
+              const isInScope = shouldMarkSavedOnly ? item.savedAt != null : true;
+
+              return item.readAt === null && isInScope
+                ? { ...item, readAt: optimisticReadAt }
+                : item;
+            }),
+          };
+        }),
       );
 
       const result = await markAllItemsReadRequest(scopeType, scopeId);
@@ -115,6 +136,91 @@ export function useFeedCrudActions({
       );
     },
     [setErrorMessage, setFeeds, setInfoMessage],
+  );
+
+  const toggleArticleSaved = useCallback(
+    async (articleId: string) => {
+      if (savingItemId) {
+        return;
+      }
+
+      const article = allArticles.find((candidate) => candidate.id === articleId);
+      if (!article) {
+        return;
+      }
+
+      const wasSaved = article.savedAt != null;
+      const nextSaved = !wasSaved;
+      const previousSavedAt = article.savedAt ?? null;
+      const optimisticSavedAt = nextSaved ? new Date().toISOString() : null;
+
+      setFeeds((previousFeeds) =>
+        previousFeeds.map((feed) => {
+          if (feed.id !== article.feedId) {
+            return feed;
+          }
+
+          return {
+            ...feed,
+            items: feed.items.map((item) =>
+              item.id === articleId ? { ...item, savedAt: optimisticSavedAt } : item,
+            ),
+          };
+        }),
+      );
+
+      setSavingItemId(articleId);
+
+      const result = await setItemSavedRequest(articleId, nextSaved);
+      setSavingItemId(null);
+
+      if (!result.ok) {
+        // Revert optimistic update.
+        setFeeds((previousFeeds) =>
+          previousFeeds.map((feed) => {
+            if (feed.id !== article.feedId) {
+              return feed;
+            }
+
+            return {
+              ...feed,
+              items: feed.items.map((item) =>
+                item.id === articleId ? { ...item, savedAt: previousSavedAt } : item,
+              ),
+            };
+          }),
+        );
+
+        if (result.networkError) {
+          setErrorMessage("Could not connect to the server.");
+          return;
+        }
+
+        setErrorMessage(result.body?.error || "Unable to update saved state.");
+        return;
+      }
+
+      const persistedSavedAt =
+        result.body && "savedAt" in result.body
+          ? (result.body.savedAt ?? null)
+          : optimisticSavedAt;
+
+      setFeeds((previousFeeds) =>
+        previousFeeds.map((feed) => {
+          if (feed.id !== article.feedId) {
+            return feed;
+          }
+
+          return {
+            ...feed,
+            items: feed.items.map((item) =>
+              item.id === articleId ? { ...item, savedAt: persistedSavedAt } : item,
+            ),
+          };
+        }),
+      );
+    },
+    [allArticles, savingItemId, setErrorMessage, setFeeds],
   );
 
   const handleRefresh = useCallback(async () => {
@@ -319,8 +425,10 @@ export function useFeedCrudActions({
     deletingFeedId,
     renamingFeedId,
     updatingFeedFoldersId,
+    savingItemId,
     markArticleAsRead,
     markAllArticlesAsRead,
+    toggleArticleSaved,
     handleRefresh,
     handleDeleteFeed,
     handleRenameFeed,

@@ -3,6 +3,7 @@ import type { IsoDateString } from "./common";
 export type ArticleScopeDto =
   | { type: "all" }
   | { type: "unread" }
+  | { type: "saved" }
   | { type: "uncategorized" }
   | { type: "folder"; id: string }
   | { type: "feed"; id: string };
@@ -16,6 +17,7 @@ export interface ArticlePageItemDto {
   author: string | null;
   publishedAt: IsoDateString | null;
   readAt: IsoDateString | null;
+  savedAt: IsoDateString | null;
   createdAt: IsoDateString;
 }
 

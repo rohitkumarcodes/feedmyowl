@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   deleteUncategorizedFeedsForUser: vi.fn(),
   moveUncategorizedFeedsToFolderForUser: vi.fn(),
   markFeedItemReadForUser: vi.fn(),
+  setFeedItemSavedForUser: vi.fn(),
   getAppUser: vi.fn(),
   parseRouteJson: vi.fn(),
 }));
@@ -39,6 +40,7 @@ vi.mock("@/lib/server/feed-service", () => ({
   deleteUncategorizedFeedsForUser: mocks.deleteUncategorizedFeedsForUser,
   moveUncategorizedFeedsToFolderForUser: mocks.moveUncategorizedFeedsToFolderForUser,
   markFeedItemReadForUser: mocks.markFeedItemReadForUser,
+  setFeedItemSavedForUser: mocks.setFeedItemSavedForUser,
 }));
 
 vi.mock("./route.shared", () => ({
@@ -194,5 +196,62 @@ describe("PATCH /api/feeds uncategorized.move_to_folder", () => {
       "user_123",
       "folder_123",
     );
+  });
+});
+
+describe("PATCH /api/feeds item.setSaved", () => {
+  beforeEach(() => {
+    mocks.assertTrustedWriteOrigin.mockReturnValue(null);
+    mocks.getAppUser.mockResolvedValue({ id: "user_123", clerkId: "clerk_123" });
+    mocks.handleApiRouteError.mockImplementation(
+      () => new Response(JSON.stringify({ error: "Unexpected error" }), { status: 500 }),
+    );
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns 400 when itemId is missing", async () => {
+    mocks.parseRouteJson.mockResolvedValue({
+      action: "item.setSaved",
+      saved: true,
+    });
+
+    const response = await patchFeedsRoute(createPatchRequest({}));
+    expect(response.status).toBe(400);
+  });
+
+  it("returns 400 when saved is missing", async () => {
+    mocks.parseRouteJson.mockResolvedValue({
+      action: "item.setSaved",
+      itemId: "item_1",
+    });
+
+    const response = await patchFeedsRoute(createPatchRequest({}));
+    expect(response.status).toBe(400);
+  });
+
+  it("returns updated savedAt payload", async () => {
+    mocks.parseRouteJson.mockResolvedValue({
+      action: "item.setSaved",
+      itemId: "item_1",
+      saved: true,
+    });
+
+    mocks.setFeedItemSavedForUser.mockResolvedValue({
+      status: "updated",
+      itemId: "item_1",
+      savedAt: "2026-02-11T00:00:00.000Z",
+    });
+
+    const response = await patchFeedsRoute(createPatchRequest({}));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({
+      itemId: "item_1",
+      savedAt: "2026-02-11T00:00:00.000Z",
+    });
   });
 });

@@ -57,6 +57,7 @@ describe("GET /api/articles", () => {
           author: "Author",
           publishedAt: new Date("2026-02-11T10:00:00.000Z"),
           readAt: null,
+          savedAt: null,
           createdAt: new Date("2026-02-11T10:00:00.000Z"),
         },
       ],
@@ -81,6 +82,7 @@ describe("GET /api/articles", () => {
           author: "Author",
           publishedAt: "2026-02-11T10:00:00.000Z",
           readAt: null,
+          savedAt: null,
           createdAt: "2026-02-11T10:00:00.000Z",
         },
       ],
@@ -167,5 +169,22 @@ describe("GET /api/articles", () => {
 
     expect(response.status).toBe(200);
     expect(body.scope).toEqual({ type: "uncategorized" });
+  });
+
+  it("supports saved scope requests", async () => {
+    mocks.listArticlePageForUser.mockResolvedValue({
+      status: "ok",
+      items: [],
+      nextCursor: null,
+      hasMore: false,
+      limit: 40,
+      scope: { type: "saved" },
+    });
+
+    const response = await GET(buildRequest("scopeType=saved"));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.scope).toEqual({ type: "saved" });
   });
 });

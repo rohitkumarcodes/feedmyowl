@@ -180,6 +180,7 @@ export default async function FeedsPage() {
             author: item.author,
             publishedAt: toIsoString(item.publishedAt),
             readAt: toIsoString(item.readAt),
+            savedAt: toIsoString(item.savedAt),
             createdAt: item.createdAt.toISOString(),
           }),
         );

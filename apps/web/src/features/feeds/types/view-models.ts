@@ -24,6 +24,7 @@ export interface FeedItemViewModel {
   author: string | null;
   publishedAt: string | null;
   readAt: string | null;
+  savedAt: string | null;
   createdAt: string;
 }
 
@@ -58,6 +59,7 @@ export interface ArticleViewModel {
   publishedAt: string | null;
   createdAt: string;
   readAt: string | null;
+  savedAt: string | null;
   feedId: string;
   feedTitle: string;
   feedFolderIds: string[];

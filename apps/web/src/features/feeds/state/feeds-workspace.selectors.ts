@@ -27,6 +27,10 @@ export function doesArticleMatchSidebarScope(
     return article.readAt === null;
   }
 
+  if (selectedScope.type === "saved") {
+    return article.savedAt != null;
+  }
+
   if (selectedScope.type === "feed") {
     return article.feedId === selectedScope.feedId;
   }
@@ -83,6 +87,7 @@ export function selectAllArticles(feeds: FeedViewModel[]): ArticleViewModel[] {
         author: item.author,
         publishedAt: item.publishedAt,
         readAt: item.readAt,
+        savedAt: item.savedAt ?? null,
         createdAt: item.createdAt,
         feedId: feed.id,
         feedTitle: getFeedLabel(feed),
@@ -108,9 +113,24 @@ export function selectVisibleArticles(
   allArticles: ArticleViewModel[],
   selectedScope: SidebarScope,
 ): ArticleViewModel[] {
-  return allArticles.filter((article) =>
+  const visible = allArticles.filter((article) =>
     doesArticleMatchSidebarScope(article, selectedScope),
   );
+
+  if (selectedScope.type === "saved") {
+    visible.sort((left, right) => {
+      const leftTime = toTimeValue(left.savedAt);
+      const rightTime = toTimeValue(right.savedAt);
+
+      if (leftTime !== rightTime) {
+        return rightTime - leftTime;
+      }
+
+      return right.id.localeCompare(left.id);
+    });
+  }
+
+  return visible;
 }
 
 /**
@@ -141,6 +161,10 @@ export function selectScopeLabel(
 
   if (selectedScope.type === "unread") {
     return "Unread";
+  }
+
+  if (selectedScope.type === "saved") {
+    return "Saved";
   }
 
   if (selectedScope.type === "uncategorized") {
@@ -209,6 +233,10 @@ export function selectEmptyStateMessage(
 
   if (selectedScope.type === "unread") {
     return "No unread articles.";
+  }
+
+  if (selectedScope.type === "saved") {
+    return "No saved articles.";
   }
 
   if (selectedScope.type === "uncategorized") {

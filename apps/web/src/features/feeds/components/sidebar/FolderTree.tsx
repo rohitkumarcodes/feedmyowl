@@ -17,6 +17,7 @@ import type { UnreadCounts } from "@/features/feeds/state/unread-counts";
 import { getFeedLabel } from "@/features/feeds/state/feeds-workspace.selectors";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { isReservedFolderName } from "@/lib/shared/folders";
+import { BookmarkRibbonIcon } from "@/features/feeds/components/BookmarkRibbonIcon";
 import primitiveStyles from "../LeftPanePrimitives.module.css";
 import { PaneToggleIcon } from "../PaneToggleIcon";
 import { FeedItem } from "./FeedItem";
@@ -36,6 +37,7 @@ interface FolderTreeProps {
   onSelectAll: () => void;
   /** Select the "Unread" virtual scope (checker mode only). */
   onSelectUnread: () => void;
+  onSelectSaved: () => void;
   onSelectUncategorized: () => void;
   onSelectFolder: (folderId: string) => void;
   onSelectFeed: (feedId: string) => void;
@@ -427,6 +429,7 @@ export function FolderTree({
   unreadCounts,
   onSelectAll,
   onSelectUnread,
+  onSelectSaved,
   onSelectUncategorized,
   onSelectFolder,
   onSelectFeed,
@@ -553,6 +556,18 @@ export function FolderTree({
     const sorted = [...feeds];
     sorted.sort((a, b) => getFeedLabel(a).localeCompare(getFeedLabel(b)));
     return sorted;
+  }, [feeds]);
+
+  const savedArticleCount = useMemo(() => {
+    let total = 0;
+    for (const feed of feeds) {
+      for (const item of feed.items) {
+        if (item.savedAt) {
+          total += 1;
+        }
+      }
+    }
+    return total;
   }, [feeds]);
 
   const feedsByFolderId = useMemo(() => {
@@ -699,6 +714,35 @@ export function FolderTree({
   return (
     <>
       <div className={styles.sections}>
+        <div
+          className={`${styles.folderRowWrap} ${
+            selectedScope.type === "saved" ? styles.folderRowWrapActive : ""
+          }`}
+        >
+          <button
+            type="button"
+            className={`${primitiveStyles.row} ${primitiveStyles.rowRegular} ${styles.folderRow} ${
+              styles.allFeedsRow
+            } ${selectedScope.type === "saved" ? primitiveStyles.rowActive : ""}`}
+            onClick={onSelectSaved}
+            aria-current={selectedScope.type === "saved" ? "true" : undefined}
+          >
+            <span className={styles.folderNameWrap}>
+              <span className={styles.allFeedsLabelShim} aria-hidden="true">
+                <span className={styles.folderToggleChevronPlaceholder}>▸</span>
+                <BookmarkRibbonIcon
+                  className={`${styles.folderRowIcon} ${styles.scopeRowIcon}`}
+                />
+              </span>
+              <span className={styles.folderLabel}>Saved</span>
+            </span>
+            <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
+              {savedArticleCount}
+            </span>
+          </button>
+          <div className={styles.folderActionsSpacer} aria-hidden="true" />
+        </div>
+
         <div
           className={`${styles.folderRowWrap} ${
             selectedScope.type === "all" ? styles.folderRowWrapActive : ""
