@@ -19,6 +19,7 @@ import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { isReservedFolderName } from "@/lib/shared/folders";
 import { BookmarkRibbonIcon } from "@/features/feeds/components/BookmarkRibbonIcon";
 import { StackedLayersIcon } from "@/features/feeds/components/StackedLayersIcon";
+import { EyeIcon } from "@/features/feeds/components/EyeIcon";
 import primitiveStyles from "../LeftPanePrimitives.module.css";
 import { PaneToggleIcon } from "../PaneToggleIcon";
 import { FeedItem } from "./FeedItem";
@@ -793,6 +794,7 @@ export function FolderTree({
               <span className={styles.folderNameWrap}>
                 <span className={styles.allFeedsLabelShim} aria-hidden="true">
                   <span className={styles.folderToggleChevronPlaceholder}>▸</span>
+                  <EyeIcon className={`${styles.folderRowIcon} ${styles.scopeRowIcon}`} />
                 </span>
                 <span className={styles.folderLabel}>Unread</span>
               </span>
