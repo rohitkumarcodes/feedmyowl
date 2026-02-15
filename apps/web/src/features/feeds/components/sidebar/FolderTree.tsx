@@ -732,6 +732,7 @@ export function FolderTree({
                 <span className={styles.folderToggleChevronPlaceholder}>▸</span>
                 <BookmarkRibbonIcon
                   className={`${styles.folderRowIcon} ${styles.scopeRowIcon}`}
+                  filled
                 />
               </span>
               <span className={styles.folderLabel}>Saved</span>

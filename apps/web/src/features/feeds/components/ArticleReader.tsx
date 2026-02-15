@@ -191,7 +191,10 @@ export function ArticleReader({ article, isSavingSaved, onToggleSaved }: Article
               data-saved={article.savedAt != null}
               disabled={isSavingSaved}
             >
-              <BookmarkRibbonIcon className={styles.saveButtonIcon} />
+              <BookmarkRibbonIcon
+                className={styles.saveButtonIcon}
+                filled={article.savedAt != null}
+              />
               <span>{article.savedAt != null ? "Saved" : "Save"}</span>
             </button>
           ) : null}
