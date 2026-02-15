@@ -446,7 +446,12 @@
   gap: 6px;
   justify-content: center;
   margin: 4px auto 0;
-  max-width: 240px;
+  max-width: 360px;
+  width: 100%;
+}
+
+.deleteDialogActions > button {
+  width: 100%;
 }
 
 .uncategorizedCta {
@@ -534,6 +539,7 @@
   color: var(--text-secondary);
   font-size: var(--text-sm);
   margin-bottom: 12px;
+  text-align: center;
 }
 
 .deleteDialogOptionCards {
