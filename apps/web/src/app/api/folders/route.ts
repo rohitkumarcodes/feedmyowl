@@ -5,17 +5,26 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth";
-import { handleApiRouteError } from "@/lib/api-errors";
-import { ensureUserRecord } from "@/lib/app-user";
-import { assertTrustedWriteOrigin } from "@/lib/csrf";
-import { parseRequestJson } from "@/lib/http/request-json";
-import { applyRouteRateLimit } from "@/lib/rate-limit";
+import { requireAuth } from "@/lib/server/auth";
+import { handleApiRouteError } from "@/lib/server/api-errors";
+import { ensureUserRecord } from "@/lib/server/app-user";
+import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
+import { parseRequestJson } from "@/lib/server/http/request-json";
+import { applyRouteRateLimit } from "@/lib/server/rate-limit";
 import {
   createFolderForUser,
   FOLDER_LIMIT,
   FOLDER_NAME_MAX_LENGTH,
-} from "@/lib/folder-service";
+} from "@/lib/server/folder-service";
+import type { FolderCreateResponseBody } from "@/contracts/api/folders";
+
+function toIsoString(value: Date | string | null | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+
+  return typeof value === "string" ? value : value.toISOString();
+}
 
 /**
  * POST /api/folders
@@ -62,7 +71,7 @@ export async function POST(request: NextRequest) {
           error: `Folder name must be 1-${FOLDER_NAME_MAX_LENGTH} characters.`,
           code: "invalid_name",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -72,18 +81,17 @@ export async function POST(request: NextRequest) {
           error: `You can have up to ${FOLDER_LIMIT} folders.`,
           code: "folder_limit_reached",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (result.status === "reserved_name") {
       return NextResponse.json(
         {
-          error:
-            "This name is reserved. Please choose a different folder name.",
+          error: "This name is reserved. Please choose a different folder name.",
           code: "reserved_name",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -93,11 +101,20 @@ export async function POST(request: NextRequest) {
           error: "A folder with this name already exists.",
           code: "duplicate_name",
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
-    return NextResponse.json({ folder: result.folder }, { status: 201 });
+    const fallbackCreatedAt = new Date().toISOString();
+    const folder = {
+      ...result.folder,
+      createdAt: toIsoString(result.folder.createdAt) ?? fallbackCreatedAt,
+      updatedAt: toIsoString(result.folder.updatedAt) ?? fallbackCreatedAt,
+    };
+
+    return NextResponse.json({ folder } satisfies FolderCreateResponseBody, {
+      status: 201,
+    });
   } catch (error) {
     return handleApiRouteError(error, "api.folders.post");
   }

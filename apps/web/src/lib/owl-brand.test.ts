@@ -6,7 +6,7 @@ import {
   buildOwlFaviconDataUri,
   coerceOwlAscii,
   isOwlAscii,
-} from "@/lib/owl-brand";
+} from "@/lib/shared/owl-brand";
 
 function extractFaviconText(dataUri: string): string {
   const encodedSvg = dataUri.slice("data:image/svg+xml,".length);

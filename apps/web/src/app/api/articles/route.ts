@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth";
-import { handleApiRouteError } from "@/lib/api-errors";
-import { ensureUserRecord } from "@/lib/app-user";
+import { requireAuth } from "@/lib/server/auth";
+import { handleApiRouteError } from "@/lib/server/api-errors";
+import { ensureUserRecord } from "@/lib/server/app-user";
 import {
   decodeArticleCursor,
   parseArticlePageLimit,
   parseScopeFromSearchParams,
-  type ArticlePageResponseBody,
-} from "@/lib/article-pagination";
-import { listArticlePageForUser } from "@/lib/article-service";
+} from "@/lib/shared/article-pagination";
+import type { ArticlePageResponseBody } from "@/contracts/api/articles";
+import { listArticlePageForUser } from "@/lib/server/article-service";
 
 /**
  * GET /api/articles
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
           error: scopeResult.error,
           code: scopeResult.code,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
           error: limitResult.error,
           code: limitResult.code,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
           error: decodedCursor.error,
           code: decodedCursor.code,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -101,4 +101,3 @@ export async function GET(request: NextRequest) {
     return handleApiRouteError(error, "api.articles.get");
   }
 }
-

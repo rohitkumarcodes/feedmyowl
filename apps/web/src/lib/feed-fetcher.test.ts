@@ -7,11 +7,11 @@ vi.mock("node:dns/promises", () => ({
   lookup: mockLookup,
 }));
 
-vi.mock("@/lib/error-tracking", () => ({
+vi.mock("@/lib/server/error-tracking", () => ({
   captureMessage: mockCaptureMessage,
 }));
 
-import { fetchFeedXml } from "@/lib/feed-fetcher";
+import { fetchFeedXml } from "@/lib/server/feed-fetcher";
 
 describe("fetchFeedXml", () => {
   const fetchMock = vi.fn();
@@ -36,7 +36,7 @@ describe("fetchFeedXml", () => {
     await expect(
       fetchFeedXml("http://127.0.0.1/feed.xml", {
         retries: 0,
-      })
+      }),
     ).rejects.toThrow(/blocked/i);
 
     expect(fetchMock).not.toHaveBeenCalled();
@@ -49,10 +49,10 @@ describe("fetchFeedXml", () => {
         new Response("<rss><channel><title>OK</title></channel></rss>", {
           status: 200,
           headers: {
-            etag: "\"etag-123\"",
+            etag: '"etag-123"',
             "last-modified": "Wed, 11 Feb 2026 00:00:00 GMT",
           },
-        })
+        }),
       );
 
     const result = await fetchFeedXml("https://example.com/feed.xml", {
@@ -62,7 +62,7 @@ describe("fetchFeedXml", () => {
 
     expect(result.status).toBe("ok");
     expect(result.text).toContain("<rss>");
-    expect(result.etag).toBe("\"etag-123\"");
+    expect(result.etag).toBe('"etag-123"');
     expect(result.lastModified).toBe("Wed, 11 Feb 2026 00:00:00 GMT");
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
@@ -72,20 +72,20 @@ describe("fetchFeedXml", () => {
       new Response(null, {
         status: 304,
         headers: {
-          etag: "\"etag-new\"",
+          etag: '"etag-new"',
           "last-modified": "Wed, 11 Feb 2026 00:00:00 GMT",
         },
-      })
+      }),
     );
 
     const result = await fetchFeedXml("https://example.com/feed.xml", {
       retries: 0,
-      etag: "\"etag-old\"",
+      etag: '"etag-old"',
       lastModified: "Tue, 10 Feb 2026 00:00:00 GMT",
     });
 
     expect(result.status).toBe("not_modified");
-    expect(result.etag).toBe("\"etag-new\"");
+    expect(result.etag).toBe('"etag-new"');
     expect(result.lastModified).toBe("Wed, 11 Feb 2026 00:00:00 GMT");
   });
 
@@ -96,13 +96,13 @@ describe("fetchFeedXml", () => {
         headers: {
           location: "http://169.254.169.254/latest/meta-data",
         },
-      })
+      }),
     );
 
     await expect(
       fetchFeedXml("https://example.com/feed.xml", {
         retries: 0,
-      })
+      }),
     ).rejects.toThrow(/blocked/i);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);

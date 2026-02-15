@@ -14,7 +14,7 @@
  */
 
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { getTrustedOrigins } from "@/lib/trusted-origins";
+import { getTrustedOrigins } from "@/lib/server/trusted-origins";
 
 /**
  * Routes that do NOT require authentication.
@@ -36,7 +36,7 @@ export default clerkMiddleware(
   },
   {
     authorizedParties: getTrustedOrigins(),
-  }
+  },
 );
 
 /**

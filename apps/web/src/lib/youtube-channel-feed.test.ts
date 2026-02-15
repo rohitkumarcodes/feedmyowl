@@ -4,11 +4,11 @@ const mocks = vi.hoisted(() => ({
   fetchRemoteText: vi.fn(),
 }));
 
-vi.mock("@/lib/feed-fetcher", () => ({
+vi.mock("@/lib/server/feed-fetcher", () => ({
   fetchRemoteText: mocks.fetchRemoteText,
 }));
 
-import { resolveYouTubeChannelFeedUrl } from "@/lib/youtube-channel-feed";
+import { resolveYouTubeChannelFeedUrl } from "@/lib/server/youtube-channel-feed";
 
 describe("resolveYouTubeChannelFeedUrl", () => {
   beforeEach(() => {
@@ -29,7 +29,7 @@ describe("resolveYouTubeChannelFeedUrl", () => {
     const input = `https://www.youtube.com/channel/${channelId}/videos`;
 
     await expect(resolveYouTubeChannelFeedUrl(input)).resolves.toBe(
-      `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
+      `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`,
     );
     expect(mocks.fetchRemoteText).not.toHaveBeenCalled();
   });
@@ -48,7 +48,7 @@ describe("resolveYouTubeChannelFeedUrl", () => {
     });
 
     await expect(resolveYouTubeChannelFeedUrl(input)).resolves.toBe(
-      `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
+      `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`,
     );
 
     expect(mocks.fetchRemoteText).toHaveBeenCalledWith(input, {
@@ -59,4 +59,3 @@ describe("resolveYouTubeChannelFeedUrl", () => {
     });
   });
 });
-

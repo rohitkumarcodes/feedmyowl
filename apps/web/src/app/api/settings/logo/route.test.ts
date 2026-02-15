@@ -12,15 +12,16 @@ const mocks = vi.hoisted(() => ({
   assertTrustedWriteOrigin: vi.fn(),
 }));
 
-vi.mock("@/lib/auth", () => ({
+vi.mock("@/lib/server/auth", () => ({
   requireAuth: mocks.requireAuth,
+  isAuthRequiredError: vi.fn(() => false),
 }));
 
-vi.mock("@/lib/app-user", () => ({
+vi.mock("@/lib/server/app-user", () => ({
   ensureUserRecord: mocks.ensureUserRecord,
 }));
 
-vi.mock("@/lib/database", () => ({
+vi.mock("@/lib/server/database", () => ({
   db: {
     update: mocks.dbUpdate,
   },
@@ -30,11 +31,11 @@ vi.mock("@/lib/database", () => ({
   },
 }));
 
-vi.mock("@/lib/api-errors", () => ({
+vi.mock("@/lib/server/api-errors", () => ({
   handleApiRouteError: mocks.handleApiRouteError,
 }));
 
-vi.mock("@/lib/csrf", () => ({
+vi.mock("@/lib/server/csrf", () => ({
   assertTrustedWriteOrigin: mocks.assertTrustedWriteOrigin,
 }));
 
@@ -64,7 +65,7 @@ describe("PATCH /api/settings/logo", () => {
 
     mocks.eq.mockReturnValue("where-clause");
     mocks.handleApiRouteError.mockImplementation(() =>
-      Response.json({ error: "Internal server error" }, { status: 500 })
+      Response.json({ error: "Internal server error" }, { status: 500 }),
     );
   });
 
@@ -92,14 +93,11 @@ describe("PATCH /api/settings/logo", () => {
   });
 
   it("returns 400 when request JSON is malformed", async () => {
-    const malformedRequest = new Request(
-      "https://app.feedmyowl.test/api/settings/logo",
-      {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: "{not-json",
-      }
-    ) as NextRequest;
+    const malformedRequest = new Request("https://app.feedmyowl.test/api/settings/logo", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: "{not-json",
+    }) as NextRequest;
 
     const response = await PATCH(malformedRequest);
     expect(response.status).toBe(400);
@@ -119,7 +117,7 @@ describe("PATCH /api/settings/logo", () => {
   it("delegates unexpected errors to shared API error handling", async () => {
     mocks.requireAuth.mockRejectedValue(new Error("Unauthorized: user is not signed in"));
     mocks.handleApiRouteError.mockReturnValue(
-      Response.json({ error: "Unauthorized" }, { status: 401 })
+      Response.json({ error: "Unauthorized" }, { status: 401 }),
     );
 
     const response = await PATCH(createPatchRequest({ owlAscii: "{o,o}" }));
@@ -127,7 +125,7 @@ describe("PATCH /api/settings/logo", () => {
 
     expect(mocks.handleApiRouteError).toHaveBeenCalledWith(
       expect.any(Error),
-      "api.settings.logo.patch"
+      "api.settings.logo.patch",
     );
     expect(response.status).toBe(401);
     expect(body.error).toBe("Unauthorized");

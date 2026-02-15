@@ -1,12 +1,10 @@
 import type { NextRequest } from "next/server";
-import { ensureUserRecord } from "@/lib/app-user";
-import { requireAuth } from "@/lib/auth";
-import { parseRequestJson } from "@/lib/http/request-json";
+import type { ApiErrorBody } from "@/contracts/api/common";
+import { ensureUserRecord } from "@/lib/server/app-user";
+import { requireAuth } from "@/lib/server/auth";
+import { parseRequestJson } from "@/lib/server/http/request-json";
 
-export interface ApiError {
-  error: string;
-  code?: string;
-}
+export type ApiError = ApiErrorBody;
 
 export async function getAppUser() {
   const { clerkId } = await requireAuth();
@@ -14,7 +12,7 @@ export async function getAppUser() {
 }
 
 export async function parseRouteJson(
-  request: NextRequest
+  request: NextRequest,
 ): Promise<Record<string, unknown> | null> {
   return await parseRequestJson(request);
 }

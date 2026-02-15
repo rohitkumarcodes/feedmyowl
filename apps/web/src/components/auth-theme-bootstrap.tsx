@@ -6,7 +6,7 @@ import {
   clearThemeModeFromDocument,
   subscribeToSystemThemeModeChanges,
   type ThemeMode,
-} from "@/lib/theme-mode";
+} from "@/lib/shared/theme-mode";
 
 interface AuthThemeBootstrapProps {
   initialThemeMode: ThemeMode;

@@ -19,9 +19,9 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { verifyStripeWebhook } from "@/lib/payments";
-import { db, eq, users } from "@/lib/database";
-import { captureError } from "@/lib/error-tracking";
+import { verifyStripeWebhook } from "@/lib/server/payments";
+import { db, eq, users } from "@/lib/server/database";
+import { captureError } from "@/lib/server/error-tracking";
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     if (!signature) {
       return NextResponse.json(
         { error: "Missing Stripe-Signature header" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -42,10 +42,7 @@ export async function POST(request: NextRequest) {
     try {
       event = verifyStripeWebhook(body, signature);
     } catch {
-      return NextResponse.json(
-        { error: "Invalid webhook signature" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Invalid webhook signature" }, { status: 401 });
     }
 
     // --- Step 2: Handle the verified event ---
@@ -91,9 +88,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true });
   } catch (error) {
     captureError(error, { webhook: "stripe" });
-    return NextResponse.json(
-      { error: "Webhook processing failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
   }
 }

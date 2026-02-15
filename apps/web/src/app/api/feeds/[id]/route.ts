@@ -5,19 +5,31 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth";
-import { handleApiRouteError } from "@/lib/api-errors";
-import { ensureUserRecord } from "@/lib/app-user";
-import { assertTrustedWriteOrigin } from "@/lib/csrf";
-import { parseRequestJson } from "@/lib/http/request-json";
-import { applyRouteRateLimit } from "@/lib/rate-limit";
+import { requireAuth } from "@/lib/server/auth";
+import { handleApiRouteError } from "@/lib/server/api-errors";
+import { ensureUserRecord } from "@/lib/server/app-user";
+import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
+import { parseRequestJson } from "@/lib/server/http/request-json";
+import { applyRouteRateLimit } from "@/lib/server/rate-limit";
+import type {
+  FeedIdDeleteResponseBody,
+  FeedIdPatchResponseBody,
+} from "@/contracts/api/feeds";
 import {
   deleteFeedForUser,
   renameFeedForUser,
   setFeedFoldersForUser,
-} from "@/lib/feed-service";
+} from "@/lib/server/feed-service";
 
 const FEED_CUSTOM_TITLE_MAX_LENGTH = 255;
+
+function toIsoString(value: Date | string | null | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+
+  return typeof value === "string" ? value : value.toISOString();
+}
 
 /**
  * PATCH /api/feeds/[id]
@@ -25,7 +37,7 @@ const FEED_CUSTOM_TITLE_MAX_LENGTH = 255;
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const csrfFailure = assertTrustedWriteOrigin(request, "api.feeds.id.patch");
@@ -57,13 +69,16 @@ export async function PATCH(
     if (payload?.action === "feed.setFolders") {
       const folderIds = payload.folderIds;
 
-      if (!Array.isArray(folderIds) || !folderIds.every((value) => typeof value === "string")) {
+      if (
+        !Array.isArray(folderIds) ||
+        !folderIds.every((value) => typeof value === "string")
+      ) {
         return NextResponse.json(
           {
             error: "folderIds must be an array of folder IDs.",
             code: "invalid_folder_ids",
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -80,7 +95,7 @@ export async function PATCH(
             code: "invalid_folder_ids",
             invalidFolderIds: result.invalidFolderIds,
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -89,7 +104,7 @@ export async function PATCH(
           id,
           folderIds: result.folderIds,
         },
-      });
+      } satisfies FeedIdPatchResponseBody);
     }
 
     const nextName = payload?.name;
@@ -105,21 +120,28 @@ export async function PATCH(
           error: `Name must be ${FEED_CUSTOM_TITLE_MAX_LENGTH} characters or fewer.`,
           code: "name_too_long",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const updatedFeed = await renameFeedForUser(
       user.id,
       id,
-      trimmedName.length > 0 ? trimmedName : null
+      trimmedName.length > 0 ? trimmedName : null,
     );
 
     if (!updatedFeed) {
       return NextResponse.json({ error: "Feed not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ feed: updatedFeed });
+    const updatedFeedDto = {
+      ...updatedFeed,
+      updatedAt: toIsoString(updatedFeed.updatedAt) ?? new Date().toISOString(),
+    };
+
+    return NextResponse.json({
+      feed: updatedFeedDto,
+    } satisfies FeedIdPatchResponseBody);
   } catch (error) {
     return handleApiRouteError(error, "api.feeds.id.patch");
   }
@@ -131,7 +153,7 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const csrfFailure = assertTrustedWriteOrigin(request, "api.feeds.id.delete");
@@ -166,7 +188,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Feed not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true } satisfies FeedIdDeleteResponseBody);
   } catch (error) {
     return handleApiRouteError(error, "api.feeds.id.delete");
   }

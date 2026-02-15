@@ -5,11 +5,11 @@ import {
   isImportFailureRow,
   parseRetryAfterSeconds,
   reconcileChunkRowsByUrl,
-} from "@/lib/feed-import-client";
+} from "@/lib/shared/feed-import-client";
 import type {
   FeedImportEntry,
   FeedImportRowResult,
-} from "@/lib/feed-import-types";
+} from "@/lib/shared/feed-import-types";
 
 describe("feed import client helpers", () => {
   it("parses Retry-After seconds and clamps to supported bounds", () => {
@@ -71,7 +71,7 @@ describe("feed import client helpers", () => {
   it("builds fallback chunk rows and classifies failure rows", () => {
     const rows = buildChunkFallbackRows(
       [{ url: "https://a.example.com/feed.xml", folderNames: [], customTitle: null }],
-      "Could not connect to the server."
+      "Could not connect to the server.",
     );
 
     expect(rows).toEqual([
@@ -87,7 +87,7 @@ describe("feed import client helpers", () => {
       isImportFailureRow({
         url: "https://ok.example.com/feed.xml",
         status: "imported",
-      } as FeedImportRowResult)
+      } as FeedImportRowResult),
     ).toBe(false);
   });
 
@@ -126,11 +126,11 @@ describe("feed import client helpers", () => {
     expect(report).toContain("Failures:");
     expect(report).toContain("https://a.example.com/feed.xml [invalid_xml]");
     expect(report).toContain(
-      "https://b.example.com/feed.xml [multiple_candidates] - Choose one feed URL manually."
+      "https://b.example.com/feed.xml [multiple_candidates] - Choose one feed URL manually.",
     );
     expect(report).toContain("Warnings:");
     expect(report).toContain(
-      'https://c.example.com/feed.xml [warning] - Folder "Tech" could not be created.'
+      'https://c.example.com/feed.xml [warning] - Folder "Tech" could not be created.',
     );
   });
 });

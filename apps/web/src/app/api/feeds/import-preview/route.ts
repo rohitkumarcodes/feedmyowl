@@ -1,27 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth";
-import { ensureUserRecord } from "@/lib/app-user";
-import { handleApiRouteError } from "@/lib/api-errors";
-import { assertTrustedWriteOrigin } from "@/lib/csrf";
-import { captureMessage } from "@/lib/error-tracking";
-import { parseRequestJsonWithLimit } from "@/lib/http/request-json";
-import { applyRouteRateLimit } from "@/lib/rate-limit";
-import { getFoldersForUser } from "@/lib/folder-service";
-import { normalizeFeedUrl } from "@/lib/feed-url";
+import { requireAuth } from "@/lib/server/auth";
+import { ensureUserRecord } from "@/lib/server/app-user";
+import { handleApiRouteError } from "@/lib/server/api-errors";
+import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
+import { captureMessage } from "@/lib/server/error-tracking";
+import { parseRequestJsonWithLimit } from "@/lib/server/http/request-json";
+import { applyRouteRateLimit } from "@/lib/server/rate-limit";
+import { getFoldersForUser } from "@/lib/server/folder-service";
+import { normalizeFeedUrl } from "@/lib/shared/feed-url";
 import {
   normalizeAndMergeImportEntries,
   parseImportFileContents,
-} from "@/lib/feed-import-file";
+} from "@/lib/shared/feed-import-file";
 import type {
   FeedImportEntry,
   FeedImportPreview,
   FeedImportPreviewEntry,
   FeedImportSourceType,
-} from "@/lib/feed-import-types";
+} from "@/lib/shared/feed-import-types";
 import {
   FEED_IMPORT_MAX_TOTAL_ENTRIES,
   FEED_IMPORT_MAX_REQUEST_BYTES,
-} from "@/lib/feed-import-types";
+} from "@/lib/shared/feed-import-types";
 
 interface ParseFileResult {
   status: "ok";
@@ -64,13 +64,16 @@ function badRequest(error: string) {
 
 /**
  * POST /api/feeds/import-preview
- * 
+ *
  * Generates a preview of an import file without actually importing.
  * Validates URLs and checks for existing subscriptions.
  */
 export async function POST(request: NextRequest) {
   try {
-    const csrfFailure = assertTrustedWriteOrigin(request, "api.feeds.import_preview.post");
+    const csrfFailure = assertTrustedWriteOrigin(
+      request,
+      "api.feeds.import_preview.post",
+    );
     if (csrfFailure) {
       return csrfFailure;
     }
@@ -100,7 +103,7 @@ export async function POST(request: NextRequest) {
 
     if (payloadResult.status === "payload_too_large") {
       return badRequest(
-        `Request payload exceeds ${FEED_IMPORT_MAX_REQUEST_BYTES} bytes.`
+        `Request payload exceeds ${FEED_IMPORT_MAX_REQUEST_BYTES} bytes.`,
       );
     }
 
@@ -116,7 +119,7 @@ export async function POST(request: NextRequest) {
       parseResult = parseImportFile(payload.file);
     } catch (error) {
       return badRequest(
-        error instanceof Error ? error.message : "Could not parse import file."
+        error instanceof Error ? error.message : "Could not parse import file.",
       );
     }
 
@@ -128,7 +131,7 @@ export async function POST(request: NextRequest) {
 
     if (entries.length > FEED_IMPORT_MAX_TOTAL_ENTRIES) {
       return badRequest(
-        `Import file contains ${entries.length} feeds. Maximum is ${FEED_IMPORT_MAX_TOTAL_ENTRIES}.`
+        `Import file contains ${entries.length} feeds. Maximum is ${FEED_IMPORT_MAX_TOTAL_ENTRIES}.`,
       );
     }
 
@@ -140,13 +143,11 @@ export async function POST(request: NextRequest) {
           return null;
         }
         return findExistingFeedForUserByUserId(appUser.id, normalizedUrl);
-      })
+      }),
     );
 
     const userFolders = await getFoldersForUser(appUser.id);
-    const existingFolderSet = new Set(
-      userFolders.map((f) => f.name.toLowerCase())
-    );
+    const existingFolderSet = new Set(userFolders.map((f) => f.name.toLowerCase()));
 
     // Collect all folder names from the import
     const importFolderSet = new Set<string>();
@@ -174,16 +175,12 @@ export async function POST(request: NextRequest) {
       if (existingFeed) {
         // Check if folder assignments differ
         const existingFolderNames = userFolders
-          .filter((f) =>
-            existingFeed.folderIds?.some((fid) => fid === f.id)
-          )
+          .filter((f) => existingFeed.folderIds?.some((fid) => fid === f.id))
           .map((f) => f.name);
 
-        const importFoldersLower = new Set(
-          entry.folderNames.map((f) => f.toLowerCase())
-        );
+        const importFoldersLower = new Set(entry.folderNames.map((f) => f.toLowerCase()));
         const existingFoldersLower = new Set(
-          existingFolderNames.map((f) => f.toLowerCase())
+          existingFolderNames.map((f) => f.toLowerCase()),
         );
 
         // Check if folders are different
@@ -208,7 +205,10 @@ export async function POST(request: NextRequest) {
       const invalidFolders: string[] = [];
       for (const folderName of entry.folderNames) {
         const normalizedFolder = folderName.trim().toLowerCase();
-        if (!existingFolderSet.has(normalizedFolder) && !importFolderSet.has(folderName)) {
+        if (
+          !existingFolderSet.has(normalizedFolder) &&
+          !importFolderSet.has(folderName)
+        ) {
           invalidFolders.push(folderName);
         }
       }
@@ -251,7 +251,7 @@ export async function POST(request: NextRequest) {
     };
 
     captureMessage(
-      `feeds.import_preview.completed route=api.feeds.import_preview.post source=${sourceType} total=${preview.totalCount} new=${preview.newCount} duplicates=${preview.duplicateCount} errors=${preview.errorCount}`
+      `feeds.import_preview.completed route=api.feeds.import_preview.post source=${sourceType} total=${preview.totalCount} new=${preview.newCount} duplicates=${preview.duplicateCount} errors=${preview.errorCount}`,
     );
 
     return NextResponse.json(preview);
@@ -265,11 +265,10 @@ export async function POST(request: NextRequest) {
  * This is a wrapper that also returns folder IDs.
  */
 async function findExistingFeedForUserByUserId(userId: string, url: string) {
-  const { db } = await import("@/lib/database");
+  const { db } = await import("@/lib/server/database");
 
   const feed = await db.query.feeds.findFirst({
-    where: (feeds, { eq, and }) =>
-      and(eq(feeds.userId, userId), eq(feeds.url, url)),
+    where: (feeds, { eq, and }) => and(eq(feeds.userId, userId), eq(feeds.url, url)),
   });
 
   if (!feed) {

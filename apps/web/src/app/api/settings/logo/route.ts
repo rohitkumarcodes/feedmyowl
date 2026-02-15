@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth";
-import { ensureUserRecord } from "@/lib/app-user";
-import { db, eq, users } from "@/lib/database";
-import { handleApiRouteError } from "@/lib/api-errors";
-import { assertTrustedWriteOrigin } from "@/lib/csrf";
-import { parseRequestJson } from "@/lib/http/request-json";
-import { isOwlAscii } from "@/lib/owl-brand";
+import { requireAuth } from "@/lib/server/auth";
+import { ensureUserRecord } from "@/lib/server/app-user";
+import { db, eq, users } from "@/lib/server/database";
+import { handleApiRouteError } from "@/lib/server/api-errors";
+import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
+import { parseRequestJson } from "@/lib/server/http/request-json";
+import { isOwlAscii } from "@/lib/shared/owl-brand";
+import type { SettingsLogoPatchResponseBody } from "@/contracts/api/settings";
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -36,7 +37,7 @@ export async function PATCH(request: NextRequest) {
       })
       .where(eq(users.id, user.id));
 
-    return NextResponse.json({ owlAscii });
+    return NextResponse.json({ owlAscii } satisfies SettingsLogoPatchResponseBody);
   } catch (error) {
     return handleApiRouteError(error, "api.settings.logo.patch");
   }

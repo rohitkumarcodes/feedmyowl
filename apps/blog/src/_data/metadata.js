@@ -19,11 +19,11 @@ function resolveAbsoluteUrl(value, fallback) {
 
 const siteUrl = resolveAbsoluteUrl(
   process.env.BLOG_SITE_URL || process.env.NEXT_PUBLIC_LANDING_PAGE_URL,
-  "https://feedmyowl.com"
+  "https://feedmyowl.com",
 );
 const appUrl = resolveAbsoluteUrl(
   process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL,
-  "https://app.feedmyowl.com"
+  "https://app.feedmyowl.com",
 );
 
 export default {

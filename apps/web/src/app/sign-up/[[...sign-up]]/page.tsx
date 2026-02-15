@@ -9,7 +9,7 @@
  */
 
 import { redirect } from "next/navigation";
-import { getAuthUserId, SignUpForm } from "@/lib/auth";
+import { getAuthUserId, SignUpForm } from "@/lib/server/auth";
 import styles from "@/app/auth-page.module.css";
 
 /**

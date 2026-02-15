@@ -7,16 +7,16 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth";
-import { db, eq, users } from "@/lib/database";
-import { handleApiRouteError } from "@/lib/api-errors";
-import { ensureUserRecord } from "@/lib/app-user";
-import { captureMessage } from "@/lib/error-tracking";
+import { requireAuth } from "@/lib/server/auth";
+import { db, eq, users } from "@/lib/server/database";
+import { handleApiRouteError } from "@/lib/server/api-errors";
+import { ensureUserRecord } from "@/lib/server/app-user";
+import { captureMessage } from "@/lib/server/error-tracking";
 import {
   getFeedMembershipFolderIds,
   resolveFeedFolderIds,
-} from "@/lib/folder-memberships";
-import { applyRouteRateLimit } from "@/lib/rate-limit";
+} from "@/lib/shared/folder-memberships";
+import { applyRouteRateLimit } from "@/lib/server/rate-limit";
 
 interface FolderRow {
   id: string;
@@ -66,7 +66,10 @@ const FOLDER_PATH_SEPARATOR = " / ";
 /**
  * Render a single feed as an OPML outline element.
  */
-function buildFeedOutline(feed: { url: string; title: string | null; customTitle: string | null }, indent: string): string {
+function buildFeedOutline(
+  feed: { url: string; title: string | null; customTitle: string | null },
+  indent: string,
+): string {
   const title = escapeXml(feed.customTitle || feed.title || feed.url);
   const url = escapeXml(feed.url);
   return `${indent}<outline text="${title}" title="${title}" type="rss" xmlUrl="${url}" />`;
@@ -103,7 +106,7 @@ function renderFolderNode(node: FolderTreeNode, depth: number): string {
 
   // Sort children alphabetically.
   const sortedChildren = [...node.children.values()].sort((a, b) =>
-    a.name.localeCompare(b.name)
+    a.name.localeCompare(b.name),
   );
 
   // Sort feeds alphabetically by display label.
@@ -212,7 +215,7 @@ function buildFolderAwareOpml(params: {
 
   // Render folder tree nodes.
   const sortedRoots = [...rootChildren.values()].sort((a, b) =>
-    a.name.localeCompare(b.name)
+    a.name.localeCompare(b.name),
   );
   const folderBlocks = sortedRoots
     .map((node) => renderFolderNode(node, 0))
@@ -312,7 +315,7 @@ export async function GET(request: NextRequest) {
     if (format === "json" && jsonVersion !== "2") {
       return NextResponse.json(
         { error: "Unsupported JSON export version" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -345,7 +348,7 @@ export async function GET(request: NextRequest) {
       });
 
       captureMessage(
-        `feeds.export.completed route=api.feeds.export.get format=opml feeds=${feedRows.length} folders=${folderRows.length} duration_ms=${Date.now() - startedAtMs}`
+        `feeds.export.completed route=api.feeds.export.get format=opml feeds=${feedRows.length} folders=${folderRows.length} duration_ms=${Date.now() - startedAtMs}`,
       );
 
       return new NextResponse(opml, {
@@ -390,7 +393,7 @@ export async function GET(request: NextRequest) {
       };
 
       captureMessage(
-        `feeds.export.completed route=api.feeds.export.get format=json feeds=${feedRows.length} folders=${folderRows.length} duration_ms=${Date.now() - startedAtMs}`
+        `feeds.export.completed route=api.feeds.export.get format=json feeds=${feedRows.length} folders=${folderRows.length} duration_ms=${Date.now() - startedAtMs}`,
       );
 
       return new NextResponse(JSON.stringify(portableExport, null, 2), {
@@ -403,10 +406,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return NextResponse.json(
-      { error: "Unsupported export format" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Unsupported export format" }, { status: 400 });
   } catch (error) {
     return handleApiRouteError(error, "api.feeds.export.get");
   }

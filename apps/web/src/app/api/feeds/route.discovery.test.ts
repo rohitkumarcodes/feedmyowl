@@ -22,7 +22,7 @@ const mocks = vi.hoisted(() => ({
   applyRouteRateLimit: vi.fn(),
 }));
 
-vi.mock("@/lib/database", () => ({
+vi.mock("@/lib/server/database", () => ({
   db: {
     query: {
       folders: {
@@ -41,34 +41,35 @@ vi.mock("@/lib/database", () => ({
   users: {},
 }));
 
-vi.mock("@/lib/auth", () => ({
+vi.mock("@/lib/server/auth", () => ({
   requireAuth: mocks.requireAuth,
   deleteAuthUser: vi.fn(),
+  isAuthRequiredError: vi.fn(() => false),
 }));
 
-vi.mock("@/lib/app-user", () => ({
+vi.mock("@/lib/server/app-user", () => ({
   ensureUserRecord: mocks.ensureUserRecord,
 }));
 
-vi.mock("@/lib/feed-discovery", () => ({
+vi.mock("@/lib/server/feed-discovery", () => ({
   discoverFeedCandidates: mocks.discoverFeedCandidates,
 }));
 
-vi.mock("@/lib/feed-parser", () => ({
+vi.mock("@/lib/server/feed-parser", () => ({
   parseFeed: mocks.parseFeed,
   parseFeedWithMetadata: mocks.parseFeedWithMetadata,
   parseFeedXml: mocks.parseFeedXml,
 }));
 
-vi.mock("@/lib/feed-errors", () => ({
+vi.mock("@/lib/shared/feed-errors", () => ({
   normalizeFeedError: mocks.normalizeFeedError,
 }));
 
-vi.mock("@/lib/feed-fetcher", () => ({
+vi.mock("@/lib/server/feed-fetcher", () => ({
   fetchFeedXml: mocks.fetchFeedXml,
 }));
 
-vi.mock("@/lib/feed-service", () => ({
+vi.mock("@/lib/server/feed-service", () => ({
   createFeedWithInitialItems: mocks.createFeedWithInitialItems,
   findExistingFeedForUserByUrl: mocks.findExistingFeedForUserByUrl,
   setFeedFoldersForUser: mocks.setFeedFoldersForUser,
@@ -76,15 +77,15 @@ vi.mock("@/lib/feed-service", () => ({
   deleteUncategorizedFeedsForUser: mocks.deleteUncategorizedFeedsForUser,
 }));
 
-vi.mock("@/lib/retention", () => ({
+vi.mock("@/lib/server/retention", () => ({
   purgeOldFeedItemsForUser: mocks.purgeOldFeedItemsForUser,
 }));
 
-vi.mock("@/lib/csrf", () => ({
+vi.mock("@/lib/server/csrf", () => ({
   assertTrustedWriteOrigin: mocks.assertTrustedWriteOrigin,
 }));
 
-vi.mock("@/lib/rate-limit", () => ({
+vi.mock("@/lib/server/rate-limit", () => ({
   applyRouteRateLimit: mocks.applyRouteRateLimit,
 }));
 
@@ -116,7 +117,7 @@ describe("POST /api/feeds discovery fallback", () => {
 
     mocks.parseFeed.mockRejectedValue(new Error("Input URL is not valid RSS/Atom"));
     mocks.parseFeedWithMetadata.mockRejectedValue(
-      new Error("Input URL is not valid RSS/Atom")
+      new Error("Input URL is not valid RSS/Atom"),
     );
     mocks.normalizeFeedError.mockReturnValue({
       code: "invalid_xml",
@@ -177,7 +178,7 @@ describe("POST /api/feeds discovery fallback", () => {
       {
         etag: null,
         lastModified: null,
-      }
+      },
     );
   });
 
@@ -228,7 +229,7 @@ describe("POST /api/feeds discovery fallback", () => {
       {
         etag: null,
         lastModified: null,
-      }
+      },
     );
   });
 
@@ -258,7 +259,7 @@ describe("POST /api/feeds discovery fallback", () => {
     expect(response.status).toBe(400);
     expect(body.code).toBe("invalid_xml");
     expect(body.error).toBe(
-      "Error: We couldn't find any feed at this URL. Contact site owner and ask for the feed link."
+      "Error: We couldn't find any feed at this URL. Contact site owner and ask for the feed link.",
     );
     expect(mocks.createFeedWithInitialItems).not.toHaveBeenCalled();
     expect(mocks.fetchFeedXml).toHaveBeenCalledTimes(2);
@@ -280,22 +281,19 @@ describe("POST /api/feeds discovery fallback", () => {
     });
 
     const response = await POST(
-      createFeedCreateRequest("https://example.com/feed.xml", ["folder_news"])
+      createFeedCreateRequest("https://example.com/feed.xml", ["folder_news"]),
     );
     const body = await response.json();
 
     expect(response.status).toBe(200);
     expect(body.duplicate).toBe(true);
     expect(body.mergedFolderCount).toBe(1);
-    expect(body.message).toBe(
-      "This feed is already in your library. Added to 1 folder."
-    );
+    expect(body.message).toBe("This feed is already in your library. Added to 1 folder.");
     expect(body.feed.folderIds).toEqual(["folder_existing", "folder_news"]);
-    expect(mocks.setFeedFoldersForUser).toHaveBeenCalledWith(
-      "user_123",
-      "feed_123",
-      ["folder_existing", "folder_news"]
-    );
+    expect(mocks.setFeedFoldersForUser).toHaveBeenCalledWith("user_123", "feed_123", [
+      "folder_existing",
+      "folder_news",
+    ]);
     expect(mocks.createFeedWithInitialItems).not.toHaveBeenCalled();
   });
 
@@ -311,7 +309,7 @@ describe("POST /api/feeds discovery fallback", () => {
     });
 
     const response = await POST(
-      createFeedCreateRequest("https://example.com/feed.xml", ["folder_existing"])
+      createFeedCreateRequest("https://example.com/feed.xml", ["folder_existing"]),
     );
     const body = await response.json();
 
@@ -329,7 +327,7 @@ describe("POST /api/feeds discovery fallback", () => {
     mocks.dbQueryFoldersFindMany.mockResolvedValue([{ id: "folder_news" }]);
     mocks.dbQueryFeedFolderMembershipsFindMany.mockResolvedValue([]);
     mocks.parseFeedWithMetadata.mockRejectedValue(
-      new Error("Input URL is not valid RSS/Atom")
+      new Error("Input URL is not valid RSS/Atom"),
     );
     mocks.normalizeFeedError.mockReturnValue({
       code: "invalid_xml",
@@ -341,20 +339,18 @@ describe("POST /api/feeds discovery fallback", () => {
         [discoveredCandidate]: "html_alternate",
       },
     });
-    mocks.findExistingFeedForUserByUrl
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        id: "feed_789",
-        userId: "user_123",
-        url: discoveredCandidate,
-      });
+    mocks.findExistingFeedForUserByUrl.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: "feed_789",
+      userId: "user_123",
+      url: discoveredCandidate,
+    });
     mocks.setFeedFoldersForUser.mockResolvedValue({
       status: "ok",
       folderIds: ["folder_news"],
     });
 
     const response = await POST(
-      createFeedCreateRequest("https://example.com", ["folder_news"])
+      createFeedCreateRequest("https://example.com", ["folder_news"]),
     );
     const body = await response.json();
 
@@ -362,11 +358,9 @@ describe("POST /api/feeds discovery fallback", () => {
     expect(body.duplicate).toBe(true);
     expect(body.mergedFolderCount).toBe(1);
     expect(body.feed.folderIds).toEqual(["folder_news"]);
-    expect(mocks.setFeedFoldersForUser).toHaveBeenCalledWith(
-      "user_123",
-      "feed_789",
-      ["folder_news"]
-    );
+    expect(mocks.setFeedFoldersForUser).toHaveBeenCalledWith("user_123", "feed_789", [
+      "folder_news",
+    ]);
   });
 
   it("requires an explicit action", async () => {
@@ -377,7 +371,7 @@ describe("POST /api/feeds discovery fallback", () => {
         body: JSON.stringify({
           url: "https://example.com/feed.xml",
         }),
-      }) as NextRequest
+      }) as NextRequest,
     );
     const body = await response.json();
 

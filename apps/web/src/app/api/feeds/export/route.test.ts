@@ -9,16 +9,16 @@ const mocks = vi.hoisted(() => ({
   captureMessage: vi.fn(),
 }));
 
-vi.mock("@/lib/auth", () => ({
+vi.mock("@/lib/server/auth", () => ({
   requireAuth: mocks.requireAuth,
   isAuthRequiredError: vi.fn(() => false),
 }));
 
-vi.mock("@/lib/app-user", () => ({
+vi.mock("@/lib/server/app-user", () => ({
   ensureUserRecord: mocks.ensureUserRecord,
 }));
 
-vi.mock("@/lib/database", () => ({
+vi.mock("@/lib/server/database", () => ({
   db: {
     query: {
       users: {
@@ -30,11 +30,11 @@ vi.mock("@/lib/database", () => ({
   users: {},
 }));
 
-vi.mock("@/lib/rate-limit", () => ({
+vi.mock("@/lib/server/rate-limit", () => ({
   applyRouteRateLimit: mocks.applyRouteRateLimit,
 }));
 
-vi.mock("@/lib/error-tracking", () => ({
+vi.mock("@/lib/server/error-tracking", () => ({
   captureMessage: mocks.captureMessage,
 }));
 
@@ -106,15 +106,15 @@ describe("GET /api/feeds/export", () => {
 
   it("returns OPML export grouped by folders", async () => {
     const response = await GET(
-      createRequest("https://app.feedmyowl.test/api/feeds/export?format=opml")
+      createRequest("https://app.feedmyowl.test/api/feeds/export?format=opml"),
     );
     const body = await response.text();
 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("text/x-opml");
-    expect(body).toContain("<opml version=\"2.0\">");
-    expect(body).toContain("xmlUrl=\"https://example.com/feed.xml\"");
-    expect(body).toContain("outline text=\"Tech\"");
+    expect(body).toContain('<opml version="2.0">');
+    expect(body).toContain('xmlUrl="https://example.com/feed.xml"');
+    expect(body).toContain('outline text="Tech"');
     // htmlUrl should not be present (we don't store site URLs).
     expect(body).not.toContain("htmlUrl=");
     // ownerEmail from the user record should be in the head.
@@ -123,7 +123,7 @@ describe("GET /api/feeds/export", () => {
 
   it("returns portable JSON v2 with all folder names", async () => {
     const response = await GET(
-      createRequest("https://app.feedmyowl.test/api/feeds/export?format=json")
+      createRequest("https://app.feedmyowl.test/api/feeds/export?format=json"),
     );
     const body = (await response.json()) as {
       version: number;
@@ -176,7 +176,7 @@ describe("GET /api/feeds/export", () => {
     });
 
     const response = await GET(
-      createRequest("https://app.feedmyowl.test/api/feeds/export?format=opml")
+      createRequest("https://app.feedmyowl.test/api/feeds/export?format=opml"),
     );
     const body = await response.text();
 
@@ -189,7 +189,7 @@ describe("GET /api/feeds/export", () => {
 
   it("returns 400 for unsupported JSON export version", async () => {
     const response = await GET(
-      createRequest("https://app.feedmyowl.test/api/feeds/export?format=json&version=1")
+      createRequest("https://app.feedmyowl.test/api/feeds/export?format=json&version=1"),
     );
     const body = (await response.json()) as { error?: string };
 
@@ -199,7 +199,7 @@ describe("GET /api/feeds/export", () => {
 
   it("returns 400 for unsupported export format", async () => {
     const response = await GET(
-      createRequest("https://app.feedmyowl.test/api/feeds/export?format=csv")
+      createRequest("https://app.feedmyowl.test/api/feeds/export?format=csv"),
     );
     const body = (await response.json()) as { error?: string };
 
@@ -211,18 +211,21 @@ describe("GET /api/feeds/export", () => {
     mocks.applyRouteRateLimit.mockResolvedValue({
       allowed: false,
       response: Response.json(
-        { error: "Rate limit exceeded. Please wait before trying again.", code: "rate_limited" },
+        {
+          error: "Rate limit exceeded. Please wait before trying again.",
+          code: "rate_limited",
+        },
         {
           status: 429,
           headers: {
             "Retry-After": "12",
           },
-        }
+        },
       ),
     });
 
     const response = await GET(
-      createRequest("https://app.feedmyowl.test/api/feeds/export?format=opml")
+      createRequest("https://app.feedmyowl.test/api/feeds/export?format=opml"),
     );
     const body = (await response.json()) as { code?: string };
 

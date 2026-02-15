@@ -13,12 +13,12 @@ vi.mock("./route.shared", () => ({
   getAppUser: mocks.getAppUser,
 }));
 
-vi.mock("@/lib/retention", () => ({
+vi.mock("@/lib/server/retention", () => ({
   isUserRetentionPurgeNeeded: mocks.isUserRetentionPurgeNeeded,
   purgeOldFeedItemsForUser: mocks.purgeOldFeedItemsForUser,
 }));
 
-vi.mock("@/lib/database", () => ({
+vi.mock("@/lib/server/database", () => ({
   db: {
     query: {
       users: {
@@ -30,7 +30,7 @@ vi.mock("@/lib/database", () => ({
   users: {},
 }));
 
-vi.mock("@/lib/api-errors", () => ({
+vi.mock("@/lib/server/api-errors", () => ({
   handleApiRouteError: mocks.handleApiRouteError,
 }));
 
@@ -46,8 +46,8 @@ describe("GET /api/feeds retention guard", () => {
       feeds: [],
     });
     mocks.eq.mockReturnValue(Symbol("eq"));
-    mocks.handleApiRouteError.mockImplementation(() =>
-      new Response(JSON.stringify({ error: "Unexpected error" }), { status: 500 })
+    mocks.handleApiRouteError.mockImplementation(
+      () => new Response(JSON.stringify({ error: "Unexpected error" }), { status: 500 }),
     );
   });
 

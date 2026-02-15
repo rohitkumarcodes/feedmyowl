@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, eq, users } from "@/lib/database";
-import { deleteAuthUser } from "@/lib/auth";
-import { handleApiRouteError } from "@/lib/api-errors";
-import { assertTrustedWriteOrigin } from "@/lib/csrf";
+import { db, eq, users } from "@/lib/server/database";
+import { deleteAuthUser } from "@/lib/server/auth";
+import { handleApiRouteError } from "@/lib/server/api-errors";
+import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
+import type {
+  AccountDeleteResponseBody,
+  MarkReadResponseBody,
+  UncategorizedDeleteResponseBody,
+  UncategorizedMoveResponseBody,
+} from "@/contracts/api/feeds";
 import {
   deleteUncategorizedFeedsForUser,
   markFeedItemReadForUser,
   moveUncategorizedFeedsToFolderForUser,
-} from "@/lib/feed-service";
+} from "@/lib/server/feed-service";
 import { getAppUser, parseRouteJson } from "./route.shared";
 
 /**
@@ -55,10 +61,13 @@ export async function patchFeedsRoute(request: NextRequest) {
           itemId: result.itemId,
           readAt: result.readAt,
           alreadyRead: true,
-        });
+        } satisfies MarkReadResponseBody);
       }
 
-      return NextResponse.json({ itemId: result.itemId, readAt: result.readAt });
+      return NextResponse.json({
+        itemId: result.itemId,
+        readAt: result.readAt,
+      } satisfies MarkReadResponseBody);
     }
 
     if (payload.action === "uncategorized.delete") {
@@ -66,12 +75,15 @@ export async function patchFeedsRoute(request: NextRequest) {
       if (!confirmed) {
         return NextResponse.json(
           { error: "Uncategorized deletion must be explicitly confirmed." },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
       const deletedFeedCount = await deleteUncategorizedFeedsForUser(appUser.id);
-      return NextResponse.json({ success: true, deletedFeedCount });
+      return NextResponse.json({
+        success: true,
+        deletedFeedCount,
+      } satisfies UncategorizedDeleteResponseBody);
     }
 
     if (payload.action === "uncategorized.move_to_folder") {
@@ -83,14 +95,11 @@ export async function patchFeedsRoute(request: NextRequest) {
             error: "Folder ID is required.",
             code: "invalid_folder_id",
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
-      const result = await moveUncategorizedFeedsToFolderForUser(
-        appUser.id,
-        folderId
-      );
+      const result = await moveUncategorizedFeedsToFolderForUser(appUser.id, folderId);
 
       if (result.status === "invalid_folder_id") {
         return NextResponse.json(
@@ -98,7 +107,7 @@ export async function patchFeedsRoute(request: NextRequest) {
             error: "Selected folder could not be found.",
             code: "invalid_folder_id",
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -107,7 +116,7 @@ export async function patchFeedsRoute(request: NextRequest) {
         totalUncategorizedCount: result.totalUncategorizedCount,
         movedFeedCount: result.movedFeedCount,
         failedFeedCount: result.failedFeedCount,
-      });
+      } satisfies UncategorizedMoveResponseBody);
     }
 
     if (payload.action === "account.delete") {
@@ -115,7 +124,7 @@ export async function patchFeedsRoute(request: NextRequest) {
       if (!confirmed) {
         return NextResponse.json(
           { error: "Account deletion must be explicitly confirmed." },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -124,13 +133,13 @@ export async function patchFeedsRoute(request: NextRequest) {
       } catch {
         return NextResponse.json(
           { error: "Could not delete authentication account." },
-          { status: 500 }
+          { status: 500 },
         );
       }
 
       await db.delete(users).where(eq(users.id, appUser.id));
 
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true } satisfies AccountDeleteResponseBody);
     }
 
     return NextResponse.json({ error: "Unsupported action" }, { status: 400 });

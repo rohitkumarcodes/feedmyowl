@@ -6,8 +6,8 @@ import {
   parseJsonImportEntries,
   parseOpmlImportEntries,
   summarizeImportRows,
-} from "@/lib/feed-import-file";
-import type { FeedImportRowResult } from "@/lib/feed-import-types";
+} from "@/lib/shared/feed-import-file";
+import type { FeedImportRowResult } from "@/lib/shared/feed-import-types";
 
 describe("feed import file helpers", () => {
   it("parses OPML entries with flattened nested folder paths", () => {
@@ -133,7 +133,7 @@ describe("feed import file helpers", () => {
             folders: ["Folder C", "Folder D"],
           },
         ],
-      })
+      }),
     );
 
     expect(portable).toEqual([
@@ -157,10 +157,10 @@ describe("feed import file helpers", () => {
               folderIds: ["folder_a"],
             },
           ],
-        })
-      )
+        }),
+      ),
     ).toThrow(
-      "Only FeedMyOwl portable JSON v2 exports are supported. Found version unknown. Re-export your feeds as JSON v2 and try again."
+      "Only FeedMyOwl portable JSON v2 exports are supported. Found version unknown. Re-export your feeds as JSON v2 and try again.",
     );
   });
 
@@ -297,14 +297,14 @@ describe("feed import file helpers", () => {
         sourceApp: "FeedMyOwl",
         exportedAt: "2026-02-11T00:00:00.000Z",
         feeds: [{ url: "https://example.com/feed.xml", folders: [] }],
-      })
+      }),
     );
 
     expect(parsed.sourceType).toBe("JSON");
     expect(parsed.entries).toHaveLength(1);
 
     expect(() => parseImportFileContents("feeds.txt", "invalid")).toThrow(
-      "Unsupported file type. Use .opml, .xml, or .json."
+      "Unsupported file type. Use .opml, .xml, or .json.",
     );
   });
 });

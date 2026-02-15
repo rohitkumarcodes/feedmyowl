@@ -4,7 +4,7 @@ const mocks = vi.hoisted(() => ({
   dbExecute: vi.fn(),
 }));
 
-vi.mock("@/lib/database", () => ({
+vi.mock("@/lib/server/database", () => ({
   db: {
     execute: mocks.dbExecute,
   },
@@ -19,7 +19,7 @@ import {
   isUserRetentionPurgeNeeded,
   purgeOldFeedItemsForFeed,
   purgeOldFeedItemsForUser,
-} from "@/lib/retention";
+} from "@/lib/server/retention";
 
 describe("retention helpers", () => {
   beforeEach(() => {

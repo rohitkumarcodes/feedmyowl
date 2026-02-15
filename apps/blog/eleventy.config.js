@@ -58,10 +58,10 @@ export default function (eleventyConfig) {
 
     // Directory configuration
     dir: {
-      input: "src",           // Source files
-      includes: "_includes",  // Template partials and layouts
-      data: "_data",          // Global data files
-      output: "_site",        // Build output (gitignored)
+      input: "src", // Source files
+      includes: "_includes", // Template partials and layouts
+      data: "_data", // Global data files
+      output: "_site", // Build output (gitignored)
     },
   };
 }

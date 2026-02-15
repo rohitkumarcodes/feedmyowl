@@ -4,7 +4,7 @@ import {
   getAppUrl,
   getLandingPageUrl,
   getVercelPreviewOrigin,
-} from "@/lib/runtime-config";
+} from "@/lib/shared/runtime-config";
 
 const originalEnv = { ...process.env };
 

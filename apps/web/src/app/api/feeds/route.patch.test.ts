@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
   parseRouteJson: vi.fn(),
 }));
 
-vi.mock("@/lib/database", () => ({
+vi.mock("@/lib/server/database", () => ({
   db: {
     delete: mocks.dbDelete,
   },
@@ -22,19 +22,20 @@ vi.mock("@/lib/database", () => ({
   users: {},
 }));
 
-vi.mock("@/lib/auth", () => ({
+vi.mock("@/lib/server/auth", () => ({
   deleteAuthUser: mocks.deleteAuthUser,
+  isAuthRequiredError: vi.fn(() => false),
 }));
 
-vi.mock("@/lib/api-errors", () => ({
+vi.mock("@/lib/server/api-errors", () => ({
   handleApiRouteError: mocks.handleApiRouteError,
 }));
 
-vi.mock("@/lib/csrf", () => ({
+vi.mock("@/lib/server/csrf", () => ({
   assertTrustedWriteOrigin: mocks.assertTrustedWriteOrigin,
 }));
 
-vi.mock("@/lib/feed-service", () => ({
+vi.mock("@/lib/server/feed-service", () => ({
   deleteUncategorizedFeedsForUser: mocks.deleteUncategorizedFeedsForUser,
   moveUncategorizedFeedsToFolderForUser: mocks.moveUncategorizedFeedsToFolderForUser,
   markFeedItemReadForUser: mocks.markFeedItemReadForUser,
@@ -64,8 +65,8 @@ describe("PATCH /api/feeds uncategorized.delete", () => {
       confirm: true,
     });
     mocks.deleteUncategorizedFeedsForUser.mockResolvedValue(2);
-    mocks.handleApiRouteError.mockImplementation(() =>
-      new Response(JSON.stringify({ error: "Unexpected error" }), { status: 500 })
+    mocks.handleApiRouteError.mockImplementation(
+      () => new Response(JSON.stringify({ error: "Unexpected error" }), { status: 500 }),
     );
   });
 
@@ -123,8 +124,8 @@ describe("PATCH /api/feeds uncategorized.move_to_folder", () => {
   beforeEach(() => {
     mocks.assertTrustedWriteOrigin.mockReturnValue(null);
     mocks.getAppUser.mockResolvedValue({ id: "user_123", clerkId: "clerk_123" });
-    mocks.handleApiRouteError.mockImplementation(() =>
-      new Response(JSON.stringify({ error: "Unexpected error" }), { status: 500 })
+    mocks.handleApiRouteError.mockImplementation(
+      () => new Response(JSON.stringify({ error: "Unexpected error" }), { status: 500 }),
     );
   });
 
@@ -191,7 +192,7 @@ describe("PATCH /api/feeds uncategorized.move_to_folder", () => {
     });
     expect(mocks.moveUncategorizedFeedsToFolderForUser).toHaveBeenCalledWith(
       "user_123",
-      "folder_123"
+      "folder_123",
     );
   });
 });

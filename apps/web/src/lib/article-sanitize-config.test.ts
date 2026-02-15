@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   ARTICLE_ALLOWED_URI_REGEXP,
   ARTICLE_SANITIZE_CONFIG,
-} from "@/lib/article-sanitize-config";
+} from "@/lib/shared/article-sanitize-config";
 
 describe("ARTICLE_SANITIZE_CONFIG", () => {
   it("blocks javascript and data URI schemes", () => {

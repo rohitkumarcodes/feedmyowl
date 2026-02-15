@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveShortcutAction } from "./shortcut-dispatch";
+import { resolveShortcutAction } from "@/lib/shared/shortcut-dispatch";
 
 const baseContext = {
   enabled: true,
@@ -16,7 +16,7 @@ function eventSnapshot(
     ctrlKey: boolean;
     altKey: boolean;
     shiftKey: boolean;
-  }>
+  }>,
 ) {
   return {
     key,
@@ -34,14 +34,14 @@ describe("shortcut-dispatch", () => {
       resolveShortcutAction(eventSnapshot("j"), {
         ...baseContext,
         isListContext: true,
-      })
+      }),
     ).toBe("article.next.vim");
 
     expect(
       resolveShortcutAction(eventSnapshot("k"), {
         ...baseContext,
         isReaderContext: true,
-      })
+      }),
     ).toBe("article.previous.vim");
   });
 
@@ -50,14 +50,14 @@ describe("shortcut-dispatch", () => {
       resolveShortcutAction(eventSnapshot("ArrowDown"), {
         ...baseContext,
         isListContext: true,
-      })
+      }),
     ).toBe("article.next.arrow");
 
     expect(
       resolveShortcutAction(eventSnapshot("Enter"), {
         ...baseContext,
         isListContext: true,
-      })
+      }),
     ).toBe("article.open");
 
     expect(
@@ -65,7 +65,7 @@ describe("shortcut-dispatch", () => {
         ...baseContext,
         isListContext: true,
         isReaderContext: true,
-      })
+      }),
     ).toBe("article.next.arrow");
   });
 
@@ -74,62 +74,62 @@ describe("shortcut-dispatch", () => {
       resolveShortcutAction(eventSnapshot("ArrowDown"), {
         ...baseContext,
         isReaderContext: true,
-      })
+      }),
     ).toBe("reader.scroll.lineDown");
 
     expect(
       resolveShortcutAction(eventSnapshot("ArrowUp"), {
         ...baseContext,
         isReaderContext: true,
-      })
+      }),
     ).toBe("reader.scroll.lineUp");
 
     expect(
       resolveShortcutAction(eventSnapshot("PageDown"), {
         ...baseContext,
         isReaderContext: true,
-      })
+      }),
     ).toBe("reader.scroll.pageDown");
 
     expect(
       resolveShortcutAction(eventSnapshot("PageUp"), {
         ...baseContext,
         isReaderContext: true,
-      })
+      }),
     ).toBe("reader.scroll.pageUp");
 
     expect(
       resolveShortcutAction(eventSnapshot(" "), {
         ...baseContext,
         isReaderContext: true,
-      })
+      }),
     ).toBe("reader.scroll.pageDown");
 
     expect(
       resolveShortcutAction(eventSnapshot(" ", { shiftKey: true }), {
         ...baseContext,
         isReaderContext: true,
-      })
+      }),
     ).toBe("reader.scroll.pageUp");
 
     expect(
       resolveShortcutAction(eventSnapshot("PageDown"), {
         ...baseContext,
         isListContext: true,
-      })
+      }),
     ).toBeNull();
   });
 
   it("maps workspace-wide actions when not typing", () => {
     expect(resolveShortcutAction(eventSnapshot("r"), baseContext)).toBe("feeds.refresh");
     expect(resolveShortcutAction(eventSnapshot("f"), baseContext)).toBe(
-      "workspace.focusCycle"
+      "workspace.focusCycle",
     );
     expect(resolveShortcutAction(eventSnapshot("/"), baseContext)).toBe("search.focus");
     expect(resolveShortcutAction(eventSnapshot("?"), baseContext)).toBe("shortcuts.open");
-    expect(resolveShortcutAction(eventSnapshot("/", { shiftKey: true }), baseContext)).toBe(
-      "shortcuts.open"
-    );
+    expect(
+      resolveShortcutAction(eventSnapshot("/", { shiftKey: true }), baseContext),
+    ).toBe("shortcuts.open");
   });
 
   it("ignores shortcuts while typing or using command modifiers", () => {
@@ -138,28 +138,28 @@ describe("shortcut-dispatch", () => {
         ...baseContext,
         isTypingTarget: true,
         isListContext: true,
-      })
+      }),
     ).toBeNull();
 
     expect(
       resolveShortcutAction(eventSnapshot("r", { metaKey: true }), {
         ...baseContext,
         isListContext: true,
-      })
+      }),
     ).toBeNull();
 
     expect(
       resolveShortcutAction(eventSnapshot("f"), {
         ...baseContext,
         isTypingTarget: true,
-      })
+      }),
     ).toBeNull();
 
     expect(
       resolveShortcutAction(eventSnapshot("/"), {
         ...baseContext,
         isTypingTarget: true,
-      })
+      }),
     ).toBeNull();
   });
 
@@ -168,7 +168,7 @@ describe("shortcut-dispatch", () => {
       resolveShortcutAction(eventSnapshot("Escape"), {
         ...baseContext,
         isShortcutsModalOpen: true,
-      })
+      }),
     ).toBe("shortcuts.close");
 
     expect(
@@ -176,21 +176,21 @@ describe("shortcut-dispatch", () => {
         ...baseContext,
         isListContext: true,
         isShortcutsModalOpen: true,
-      })
+      }),
     ).toBeNull();
 
     expect(
       resolveShortcutAction(eventSnapshot("f"), {
         ...baseContext,
         isShortcutsModalOpen: true,
-      })
+      }),
     ).toBeNull();
 
     expect(
       resolveShortcutAction(eventSnapshot("r"), {
         ...baseContext,
         isShortcutsModalOpen: true,
-      })
+      }),
     ).toBeNull();
   });
 
@@ -200,7 +200,7 @@ describe("shortcut-dispatch", () => {
         ...baseContext,
         enabled: false,
         isListContext: true,
-      })
+      }),
     ).toBeNull();
   });
 });

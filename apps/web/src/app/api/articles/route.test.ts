@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { encodeArticleCursor } from "@/lib/article-pagination";
+import { encodeArticleCursor } from "@/lib/shared/article-pagination";
 
 const mocks = vi.hoisted(() => ({
   requireAuth: vi.fn(),
@@ -8,16 +8,16 @@ const mocks = vi.hoisted(() => ({
   listArticlePageForUser: vi.fn(),
 }));
 
-vi.mock("@/lib/auth", () => ({
+vi.mock("@/lib/server/auth", () => ({
   requireAuth: mocks.requireAuth,
   isAuthRequiredError: vi.fn(() => false),
 }));
 
-vi.mock("@/lib/app-user", () => ({
+vi.mock("@/lib/server/app-user", () => ({
   ensureUserRecord: mocks.ensureUserRecord,
 }));
 
-vi.mock("@/lib/article-service", () => ({
+vi.mock("@/lib/server/article-service", () => ({
   listArticlePageForUser: mocks.listArticlePageForUser,
 }));
 
@@ -108,7 +108,7 @@ describe("GET /api/articles", () => {
     });
 
     const response = await GET(
-      buildRequest(`scopeType=feed&scopeId=feed_123&limit=20&cursor=${cursor}`)
+      buildRequest(`scopeType=feed&scopeId=feed_123&limit=20&cursor=${cursor}`),
     );
     expect(response.status).toBe(200);
     expect(mocks.listArticlePageForUser).toHaveBeenCalledWith(
@@ -120,7 +120,7 @@ describe("GET /api/articles", () => {
         },
         scope: { type: "feed", id: "feed_123" },
         limit: 20,
-      })
+      }),
     );
   });
 

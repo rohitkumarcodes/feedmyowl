@@ -1,26 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth";
-import { ensureUserRecord } from "@/lib/app-user";
-import { handleApiRouteError } from "@/lib/api-errors";
-import { assertTrustedWriteOrigin } from "@/lib/csrf";
-import { captureMessage } from "@/lib/error-tracking";
-import { importFeedEntriesForUser } from "@/lib/feed-import-service";
-import { parseRequestJsonWithLimit } from "@/lib/http/request-json";
-import { applyRouteRateLimit } from "@/lib/rate-limit";
+import { requireAuth } from "@/lib/server/auth";
+import { ensureUserRecord } from "@/lib/server/app-user";
+import { handleApiRouteError } from "@/lib/server/api-errors";
+import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
+import { captureMessage } from "@/lib/server/error-tracking";
+import { importFeedEntriesForUser } from "@/lib/server/feed-import-service";
+import { parseRequestJsonWithLimit } from "@/lib/server/http/request-json";
+import { applyRouteRateLimit } from "@/lib/server/rate-limit";
 import type {
   FeedImportEntry,
   FeedImportRequest,
   FeedImportResponse,
   FeedImportSourceType,
-} from "@/lib/feed-import-types";
-import { FEED_IMPORT_MAX_ENTRIES_PER_REQUEST } from "@/lib/feed-import-types";
+} from "@/lib/shared/feed-import-types";
+import { FEED_IMPORT_MAX_ENTRIES_PER_REQUEST } from "@/lib/shared/feed-import-types";
 import {
   FEED_IMPORT_MAX_CUSTOM_TITLE_LENGTH,
   FEED_IMPORT_MAX_FOLDER_NAMES_PER_ENTRY,
   FEED_IMPORT_MAX_REQUEST_BYTES,
   FEED_IMPORT_MAX_URL_LENGTH,
-} from "@/lib/feed-import-types";
-import { FOLDER_NAME_MAX_LENGTH } from "@/lib/folder-service";
+} from "@/lib/shared/feed-import-types";
+import { FOLDER_NAME_MAX_LENGTH } from "@/lib/server/folder-service";
 
 function parseSourceType(value: unknown): FeedImportSourceType | null {
   return value === "OPML" || value === "JSON" ? value : null;
@@ -73,7 +73,10 @@ function parseImportEntries(value: unknown): ParseImportEntriesResult {
       };
     }
 
-    if (!Array.isArray(folderNames) || !folderNames.every((name) => typeof name === "string")) {
+    if (
+      !Array.isArray(folderNames) ||
+      !folderNames.every((name) => typeof name === "string")
+    ) {
       return {
         status: "invalid_payload",
         error: `entries[${index}].folderNames must be an array of strings.`,
@@ -134,7 +137,7 @@ function badRequest(code: "invalid_payload" | "entry_limit_exceeded", error: str
       error,
       code,
     },
-    { status: 400 }
+    { status: 400 },
   );
 }
 
@@ -176,14 +179,14 @@ export async function POST(request: NextRequest) {
     if (payloadResult.status === "payload_too_large") {
       captureMessage(
         `feeds.import.rejected route=api.feeds.import.post reason=payload_too_large max_bytes=${FEED_IMPORT_MAX_REQUEST_BYTES}`,
-        "warning"
+        "warning",
       );
       return NextResponse.json(
         {
           error: `Request payload exceeds ${FEED_IMPORT_MAX_REQUEST_BYTES} bytes.`,
           code: "payload_too_large",
         },
-        { status: 413 }
+        { status: 413 },
       );
     }
 
@@ -206,7 +209,7 @@ export async function POST(request: NextRequest) {
     if (entries.length > FEED_IMPORT_MAX_ENTRIES_PER_REQUEST) {
       return badRequest(
         "entry_limit_exceeded",
-        `A single import request can process at most ${FEED_IMPORT_MAX_ENTRIES_PER_REQUEST} entries.`
+        `A single import request can process at most ${FEED_IMPORT_MAX_ENTRIES_PER_REQUEST} entries.`,
       );
     }
 
@@ -214,8 +217,7 @@ export async function POST(request: NextRequest) {
     const skipMultiCandidate =
       !optionsValue ||
       typeof optionsValue !== "object" ||
-      (optionsValue as FeedImportRequest["options"] | null)?.skipMultiCandidate !==
-        false;
+      (optionsValue as FeedImportRequest["options"] | null)?.skipMultiCandidate !== false;
 
     const rows = await importFeedEntriesForUser({
       userId: appUser.id,
@@ -228,18 +230,17 @@ export async function POST(request: NextRequest) {
       importedCount: rows.filter((row) => row.status === "imported").length,
       duplicateCount: rows.filter(
         (row) =>
-          row.status === "duplicate_merged" || row.status === "duplicate_unchanged"
+          row.status === "duplicate_merged" || row.status === "duplicate_unchanged",
       ).length,
       mergedCount: rows.filter((row) => row.status === "duplicate_merged").length,
       failedCount: rows.filter(
-        (row) =>
-          row.status === "failed" || row.status === "skipped_multiple_candidates"
+        (row) => row.status === "failed" || row.status === "skipped_multiple_candidates",
       ).length,
       rows,
     };
     const warningCount = rows.reduce(
       (total, row) => total + (row.warnings?.length ?? 0),
-      0
+      0,
     );
 
     const failureCounts: Record<string, number> = {};
@@ -252,8 +253,8 @@ export async function POST(request: NextRequest) {
 
     captureMessage(
       `feeds.import.completed route=api.feeds.import.post source=${sourceType} processed=${responseBody.processedCount} imported=${responseBody.importedCount} duplicates=${responseBody.duplicateCount} merged=${responseBody.mergedCount} failed=${responseBody.failedCount} warnings=${warningCount} duration_ms=${Date.now() - startedAtMs} codes=${JSON.stringify(
-        failureCounts
-      )}`
+        failureCounts,
+      )}`,
     );
 
     return NextResponse.json(responseBody);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeFeedItemFingerprint } from "@/lib/feed-item-fingerprint";
+import { computeFeedItemFingerprint } from "@/lib/server/feed-item-fingerprint";
 
 describe("computeFeedItemFingerprint", () => {
   it("returns deterministic hash for semantically equivalent content", () => {

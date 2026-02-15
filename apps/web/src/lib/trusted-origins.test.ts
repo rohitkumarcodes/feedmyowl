@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { getTrustedOrigins } from "@/lib/trusted-origins";
+import { getTrustedOrigins } from "@/lib/server/trusted-origins";
 
 const originalEnv = { ...process.env };
 

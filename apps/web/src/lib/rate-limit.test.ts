@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   __resetInMemoryRateLimitStateForTests,
   applyRouteRateLimit,
-} from "@/lib/rate-limit";
+} from "@/lib/server/rate-limit";
 
 function toRequest(): NextRequest {
   return new Request("https://app.feedmyowl.test/api/feeds", {

@@ -4,11 +4,11 @@ const mocks = vi.hoisted(() => ({
   fetchRemoteText: vi.fn(),
 }));
 
-vi.mock("@/lib/feed-fetcher", () => ({
+vi.mock("@/lib/server/feed-fetcher", () => ({
   fetchRemoteText: mocks.fetchRemoteText,
 }));
 
-import { discoverFeedCandidates } from "@/lib/feed-discovery";
+import { discoverFeedCandidates } from "@/lib/server/feed-discovery";
 
 describe("discoverFeedCandidates", () => {
   beforeEach(() => {
@@ -39,7 +39,9 @@ describe("discoverFeedCandidates", () => {
     const result = await discoverFeedCandidates("https://news.example.com/blog");
 
     expect(result.candidates[0]).toBe("https://news.example.com/feed.xml");
-    expect(result.methodHints["https://news.example.com/feed.xml"]).toBe("html_alternate");
+    expect(result.methodHints["https://news.example.com/feed.xml"]).toBe(
+      "html_alternate",
+    );
     expect(result.candidates).not.toContain("https://news.example.com/comments/feed.xml");
     expect(result.candidates.length).toBeLessThanOrEqual(5);
   });

@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { useSelectedLayoutSegment } from "next/navigation";
-import { UserMenu } from "@/lib/auth-client";
-import { emitOpenShortcutsDialogEvent } from "@/lib/shortcuts-dialog-events";
+import { UserMenu } from "@/lib/client/auth-client";
+import { emitOpenShortcutsDialogEvent } from "@/lib/shared/shortcuts-dialog-events";
 import styles from "./layout.module.css";
 
 /**
@@ -69,7 +69,7 @@ export function AccountControls() {
 
   const handleOpenAdmin = () => {
     const hiddenTrigger = adminActionRef.current?.querySelector<HTMLButtonElement>(
-      `.${styles.optionsClerkHiddenTrigger}`
+      `.${styles.optionsClerkHiddenTrigger}`,
     );
     hiddenTrigger?.click();
     setIsOptionsOpen(false);
@@ -134,7 +134,13 @@ export function AccountControls() {
                   xmlns="http://www.w3.org/2000/svg"
                   aria-hidden="true"
                 >
-                  <circle cx="12" cy="8" r="3.4" stroke="currentColor" strokeWidth="1.8" />
+                  <circle
+                    cx="12"
+                    cy="8"
+                    r="3.4"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                  />
                   <path
                     d="M5.3 19.2C6.5 16.7 9.1 15.2 12 15.2C14.9 15.2 17.5 16.7 18.7 19.2"
                     stroke="currentColor"
@@ -194,11 +200,36 @@ export function AccountControls() {
                     stroke="currentColor"
                     strokeWidth="1.8"
                   />
-                  <path d="M7 10H8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  <path d="M10 10H11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  <path d="M13 10H14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  <path d="M16 10H17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  <path d="M7 13.5H17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  <path
+                    d="M7 10H8"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M10 10H11"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M13 10H14"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M16 10H17"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M7 13.5H17"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
                 </svg>
                 <span>Keyboard shortcuts</span>
               </button>

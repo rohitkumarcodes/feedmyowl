@@ -18,10 +18,8 @@ import path from "node:path";
 
 function parseEnvValue(rawValue: string): string {
   const trimmedValue = rawValue.trim();
-  const isDoubleQuoted =
-    trimmedValue.startsWith("\"") && trimmedValue.endsWith("\"");
-  const isSingleQuoted =
-    trimmedValue.startsWith("'") && trimmedValue.endsWith("'");
+  const isDoubleQuoted = trimmedValue.startsWith('"') && trimmedValue.endsWith('"');
+  const isSingleQuoted = trimmedValue.startsWith("'") && trimmedValue.endsWith("'");
 
   if (isDoubleQuoted || isSingleQuoted) {
     return trimmedValue.slice(1, -1);
@@ -64,9 +62,7 @@ function ensureDatabaseUrlFromEnvFiles() {
         continue;
       }
 
-      const parsedValue = parseEnvValue(
-        normalizedLine.slice("DATABASE_URL=".length)
-      );
+      const parsedValue = parseEnvValue(normalizedLine.slice("DATABASE_URL=".length));
 
       if (parsedValue) {
         process.env.DATABASE_URL = parsedValue;

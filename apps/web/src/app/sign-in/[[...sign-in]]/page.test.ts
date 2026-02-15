@@ -13,9 +13,10 @@ vi.mock("next/navigation", () => ({
   redirect: mocks.redirect,
 }));
 
-vi.mock("@/lib/auth", () => ({
+vi.mock("@/lib/server/auth", () => ({
   SignInForm: () => null,
   getAuthUserId: mocks.getAuthUserId,
+  isAuthRequiredError: () => false,
 }));
 
 vi.mock("@/app/auth-page.module.css", () => ({

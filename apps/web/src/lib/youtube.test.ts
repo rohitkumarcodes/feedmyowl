@@ -3,35 +3,35 @@ import {
   extractYouTubeChannelIdFromHtml,
   extractYouTubeChannelIdFromUrl,
   extractYouTubeVideoId,
-} from "@/lib/youtube";
+} from "@/lib/shared/youtube";
 
 describe("youtube helpers", () => {
   describe("extractYouTubeVideoId", () => {
     it("parses watch URLs", () => {
       expect(extractYouTubeVideoId("https://www.youtube.com/watch?v=dQw4w9WgXcQ")).toBe(
-        "dQw4w9WgXcQ"
+        "dQw4w9WgXcQ",
       );
 
       expect(
-        extractYouTubeVideoId("https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=10s")
+        extractYouTubeVideoId("https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=10s"),
       ).toBe("dQw4w9WgXcQ");
     });
 
     it("parses youtu.be URLs", () => {
-      expect(extractYouTubeVideoId("https://youtu.be/dQw4w9WgXcQ")).toBe(
-        "dQw4w9WgXcQ"
-      );
+      expect(extractYouTubeVideoId("https://youtu.be/dQw4w9WgXcQ")).toBe("dQw4w9WgXcQ");
     });
 
     it("parses shorts URLs", () => {
       expect(extractYouTubeVideoId("https://www.youtube.com/shorts/dQw4w9WgXcQ")).toBe(
-        "dQw4w9WgXcQ"
+        "dQw4w9WgXcQ",
       );
     });
 
     it("rejects non-YouTube URLs and invalid ids", () => {
       expect(extractYouTubeVideoId("https://example.com/watch?v=dQw4w9WgXcQ")).toBe(null);
-      expect(extractYouTubeVideoId("https://www.youtube.com/watch?v=notvalid")).toBe(null);
+      expect(extractYouTubeVideoId("https://www.youtube.com/watch?v=notvalid")).toBe(
+        null,
+      );
     });
   });
 
@@ -40,26 +40,26 @@ describe("youtube helpers", () => {
 
     it("parses /channel/ URLs", () => {
       expect(
-        extractYouTubeChannelIdFromUrl(`https://www.youtube.com/channel/${channelId}`)
+        extractYouTubeChannelIdFromUrl(`https://www.youtube.com/channel/${channelId}`),
       ).toBe(channelId);
     });
 
     it("parses /channel/ URLs with suffix paths", () => {
       expect(
         extractYouTubeChannelIdFromUrl(
-          `https://www.youtube.com/channel/${channelId}/videos`
-        )
+          `https://www.youtube.com/channel/${channelId}/videos`,
+        ),
       ).toBe(channelId);
     });
 
     it("rejects non-YouTube and invalid channel ids", () => {
       expect(
-        extractYouTubeChannelIdFromUrl(`https://example.com/channel/${channelId}`)
+        extractYouTubeChannelIdFromUrl(`https://example.com/channel/${channelId}`),
       ).toBe(null);
       expect(
         extractYouTubeChannelIdFromUrl(
-          "https://www.youtube.com/channel/ZZaaaaaaaaaaaaaaaaaaaaaa"
-        )
+          "https://www.youtube.com/channel/ZZaaaaaaaaaaaaaaaaaaaaaa",
+        ),
       ).toBe(null);
     });
   });
@@ -108,4 +108,3 @@ describe("youtube helpers", () => {
     });
   });
 });
-

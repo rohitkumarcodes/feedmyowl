@@ -29,8 +29,7 @@
 
   --font-serif: Charter, "Bitstream Charter", "Sitka Text", Cambria, serif;
   --font-sans: "Noto Sans", "Liberation Sans", "Segoe UI", Arial, sans-serif;
-  --font-mono: "SF Mono", "Fira Code", Consolas, "Liberation Mono", Menlo,
-    monospace;
+  --font-mono: "SF Mono", "Fira Code", Consolas, "Liberation Mono", Menlo, monospace;
 
   --text-xs: 0.75rem;
   --text-sm: 0.8125rem;

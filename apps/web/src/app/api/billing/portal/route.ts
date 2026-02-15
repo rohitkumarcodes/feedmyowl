@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth";
-import { handleApiRouteError } from "@/lib/api-errors";
-import { ensureUserRecord } from "@/lib/app-user";
-import { assertTrustedWriteOrigin } from "@/lib/csrf";
-import { createPortalSession } from "@/lib/payments";
+import { requireAuth } from "@/lib/server/auth";
+import { handleApiRouteError } from "@/lib/server/api-errors";
+import { ensureUserRecord } from "@/lib/server/app-user";
+import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
+import { createPortalSession } from "@/lib/server/payments";
+import type { BillingPortalResponseBody } from "@/contracts/api/billing";
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
     if (!user.stripeCustomerId) {
       return NextResponse.json(
         { error: "No billing profile found for this account" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -30,11 +31,11 @@ export async function POST(request: NextRequest) {
     if (!portalUrl) {
       return NextResponse.json(
         { error: "Unable to open billing portal" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
-    return NextResponse.json({ url: portalUrl });
+    return NextResponse.json({ url: portalUrl } satisfies BillingPortalResponseBody);
   } catch (error) {
     return handleApiRouteError(error, "api.billing.portal.post");
   }

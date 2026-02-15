@@ -1,36 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  and,
-  db,
-  eq,
-  folders,
-  inArray,
-} from "@/lib/database";
-import { handleApiRouteError } from "@/lib/api-errors";
-import { assertTrustedWriteOrigin } from "@/lib/csrf";
+import { and, db, eq, folders, inArray } from "@/lib/server/database";
+import { handleApiRouteError } from "@/lib/server/api-errors";
+import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
 import {
   discoverFeedCandidates,
   type FeedDiscoveryMethod,
-} from "@/lib/feed-discovery";
-import { normalizeFeedError } from "@/lib/feed-errors";
-import { fetchFeedXml } from "@/lib/feed-fetcher";
+} from "@/lib/server/feed-discovery";
+import { normalizeFeedError } from "@/lib/shared/feed-errors";
+import { fetchFeedXml } from "@/lib/server/feed-fetcher";
 import {
   parseFeed,
   parseFeedWithMetadata,
   parseFeedXml,
   type ParsedFeed,
-} from "@/lib/feed-parser";
-import { normalizeFeedUrl } from "@/lib/feed-url";
-import { applyRouteRateLimit } from "@/lib/rate-limit";
-import { resolveYouTubeChannelFeedUrl } from "@/lib/youtube-channel-feed";
+} from "@/lib/server/feed-parser";
+import { normalizeFeedUrl } from "@/lib/shared/feed-url";
+import { applyRouteRateLimit } from "@/lib/server/rate-limit";
+import { resolveYouTubeChannelFeedUrl } from "@/lib/server/youtube-channel-feed";
 import {
   createFeedWithInitialItems,
   findExistingFeedForUserByUrl,
   setFeedFoldersForUser,
-} from "@/lib/feed-service";
-import { normalizeFolderIds } from "@/lib/folder-memberships";
-import { getFeedFolderIdsForUserFeed } from "@/lib/feed-folder-memberships";
-import { NO_FEED_FOUND_MESSAGE } from "@/lib/feed-messages";
+} from "@/lib/server/feed-service";
+import { normalizeFolderIds } from "@/lib/shared/folder-memberships";
+import { getFeedFolderIdsForUserFeed } from "@/lib/server/feed-folder-memberships";
+import { NO_FEED_FOUND_MESSAGE } from "@/lib/shared/feed-messages";
+import type {
+  FeedsCreateDuplicateResponseBody,
+  FeedsCreateOkResponseBody,
+  FeedsDiscoverResponseBody,
+} from "@/contracts/api/feeds";
 import type { ApiError } from "./route.shared";
 import { getAppUser, parseRouteJson } from "./route.shared";
 
@@ -57,8 +56,16 @@ interface CandidateXmlFetchResult {
 
 const FEED_CANDIDATE_TIMEOUT_MS = 7_000;
 
+function toIsoString(value: Date | string | null | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+
+  return typeof value === "string" ? value : value.toISOString();
+}
+
 function toDiscoverCandidateResponse(
-  candidate: ValidatedDiscoverCandidate
+  candidate: ValidatedDiscoverCandidate,
 ): DiscoverCandidateResponse {
   return {
     url: candidate.url,
@@ -96,7 +103,7 @@ async function buildValidatedCandidateForUser(params: {
 }): Promise<ValidatedDiscoverCandidate> {
   const existingFeed = await findExistingFeedForUserByUrl(
     params.userId,
-    params.candidateUrl
+    params.candidateUrl,
   );
 
   return {
@@ -149,6 +156,7 @@ function parseFolderIdsPayload(payload: Record<string, unknown>): string[] | nul
 
 interface DuplicateFeedRecord {
   id: string;
+  url: string;
   [key: string]: unknown;
 }
 
@@ -156,10 +164,10 @@ async function buildDuplicateFeedCreateResponse(params: {
   userId: string;
   feed: DuplicateFeedRecord;
   requestedFolderIds: string[];
-}) {
+}): Promise<FeedsCreateDuplicateResponseBody> {
   const currentFolderIds = await getFeedFolderIdsForUserFeed(
     params.userId,
-    params.feed.id
+    params.feed.id,
   );
   const mergedFolderIds = normalizeFolderIds([
     ...currentFolderIds,
@@ -172,7 +180,7 @@ async function buildDuplicateFeedCreateResponse(params: {
     const updateResult = await setFeedFoldersForUser(
       params.userId,
       params.feed.id,
-      mergedFolderIds
+      mergedFolderIds,
     );
 
     if (updateResult.status === "ok") {
@@ -255,7 +263,7 @@ export async function postFeedsRoute(request: NextRequest) {
           error: "This URL does not appear to be valid.",
           code: "invalid_url",
         } satisfies ApiError,
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -323,12 +331,12 @@ export async function postFeedsRoute(request: NextRequest) {
             error: NO_FEED_FOUND_MESSAGE,
             code: "invalid_xml",
           } satisfies ApiError,
-          { status: 400 }
+          { status: 400 },
         );
       }
 
       const addableCandidates = validatedCandidates.filter(
-        (candidate) => !candidate.duplicate
+        (candidate) => !candidate.duplicate,
       );
       const status =
         addableCandidates.length === 0
@@ -341,7 +349,7 @@ export async function postFeedsRoute(request: NextRequest) {
         status,
         normalizedInputUrl: nextUrl,
         candidates: validatedCandidates.map(toDiscoverCandidateResponse),
-      });
+      } satisfies FeedsDiscoverResponseBody);
     }
 
     const requestedFolderIds = parseFolderIdsPayload(payload);
@@ -351,7 +359,7 @@ export async function postFeedsRoute(request: NextRequest) {
           error: "folderIds must be an array of folder IDs.",
           code: "invalid_folder_ids",
         } satisfies ApiError,
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -359,13 +367,13 @@ export async function postFeedsRoute(request: NextRequest) {
       const existingFolders = await db.query.folders.findMany({
         where: and(
           eq(folders.userId, appUser.id),
-          inArray(folders.id, requestedFolderIds)
+          inArray(folders.id, requestedFolderIds),
         ),
         columns: { id: true },
       });
       const existingFolderIds = new Set(existingFolders.map((folder) => folder.id));
       const invalidFolderIds = requestedFolderIds.filter(
-        (folderId) => !existingFolderIds.has(folderId)
+        (folderId) => !existingFolderIds.has(folderId),
       );
 
       if (invalidFolderIds.length > 0) {
@@ -374,7 +382,7 @@ export async function postFeedsRoute(request: NextRequest) {
             error: "One or more selected folders could not be found.",
             code: "invalid_folder_ids",
           } satisfies ApiError,
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -390,7 +398,7 @@ export async function postFeedsRoute(request: NextRequest) {
           userId: appUser.id,
           feed: existingFeed,
           requestedFolderIds,
-        })
+        }),
       );
     }
 
@@ -416,14 +424,17 @@ export async function postFeedsRoute(request: NextRequest) {
             error: normalizedError.message,
             code: normalizedError.code,
           } satisfies ApiError,
-          { status: 400 }
+          { status: 400 },
         );
       }
 
       const discovery = await discoverFeedCandidates(nextUrl);
 
       for (const candidateUrl of discovery.candidates) {
-        const duplicateFeed = await findExistingFeedForUserByUrl(appUser.id, candidateUrl);
+        const duplicateFeed = await findExistingFeedForUserByUrl(
+          appUser.id,
+          candidateUrl,
+        );
 
         if (duplicateFeed) {
           return NextResponse.json(
@@ -431,7 +442,7 @@ export async function postFeedsRoute(request: NextRequest) {
               userId: appUser.id,
               feed: duplicateFeed,
               requestedFolderIds,
-            })
+            }),
           );
         }
 
@@ -445,7 +456,7 @@ export async function postFeedsRoute(request: NextRequest) {
 
           const resolvedDuplicate = await findExistingFeedForUserByUrl(
             appUser.id,
-            resolvedUrl
+            resolvedUrl,
           );
 
           if (resolvedDuplicate) {
@@ -454,7 +465,7 @@ export async function postFeedsRoute(request: NextRequest) {
                 userId: appUser.id,
                 feed: resolvedDuplicate,
                 requestedFolderIds,
-              })
+              }),
             );
           }
 
@@ -470,7 +481,7 @@ export async function postFeedsRoute(request: NextRequest) {
             error: NO_FEED_FOUND_MESSAGE,
             code: "invalid_xml",
           } satisfies ApiError,
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -478,7 +489,7 @@ export async function postFeedsRoute(request: NextRequest) {
     if (!parsedFeed) {
       return NextResponse.json(
         { error: "Could not add this feed right now." },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -492,10 +503,13 @@ export async function postFeedsRoute(request: NextRequest) {
         {
           etag: resolvedEtag,
           lastModified: resolvedLastModified,
-        }
+        },
       );
     } catch {
-      const raceExistingFeed = await findExistingFeedForUserByUrl(appUser.id, resolvedUrl);
+      const raceExistingFeed = await findExistingFeedForUserByUrl(
+        appUser.id,
+        resolvedUrl,
+      );
 
       if (raceExistingFeed) {
         return NextResponse.json(
@@ -503,41 +517,49 @@ export async function postFeedsRoute(request: NextRequest) {
             userId: appUser.id,
             feed: raceExistingFeed,
             requestedFolderIds,
-          })
+          }),
         );
       }
 
       return NextResponse.json(
         { error: "Could not add this feed right now." },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     if (!created) {
       return NextResponse.json(
         { error: "Could not add this feed right now." },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     const createdFolderIds = await getFeedFolderIdsForUserFeed(
       appUser.id,
-      created.feed.id
+      created.feed.id,
     );
+
+    const createdFeed = created.feed;
+    const fallbackCreatedAt = new Date().toISOString();
+    const createdFeedDto = {
+      ...createdFeed,
+      lastFetchedAt: toIsoString(createdFeed.lastFetchedAt),
+      lastFetchErrorAt: toIsoString(createdFeed.lastFetchErrorAt),
+      createdAt: toIsoString(createdFeed.createdAt) ?? fallbackCreatedAt,
+      updatedAt: toIsoString(createdFeed.updatedAt) ?? fallbackCreatedAt,
+      folderIds: createdFolderIds,
+    };
 
     return NextResponse.json(
       {
-        feed: {
-          ...created.feed,
-          folderIds: createdFolderIds,
-        },
+        feed: createdFeedDto,
         importedItemCount: created.insertedItems,
         duplicate: false,
         message: discoveredFromSiteUrl
           ? "Feed found automatically and added."
           : undefined,
-      },
-      { status: 201 }
+      } satisfies FeedsCreateOkResponseBody,
+      { status: 201 },
     );
   } catch (error) {
     return handleApiRouteError(error, "api.feeds.post");

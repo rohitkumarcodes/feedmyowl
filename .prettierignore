@@ -1,0 +1,29 @@
+# Dependencies / build artifacts
+node_modules/
+.pnpm-store/
+.next/
+out/
+dist/
+build/
+_site/
+.vercel/
+
+# Generated / tooling
+pnpm-lock.yaml
+**/*.tsbuildinfo
+
+# Drizzle migrations (generated)
+apps/web/src/db/migrations/
+
+# OS / editor
+.DS_Store
+
+# Clerk temp files
+**/.clerk/
+
+# Large product docs (keep formatting stable unless explicitly edited)
+DECISION_LOG.md
+DESIGN.md
+FEEDMYOWL_PROJECT_CONTEXT.md
+RUNBOOK.md
+UX.md

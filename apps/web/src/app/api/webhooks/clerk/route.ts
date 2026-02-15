@@ -22,9 +22,9 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { verifyClerkWebhook } from "@/lib/auth";
-import { db, eq, users } from "@/lib/database";
-import { captureError } from "@/lib/error-tracking";
+import { verifyClerkWebhook } from "@/lib/server/auth";
+import { db, eq, users } from "@/lib/server/database";
+import { captureError } from "@/lib/server/error-tracking";
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,10 +37,7 @@ export async function POST(request: NextRequest) {
     const svixSignature = request.headers.get("svix-signature");
 
     if (!svixId || !svixTimestamp || !svixSignature) {
-      return NextResponse.json(
-        { error: "Missing svix headers" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing svix headers" }, { status: 400 });
     }
 
     let payload: { type: string; data: Record<string, unknown> };
@@ -51,10 +48,7 @@ export async function POST(request: NextRequest) {
         "svix-signature": svixSignature,
       });
     } catch {
-      return NextResponse.json(
-        { error: "Invalid webhook signature" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Invalid webhook signature" }, { status: 401 });
     }
 
     // --- Step 2: Handle the verified event ---
@@ -70,7 +64,7 @@ export async function POST(request: NextRequest) {
         if (!email) {
           return NextResponse.json(
             { error: "No email in webhook payload" },
-            { status: 400 }
+            { status: 400 },
           );
         }
 
@@ -111,9 +105,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true });
   } catch (error) {
     captureError(error, { webhook: "clerk" });
-    return NextResponse.json(
-      { error: "Webhook processing failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
   }
 }

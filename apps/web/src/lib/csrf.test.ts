@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { describe, expect, it } from "vitest";
-import { assertTrustedWriteOrigin } from "@/lib/csrf";
+import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
 
 function toRequest(headers: Record<string, string>): NextRequest {
   return new Request("https://app.feedmyowl.test/api/feeds", {
@@ -17,7 +17,7 @@ describe("assertTrustedWriteOrigin", () => {
         "content-type": "application/json",
         origin: "https://app.feedmyowl.com",
       }),
-      "api.feeds.post"
+      "api.feeds.post",
     );
 
     expect(result).toBeNull();
@@ -29,7 +29,7 @@ describe("assertTrustedWriteOrigin", () => {
         "content-type": "application/json",
         referer: "https://app.feedmyowl.com/settings",
       }),
-      "api.feeds.post"
+      "api.feeds.post",
     );
 
     expect(result).toBeNull();
@@ -41,7 +41,7 @@ describe("assertTrustedWriteOrigin", () => {
         "content-type": "application/json",
         origin: "https://evil.example",
       }),
-      "api.feeds.post"
+      "api.feeds.post",
     );
 
     expect(response).not.toBeNull();
@@ -55,7 +55,7 @@ describe("assertTrustedWriteOrigin", () => {
       toRequest({
         "content-type": "application/json",
       }),
-      "api.feeds.post"
+      "api.feeds.post",
     );
 
     expect(response).not.toBeNull();

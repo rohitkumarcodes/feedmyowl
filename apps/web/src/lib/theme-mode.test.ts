@@ -5,7 +5,7 @@ import {
   isThemeMode,
   resolveThemeMode,
   THEME_MODE_VALUES,
-} from "@/lib/theme-mode";
+} from "@/lib/shared/theme-mode";
 
 describe("theme-mode helpers", () => {
   it("accepts valid theme values", () => {

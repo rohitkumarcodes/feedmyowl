@@ -2,26 +2,29 @@
  * Server-rendered feeds page that loads feeds and article items for
  * the authenticated user and passes them to the client workspace shell.
  */
-import { db, eq, users } from "@/lib/database";
-import { getAuthenticatedAppUser } from "@/lib/app-user";
-import { FeedsWorkspace } from "@/components/feeds-workspace";
-import { createInitialPaginationByScopeKey } from "@/components/article-pagination-state";
+import { db, eq, users } from "@/lib/server/database";
+import { getAuthenticatedAppUser } from "@/lib/server/app-user";
+import { FeedsWorkspace } from "@/features/feeds/components/FeedsWorkspace";
+import { createInitialPaginationByScopeKey } from "@/features/feeds/state/article-pagination-state";
 import type {
   FeedViewModel,
   FeedItemViewModel,
   FolderViewModel,
-} from "@/components/feeds-types";
+} from "@/features/feeds/types/view-models";
 import {
   DEFAULT_ARTICLE_PAGE_LIMIT,
   scopeToKey,
   type ArticleScope,
-} from "@/lib/article-pagination";
+} from "@/lib/shared/article-pagination";
 import {
   getFeedMembershipFolderIds,
   resolveFeedFolderIds,
-} from "@/lib/folder-memberships";
-import { isUserRetentionPurgeNeeded, purgeOldFeedItemsForUser } from "@/lib/retention";
-import { listArticlePageForUser } from "@/lib/article-service";
+} from "@/lib/shared/folder-memberships";
+import {
+  isUserRetentionPurgeNeeded,
+  purgeOldFeedItemsForUser,
+} from "@/lib/server/retention";
+import { listArticlePageForUser } from "@/lib/server/article-service";
 
 /**
  * This page reads per-user data at request time — never statically prerender.
@@ -143,59 +146,57 @@ export default async function FeedsPage() {
         }>
       | undefined) ?? [];
 
-  const folders: FolderViewModel[] =
-    folderRows
-      .map((folder) => ({
-        id: folder.id,
-        name: folder.name,
-        createdAt: folder.createdAt.toISOString(),
-        updatedAt: folder.updatedAt.toISOString(),
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+  const folders: FolderViewModel[] = folderRows
+    .map((folder) => ({
+      id: folder.id,
+      name: folder.name,
+      createdAt: folder.createdAt.toISOString(),
+      updatedAt: folder.updatedAt.toISOString(),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
-  const feeds: FeedViewModel[] =
-    feedRows
-      .map((feed) => {
-        const scopedInitialItems = [...(initialItemsByFeedId.get(feed.id) ?? [])]
-          .sort((a, b) => {
-            const aDate = a.publishedAt?.valueOf() ?? a.createdAt.valueOf();
-            const bDate = b.publishedAt?.valueOf() ?? b.createdAt.valueOf();
-            return bDate - aDate;
-          })
-          .map(
-            (item): FeedItemViewModel => ({
-              id: item.id,
-              title: item.title,
-              link: item.link,
-              content: item.content,
-              author: item.author,
-              publishedAt: toIsoString(item.publishedAt),
-              readAt: toIsoString(item.readAt),
-              createdAt: item.createdAt.toISOString(),
-            })
-          );
+  const feeds: FeedViewModel[] = feedRows
+    .map((feed) => {
+      const scopedInitialItems = [...(initialItemsByFeedId.get(feed.id) ?? [])]
+        .sort((a, b) => {
+          const aDate = a.publishedAt?.valueOf() ?? a.createdAt.valueOf();
+          const bDate = b.publishedAt?.valueOf() ?? b.createdAt.valueOf();
+          return bDate - aDate;
+        })
+        .map(
+          (item): FeedItemViewModel => ({
+            id: item.id,
+            title: item.title,
+            link: item.link,
+            content: item.content,
+            author: item.author,
+            publishedAt: toIsoString(item.publishedAt),
+            readAt: toIsoString(item.readAt),
+            createdAt: item.createdAt.toISOString(),
+          }),
+        );
 
-        return {
-          id: feed.id,
-          title: feed.title,
-          customTitle: feed.customTitle,
-          description: feed.description,
-          url: feed.url,
-          folderIds: resolveFeedFolderIds(getFeedMembershipFolderIds(feed)),
-          lastFetchedAt: toIsoString(feed.lastFetchedAt),
-          lastFetchStatus: feed.lastFetchStatus,
-          lastFetchErrorCode: feed.lastFetchErrorCode,
-          lastFetchErrorMessage: feed.lastFetchErrorMessage,
-          lastFetchErrorAt: toIsoString(feed.lastFetchErrorAt),
-          createdAt: feed.createdAt.toISOString(),
-          items: scopedInitialItems,
-        };
-      })
-      .sort((a, b) => {
-        const aDate = Date.parse(a.lastFetchedAt || a.createdAt) || 0;
-        const bDate = Date.parse(b.lastFetchedAt || b.createdAt) || 0;
-        return bDate - aDate;
-      });
+      return {
+        id: feed.id,
+        title: feed.title,
+        customTitle: feed.customTitle,
+        description: feed.description,
+        url: feed.url,
+        folderIds: resolveFeedFolderIds(getFeedMembershipFolderIds(feed)),
+        lastFetchedAt: toIsoString(feed.lastFetchedAt),
+        lastFetchStatus: feed.lastFetchStatus,
+        lastFetchErrorCode: feed.lastFetchErrorCode,
+        lastFetchErrorMessage: feed.lastFetchErrorMessage,
+        lastFetchErrorAt: toIsoString(feed.lastFetchErrorAt),
+        createdAt: feed.createdAt.toISOString(),
+        items: scopedInitialItems,
+      };
+    })
+    .sort((a, b) => {
+      const aDate = Date.parse(a.lastFetchedAt || a.createdAt) || 0;
+      const bDate = Date.parse(b.lastFetchedAt || b.createdAt) || 0;
+      return bDate - aDate;
+    });
 
   const initialPaginationByScopeKey = createInitialPaginationByScopeKey({
     scopeKey: scopeToKey(allScope),

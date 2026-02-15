@@ -116,9 +116,9 @@ export const folders = pgTable(
      */
     userNameUniqueIdx: uniqueIndex("folders_user_id_lower_name_unique").on(
       table.userId,
-      sql`lower(${table.name})`
+      sql`lower(${table.name})`,
     ),
-  })
+  }),
 );
 
 // =============================================================================
@@ -185,11 +185,8 @@ export const feeds = pgTable(
      * A user should not be able to subscribe to the exact same URL twice.
      * Duplicate URLs are skipped during imports and manual add-feed.
      */
-    userUrlUniqueIdx: uniqueIndex("feeds_user_id_url_unique").on(
-      table.userId,
-      table.url
-    ),
-  })
+    userUrlUniqueIdx: uniqueIndex("feeds_user_id_url_unique").on(table.userId, table.url),
+  }),
 );
 
 // =============================================================================
@@ -230,9 +227,9 @@ export const feedFolderMemberships = pgTable(
      * Prevent duplicate membership rows for the same user/feed/folder.
      */
     userFeedFolderUniqueIdx: uniqueIndex(
-      "feed_folder_memberships_user_feed_folder_unique"
+      "feed_folder_memberships_user_feed_folder_unique",
     ).on(table.userId, table.feedId, table.folderId),
-  })
+  }),
 );
 
 // =============================================================================
@@ -245,45 +242,47 @@ export const feedFolderMemberships = pgTable(
  * Items are kept in the database even if the source feed goes down,
  * so users can always read previously fetched content.
  */
-export const feedItems = pgTable("feed_items", {
-  /** Unique identifier (UUID v4, auto-generated) */
-  id: uuid("id").defaultRandom().primaryKey(),
+export const feedItems = pgTable(
+  "feed_items",
+  {
+    /** Unique identifier (UUID v4, auto-generated) */
+    id: uuid("id").defaultRandom().primaryKey(),
 
-  /** Which feed this item belongs to — cascade delete removes items when feed is deleted */
-  feedId: uuid("feed_id")
-    .references(() => feeds.id, { onDelete: "cascade" })
-    .notNull(),
+    /** Which feed this item belongs to — cascade delete removes items when feed is deleted */
+    feedId: uuid("feed_id")
+      .references(() => feeds.id, { onDelete: "cascade" })
+      .notNull(),
 
-  /** The item's globally unique identifier (from the feed's <guid> or <id>) */
-  guid: text("guid"),
+    /** The item's globally unique identifier (from the feed's <guid> or <id>) */
+    guid: text("guid"),
 
-  /** Article title */
-  title: text("title"),
+    /** Article title */
+    title: text("title"),
 
-  /** Link to the original article */
-  link: text("link"),
+    /** Link to the original article */
+    link: text("link"),
 
-  /** Article content (HTML or plain text from the feed) */
-  content: text("content"),
+    /** Article content (HTML or plain text from the feed) */
+    content: text("content"),
 
-  /** Author name */
-  author: varchar("author", { length: 255 }),
+    /** Author name */
+    author: varchar("author", { length: 255 }),
 
-  /** Deterministic fallback dedupe key for items without stable GUIDs */
-  contentFingerprint: text("content_fingerprint"),
+    /** Deterministic fallback dedupe key for items without stable GUIDs */
+    contentFingerprint: text("content_fingerprint"),
 
-  /** When the article was published (from the feed, not when we fetched it) */
-  publishedAt: timestamp("published_at"),
+    /** When the article was published (from the feed, not when we fetched it) */
+    publishedAt: timestamp("published_at"),
 
-  /** When the user opened this article in FeedMyOwl */
-  readAt: timestamp("read_at"),
+    /** When the user opened this article in FeedMyOwl */
+    readAt: timestamp("read_at"),
 
-  /** When we first stored this item */
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+    /** When we first stored this item */
+    createdAt: timestamp("created_at").defaultNow().notNull(),
 
-  /** When this row was last updated */
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-},
+    /** When this row was last updated */
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
   (table) => ({
     /**
      * Canonical dedupe for GUID-backed items.
@@ -296,12 +295,10 @@ export const feedItems = pgTable("feed_items", {
     /**
      * Fallback dedupe when no GUID is available.
      */
-    feedFingerprintUniqueIdx: uniqueIndex(
-      "feed_items_feed_id_content_fingerprint_unique"
-    )
+    feedFingerprintUniqueIdx: uniqueIndex("feed_items_feed_id_content_fingerprint_unique")
       .on(table.feedId, table.contentFingerprint)
       .where(sql`${table.guid} is null and ${table.contentFingerprint} is not null`),
-  })
+  }),
 );
 
 // =============================================================================
@@ -349,7 +346,7 @@ export const feedFolderMembershipsRelations = relations(
       fields: [feedFolderMemberships.folderId],
       references: [folders.id],
     }),
-  })
+  }),
 );
 
 export const feedItemsRelations = relations(feedItems, ({ one }) => ({

@@ -1,6 +1,7 @@
 {
   "name": "feedmyowl",
   "private": true,
+  "packageManager": "pnpm@10.28.2",
   "pnpm": {
     "onlyBuiltDependencies": [
       "@clerk/shared",
@@ -17,9 +18,18 @@
     "build:blog": "pnpm --filter blog build",
     "lint:web": "pnpm --filter web lint",
     "test:web": "pnpm --filter web test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,css,yaml,yml,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,css,yaml,yml,md}\"",
+    "lint": "pnpm -r --if-present lint",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "build": "pnpm -r --if-present build",
     "db:generate": "pnpm --filter web db:generate",
     "db:migrate": "pnpm --filter web db:migrate",
     "db:studio": "pnpm --filter web db:studio"
+  },
+  "devDependencies": {
+    "prettier": "3.8.1"
   },
   "engines": {
     "node": ">=22"

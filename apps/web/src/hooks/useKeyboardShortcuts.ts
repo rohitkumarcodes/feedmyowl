@@ -3,7 +3,7 @@
  */
 
 import { useEffect } from "react";
-import { resolveShortcutAction } from "@/lib/shortcut-dispatch";
+import { resolveShortcutAction } from "@/lib/shared/shortcut-dispatch";
 
 interface UseKeyboardShortcutsOptions {
   enabled: boolean;
@@ -119,7 +119,7 @@ export function useKeyboardShortcuts({
           isListContext: isListContextTarget(event.target),
           isReaderContext: isReaderContextTarget(event.target),
           isShortcutsModalOpen,
-        }
+        },
       );
 
       if (!action) {

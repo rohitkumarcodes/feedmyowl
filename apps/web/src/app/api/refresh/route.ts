@@ -7,12 +7,13 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth";
-import { handleApiRouteError } from "@/lib/api-errors";
-import { ensureUserRecord } from "@/lib/app-user";
-import { assertTrustedWriteOrigin } from "@/lib/csrf";
-import { refreshFeedsForUser } from "@/lib/feed-service";
-import { applyRouteRateLimit } from "@/lib/rate-limit";
+import { requireAuth } from "@/lib/server/auth";
+import { handleApiRouteError } from "@/lib/server/api-errors";
+import { ensureUserRecord } from "@/lib/server/app-user";
+import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
+import { refreshFeedsForUser } from "@/lib/server/feed-service";
+import { applyRouteRateLimit } from "@/lib/server/rate-limit";
+import type { RefreshResponseBody } from "@/contracts/api/refresh";
 
 /**
  * POST /api/refresh
@@ -55,13 +56,13 @@ export async function POST(request: NextRequest) {
         message: refresh.message || "No feeds to refresh",
         results: [],
         retentionDeletedCount: refresh.retentionDeletedCount,
-      });
+      } satisfies RefreshResponseBody);
     }
 
     return NextResponse.json({
       results: refresh.results,
       retentionDeletedCount: refresh.retentionDeletedCount,
-    });
+    } satisfies RefreshResponseBody);
   } catch (error) {
     return handleApiRouteError(error, "api.refresh.post");
   }

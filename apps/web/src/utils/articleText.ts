@@ -39,7 +39,7 @@ export function stripHtmlToText(content: string | null): string {
       .replace(/<br\s*\/?>/gi, "\n")
       .replace(/<li\b[^>]*>/gi, "\n- ")
       .replace(/<\/li>/gi, "")
-      .replace(/<[^>]+>/g, " ")
+      .replace(/<[^>]+>/g, " "),
   )
     .replace(/\r\n?/g, "\n")
     .replace(/[ \t]+\n/g, "\n")
@@ -53,10 +53,7 @@ export function stripHtmlToText(content: string | null): string {
 /**
  * Produces a single-line snippet used in article rows and search matching.
  */
-export function extractArticleSnippet(
-  content: string | null,
-  maxLength = 160
-): string {
+export function extractArticleSnippet(content: string | null, maxLength = 160): string {
   const baseText = stripHtmlToText(content).replace(/\s+/g, " ").trim();
 
   if (baseText.length <= maxLength) {

@@ -19,15 +19,16 @@ const mocks = vi.hoisted(() => ({
   applyRouteRateLimit: vi.fn(),
 }));
 
-vi.mock("@/lib/auth", () => ({
+vi.mock("@/lib/server/auth", () => ({
   requireAuth: mocks.requireAuth,
+  isAuthRequiredError: vi.fn(() => false),
 }));
 
-vi.mock("@/lib/app-user", () => ({
+vi.mock("@/lib/server/app-user", () => ({
   ensureUserRecord: mocks.ensureUserRecord,
 }));
 
-vi.mock("@/lib/database", () => ({
+vi.mock("@/lib/server/database", () => ({
   db: {
     query: {
       folders: {
@@ -45,39 +46,39 @@ vi.mock("@/lib/database", () => ({
   users: {},
 }));
 
-vi.mock("@/lib/feed-discovery", () => ({
+vi.mock("@/lib/server/feed-discovery", () => ({
   discoverFeedCandidates: mocks.discoverFeedCandidates,
 }));
 
-vi.mock("@/lib/feed-parser", () => ({
+vi.mock("@/lib/server/feed-parser", () => ({
   parseFeedWithMetadata: mocks.parseFeedWithMetadata,
 }));
 
-vi.mock("@/lib/feed-errors", () => ({
+vi.mock("@/lib/shared/feed-errors", () => ({
   normalizeFeedError: mocks.normalizeFeedError,
 }));
 
-vi.mock("@/lib/feed-service", () => ({
+vi.mock("@/lib/server/feed-service", () => ({
   createFeedWithInitialItems: mocks.createFeedWithInitialItems,
   findExistingFeedForUserByUrl: mocks.findExistingFeedForUserByUrl,
   renameFeedForUser: mocks.renameFeedForUser,
   addFeedFoldersForUser: mocks.addFeedFoldersForUser,
 }));
 
-vi.mock("@/lib/folder-service", () => ({
+vi.mock("@/lib/server/folder-service", () => ({
   FOLDER_NAME_MAX_LENGTH: 255,
   createFolderForUser: mocks.createFolderForUser,
 }));
 
-vi.mock("@/lib/error-tracking", () => ({
+vi.mock("@/lib/server/error-tracking", () => ({
   captureMessage: mocks.captureMessage,
 }));
 
-vi.mock("@/lib/csrf", () => ({
+vi.mock("@/lib/server/csrf", () => ({
   assertTrustedWriteOrigin: mocks.assertTrustedWriteOrigin,
 }));
 
-vi.mock("@/lib/rate-limit", () => ({
+vi.mock("@/lib/server/rate-limit", () => ({
   applyRouteRateLimit: mocks.applyRouteRateLimit,
 }));
 
@@ -85,7 +86,7 @@ import { POST } from "@/app/api/feeds/import/route";
 
 function createImportRequest(
   body: Record<string, unknown> | string,
-  options?: { headers?: Record<string, string> }
+  options?: { headers?: Record<string, string> },
 ): NextRequest {
   const payload = typeof body === "string" ? body : JSON.stringify(body);
 
@@ -145,13 +146,14 @@ describe("POST /api/feeds/import", () => {
   });
 
   it("imports valid feed entries and applies custom title only to newly created feeds", async () => {
-    mocks.findExistingFeedForUserByUrl.mockImplementation(async (_userId: string, url: string) =>
-      url === "https://existing.example.com/feed.xml"
-        ? ({
-            id: "feed_existing",
-            folderId: null,
-          } as never)
-        : null
+    mocks.findExistingFeedForUserByUrl.mockImplementation(
+      async (_userId: string, url: string) =>
+        url === "https://existing.example.com/feed.xml"
+          ? ({
+              id: "feed_existing",
+              folderId: null,
+            } as never)
+          : null,
     );
     mocks.parseFeedWithMetadata.mockResolvedValue({
       parsedFeed: {
@@ -183,7 +185,7 @@ describe("POST /api/feeds/import", () => {
             customTitle: "Apply this title",
           },
         ],
-      })
+      }),
     );
     const body = (await response.json()) as {
       rows: Array<{ status: string }>;
@@ -204,13 +206,13 @@ describe("POST /api/feeds/import", () => {
         userId: "user_123",
         userLimitPerMinute: 25,
         ipLimitPerMinute: 100,
-      })
+      }),
     );
     expect(mocks.renameFeedForUser).toHaveBeenCalledTimes(1);
     expect(mocks.renameFeedForUser).toHaveBeenCalledWith(
       "user_123",
       "feed_new",
-      "Apply this title"
+      "Apply this title",
     );
   });
 
@@ -219,7 +221,7 @@ describe("POST /api/feeds/import", () => {
       createImportRequest({
         sourceType: "JSON",
         entries: [{ url: "://broken", folderNames: [], customTitle: null }],
-      })
+      }),
     );
     const body = (await response.json()) as {
       rows: Array<{ status: string; code?: string }>;
@@ -270,7 +272,7 @@ describe("POST /api/feeds/import", () => {
       createImportRequest({
         sourceType: "JSON",
         entries: [{ url: "https://example.com", folderNames: [], customTitle: null }],
-      })
+      }),
     );
     const body = (await response.json()) as {
       rows: Array<{ status: string; message?: string }>;
@@ -293,7 +295,7 @@ describe("POST /api/feeds/import", () => {
       {
         etag: null,
         lastModified: null,
-      }
+      },
     );
   });
 
@@ -316,7 +318,8 @@ describe("POST /api/feeds/import", () => {
     });
     mocks.normalizeFeedError.mockReturnValue({
       code: "timeout",
-      message: "This feed could not be updated. The server did not respond in time. This is often temporary.",
+      message:
+        "This feed could not be updated. The server did not respond in time. This is often temporary.",
     });
     mocks.discoverFeedCandidates.mockResolvedValue({
       candidates: ["https://example.com/feed.xml"],
@@ -329,7 +332,7 @@ describe("POST /api/feeds/import", () => {
       createImportRequest({
         sourceType: "JSON",
         entries: [{ url: "https://example.com", folderNames: [], customTitle: null }],
-      })
+      }),
     );
     const body = (await response.json()) as {
       rows: Array<{ status: string; code?: string; message?: string }>;
@@ -377,7 +380,7 @@ describe("POST /api/feeds/import", () => {
             customTitle: null,
           },
         ],
-      })
+      }),
     );
     const body = (await response.json()) as {
       rows: Array<{ status: string; code?: string }>;
@@ -393,7 +396,7 @@ describe("POST /api/feeds/import", () => {
     expect(mocks.addFeedFoldersForUser).toHaveBeenCalledWith(
       "user_123",
       "feed_existing",
-      ["folder_merged"]
+      ["folder_merged"],
     );
   });
 
@@ -413,7 +416,7 @@ describe("POST /api/feeds/import", () => {
             customTitle: null,
           },
         ],
-      })
+      }),
     );
     const body = (await response.json()) as { rows: Array<{ status: string }> };
 
@@ -454,7 +457,7 @@ describe("POST /api/feeds/import", () => {
       createImportRequest({
         sourceType: "JSON",
         entries: [{ url: "https://example.com", folderNames: [], customTitle: null }],
-      })
+      }),
     );
     const body = (await response.json()) as {
       rows: Array<{ status: string; code?: string }>;
@@ -482,13 +485,18 @@ describe("POST /api/feeds/import", () => {
       resolvedUrl: url,
     }));
     mocks.createFeedWithInitialItems.mockImplementation(
-      async (_userId: string, url: string, _parsedFeed: unknown, folderIds: string[]) => ({
+      async (
+        _userId: string,
+        url: string,
+        _parsedFeed: unknown,
+        folderIds: string[],
+      ) => ({
         feed: {
           id: url.includes("one") ? "feed_one" : "feed_two",
           folderId: folderIds[0] || null,
         },
         insertedItems: 0,
-      })
+      }),
     );
     mocks.createFolderForUser.mockResolvedValue({
       status: "ok",
@@ -515,7 +523,7 @@ describe("POST /api/feeds/import", () => {
             customTitle: null,
           },
         ],
-      })
+      }),
     );
     const body = (await response.json()) as { importedCount: number };
 
@@ -531,7 +539,7 @@ describe("POST /api/feeds/import", () => {
       {
         etag: null,
         lastModified: null,
-      }
+      },
     );
     expect(mocks.createFeedWithInitialItems).toHaveBeenNthCalledWith(
       2,
@@ -542,7 +550,7 @@ describe("POST /api/feeds/import", () => {
       {
         etag: null,
         lastModified: null,
-      }
+      },
     );
   });
 
@@ -551,14 +559,16 @@ describe("POST /api/feeds/import", () => {
       createImportRequest(
         JSON.stringify({
           sourceType: "JSON",
-          entries: [{ url: "https://example.com/feed.xml", folderNames: [], customTitle: null }],
+          entries: [
+            { url: "https://example.com/feed.xml", folderNames: [], customTitle: null },
+          ],
         }),
         {
           headers: {
             "Content-Length": "1000001",
           },
-        }
-      )
+        },
+      ),
     );
     const body = (await response.json()) as { code?: string };
 
@@ -571,7 +581,7 @@ describe("POST /api/feeds/import", () => {
       createImportRequest({
         sourceType: "JSON",
         entries: [],
-      })
+      }),
     );
     const body = (await response.json()) as { code?: string; error?: string };
 
@@ -591,7 +601,7 @@ describe("POST /api/feeds/import", () => {
             customTitle: null,
           },
         ],
-      })
+      }),
     );
     const body = (await response.json()) as { code?: string; error?: string };
 
@@ -609,7 +619,7 @@ describe("POST /api/feeds/import", () => {
           folderNames: [],
           customTitle: null,
         })),
-      })
+      }),
     );
     const body = (await response.json()) as { code?: string };
 
@@ -631,8 +641,10 @@ describe("POST /api/feeds/import", () => {
     const response = await POST(
       createImportRequest({
         sourceType: "JSON",
-        entries: [{ url: "https://example.com/feed.xml", folderNames: [], customTitle: null }],
-      })
+        entries: [
+          { url: "https://example.com/feed.xml", folderNames: [], customTitle: null },
+        ],
+      }),
     );
     const body = (await response.json()) as {
       rows: Array<{ status: string; code?: string }>;
@@ -654,26 +666,26 @@ describe("POST /api/feeds/import", () => {
       id: "feed_existing",
       folderId: null,
     });
-    mocks.createFolderForUser.mockImplementation(async (_userId: string, name: string) => ({
-      status: "ok",
-      folder: {
-        id: name === "Alpha" ? "folder_alpha" : "folder_beta",
-        name,
-        createdAt: new Date("2026-02-11T00:00:00.000Z"),
-        updatedAt: new Date("2026-02-11T00:00:00.000Z"),
-      },
-    }));
+    mocks.createFolderForUser.mockImplementation(
+      async (_userId: string, name: string) => ({
+        status: "ok",
+        folder: {
+          id: name === "Alpha" ? "folder_alpha" : "folder_beta",
+          name,
+          createdAt: new Date("2026-02-11T00:00:00.000Z"),
+          updatedAt: new Date("2026-02-11T00:00:00.000Z"),
+        },
+      }),
+    );
     mocks.addFeedFoldersForUser.mockImplementation(
       async (_userId: string, _feedId: string, folderIds: string[]) => {
         const isAlpha = folderIds.includes("folder_alpha");
         return {
           status: "ok",
           addedFolderIds: [isAlpha ? "folder_alpha" : "folder_beta"],
-          folderIds: isAlpha
-            ? ["folder_alpha"]
-            : ["folder_alpha", "folder_beta"],
+          folderIds: isAlpha ? ["folder_alpha"] : ["folder_alpha", "folder_beta"],
         };
-      }
+      },
     );
 
     const response = await POST(
@@ -691,7 +703,7 @@ describe("POST /api/feeds/import", () => {
             customTitle: null,
           },
         ],
-      })
+      }),
     );
     const body = (await response.json()) as {
       rows: Array<{ status: string }>;
@@ -708,12 +720,12 @@ describe("POST /api/feeds/import", () => {
     expect(mocks.addFeedFoldersForUser).toHaveBeenCalledWith(
       "user_123",
       "feed_existing",
-      ["folder_alpha"]
+      ["folder_alpha"],
     );
     expect(mocks.addFeedFoldersForUser).toHaveBeenCalledWith(
       "user_123",
       "feed_existing",
-      ["folder_beta"]
+      ["folder_beta"],
     );
   });
 
@@ -730,15 +742,17 @@ describe("POST /api/feeds/import", () => {
           headers: {
             "Retry-After": "5",
           },
-        }
+        },
       ),
     });
 
     const response = await POST(
       createImportRequest({
         sourceType: "JSON",
-        entries: [{ url: "https://one.example.com/feed.xml", folderNames: [], customTitle: null }],
-      })
+        entries: [
+          { url: "https://one.example.com/feed.xml", folderNames: [], customTitle: null },
+        ],
+      }),
     );
     const body = await response.json();
 

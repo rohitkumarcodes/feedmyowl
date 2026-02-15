@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
-import { db, eq, users } from "@/lib/database";
-import { handleApiRouteError } from "@/lib/api-errors";
+import { db, eq, users } from "@/lib/server/database";
+import { handleApiRouteError } from "@/lib/server/api-errors";
 import {
   getFeedMembershipFolderIds,
   resolveFeedFolderIds,
-} from "@/lib/folder-memberships";
-import { isUserRetentionPurgeNeeded, purgeOldFeedItemsForUser } from "@/lib/retention";
+} from "@/lib/shared/folder-memberships";
+import {
+  isUserRetentionPurgeNeeded,
+  purgeOldFeedItemsForUser,
+} from "@/lib/server/retention";
+import type { FeedsGetResponseBody } from "@/contracts/api/feeds";
 import { getAppUser } from "./route.shared";
 
 /**
@@ -50,45 +54,43 @@ export async function getFeedsRoute() {
           },
         },
       },
-    })) as
-      | {
-          folders?: Array<{
-            id: string;
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
-          }>;
-          feeds?: Array<{
-            id: string;
-            userId: string;
-            url: string;
-            title: string | null;
-            customTitle: string | null;
-            description: string | null;
-            lastFetchedAt: Date | null;
-            lastFetchStatus: string | null;
-            lastFetchErrorCode: string | null;
-            lastFetchErrorMessage: string | null;
-            lastFetchErrorAt: Date | null;
-            createdAt: Date;
-            updatedAt: Date;
-            items: Array<{
-              id: string;
-              feedId: string;
-              guid: string | null;
-              title: string | null;
-              link: string | null;
-              content: string | null;
-              author: string | null;
-              publishedAt: Date | null;
-              readAt: Date | null;
-              createdAt: Date;
-              updatedAt: Date;
-            }>;
-            folderMemberships?: Array<{ folderId: string }>;
-          }>;
-        }
-      | null;
+    })) as {
+      folders?: Array<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+      }>;
+      feeds?: Array<{
+        id: string;
+        userId: string;
+        url: string;
+        title: string | null;
+        customTitle: string | null;
+        description: string | null;
+        lastFetchedAt: Date | null;
+        lastFetchStatus: string | null;
+        lastFetchErrorCode: string | null;
+        lastFetchErrorMessage: string | null;
+        lastFetchErrorAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
+        items: Array<{
+          id: string;
+          feedId: string;
+          guid: string | null;
+          title: string | null;
+          link: string | null;
+          content: string | null;
+          author: string | null;
+          publishedAt: Date | null;
+          readAt: Date | null;
+          createdAt: Date;
+          updatedAt: Date;
+        }>;
+        folderMemberships?: Array<{ folderId: string }>;
+      }>;
+    } | null;
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -97,6 +99,13 @@ export async function getFeedsRoute() {
     const folderRows = user.folders ?? [];
     const feedRows = user.feeds ?? [];
 
+    const responseFolders = folderRows.map((folder) => ({
+      id: folder.id,
+      name: folder.name,
+      createdAt: folder.createdAt.toISOString(),
+      updatedAt: folder.updatedAt.toISOString(),
+    }));
+
     const responseFeeds = feedRows.map((feed) => ({
       id: feed.id,
       userId: feed.userId,
@@ -104,18 +113,27 @@ export async function getFeedsRoute() {
       title: feed.title,
       customTitle: feed.customTitle,
       description: feed.description,
-      lastFetchedAt: feed.lastFetchedAt,
+      lastFetchedAt: feed.lastFetchedAt?.toISOString() ?? null,
       lastFetchStatus: feed.lastFetchStatus,
       lastFetchErrorCode: feed.lastFetchErrorCode,
       lastFetchErrorMessage: feed.lastFetchErrorMessage,
-      lastFetchErrorAt: feed.lastFetchErrorAt,
-      createdAt: feed.createdAt,
-      updatedAt: feed.updatedAt,
-      items: feed.items,
+      lastFetchErrorAt: feed.lastFetchErrorAt?.toISOString() ?? null,
+      createdAt: feed.createdAt.toISOString(),
+      updatedAt: feed.updatedAt.toISOString(),
+      items: feed.items.map((item) => ({
+        ...item,
+        publishedAt: item.publishedAt?.toISOString() ?? null,
+        readAt: item.readAt?.toISOString() ?? null,
+        createdAt: item.createdAt.toISOString(),
+        updatedAt: item.updatedAt.toISOString(),
+      })),
       folderIds: resolveFeedFolderIds(getFeedMembershipFolderIds(feed)),
     }));
 
-    return NextResponse.json({ feeds: responseFeeds, folders: folderRows });
+    return NextResponse.json({
+      feeds: responseFeeds,
+      folders: responseFolders,
+    } satisfies FeedsGetResponseBody);
   } catch (error) {
     return handleApiRouteError(error, "api.feeds.get");
   }

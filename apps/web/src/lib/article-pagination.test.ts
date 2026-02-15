@@ -5,7 +5,7 @@ import {
   parseArticlePageLimit,
   parseScopeFromSearchParams,
   scopeToKey,
-} from "@/lib/article-pagination";
+} from "@/lib/shared/article-pagination";
 
 describe("article-pagination", () => {
   it("encodes and decodes a cursor payload", () => {
@@ -37,8 +37,8 @@ describe("article-pagination", () => {
           sortKeyIso: "2026-02-11T13:00:00.000Z",
           itemId: "item_123",
         }),
-        "utf8"
-      ).toString("base64url")
+        "utf8",
+      ).toString("base64url"),
     );
     expect(wrongVersion.ok).toBe(false);
   });
@@ -55,7 +55,7 @@ describe("article-pagination", () => {
     expect(scopeToKey(allScope.value)).toBe("all");
 
     const folderScope = parseScopeFromSearchParams(
-      new URLSearchParams("scopeType=folder&scopeId=folder-1")
+      new URLSearchParams("scopeType=folder&scopeId=folder-1"),
     );
     expect(folderScope).toEqual({
       ok: true,
@@ -69,12 +69,12 @@ describe("article-pagination", () => {
 
   it("rejects missing scope ids and invalid scope types", () => {
     const missingScopeId = parseScopeFromSearchParams(
-      new URLSearchParams("scopeType=folder")
+      new URLSearchParams("scopeType=folder"),
     );
     expect(missingScopeId.ok).toBe(false);
 
     const invalidScopeType = parseScopeFromSearchParams(
-      new URLSearchParams("scopeType=broken")
+      new URLSearchParams("scopeType=broken"),
     );
     expect(invalidScopeType.ok).toBe(false);
   });
@@ -87,4 +87,3 @@ describe("article-pagination", () => {
     expect(parseArticlePageLimit("abc").ok).toBe(false);
   });
 });
-

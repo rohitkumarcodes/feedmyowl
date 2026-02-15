@@ -21,7 +21,7 @@ const mocks = vi.hoisted(() => ({
   applyRouteRateLimit: vi.fn(),
 }));
 
-vi.mock("@/lib/database", () => ({
+vi.mock("@/lib/server/database", () => ({
   db: {
     query: {
       feedFolderMemberships: {
@@ -37,34 +37,35 @@ vi.mock("@/lib/database", () => ({
   users: {},
 }));
 
-vi.mock("@/lib/auth", () => ({
+vi.mock("@/lib/server/auth", () => ({
   requireAuth: mocks.requireAuth,
   deleteAuthUser: vi.fn(),
+  isAuthRequiredError: vi.fn(() => false),
 }));
 
-vi.mock("@/lib/app-user", () => ({
+vi.mock("@/lib/server/app-user", () => ({
   ensureUserRecord: mocks.ensureUserRecord,
 }));
 
-vi.mock("@/lib/feed-discovery", () => ({
+vi.mock("@/lib/server/feed-discovery", () => ({
   discoverFeedCandidates: mocks.discoverFeedCandidates,
 }));
 
-vi.mock("@/lib/feed-parser", () => ({
+vi.mock("@/lib/server/feed-parser", () => ({
   parseFeed: mocks.parseFeed,
   parseFeedWithMetadata: mocks.parseFeedWithMetadata,
   parseFeedXml: mocks.parseFeedXml,
 }));
 
-vi.mock("@/lib/feed-errors", () => ({
+vi.mock("@/lib/shared/feed-errors", () => ({
   normalizeFeedError: mocks.normalizeFeedError,
 }));
 
-vi.mock("@/lib/feed-fetcher", () => ({
+vi.mock("@/lib/server/feed-fetcher", () => ({
   fetchFeedXml: mocks.fetchFeedXml,
 }));
 
-vi.mock("@/lib/feed-service", () => ({
+vi.mock("@/lib/server/feed-service", () => ({
   createFeedWithInitialItems: mocks.createFeedWithInitialItems,
   findExistingFeedForUserByUrl: mocks.findExistingFeedForUserByUrl,
   setFeedFoldersForUser: mocks.setFeedFoldersForUser,
@@ -72,15 +73,15 @@ vi.mock("@/lib/feed-service", () => ({
   deleteUncategorizedFeedsForUser: mocks.deleteUncategorizedFeedsForUser,
 }));
 
-vi.mock("@/lib/retention", () => ({
+vi.mock("@/lib/server/retention", () => ({
   purgeOldFeedItemsForUser: mocks.purgeOldFeedItemsForUser,
 }));
 
-vi.mock("@/lib/csrf", () => ({
+vi.mock("@/lib/server/csrf", () => ({
   assertTrustedWriteOrigin: mocks.assertTrustedWriteOrigin,
 }));
 
-vi.mock("@/lib/rate-limit", () => ({
+vi.mock("@/lib/server/rate-limit", () => ({
   applyRouteRateLimit: mocks.applyRouteRateLimit,
 }));
 
@@ -254,7 +255,8 @@ describe("POST /api/feeds feed.discover", () => {
     mocks.parseFeed.mockRejectedValue(new Error("Timed out"));
     mocks.normalizeFeedError.mockReturnValue({
       code: "timeout",
-      message: "This feed could not be updated. The server did not respond in time. This is often temporary.",
+      message:
+        "This feed could not be updated. The server did not respond in time. This is often temporary.",
     });
     mocks.discoverFeedCandidates.mockResolvedValue({
       candidates: ["https://example.com/feed.xml"],
@@ -270,7 +272,7 @@ describe("POST /api/feeds feed.discover", () => {
     expect(response.status).toBe(400);
     expect(body.code).toBe("timeout");
     expect(body.error).toBe(
-      "This feed could not be updated. The server did not respond in time. This is often temporary."
+      "This feed could not be updated. The server did not respond in time. This is often temporary.",
     );
   });
 
@@ -334,7 +336,7 @@ describe("POST /api/feeds feed.discover", () => {
     expect(response.status).toBe(400);
     expect(body.code).toBe("invalid_xml");
     expect(body.error).toBe(
-      "Error: We couldn't find any feed at this URL. Contact site owner and ask for the feed link."
+      "Error: We couldn't find any feed at this URL. Contact site owner and ask for the feed link.",
     );
   });
 
@@ -351,7 +353,7 @@ describe("POST /api/feeds feed.discover", () => {
           headers: {
             "Retry-After": "2",
           },
-        }
+        },
       ),
     });
 

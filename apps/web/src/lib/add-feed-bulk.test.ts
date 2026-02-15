@@ -4,7 +4,7 @@ import {
   getFailedBulkUrls,
   parseBulkFeedLines,
   summarizeBulkAddRows,
-} from "@/lib/add-feed-bulk";
+} from "@/lib/shared/add-feed-bulk";
 
 describe("add-feed bulk helpers", () => {
   it("parses trimmed non-empty lines from textarea input", () => {
@@ -13,7 +13,7 @@ describe("add-feed bulk helpers", () => {
         https://a.example/feed.xml
 
         https://b.example/rss.xml
-      `)
+      `),
     ).toEqual(["https://a.example/feed.xml", "https://b.example/rss.xml"]);
   });
 
@@ -23,7 +23,7 @@ describe("add-feed bulk helpers", () => {
         "https://a.example/feed.xml",
         "https://b.example/feed.xml",
         "https://a.example/feed.xml",
-      ])
+      ]),
     ).toEqual(["https://a.example/feed.xml", "https://b.example/feed.xml"]);
   });
 

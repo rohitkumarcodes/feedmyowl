@@ -4,7 +4,7 @@ const mocks = vi.hoisted(() => ({
   dbQueryFeedFolderMembershipsFindMany: vi.fn(),
 }));
 
-vi.mock("@/lib/database", () => ({
+vi.mock("@/lib/server/database", () => ({
   db: {
     query: {
       feedFolderMemberships: {
@@ -21,7 +21,7 @@ vi.mock("@/lib/database", () => ({
 import {
   getFeedFolderIdsForUserFeed,
   getFeedFolderIdsMapForUserFeeds,
-} from "@/lib/feed-folder-memberships";
+} from "@/lib/server/feed-folder-memberships";
 
 describe("feed-folder-membership queries", () => {
   beforeEach(() => {

@@ -3,7 +3,7 @@ import {
   getFeedMembershipFolderIds,
   normalizeFolderIds,
   resolveFeedFolderIds,
-} from "@/lib/folder-memberships";
+} from "@/lib/shared/folder-memberships";
 
 describe("folder memberships helpers", () => {
   it("normalizes folder IDs with stable ordering", () => {
@@ -24,7 +24,7 @@ describe("folder memberships helpers", () => {
     expect(
       getFeedMembershipFolderIds({
         folderMemberships: [{ folderId: "folder-a" }, { folderId: "folder-b" }],
-      })
+      }),
     ).toEqual(["folder-a", "folder-b"]);
     expect(getFeedMembershipFolderIds({})).toEqual([]);
   });

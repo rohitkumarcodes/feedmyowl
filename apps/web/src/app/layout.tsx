@@ -13,8 +13,8 @@
  * Docs: https://clerk.com/docs/components/clerk-provider
  */
 
-import { AuthProvider } from "@/lib/auth";
-import { buildOwlFaviconDataUri, DEFAULT_OWL_ASCII } from "@/lib/owl-brand";
+import { AuthProvider } from "@/lib/server/auth";
+import { buildOwlFaviconDataUri, DEFAULT_OWL_ASCII } from "@/lib/shared/owl-brand";
 import type { Metadata } from "next";
 import "@/styles/globals.css";
 
@@ -42,8 +42,7 @@ const clerkAppearance = {
 /** Page metadata — shown in browser tab and search results */
 export const metadata: Metadata = {
   title: "feed my owl",
-  description:
-    "A minimalist RSS/Atom feed reader that preserves your attention.",
+  description: "A minimalist RSS/Atom feed reader that preserves your attention.",
   icons: {
     icon: buildOwlFaviconDataUri(DEFAULT_OWL_ASCII),
   },
@@ -52,11 +51,7 @@ export const metadata: Metadata = {
 /**
  * Root layout component. Every page in the app is rendered inside this.
  */
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   const signInUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL ?? "/sign-in";
   const signUpUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL ?? "/sign-up";
 
