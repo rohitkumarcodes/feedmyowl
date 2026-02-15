@@ -426,6 +426,10 @@
   }
 }
 
+.deleteDialog {
+  max-width: min(92vw, 480px);
+}
+
 .deleteDialog h3 {
   color: var(--lp-text-main);
   font-size: var(--text-base);
