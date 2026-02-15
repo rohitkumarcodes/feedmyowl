@@ -191,6 +191,63 @@ export async function markFeedItemReadForUser(
   };
 }
 
+export type SetItemSavedResult =
+  | { status: "not_found" }
+  | { status: "already_set"; itemId: string; savedAt: string | null }
+  | { status: "updated"; itemId: string; savedAt: string | null };
+
+/**
+ * Set saved/bookmarked state on one feed item for its owner.
+ */
+export async function setFeedItemSavedForUser(
+  userId: string,
+  itemId: string,
+  saved: boolean,
+): Promise<SetItemSavedResult> {
+  const item = await db.query.feedItems.findFirst({
+    where: eq(feedItems.id, itemId),
+    columns: {
+      id: true,
+      savedAt: true,
+    },
+    with: {
+      feed: {
+        columns: {
+          id: true,
+          userId: true,
+        },
+      },
+    },
+  });
+
+  if (!item || item.feed.userId !== userId) {
+    return { status: "not_found" };
+  }
+
+  const isSaved = Boolean(item.savedAt);
+  if (saved === isSaved) {
+    return {
+      status: "already_set",
+      itemId: item.id,
+      savedAt: item.savedAt ? item.savedAt.toISOString() : null,
+    };
+  }
+
+  const now = new Date();
+  const nextSavedAt = saved ? now : null;
+
+  await db
+    .update(feedItems)
+    .set({ savedAt: nextSavedAt, updatedAt: now })
+    .where(eq(feedItems.id, item.id));
+
+  return {
+    status: "updated",
+    itemId: item.id,
+    savedAt: saved ? now.toISOString() : null,
+  };
+}
+
 export type RefreshFeedsForUserResult =
   | { status: "user_not_found"; retentionDeletedCount: number }
   | {
@@ -757,6 +814,7 @@ export async function setFeedFoldersForUser(
 export type MarkAllReadScope =
   | { type: "all" }
   | { type: "unread" }
+  | { type: "saved" }
   | { type: "uncategorized" }
   | { type: "folder"; id: string }
   | { type: "feed"; id: string };
@@ -776,7 +834,7 @@ export async function markAllFeedItemsReadForUser(
   /* Resolve which feedIds are affected by this scope. */
   let targetFeedIds: string[];
 
-  if (scope.type === "all" || scope.type === "unread") {
+  if (scope.type === "all" || scope.type === "unread" || scope.type === "saved") {
     const userFeeds = await db.query.feeds.findMany({
       where: eq(feeds.userId, userId),
       columns: { id: true },
@@ -837,12 +895,16 @@ export async function markAllFeedItemsReadForUser(
   }
 
   const now = new Date();
+  const baseWhere = and(inArray(feedItems.feedId, targetFeedIds), isNull(feedItems.readAt));
+  const whereClause =
+    scope.type === "saved"
+      ? and(baseWhere, sql`${feedItems.savedAt} is not null`)
+      : baseWhere;
+
   const updated = await db
     .update(feedItems)
     .set({ readAt: now, updatedAt: now })
-    .where(
-      and(inArray(feedItems.feedId, targetFeedIds), isNull(feedItems.readAt)),
-    )
+    .where(whereClause)
     .returning({ id: feedItems.id });
 
   return { status: "ok", markedCount: updated.length };

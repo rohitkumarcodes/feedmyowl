@@ -6,6 +6,7 @@ import type {
   FeedsCreateResponseBody,
   FeedsDiscoverResponseBody,
   FeedsGetResponseBody,
+  ItemSetSavedResponseBody,
   MarkAllReadResponseBody,
   MarkReadResponseBody,
   UncategorizedDeleteResponseBody,
@@ -55,6 +56,16 @@ export async function markItemRead(itemId: string) {
       body: JSON.stringify({ action: "item.markRead", itemId }),
     },
   );
+}
+
+export async function setItemSaved(itemId: string, saved: boolean) {
+  return await callJson<
+    (ItemSetSavedResponseBody & Partial<ApiErrorBody>) | ApiErrorBody
+  >("/api/feeds", {
+    method: "PATCH",
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ action: "item.setSaved", itemId, saved }),
+  });
 }
 
 export async function markAllItemsRead(

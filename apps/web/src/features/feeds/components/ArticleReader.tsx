@@ -9,10 +9,13 @@ import { extractYouTubeVideoId } from "@/lib/shared/youtube";
 import { toRenderableHtml } from "@/utils/articleText";
 import type { ArticleViewModel } from "@/features/feeds/types/view-models";
 import { shouldFocusReaderRoot } from "@/features/feeds/state/article-reader-focus";
+import { BookmarkRibbonIcon } from "@/features/feeds/components/BookmarkRibbonIcon";
 import styles from "./ArticleReader.module.css";
 
 interface ArticleReaderProps {
   article: ArticleViewModel | null;
+  isSavingSaved?: boolean;
+  onToggleSaved?: (articleId: string) => void;
 }
 
 function formatPublicationDate(iso: string | null): string {
@@ -52,7 +55,7 @@ function isTrustedEmbedSource(url: string): boolean {
 /**
  * Renders either a placeholder or the selected article reader view.
  */
-export function ArticleReader({ article }: ArticleReaderProps) {
+export function ArticleReader({ article, isSavingSaved, onToggleSaved }: ArticleReaderProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
 
@@ -177,7 +180,22 @@ export function ArticleReader({ article }: ArticleReaderProps) {
       onPointerDownCapture={handlePointerDownCapture}
     >
       <article className={styles.content}>
-        <p className={styles.feedName}>{article.feedTitle}</p>
+        <div className={styles.headerRow}>
+          <p className={styles.feedName}>{article.feedTitle}</p>
+          {onToggleSaved ? (
+            <button
+              type="button"
+              className={styles.saveButton}
+              onClick={() => onToggleSaved(article.id)}
+              aria-pressed={article.savedAt != null}
+              data-saved={article.savedAt != null}
+              disabled={isSavingSaved}
+            >
+              <BookmarkRibbonIcon className={styles.saveButtonIcon} />
+              <span>{article.savedAt != null ? "Saved" : "Save"}</span>
+            </button>
+          ) : null}
+        </div>
         {article.link ? (
           <a
             href={article.link}

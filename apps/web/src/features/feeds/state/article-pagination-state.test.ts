@@ -44,6 +44,7 @@ describe("article pagination state helpers", () => {
             author: null,
             publishedAt: null,
             readAt: null,
+            savedAt: null,
             createdAt: "2026-02-11T00:00:00.000Z",
           },
         ],
@@ -64,6 +65,7 @@ describe("article pagination state helpers", () => {
         author: null,
         publishedAt: null,
         readAt: null,
+        savedAt: null,
         createdAt: "2026-02-11T00:00:00.000Z",
       },
       {
@@ -75,6 +77,7 @@ describe("article pagination state helpers", () => {
         author: null,
         publishedAt: null,
         readAt: null,
+        savedAt: null,
         createdAt: "2026-02-12T00:00:00.000Z",
       },
       {
@@ -86,6 +89,7 @@ describe("article pagination state helpers", () => {
         author: null,
         publishedAt: null,
         readAt: null,
+        savedAt: null,
         createdAt: "2026-02-12T00:00:00.000Z",
       },
     ]);
@@ -108,6 +112,7 @@ describe("article pagination state helpers", () => {
             author: null,
             publishedAt: null,
             readAt: null,
+            savedAt: null,
             createdAt: "2026-02-01T00:00:00.000Z",
           },
         ],
@@ -127,6 +132,7 @@ describe("article pagination state helpers", () => {
             author: null,
             publishedAt: null,
             readAt: null,
+            savedAt: null,
             createdAt: "2026-02-11T00:00:00.000Z",
           },
         ],

@@ -33,6 +33,7 @@ export interface ArticlePageItemRecord {
   author: string | null;
   publishedAt: Date | null;
   readAt: Date | null;
+  savedAt: Date | null;
   createdAt: Date;
 }
 
@@ -112,7 +113,7 @@ async function resolveScopeFeedIdsForUser(
   userId: string,
   scope: ArticleScope,
 ): Promise<ResolveScopeFeedIdsResult> {
-  if (scope.type === "all" || scope.type === "unread") {
+  if (scope.type === "all" || scope.type === "unread" || scope.type === "saved") {
     // "unread" uses all feeds — the readAt IS NULL filter is applied later in the query.
     const userFeeds = await db.query.feeds.findMany({
       where: eq(feeds.userId, userId),
@@ -197,7 +198,10 @@ export async function listArticlePageForUser(params: {
     };
   }
 
-  const sortKeyExpression = sql`coalesce(${feedItems.publishedAt}, ${feedItems.createdAt})`;
+  const sortKeyExpression =
+    params.scope.type === "saved"
+      ? sql`${feedItems.savedAt}`
+      : sql`coalesce(${feedItems.publishedAt}, ${feedItems.createdAt})`;
 
   const cursorTimestamp = params.cursor ? toDate(params.cursor.sortKeyIso) : null;
 
@@ -206,6 +210,8 @@ export async function listArticlePageForUser(params: {
   const baseScopeFilter =
     params.scope.type === "unread"
       ? and(feedFilter, isNull(feedItems.readAt))
+      : params.scope.type === "saved"
+        ? and(feedFilter, sql`${feedItems.savedAt} is not null`)
       : feedFilter;
 
   const whereClause = params.cursor
@@ -225,8 +231,12 @@ export async function listArticlePageForUser(params: {
       author: feedItems.author,
       publishedAt: feedItems.publishedAt,
       readAt: feedItems.readAt,
+      savedAt: feedItems.savedAt,
       createdAt: feedItems.createdAt,
-      sortKey: sql<Date>`coalesce(${feedItems.publishedAt}, ${feedItems.createdAt})`,
+      sortKey:
+        params.scope.type === "saved"
+          ? feedItems.savedAt
+          : sql<Date>`coalesce(${feedItems.publishedAt}, ${feedItems.createdAt})`,
     })
     .from(feedItems)
     .where(whereClause)
@@ -245,13 +255,14 @@ export async function listArticlePageForUser(params: {
     author: row.author,
     publishedAt: toDateOrNull(row.publishedAt),
     readAt: toDateOrNull(row.readAt),
+    savedAt: toDateOrNull(row.savedAt),
     createdAt: toDate(row.createdAt),
   }));
 
   const nextCursor = hasMore
     ? (() => {
         const lastRow = pagedRows[pagedRows.length - 1];
-        const sortKey = toDate(lastRow.sortKey);
+        const sortKey = toDate(lastRow.sortKey ?? lastRow.createdAt);
         return encodeArticleCursor({
           v: 1,
           sortKeyIso: sortKey.toISOString(),

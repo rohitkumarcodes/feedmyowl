@@ -315,6 +315,10 @@
   width: 16px;
 }
 
+.scopeRowIcon {
+  margin-right: 6px;
+}
+
 .folderIconSpacer {
   display: inline-flex;
   visibility: hidden;

@@ -81,6 +81,10 @@ function toArticleScope(scope: SidebarScope): ArticleScope | null {
     return { type: "unread" };
   }
 
+  if (scope.type === "saved") {
+    return { type: "saved" };
+  }
+
   if (scope.type === "uncategorized") {
     return { type: "uncategorized" };
   }
@@ -285,6 +289,7 @@ export function FeedsWorkspace({
     deletingFeedId,
     renamingFeedId,
     updatingFeedFoldersId,
+    savingItemId,
     deletingFolderId,
     renamingFolderId,
     isDeletingUncategorized,
@@ -306,6 +311,7 @@ export function FeedsWorkspace({
     clearStatusMessages,
     markArticleAsRead,
     markAllArticlesAsRead,
+    toggleArticleSaved,
     handleRefresh,
     handleAddFeed,
     handleRenameFeed,
@@ -854,6 +860,7 @@ export function FeedsWorkspace({
             unreadCounts={unreadCounts}
             onSelectAll={() => handleSelectScope({ type: "all" })}
             onSelectUnread={() => handleSelectScope({ type: "unread" })}
+            onSelectSaved={() => handleSelectScope({ type: "saved" })}
             onSelectUncategorized={() => handleSelectScope({ type: "uncategorized" })}
             onSelectFolder={(folderId) => handleSelectScope({ type: "folder", folderId })}
             onSelectFeed={(feedId) => handleSelectScope({ type: "feed", feedId })}
@@ -992,7 +999,15 @@ export function FeedsWorkspace({
             }
           />
         }
-        articleReader={<ArticleReader article={openArticle} />}
+        articleReader={
+          <ArticleReader
+            article={openArticle}
+            isSavingSaved={Boolean(openArticle && savingItemId === openArticle.id)}
+            onToggleSaved={(articleId) => {
+              void toggleArticleSaved(articleId);
+            }}
+          />
+        }
         sidebarCollapsed={sidebarCollapsed}
         onToggleSidebar={handleToggleSidebar}
         listCollapsed={listCollapsed}

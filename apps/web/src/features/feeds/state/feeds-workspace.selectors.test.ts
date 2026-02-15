@@ -3,6 +3,7 @@ import type { FeedViewModel, FolderViewModel } from "@/features/feeds/types/view
 import {
   doesArticleMatchSidebarScope,
   selectAllArticles,
+  selectEmptyStateMessage,
   selectListStatusMessage,
   selectScopeLabel,
   selectVisibleArticles,
@@ -46,6 +47,7 @@ const feeds: FeedViewModel[] = [
         author: null,
         publishedAt: "2026-01-03T00:00:00.000Z",
         readAt: null,
+        savedAt: null,
         createdAt: "2026-01-03T00:00:00.000Z",
       },
     ],
@@ -72,6 +74,7 @@ const feeds: FeedViewModel[] = [
         author: null,
         publishedAt: "2026-01-04T00:00:00.000Z",
         readAt: null,
+        savedAt: "2026-01-06T00:00:00.000Z",
         createdAt: "2026-01-04T00:00:00.000Z",
       },
     ],
@@ -98,6 +101,7 @@ const feeds: FeedViewModel[] = [
         author: null,
         publishedAt: "2026-01-01T00:00:00.000Z",
         readAt: null,
+        savedAt: null,
         createdAt: "2026-01-01T00:00:00.000Z",
       },
     ],
@@ -148,6 +152,9 @@ describe("feeds-workspace selectors", () => {
     expect(doesArticleMatchSidebarScope(articleFromA!, { type: "uncategorized" })).toBe(
       false,
     );
+
+    expect(doesArticleMatchSidebarScope(articleFromB!, { type: "saved" })).toBe(true);
+    expect(doesArticleMatchSidebarScope(articleFromA!, { type: "saved" })).toBe(false);
   });
 
   it("filters visible articles by folder scope", () => {
@@ -177,6 +184,13 @@ describe("feeds-workspace selectors", () => {
     ).toBe("Tech");
     expect(selectScopeLabel(feeds, folders, { type: "uncategorized" })).toBe(
       "Uncategorized",
+    );
+    expect(selectScopeLabel(feeds, folders, { type: "saved" })).toBe("Saved");
+  });
+
+  it("returns saved empty-state message", () => {
+    expect(selectEmptyStateMessage(feeds.length, { type: "saved" })).toBe(
+      "No saved articles.",
     );
   });
 

@@ -1,4 +1,4 @@
-const RESERVED_FOLDER_NAMES_SET = new Set(["all feeds", "uncategorized"]);
+const RESERVED_FOLDER_NAMES_SET = new Set(["all feeds", "saved", "uncategorized"]);
 
 /**
  * Folder names that match built-in sidebar scope labels (case-insensitive).

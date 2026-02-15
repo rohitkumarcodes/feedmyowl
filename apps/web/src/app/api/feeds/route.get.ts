@@ -85,6 +85,7 @@ export async function getFeedsRoute() {
           author: string | null;
           publishedAt: Date | null;
           readAt: Date | null;
+          savedAt: Date | null;
           createdAt: Date;
           updatedAt: Date;
         }>;
@@ -124,6 +125,7 @@ export async function getFeedsRoute() {
         ...item,
         publishedAt: item.publishedAt?.toISOString() ?? null,
         readAt: item.readAt?.toISOString() ?? null,
+        savedAt: item.savedAt?.toISOString() ?? null,
         createdAt: item.createdAt.toISOString(),
         updatedAt: item.updatedAt.toISOString(),
       })),

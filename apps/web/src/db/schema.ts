@@ -280,6 +280,9 @@ export const feedItems = pgTable(
     /** When the user opened this article in FeedMyOwl */
     readAt: timestamp("read_at"),
 
+    /** When the user saved/bookmarked this article for later */
+    savedAt: timestamp("saved_at"),
+
     /** When we first stored this item */
     createdAt: timestamp("created_at").defaultNow().notNull(),
 

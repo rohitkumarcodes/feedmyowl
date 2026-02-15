@@ -154,6 +154,7 @@ function toFeedItemViewModel(item: ArticlePageItem): FeedItemViewModel {
     author: item.author,
     publishedAt: item.publishedAt,
     readAt: item.readAt,
+    savedAt: item.savedAt,
     createdAt: item.createdAt,
   };
 }

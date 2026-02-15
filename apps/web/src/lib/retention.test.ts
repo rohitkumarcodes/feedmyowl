@@ -37,6 +37,7 @@ describe("retention helpers", () => {
       "user_123",
       FEED_ITEMS_PER_FEED_LIMIT,
     ]);
+    expect(mocks.dbExecute.mock.calls[0][0]?.strings.join("")).toContain("saved_at");
   });
 
   it("returns deleted row count when user-wide prune removes over-limit items", async () => {
@@ -66,6 +67,7 @@ describe("retention helpers", () => {
     ]);
     expect(mocks.dbExecute.mock.calls[0][0]?.strings.join("")).toContain("f.user_id");
     expect(mocks.dbExecute.mock.calls[0][0]?.strings.join("")).toContain("fi.feed_id");
+    expect(mocks.dbExecute.mock.calls[0][0]?.strings.join("")).toContain("saved_at");
   });
 
   it("supports rowCount-based delete responses", async () => {
@@ -90,6 +92,7 @@ describe("retention helpers", () => {
       "user_123",
       FEED_ITEMS_PER_FEED_LIMIT,
     ]);
+    expect(mocks.dbExecute.mock.calls[0][0]?.strings.join("")).toContain("saved_at");
   });
 
   it("returns true when at least one feed exceeds the retention cap", async () => {
@@ -102,5 +105,6 @@ describe("retention helpers", () => {
       "user_123",
       FEED_ITEMS_PER_FEED_LIMIT,
     ]);
+    expect(mocks.dbExecute.mock.calls[0][0]?.strings.join("")).toContain("saved_at");
   });
 });
