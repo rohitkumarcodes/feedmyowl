@@ -398,7 +398,7 @@ function ShutterFeedGroup({
   return (
     <div
       ref={groupRef}
-      className={styles.feedGroup}
+      className={`${styles.folderFeedsShutter} ${styles.folderFeeds}`}
       data-expanded={expanded}
       onTransitionEnd={handleTransitionEnd}
     >
