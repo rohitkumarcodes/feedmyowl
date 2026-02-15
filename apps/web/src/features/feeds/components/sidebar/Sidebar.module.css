@@ -445,8 +445,8 @@
   display: grid;
   gap: 6px;
   justify-content: center;
-  margin-top: 4px;
-  max-width: 200px;
+  margin: 4px auto 0;
+  max-width: 240px;
 }
 
 .uncategorizedCta {
