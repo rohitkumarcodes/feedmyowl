@@ -1495,12 +1495,15 @@ export function Sidebar({
 
       {pendingDeleteFolderId && pendingDeleteStats ? (
         <div
-          className={primitiveStyles.dialogBackdrop}
+          className={styles.deleteDialogBackdropFixed}
+          role="presentation"
+          onClick={() => setPendingDeleteFolderId(null)}
         >
           <div
             className={`${primitiveStyles.dialog} ${styles.deleteDialog}`}
             role="dialog"
             aria-modal="true"
+            onClick={(event) => event.stopPropagation()}
           >
             <h3>Delete folder</h3>
             
