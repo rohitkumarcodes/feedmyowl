@@ -269,11 +269,9 @@ export function AddFeedForm({
         </fieldset>
       ) : null}
 
-      <fieldset className={styles.folderFieldset}>
-        <legend className={styles.label}>Folders</legend>
-        {availableFolders.length === 0 ? (
-          <p className={styles.folderEmpty}>No folders yet. Create one below.</p>
-        ) : (
+      {availableFolders.length > 0 ? (
+        <fieldset className={styles.folderFieldset}>
+          <legend className={styles.label}>Folders</legend>
           <div className={styles.folderList}>
             {availableFolders.map((folder) => {
               const isChecked = selectedFolderIds.includes(folder.id);
@@ -291,8 +289,8 @@ export function AddFeedForm({
               );
             })}
           </div>
-        )}
-      </fieldset>
+        </fieldset>
+      ) : null}
 
       <div className={styles.inlineFolderCreate}>
         <input

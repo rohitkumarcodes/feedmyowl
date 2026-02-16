@@ -107,11 +107,6 @@
   margin: 0;
 }
 
-.folderEmpty {
-  color: var(--lp-text-muted);
-  font-size: var(--text-xs);
-}
-
 .inlineFolderCreate {
   display: grid;
   gap: 6px;
