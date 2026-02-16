@@ -153,7 +153,6 @@ export function Sidebar({
     string | null
   >(null);
   const [forceRenameFolderId, setForceRenameFolderId] = useState<string | null>(null);
-  const [openFolderFormTick, setOpenFolderFormTick] = useState(0);
 
   useEffect(() => {
     if (!pendingAutoRenameFolderName) {
@@ -180,7 +179,6 @@ export function Sidebar({
         <AddFeedSection
           isMobile={isMobile}
           folders={folders}
-          openFolderFormTick={openFolderFormTick}
           isAddFeedFormVisible={isAddFeedFormVisible}
           addFeedStage={addFeedStage}
           feedUrlInput={feedUrlInput}
@@ -242,7 +240,6 @@ export function Sidebar({
         onRequestUncategorizedMove={onRequestUncategorizedMove}
         isCreatingFolder={isCreatingFolder}
         onCreateFolder={onCreateFolder}
-        onRequestOpenFolderForm={() => setOpenFolderFormTick((previous) => previous + 1)}
         forceRenameFolderId={forceRenameFolderId}
         onForceRenameHandled={(folderId) =>
           setForceRenameFolderId((previous) => (previous === folderId ? null : previous))

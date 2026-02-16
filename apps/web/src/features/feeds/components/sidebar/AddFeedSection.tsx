@@ -15,7 +15,6 @@ import styles from "./Sidebar.module.css";
 interface AddFeedSectionProps {
   isMobile: boolean;
   folders: FolderViewModel[];
-  openFolderFormTick?: number;
 
   isAddFeedFormVisible: boolean;
   addFeedStage: AddFeedStage | null;
@@ -54,7 +53,6 @@ interface AddFeedSectionProps {
 export function AddFeedSection({
   isMobile,
   folders,
-  openFolderFormTick = 0,
   isAddFeedFormVisible,
   addFeedStage,
   feedUrlInput,
@@ -87,16 +85,6 @@ export function AddFeedSection({
   const [isSidebarFolderFormVisible, setIsSidebarFolderFormVisible] = useState(false);
   const [sidebarFolderName, setSidebarFolderName] = useState("");
   const addMenuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (openFolderFormTick === 0) {
-      return;
-    }
-
-    setIsAddMenuOpen(false);
-    onCancelAddFeed();
-    setIsSidebarFolderFormVisible(true);
-  }, [onCancelAddFeed, openFolderFormTick]);
 
   useEffect(() => {
     if (!isAddMenuOpen) {

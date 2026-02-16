@@ -458,18 +458,6 @@
   width: 100%;
 }
 
-.uncategorizedCta {
-  border-top: 1px solid var(--lp-border);
-  color: var(--text-secondary);
-  display: grid;
-  gap: 6px;
-  padding: 8px 12px;
-}
-
-.uncategorizedCta p {
-  font-size: var(--text-xs);
-}
-
 .inlineField {
   display: grid;
   gap: 4px;

@@ -66,7 +66,6 @@ interface FolderTreeProps {
 
   isCreatingFolder: boolean;
   onCreateFolder: (name: string) => boolean | Promise<boolean>;
-  onRequestOpenFolderForm: () => void;
 
   forceRenameFolderId: string | null;
   onForceRenameHandled: (folderId: string) => void;
@@ -451,7 +450,6 @@ export function FolderTree({
   onRequestUncategorizedMove,
   isCreatingFolder,
   onCreateFolder,
-  onRequestOpenFolderForm,
   forceRenameFolderId,
   onForceRenameHandled,
   onCollapse,
@@ -893,18 +891,6 @@ export function FolderTree({
             >
               {renderFeedRows(uncategorizedFeeds)}
             </ShutterFeedGroup>
-            {sortedFolders.length === 0 ? (
-              <div className={styles.uncategorizedCta}>
-                <p>No folders yet. Create one to organize uncategorized feeds.</p>
-                <button
-                  type="button"
-                  className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
-                  onClick={onRequestOpenFolderForm}
-                >
-                  Create folder
-                </button>
-              </div>
-            ) : null}
           </div>
         ) : null}
 
