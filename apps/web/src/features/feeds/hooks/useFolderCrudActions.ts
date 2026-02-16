@@ -4,19 +4,22 @@ import { useCallback, useState } from "react";
 import type { FolderDeleteMode } from "@/contracts/api/folders";
 import type { FeedViewModel, FolderViewModel } from "@/features/feeds/types/view-models";
 import type { SidebarScope } from "@/features/feeds/types/scopes";
+import type { FeedActionNoticeOptions } from "@/features/feeds/hooks/useFeedActionStatus";
 import {
   createFolder as createFolderRequest,
   deleteFolder as deleteFolderRequest,
   renameFolder as renameFolderRequest,
 } from "@/lib/client/folders";
+import type { ApiErrorBody } from "@/contracts/api/common";
+import { mapApiCallResultToUiMessage, type UiActionContext } from "@/lib/shared/ui-messages";
 
 interface UseFolderCrudActionsOptions {
   router: { refresh(): void };
   setFeeds: React.Dispatch<React.SetStateAction<FeedViewModel[]>>;
   setFolders: React.Dispatch<React.SetStateAction<FolderViewModel[]>>;
   setSelectedScope: React.Dispatch<React.SetStateAction<SidebarScope>>;
-  setInfoMessage: (message: string | null) => void;
-  setErrorMessage: (message: string | null) => void;
+  setInfoMessage: (message: string | null, options?: FeedActionNoticeOptions) => void;
+  setErrorMessage: (message: string | null, options?: FeedActionNoticeOptions) => void;
   setShowAddAnotherAction: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
@@ -32,6 +35,36 @@ export function useFolderCrudActions({
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [deletingFolderId, setDeletingFolderId] = useState<string | null>(null);
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
+
+  const handleApiFailure = useCallback(
+    (
+      result: {
+        status: number;
+        networkError: boolean;
+        body: Partial<ApiErrorBody> | null;
+        headers: Headers | null;
+      },
+      context: UiActionContext,
+      fallbackMessage: string,
+      retryAction?: () => void,
+    ) => {
+      const mapped = mapApiCallResultToUiMessage(result, context, fallbackMessage);
+      setErrorMessage(mapped.text, {
+        severity: mapped.severity,
+        title: mapped.title,
+        dedupeKey: mapped.dedupeKey,
+        source: "folder",
+        retryAction:
+          retryAction && mapped.recommendedActionLabel === "Retry"
+            ? {
+                label: "Retry",
+                onAction: retryAction,
+              }
+            : undefined,
+      });
+    },
+    [setErrorMessage],
+  );
 
   const createFolder = useCallback(
     async (name: string): Promise<FolderViewModel | null> => {
@@ -49,11 +82,9 @@ export function useFolderCrudActions({
       const result = await createFolderRequest(trimmedName);
       const body = result.body;
       if (!result.ok || !body?.folder?.id) {
-        if (result.networkError) {
-          setErrorMessage("Could not connect to the server.");
-        } else {
-          setErrorMessage(body?.error || "Could not create folder.");
-        }
+        handleApiFailure(result, "folder.create", "Couldn't create this folder. Try again.", () => {
+          void createFolder(trimmedName);
+        });
         setIsCreatingFolder(false);
         return null;
       }
@@ -83,6 +114,7 @@ export function useFolderCrudActions({
     },
     [
       isCreatingFolder,
+      handleApiFailure,
       router,
       setErrorMessage,
       setFolders,
@@ -112,11 +144,9 @@ export function useFolderCrudActions({
 
       const result = await renameFolderRequest(folderId, name);
       if (!result.ok || !result.body?.folder?.id) {
-        if (result.networkError) {
-          setErrorMessage("Could not connect to the server.");
-        } else {
-          setErrorMessage(result.body?.error || "Could not rename folder.");
-        }
+        handleApiFailure(result, "folder.rename", "Couldn't rename this folder. Try again.", () => {
+          void handleRenameFolder(folderId, name);
+        });
         setRenamingFolderId(null);
         return false;
       }
@@ -143,6 +173,7 @@ export function useFolderCrudActions({
     [
       deletingFolderId,
       isCreatingFolder,
+      handleApiFailure,
       renamingFolderId,
       router,
       setErrorMessage,
@@ -165,11 +196,9 @@ export function useFolderCrudActions({
 
       const result = await deleteFolderRequest(folderId, mode);
       if (!result.ok) {
-        if (result.networkError) {
-          setErrorMessage("Could not connect to the server.");
-        } else {
-          setErrorMessage(result.body?.error || "Could not delete folder.");
-        }
+        handleApiFailure(result, "folder.delete", "Couldn't delete this folder. Try again.", () => {
+          void handleDeleteFolder(folderId, mode);
+        });
         setDeletingFolderId(null);
         return false;
       }
@@ -233,6 +262,7 @@ export function useFolderCrudActions({
     },
     [
       deletingFolderId,
+      handleApiFailure,
       isCreatingFolder,
       renamingFolderId,
       router,

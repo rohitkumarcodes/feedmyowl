@@ -25,6 +25,8 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const correlationId = error.digest?.trim() ? error.digest.trim() : null;
+
   useEffect(() => {
     // Report the error to Sentry when this component mounts
     Sentry.captureException(error);
@@ -37,8 +39,13 @@ export default function GlobalError({
           <div className={styles.panel}>
             <h1 className={styles.title}>Something went wrong</h1>
             <p className={styles.message}>
-              We&apos;ve been notified and are looking into it.
+              Try again. If this keeps happening, refresh the page and try one more time.
             </p>
+            {correlationId ? (
+              <p className={styles.supportHint}>
+                Support code: <code className={styles.supportCode}>{correlationId}</code>
+              </p>
+            ) : null}
             <button className={styles.button} onClick={() => reset()}>
               Try again
             </button>

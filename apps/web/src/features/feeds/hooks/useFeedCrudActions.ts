@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import type { ArticleViewModel, FeedViewModel } from "@/features/feeds/types/view-models";
 import type { SidebarScope } from "@/features/feeds/types/scopes";
+import type { FeedActionNoticeOptions } from "@/features/feeds/hooks/useFeedActionStatus";
 import {
   deleteFeed as deleteFeedRequest,
   markAllItemsRead as markAllItemsReadRequest,
@@ -12,7 +13,9 @@ import {
   setFeedFolders as setFeedFoldersRequest,
   setItemSaved as setItemSavedRequest,
 } from "@/lib/client/feeds";
+import type { ApiErrorBody } from "@/contracts/api/common";
 import { OFFLINE_CACHED_ARTICLES_MESSAGE } from "@/lib/shared/network-messages";
+import { mapApiCallResultToUiMessage, type UiActionContext } from "@/lib/shared/ui-messages";
 
 interface UseFeedCrudActionsOptions {
   allArticles: ArticleViewModel[];
@@ -21,8 +24,8 @@ interface UseFeedCrudActionsOptions {
   setSelectedScope: React.Dispatch<React.SetStateAction<SidebarScope>>;
   setLiveMessage: React.Dispatch<React.SetStateAction<string>>;
   setNetworkMessage: React.Dispatch<React.SetStateAction<string | null>>;
-  setInfoMessage: (message: string | null) => void;
-  setErrorMessage: (message: string | null) => void;
+  setInfoMessage: (message: string | null, options?: FeedActionNoticeOptions) => void;
+  setErrorMessage: (message: string | null, options?: FeedActionNoticeOptions) => void;
   setShowAddAnotherAction: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
@@ -42,6 +45,36 @@ export function useFeedCrudActions({
   const [renamingFeedId, setRenamingFeedId] = useState<string | null>(null);
   const [updatingFeedFoldersId, setUpdatingFeedFoldersId] = useState<string | null>(null);
   const [savingItemId, setSavingItemId] = useState<string | null>(null);
+
+  const handleApiFailure = useCallback(
+    (
+      result: {
+        status: number;
+        networkError: boolean;
+        body: Partial<ApiErrorBody> | null;
+        headers: Headers | null;
+      },
+      context: UiActionContext,
+      fallbackMessage: string,
+      retryAction?: () => void,
+    ) => {
+      const mapped = mapApiCallResultToUiMessage(result, context, fallbackMessage);
+      setErrorMessage(mapped.text, {
+        severity: mapped.severity,
+        title: mapped.title,
+        dedupeKey: mapped.dedupeKey,
+        source: "workspace",
+        retryAction:
+          retryAction && mapped.recommendedActionLabel === "Retry"
+            ? {
+                label: "Retry",
+                onAction: retryAction,
+              }
+            : undefined,
+      });
+    },
+    [setErrorMessage],
+  );
 
   const markArticleAsRead = useCallback(
     async (articleId: string) => {
@@ -69,15 +102,10 @@ export function useFeedCrudActions({
 
       const result = await markItemReadRequest(articleId);
       if (!result.ok) {
-        if (result.networkError) {
-          setErrorMessage("Could not connect to the server.");
-          return;
-        }
-
-        setErrorMessage(result.body?.error || "Unable to persist read state.");
+        handleApiFailure(result, "article.mark_read", "Couldn't update read state. Try again.");
       }
     },
-    [allArticles, setErrorMessage, setFeeds],
+    [allArticles, handleApiFailure, setFeeds],
   );
 
   /**
@@ -118,12 +146,11 @@ export function useFeedCrudActions({
 
       const result = await markAllItemsReadRequest(scopeType, scopeId);
       if (!result.ok) {
-        if (result.networkError) {
-          setErrorMessage("Could not connect to the server.");
-          return;
-        }
-
-        setErrorMessage(result.body?.error || "Could not mark all as read.");
+        handleApiFailure(
+          result,
+          "article.mark_all_read",
+          "Couldn't mark all articles as read. Try again.",
+        );
         return;
       }
 
@@ -135,7 +162,7 @@ export function useFeedCrudActions({
           : "All articles are already read.",
       );
     },
-    [setErrorMessage, setFeeds, setInfoMessage],
+    [handleApiFailure, setFeeds, setInfoMessage],
   );
 
   const toggleArticleSaved = useCallback(
@@ -191,12 +218,11 @@ export function useFeedCrudActions({
           }),
         );
 
-        if (result.networkError) {
-          setErrorMessage("Could not connect to the server.");
-          return;
-        }
-
-        setErrorMessage(result.body?.error || "Unable to update saved state.");
+        handleApiFailure(
+          result,
+          "article.set_saved",
+          "Couldn't update saved state. Try again.",
+        );
         return;
       }
 
@@ -220,7 +246,7 @@ export function useFeedCrudActions({
         }),
       );
     },
-    [allArticles, savingItemId, setErrorMessage, setFeeds],
+    [allArticles, handleApiFailure, savingItemId, setFeeds],
   );
 
   const handleRefresh = useCallback(async () => {
@@ -240,11 +266,9 @@ export function useFeedCrudActions({
 
     const result = await refreshFeedsRequest();
     if (!result.ok) {
-      if (result.networkError) {
-        setErrorMessage("Could not connect to the server.");
-      } else {
-        setErrorMessage(result.body?.error || "Could not refresh feeds.");
-      }
+      handleApiFailure(result, "feed.refresh", "Refresh didn't finish. Try again.", () => {
+        void handleRefresh();
+      });
       setIsRefreshingFeeds(false);
       return;
     }
@@ -266,6 +290,7 @@ export function useFeedCrudActions({
     router.refresh();
   }, [
     isRefreshingFeeds,
+    handleApiFailure,
     router,
     setErrorMessage,
     setInfoMessage,
@@ -287,11 +312,9 @@ export function useFeedCrudActions({
 
       const result = await deleteFeedRequest(feedId);
       if (!result.ok) {
-        if (result.networkError) {
-          setErrorMessage("Could not connect to the server.");
-        } else {
-          setErrorMessage(result.body?.error || "Could not delete feed.");
-        }
+        handleApiFailure(result, "feed.delete", "Couldn't delete this feed. Try again.", () => {
+          void handleDeleteFeed(feedId);
+        });
         setDeletingFeedId(null);
         return;
       }
@@ -311,6 +334,7 @@ export function useFeedCrudActions({
     },
     [
       deletingFeedId,
+      handleApiFailure,
       renamingFeedId,
       router,
       setErrorMessage,
@@ -335,11 +359,14 @@ export function useFeedCrudActions({
 
       const result = await renameFeedRequest(feedId, name);
       if (!result.ok) {
-        if (result.networkError) {
-          setErrorMessage("Could not connect to the server.");
-        } else {
-          setErrorMessage(result.body?.error || "Could not update feed name.");
-        }
+        handleApiFailure(
+          result,
+          "feed.rename",
+          "Couldn't update this feed name. Try again.",
+          () => {
+            void handleRenameFeed(feedId, name);
+          },
+        );
         setRenamingFeedId(null);
         return false;
       }
@@ -358,6 +385,7 @@ export function useFeedCrudActions({
     },
     [
       deletingFeedId,
+      handleApiFailure,
       renamingFeedId,
       router,
       setErrorMessage,
@@ -381,11 +409,14 @@ export function useFeedCrudActions({
 
       const result = await setFeedFoldersRequest(feedId, folderIds);
       if (!result.ok) {
-        if (result.networkError) {
-          setErrorMessage("Could not connect to the server.");
-        } else {
-          setErrorMessage(result.body?.error || "Could not update feed folders.");
-        }
+        handleApiFailure(
+          result,
+          "feed.set_folders",
+          "Couldn't update folder assignments. Choose folders and try again.",
+          () => {
+            void handleSetFeedFolders(feedId, folderIds);
+          },
+        );
         setUpdatingFeedFoldersId(null);
         return false;
       }
@@ -410,6 +441,7 @@ export function useFeedCrudActions({
     },
     [
       deletingFeedId,
+      handleApiFailure,
       renamingFeedId,
       router,
       setErrorMessage,

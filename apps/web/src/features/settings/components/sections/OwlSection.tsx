@@ -190,11 +190,15 @@ export function OwlSection({
             </p>
           ) : null}
           {owlSaveMessage ? (
-            <p className={styles.inlineMessage} role="status">
+            <p className={styles.inlineMessageSuccess} role="status">
               {owlSaveMessage}
             </p>
           ) : null}
-          {owlSaveError ? <p className={styles.inlineMessage}>{owlSaveError}</p> : null}
+          {owlSaveError ? (
+            <p className={styles.inlineMessageError} role="alert" aria-live="assertive">
+              {owlSaveError}
+            </p>
+          ) : null}
         </OwlOptionsShutter>
       </div>
     </section>

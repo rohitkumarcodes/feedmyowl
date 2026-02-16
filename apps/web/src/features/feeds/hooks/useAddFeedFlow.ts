@@ -1,6 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import type { ApiErrorBody } from "@/contracts/api/common";
+import type {
+  FeedActionNoticeOptions,
+  FeedActionNoticeSource,
+} from "@/features/feeds/hooks/useFeedActionStatus";
 import type { FeedViewModel, FolderViewModel } from "@/features/feeds/types/view-models";
 import type { SidebarScope } from "@/features/feeds/types/scopes";
 import type { FeedsWorkspaceMobileView } from "@/features/feeds/hooks/useFeedsWorkspaceMobile";
@@ -10,6 +15,7 @@ import {
 } from "@/lib/client/feeds";
 import { normalizeFeedUrl } from "@/lib/shared/feed-url";
 import { OFFLINE_CACHED_ARTICLES_MESSAGE } from "@/lib/shared/network-messages";
+import { mapApiCallResultToUiMessage } from "@/lib/shared/ui-messages";
 
 export type AddFeedStage =
   | "normalizing"
@@ -34,7 +40,35 @@ export interface FeedDiscoverResponse {
 interface ApiErrorResponse {
   error?: string;
   code?: string;
-  message?: string;
+  hint?: string;
+  retryAfterSeconds?: number;
+}
+
+interface AddFeedFlowFailure {
+  status: number;
+  error: string;
+  code?: string;
+  hint?: string;
+  retryAfterSeconds?: number;
+}
+
+interface AddFeedFlowSuccess<TResponse> {
+  ok: true;
+  body: TResponse;
+}
+
+interface AddFeedFlowFailureResult {
+  ok: false;
+  failure: AddFeedFlowFailure;
+}
+
+type AddFeedFlowResult<TResponse> = AddFeedFlowSuccess<TResponse> | AddFeedFlowFailureResult;
+
+interface RetryableApiResult {
+  status: number;
+  networkError: boolean;
+  body: Partial<ApiErrorBody> | null;
+  headers: Headers | null;
 }
 
 interface FeedCreateResponse {
@@ -73,8 +107,8 @@ interface UseAddFeedFlowOptions {
   progressNotice: string | null;
   setProgressNotice: (message: string) => void;
   clearProgressNotice: () => void;
-  setInfoMessage: (message: string | null) => void;
-  setErrorMessage: (message: string | null) => void;
+  setInfoMessage: (message: string | null, options?: FeedActionNoticeOptions) => void;
+  setErrorMessage: (message: string | null, options?: FeedActionNoticeOptions) => void;
   setShowAddAnotherAction: React.Dispatch<React.SetStateAction<boolean>>;
   createFolder: (name: string) => Promise<FolderViewModel | null>;
   handleRenameFolder: (folderId: string, name: string) => Promise<boolean>;
@@ -110,7 +144,52 @@ export function useAddFeedFlow({
     [],
   );
   const [selectedDiscoveryCandidateUrl, setSelectedDiscoveryCandidateUrl] = useState("");
+  const [addFeedFieldError, setAddFeedFieldError] = useState<string | null>(null);
   const [isAddingFeed, setIsAddingFeed] = useState(false);
+
+  const pushFlowError = useCallback(
+    (
+      failure: AddFeedFlowFailure,
+      options?: {
+        source?: FeedActionNoticeSource;
+        retryAction?: () => void;
+      },
+    ) => {
+      setErrorMessage(failure.error, {
+        severity: failure.status === 429 ? "warning" : "error",
+        title: failure.status === 429 ? "Too many requests" : "Couldn't add feed",
+        source: options?.source ?? "add_feed",
+        dedupeKey: `feed.add:${failure.code ?? failure.status}`,
+        retryAction:
+          options?.retryAction && failure.status === 429
+            ? {
+                label: "Retry",
+                onAction: options.retryAction,
+              }
+            : undefined,
+      });
+    },
+    [setErrorMessage],
+  );
+
+  const mapAddFeedFailure = useCallback(
+    (
+      result: RetryableApiResult,
+      fallbackMessage: string,
+      fallbackCode: string,
+    ): AddFeedFlowFailure => {
+      const mapped = mapApiCallResultToUiMessage(result, "feed.add", fallbackMessage);
+
+      return {
+        status: result.status,
+        error: mapped.text,
+        code: result.body?.code || fallbackCode,
+        hint: result.body?.hint,
+        retryAfterSeconds: mapped.retryAfterSeconds,
+      };
+    },
+    [],
+  );
 
   useEffect(() => {
     const validFolderIds = new Set(folders.map((folder) => folder.id));
@@ -161,6 +240,7 @@ export function useAddFeedFlow({
   useEffect(() => {
     setDiscoveryCandidates([]);
     setSelectedDiscoveryCandidateUrl("");
+    setAddFeedFieldError(null);
     setAddFeedStage((previous) => (previous === "awaiting_selection" ? null : previous));
     if (progressNotice) {
       clearProgressNotice();
@@ -258,7 +338,11 @@ export function useAddFeedFlow({
 
       const existingFeedId = feedIdByNormalizedUrl.get(normalizedUrl);
       if (!existingFeedId) {
-        setErrorMessage("Could not find an existing feed for this URL.");
+        setErrorMessage("We couldn't find this feed in your library. Try adding it again.", {
+          title: "Feed not found",
+          dedupeKey: "feed.add:open-existing-missing",
+          source: "add_feed",
+        });
         return;
       }
 
@@ -280,41 +364,45 @@ export function useAddFeedFlow({
   );
 
   const discoverFeedForAdd = useCallback(
-    async (url: string): Promise<(ApiErrorResponse & FeedDiscoverResponse) | null> => {
+    async (
+      url: string,
+    ): Promise<AddFeedFlowResult<ApiErrorResponse & FeedDiscoverResponse>> => {
       const result = await discoverFeedRequest(url);
       if (!result.ok) {
-        if (result.networkError) {
-          return { error: "Could not connect to the server." };
-        }
-
         return {
-          error: result.body?.error || "Could not discover feed URLs.",
-          code: result.body?.code,
+          ok: false,
+          failure: mapAddFeedFailure(
+            result,
+            "No feed found at this URL. Try the site's feed link.",
+            "discover_failed",
+          ),
         };
       }
 
-      return result.body;
+      return {
+        ok: true,
+        body: result.body || {},
+      };
     },
-    [],
+    [mapAddFeedFailure],
   );
 
   const createFeedForAdd = useCallback(
-    async (url: string): Promise<(ApiErrorResponse & FeedCreateResponse) | null> => {
+    async (url: string): Promise<AddFeedFlowResult<ApiErrorResponse & FeedCreateResponse>> => {
       const result = await createFeedRequest(url, addFeedFolderIds);
       if (!result.ok) {
-        if (result.networkError) {
-          return { error: "Could not connect to the server." };
-        }
-
         return {
-          error: result.body?.error || "Could not add feed.",
-          code: result.body?.code,
+          ok: false,
+          failure: mapAddFeedFailure(result, "We couldn't add this feed right now. Try again.", "create_failed"),
         };
       }
 
-      return result.body;
+      return {
+        ok: true,
+        body: result.body || {},
+      };
     },
-    [addFeedFolderIds],
+    [addFeedFolderIds, mapAddFeedFailure],
   );
 
   const handleAddFeed = useCallback(
@@ -333,12 +421,13 @@ export function useAddFeedFlow({
       setIsAddingFeed(true);
       setInfoMessage(null);
       setErrorMessage(null);
+      setAddFeedFieldError(null);
       setShowAddAnotherAction(false);
 
       try {
         const typedUrl = feedUrlInput.trim();
         if (!typedUrl) {
-          setErrorMessage("Feed URL is required.");
+          setAddFeedFieldError("Enter a feed or site URL to continue.");
           setAddFeedStage(null);
           clearProgressNotice();
           setIsAddingFeed(false);
@@ -349,7 +438,7 @@ export function useAddFeedFlow({
         setProgressNotice("Normalizing URL...");
         const normalizedSingleUrl = normalizeFeedUrl(typedUrl);
         if (!normalizedSingleUrl) {
-          setErrorMessage("This URL does not appear to be valid.");
+          setAddFeedFieldError("Enter a valid feed or site URL to continue.");
           setAddFeedStage(null);
           clearProgressNotice();
           setIsAddingFeed(false);
@@ -357,7 +446,7 @@ export function useAddFeedFlow({
         }
 
         if (normalizedExistingFeedUrls.has(normalizedSingleUrl)) {
-          setErrorMessage("This feed is already in your library.");
+          setAddFeedFieldError("This feed is already in your library.");
           setAddFeedStage(null);
           clearProgressNotice();
           setIsAddingFeed(false);
@@ -367,7 +456,7 @@ export function useAddFeedFlow({
         let candidateToCreateUrl: string | null = null;
         if (discoveryCandidates.length > 1) {
           if (!selectedDiscoveryCandidateUrl) {
-            setErrorMessage("Select one discovered feed URL to continue.");
+            setAddFeedFieldError("Choose one discovered feed URL to continue.");
             setAddFeedStage("awaiting_selection");
             setProgressNotice("Multiple feeds found. Select one to continue.");
             setIsAddingFeed(false);
@@ -378,17 +467,22 @@ export function useAddFeedFlow({
         } else {
           setAddFeedStage("discovering");
           setProgressNotice("Looking for feed URLs...");
-          const discoverBody = await discoverFeedForAdd(normalizedSingleUrl);
-          if (!discoverBody) {
-            setErrorMessage("Could not discover feed URLs.");
+          const discoverResult = await discoverFeedForAdd(normalizedSingleUrl);
+          if (!discoverResult.ok) {
+            pushFlowError(discoverResult.failure);
             setAddFeedStage(null);
             clearProgressNotice();
             setIsAddingFeed(false);
             return;
           }
 
+          const discoverBody = discoverResult.body;
           if (discoverBody.error) {
-            setErrorMessage(discoverBody.error);
+            pushFlowError({
+              status: 400,
+              error: discoverBody.error,
+              code: discoverBody.code,
+            });
             setAddFeedStage(null);
             clearProgressNotice();
             setIsAddingFeed(false);
@@ -416,7 +510,7 @@ export function useAddFeedFlow({
         }
 
         if (!candidateToCreateUrl) {
-          setErrorMessage("Could not resolve a feed URL to add.");
+          setAddFeedFieldError("No feed found at this URL. Try the site's feed link.");
           setAddFeedStage(null);
           clearProgressNotice();
           setIsAddingFeed(false);
@@ -425,17 +519,22 @@ export function useAddFeedFlow({
 
         setAddFeedStage("creating");
         setProgressNotice("Adding selected feed...");
-        const createBody = await createFeedForAdd(candidateToCreateUrl);
-        if (!createBody) {
-          setErrorMessage("Could not add feed.");
+        const createResult = await createFeedForAdd(candidateToCreateUrl);
+        if (!createResult.ok) {
+          pushFlowError(createResult.failure);
           setAddFeedStage(null);
           clearProgressNotice();
           setIsAddingFeed(false);
           return;
         }
 
+        const createBody = createResult.body;
         if (createBody.error) {
-          setErrorMessage(createBody.error);
+          pushFlowError({
+            status: 400,
+            error: createBody.error,
+            code: createBody.code,
+          });
           setAddFeedStage(null);
           clearProgressNotice();
           setIsAddingFeed(false);
@@ -446,6 +545,7 @@ export function useAddFeedFlow({
         setAddFeedNewFolderNameInput("");
         setDiscoveryCandidates([]);
         setSelectedDiscoveryCandidateUrl("");
+        setAddFeedFieldError(null);
         setAddFeedStage(null);
         clearProgressNotice();
         setIsAddingFeed(false);
@@ -457,7 +557,11 @@ export function useAddFeedFlow({
             setShowAddAnotherAction(true);
             setLastUsedAddFeedFolderIds(addFeedFolderIds);
           }
-          setInfoMessage(createBody.message || "This feed is already in your library.");
+          setInfoMessage(createBody.message || "This feed is already in your library.", {
+            source: "add_feed",
+            title: "Feed already in library",
+            dedupeKey: "feed.add:duplicate",
+          });
           setAddFeedFolderIds([]);
           setIsAddFeedFormVisible(false);
           router.refresh();
@@ -475,13 +579,23 @@ export function useAddFeedFlow({
             : "Added to Uncategorized.";
         const baseMessage = createBody?.message || "Feed added.";
         setShowAddAnotherAction(true);
-        setInfoMessage(`${baseMessage} ${assignmentMessage}`);
+        setInfoMessage(`${baseMessage} ${assignmentMessage}`, {
+          source: "add_feed",
+          title: "Feed added",
+          dedupeKey: "feed.add:success",
+        });
         setLastUsedAddFeedFolderIds(addFeedFolderIds);
         setAddFeedFolderIds([]);
         setIsAddFeedFormVisible(false);
         router.refresh();
       } catch {
-        setErrorMessage("Could not add feed right now.");
+        pushFlowError(
+          {
+            status: 500,
+            error: "We couldn't add this feed right now. Try again.",
+            code: "unexpected_failure",
+          },
+        );
         setAddFeedStage(null);
         clearProgressNotice();
         setIsAddingFeed(false);
@@ -498,10 +612,12 @@ export function useAddFeedFlow({
       feedUrlInput,
       isAddingFeed,
       normalizedExistingFeedUrls,
+      pushFlowError,
       router,
       selectedDiscoveryCandidateUrl,
       setErrorMessage,
       setInfoMessage,
+      setAddFeedFieldError,
       setNetworkMessage,
       setProgressNotice,
       setShowAddAnotherAction,
@@ -512,6 +628,7 @@ export function useAddFeedFlow({
     clearStatusMessages();
     setIsAddFeedFormVisible(true);
     setAddFeedStage(null);
+    setAddFeedFieldError(null);
     setCreatedFolderRenameId(null);
     clearProgressNotice();
   }, [clearProgressNotice, clearStatusMessages]);
@@ -523,6 +640,7 @@ export function useAddFeedFlow({
     setAddFeedNewFolderNameInput("");
     setDiscoveryCandidates([]);
     setSelectedDiscoveryCandidateUrl("");
+    setAddFeedFieldError(null);
     setAddFeedStage(null);
     setCreatedFolderRenameId(null);
     clearProgressNotice();
@@ -543,6 +661,7 @@ export function useAddFeedFlow({
     setAddFeedNewFolderNameInput("");
     setDiscoveryCandidates([]);
     setSelectedDiscoveryCandidateUrl("");
+    setAddFeedFieldError(null);
     setAddFeedStage(null);
     clearProgressNotice();
     setInfoMessage(null);
@@ -575,6 +694,7 @@ export function useAddFeedFlow({
   const selectDiscoveryCandidate = useCallback(
     (url: string) => {
       setSelectedDiscoveryCandidateUrl(url);
+      setAddFeedFieldError(null);
       setErrorMessage(null);
     },
     [setErrorMessage],
@@ -588,6 +708,7 @@ export function useAddFeedFlow({
     isAddFeedFormVisible,
     addFeedStage,
     feedUrlInput,
+    addFeedFieldError,
     inlineDuplicateMessage,
     addFeedFolderIds,
     addFeedNewFolderNameInput,

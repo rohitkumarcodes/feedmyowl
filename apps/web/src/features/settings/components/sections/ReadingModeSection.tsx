@@ -200,12 +200,14 @@ export function ReadingModeSection({
             </p>
           ) : null}
           {saveMessage ? (
-            <p className={styles.inlineMessage} role="status">
+            <p className={styles.inlineMessageSuccess} role="status">
               {saveMessage}
             </p>
           ) : null}
           {saveError ? (
-            <p className={styles.inlineMessage}>{saveError}</p>
+            <p className={styles.inlineMessageError} role="alert" aria-live="assertive">
+              {saveError}
+            </p>
           ) : null}
         </OwlOptionsShutter>
       </div>

@@ -29,6 +29,7 @@ export interface AddFeedFormProps {
   discoveryCandidates: AddFeedDiscoveryCandidate[];
   selectedDiscoveryCandidateUrl: string;
   feedUrlInput: string;
+  addFeedFieldError: string | null;
   inlineDuplicateMessage: string | null;
   isAddingFeed: boolean;
   availableFolders: FolderViewModel[];
@@ -57,6 +58,7 @@ export function AddFeedForm({
   discoveryCandidates,
   selectedDiscoveryCandidateUrl,
   feedUrlInput,
+  addFeedFieldError,
   inlineDuplicateMessage,
   isAddingFeed,
   availableFolders,
@@ -103,6 +105,14 @@ export function AddFeedForm({
 
   const isSubmitDisabled =
     isAddingFeed || Boolean(inlineDuplicateMessage) || !hasValidSelection;
+  const feedUrlErrorId = "sidebar-feed-url-error";
+  const feedUrlDuplicateId = "sidebar-feed-url-duplicate";
+  const feedUrlDescriptionIds = [
+    addFeedFieldError ? feedUrlErrorId : null,
+    inlineDuplicateMessage ? feedUrlDuplicateId : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const normalizedNewFolderName = newFolderNameInput.trim().toLocaleLowerCase();
   const isNewFolderReserved = isReservedFolderName(normalizedNewFolderName);
@@ -203,10 +213,19 @@ export function AddFeedForm({
         className={primitiveStyles.input}
         value={feedUrlInput}
         onChange={(event) => onFeedUrlChange(event.currentTarget.value)}
+        aria-invalid={Boolean(addFeedFieldError || inlineDuplicateMessage)}
+        aria-describedby={feedUrlDescriptionIds || undefined}
       />
+      {addFeedFieldError ? (
+        <p id={feedUrlErrorId} className={styles.inlineErrorMessage} role="alert">
+          {addFeedFieldError}
+        </p>
+      ) : null}
       {inlineDuplicateMessage ? (
         <div className={styles.inlineDuplicateRow}>
-          <p className={styles.inlineMessage}>{inlineDuplicateMessage}</p>
+          <p id={feedUrlDuplicateId} className={styles.inlineWarningMessage}>
+            {inlineDuplicateMessage}
+          </p>
           <button
             type="button"
             className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
@@ -315,11 +334,13 @@ export function AddFeedForm({
 
       {isNewFolderReserved ? (
         <div className={styles.inlineDuplicateRow}>
-          <p className={styles.inlineMessage}>This name is reserved.</p>
+          <p className={styles.inlineErrorMessage} role="alert">
+            This name is reserved.
+          </p>
         </div>
       ) : duplicateFolder ? (
         <div className={styles.inlineDuplicateRow}>
-          <p className={styles.inlineMessage}>
+          <p className={styles.inlineWarningMessage}>
             A folder named &quot;{duplicateFolder.name}&quot; already exists.
           </p>
           <button
@@ -334,7 +355,7 @@ export function AddFeedForm({
 
       {createdFolder ? (
         <div className={styles.createdFolderRename}>
-          <p className={styles.inlineMessage}>Folder created. Rename now (optional).</p>
+          <p className={styles.inlineSuccessMessage}>Folder created. Rename now (optional).</p>
           <div className={styles.createdFolderRenameRow}>
             <input
               ref={createdFolderInputRef}

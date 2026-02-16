@@ -19,6 +19,7 @@ interface AddFeedSectionProps {
   isAddFeedFormVisible: boolean;
   addFeedStage: AddFeedStage | null;
   feedUrlInput: string;
+  addFeedFieldError: string | null;
   inlineDuplicateMessage: string | null;
   addFeedFolderIds: string[];
   addFeedNewFolderNameInput: string;
@@ -56,6 +57,7 @@ export function AddFeedSection({
   isAddFeedFormVisible,
   addFeedStage,
   feedUrlInput,
+  addFeedFieldError,
   inlineDuplicateMessage,
   addFeedFolderIds,
   addFeedNewFolderNameInput,
@@ -353,6 +355,7 @@ export function AddFeedSection({
         addFeedStage={addFeedStage}
         discoveryCandidates={discoveryCandidates}
         selectedDiscoveryCandidateUrl={selectedDiscoveryCandidateUrl}
+        addFeedFieldError={addFeedFieldError}
         inlineDuplicateMessage={inlineDuplicateMessage}
         feedUrlInput={feedUrlInput}
         isAddingFeed={isAddingFeed}

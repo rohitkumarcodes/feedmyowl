@@ -128,8 +128,15 @@
 
 .sidebarMessageText {
   color: var(--lp-text-main);
+  display: grid;
   flex: 1;
   font-size: var(--text-xs);
+  gap: 2px;
+}
+
+.sidebarMessageTitle {
+  color: var(--lp-text-main);
+  font-weight: var(--weight-semibold);
 }
 
 .sidebarMessageIcon {
@@ -147,6 +154,24 @@
   background: var(--lp-surface-0);
 }
 
+.sidebarMessageSuccess {
+  background: var(--lp-surface-0);
+  border-left: 2px solid var(--lp-focus);
+}
+
+.sidebarMessageWarning {
+  background: var(--brand-light);
+  border-left: 2px solid var(--brand-mid);
+}
+
+.sidebarMessageWarning .sidebarMessageText {
+  color: var(--text-primary);
+}
+
+.sidebarMessageWarning .sidebarMessageTitle {
+  color: var(--text-primary);
+}
+
 .sidebarMessageProgress {
   background: var(--lp-surface-1);
 }
@@ -161,6 +186,10 @@
 }
 
 .sidebarMessageError .sidebarMessageText {
+  color: var(--danger-text);
+}
+
+.sidebarMessageError .sidebarMessageTitle {
   color: var(--danger-text);
 }
 

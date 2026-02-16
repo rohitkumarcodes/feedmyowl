@@ -3,9 +3,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 const MAX_STATUS_NOTICES = 5;
-const DEFAULT_INFO_AUTO_DISMISS_MS = 8000;
+const DEFAULT_SUCCESS_AUTO_DISMISS_MS = 8000;
+const NOTICE_DEDUPE_WINDOW_MS = 4000;
 
-export type FeedActionNoticeKind = "info" | "error";
+export type FeedActionNoticeSeverity = "success" | "info" | "warning" | "error";
+export type FeedActionNoticeKind = FeedActionNoticeSeverity;
+export type FeedActionNoticeSource =
+  | "workspace"
+  | "add_feed"
+  | "folder"
+  | "settings"
+  | "network"
+  | "unknown";
 
 export interface FeedActionNoticeAction {
   label: string;
@@ -14,12 +23,30 @@ export interface FeedActionNoticeAction {
 
 export interface FeedActionNotice {
   id: string;
+  severity: FeedActionNoticeSeverity;
   kind: FeedActionNoticeKind;
+  source?: FeedActionNoticeSource;
+  title?: string;
   text: string;
   dismissible: boolean;
   action?: FeedActionNoticeAction;
+  retryAction?: FeedActionNoticeAction;
+  dedupeKey?: string;
+  ariaLiveOverride?: "assertive" | "polite";
   autoDismissMs?: number;
+  createdAt: number;
   expiresAt?: number;
+}
+
+export interface FeedActionNoticeOptions {
+  severity?: FeedActionNoticeSeverity;
+  source?: FeedActionNoticeSource;
+  title?: string;
+  action?: FeedActionNoticeAction;
+  retryAction?: FeedActionNoticeAction;
+  dedupeKey?: string;
+  autoDismissMs?: number;
+  ariaLiveOverride?: "assertive" | "polite";
 }
 
 function createNoticeId() {
@@ -35,55 +62,142 @@ export function useFeedActionStatus() {
   const [progressNotice, setProgressNoticeState] = useState<string | null>(null);
   const [showAddAnotherAction, setShowAddAnotherAction] = useState(false);
 
-  const pushNotice = useCallback(
-    (notice: Omit<FeedActionNotice, "id">) => {
-      const nextNotice: FeedActionNotice = {
+  const buildNotice = useCallback(
+    (
+      notice: Omit<FeedActionNotice, "id" | "createdAt" | "expiresAt"> & {
+        autoDismissMs?: number;
+      },
+    ): FeedActionNotice => {
+      const now = Date.now();
+      const autoDismissMs =
+        typeof notice.autoDismissMs === "number" ? notice.autoDismissMs : undefined;
+
+      return {
         id: createNoticeId(),
         ...notice,
-        expiresAt:
-          typeof notice.autoDismissMs === "number"
-            ? Date.now() + notice.autoDismissMs
-            : undefined,
+        createdAt: now,
+        expiresAt: autoDismissMs ? now + autoDismissMs : undefined,
       };
-
-      setQueuedNotices((previous) =>
-        [nextNotice, ...previous].slice(0, MAX_STATUS_NOTICES),
-      );
-      return nextNotice.id;
     },
-    [setQueuedNotices],
+    [],
   );
 
-  const pushInfo = useCallback(
+  const pushNotice = useCallback(
     (
-      text: string,
-      options?: {
-        action?: FeedActionNoticeAction;
+      notice: Omit<FeedActionNotice, "id" | "createdAt" | "expiresAt"> & {
         autoDismissMs?: number;
       },
     ) => {
-      return pushNotice({
-        kind: "info",
+      const nextNotice = buildNotice(notice);
+
+      let pushedNoticeId = nextNotice.id;
+      setQueuedNotices((previous) => {
+        const duplicateByDedupeKey = nextNotice.dedupeKey
+          ? previous.find((candidate) => candidate.dedupeKey === nextNotice.dedupeKey)
+          : undefined;
+
+        const duplicateByContent = previous.find(
+          (candidate) =>
+            candidate.severity === nextNotice.severity &&
+            candidate.text === nextNotice.text &&
+            Date.now() - candidate.createdAt <= NOTICE_DEDUPE_WINDOW_MS,
+        );
+
+        const duplicate = duplicateByDedupeKey ?? duplicateByContent;
+        if (!duplicate) {
+          return [nextNotice, ...previous].slice(0, MAX_STATUS_NOTICES);
+        }
+
+        pushedNoticeId = duplicate.id;
+        const dedupedNotice: FeedActionNotice = {
+          ...duplicate,
+          ...nextNotice,
+          id: duplicate.id,
+        };
+
+        return [dedupedNotice, ...previous.filter((candidate) => candidate.id !== duplicate.id)]
+          .slice(0, MAX_STATUS_NOTICES);
+      });
+
+      return pushedNoticeId;
+    },
+    [buildNotice, setQueuedNotices],
+  );
+
+  const pushSuccess = useCallback(
+    (text: string, options?: FeedActionNoticeOptions) =>
+      pushNotice({
+        severity: "success",
+        kind: "success",
+        source: options?.source ?? "workspace",
+        title: options?.title,
         text,
         dismissible: true,
         action: options?.action,
+        retryAction: options?.retryAction,
+        dedupeKey: options?.dedupeKey,
+        ariaLiveOverride: options?.ariaLiveOverride,
         autoDismissMs:
-          options?.action !== undefined
+          options?.action || options?.retryAction
             ? undefined
-            : (options?.autoDismissMs ?? DEFAULT_INFO_AUTO_DISMISS_MS),
-      });
-    },
+            : (options?.autoDismissMs ?? DEFAULT_SUCCESS_AUTO_DISMISS_MS),
+      }),
+    [pushNotice],
+  );
+
+  const pushInfo = useCallback(
+    (text: string, options?: FeedActionNoticeOptions) =>
+      pushNotice({
+        severity: "info",
+        kind: "info",
+        source: options?.source ?? "workspace",
+        title: options?.title,
+        text,
+        dismissible: true,
+        action: options?.action,
+        retryAction: options?.retryAction,
+        dedupeKey: options?.dedupeKey,
+        ariaLiveOverride: options?.ariaLiveOverride,
+        autoDismissMs:
+          options?.action || options?.retryAction
+            ? undefined
+            : (options?.autoDismissMs ?? DEFAULT_SUCCESS_AUTO_DISMISS_MS),
+      }),
+    [pushNotice],
+  );
+
+  const pushWarning = useCallback(
+    (text: string, options?: FeedActionNoticeOptions) =>
+      pushNotice({
+        severity: "warning",
+        kind: "warning",
+        source: options?.source ?? "workspace",
+        title: options?.title,
+        text,
+        dismissible: true,
+        action: options?.action,
+        retryAction: options?.retryAction,
+        dedupeKey: options?.dedupeKey,
+        ariaLiveOverride: options?.ariaLiveOverride,
+        autoDismissMs: options?.autoDismissMs,
+      }),
     [pushNotice],
   );
 
   const pushError = useCallback(
-    (text: string) => {
-      return pushNotice({
+    (text: string, options?: FeedActionNoticeOptions) =>
+      pushNotice({
+        severity: "error",
         kind: "error",
+        source: options?.source ?? "workspace",
+        title: options?.title,
         text,
         dismissible: true,
-      });
-    },
+        action: options?.action,
+        retryAction: options?.retryAction,
+        dedupeKey: options?.dedupeKey,
+        ariaLiveOverride: options?.ariaLiveOverride,
+      }),
     [pushNotice],
   );
 
@@ -120,38 +234,51 @@ export function useFeedActionStatus() {
   }, [dismissNotice, queuedNotices]);
 
   const infoMessage = useMemo(() => {
-    return queuedNotices.find((notice) => notice.kind === "info")?.text ?? null;
+    return (
+      queuedNotices.find(
+        (notice) => notice.severity === "success" || notice.severity === "info",
+      )?.text ?? null
+    );
   }, [queuedNotices]);
 
   const errorMessage = useMemo(() => {
-    return queuedNotices.find((notice) => notice.kind === "error")?.text ?? null;
+    return (
+      queuedNotices.find(
+        (notice) => notice.severity === "error" || notice.severity === "warning",
+      )?.text ?? null
+    );
   }, [queuedNotices]);
 
   const setInfoMessage = useCallback(
-    (message: string | null) => {
+    (message: string | null, options?: FeedActionNoticeOptions) => {
       if (!message) {
         return;
       }
 
-      pushNotice({
-        kind: "info",
-        text: message,
-        dismissible: true,
-        autoDismissMs: showAddAnotherAction ? undefined : DEFAULT_INFO_AUTO_DISMISS_MS,
+      pushSuccess(message, {
+        ...options,
+        autoDismissMs: showAddAnotherAction
+          ? undefined
+          : (options?.autoDismissMs ?? DEFAULT_SUCCESS_AUTO_DISMISS_MS),
       });
     },
-    [pushNotice, showAddAnotherAction],
+    [pushSuccess, showAddAnotherAction],
   );
 
   const setErrorMessage = useCallback(
-    (message: string | null) => {
+    (message: string | null, options?: FeedActionNoticeOptions) => {
       if (!message) {
         return;
       }
 
-      pushError(message);
+      if (options?.severity === "warning") {
+        pushWarning(message, options);
+        return;
+      }
+
+      pushError(message, options);
     },
-    [pushError],
+    [pushError, pushWarning],
   );
 
   const setProgressNotice = useCallback((message: string) => {
@@ -175,7 +302,9 @@ export function useFeedActionStatus() {
     errorMessage,
     showAddAnotherAction,
     setShowAddAnotherAction,
+    pushSuccess,
     pushInfo,
+    pushWarning,
     pushError,
     setInfoMessage,
     setErrorMessage,

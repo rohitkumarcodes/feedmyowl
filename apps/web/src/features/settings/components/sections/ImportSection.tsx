@@ -479,7 +479,11 @@ export function ImportSection() {
           void handleImportFileChange(event);
         }}
       />
-      {importError ? <p className={styles.inlineMessage}>{importError}</p> : null}
+      {importError ? (
+        <p className={styles.inlineMessageError} role="alert" aria-live="assertive">
+          {importError}
+        </p>
+      ) : null}
       {importSummary && importSummaryText ? (
         <div className={styles.importSummary} role="status">
           <p className={styles.muted}>Source file: {importSummary.fileName}</p>

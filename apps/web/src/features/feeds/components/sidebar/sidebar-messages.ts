@@ -2,7 +2,13 @@
  * Shared sidebar notice model and mapper for semantic message rendering.
  */
 
-export type SidebarNoticeKind = "error" | "progress" | "offline" | "info";
+export type SidebarNoticeKind =
+  | "error"
+  | "warning"
+  | "success"
+  | "progress"
+  | "offline"
+  | "info";
 
 export interface SidebarNoticeAction {
   label: string;
@@ -12,6 +18,7 @@ export interface SidebarNoticeAction {
 export interface SidebarNotice {
   id: string;
   kind: SidebarNoticeKind;
+  title?: string;
   text: string;
   role: "alert" | "status";
   ariaLive: "assertive" | "polite";
@@ -24,13 +31,42 @@ interface BuildSidebarNoticesOptions {
   networkMessage: string | null;
   queuedNotices: Array<{
     id: string;
-    kind: "info" | "error";
+    kind: "success" | "info" | "warning" | "error";
+    title?: string;
     text: string;
     dismissible: boolean;
+    retryAction?: SidebarNoticeAction;
     action?: SidebarNoticeAction;
+    ariaLiveOverride?: "assertive" | "polite";
   }>;
   showAddAnotherAction: boolean;
   onAddAnother: () => void;
+}
+
+function resolveNoticeRole(
+  kind: SidebarNoticeKind,
+  override?: "assertive" | "polite",
+): SidebarNotice["role"] {
+  if (kind === "error" || override === "assertive") {
+    return "alert";
+  }
+
+  return "status";
+}
+
+function resolveNoticeAriaLive(
+  kind: SidebarNoticeKind,
+  override?: "assertive" | "polite",
+): SidebarNotice["ariaLive"] {
+  if (override) {
+    return override;
+  }
+
+  if (kind === "error") {
+    return "assertive";
+  }
+
+  return "polite";
 }
 
 /**
@@ -50,8 +86,8 @@ export function buildSidebarNotices({
       id: "progress",
       kind: "progress",
       text: progressMessage,
-      role: "status",
-      ariaLive: "polite",
+      role: resolveNoticeRole("progress"),
+      ariaLive: resolveNoticeAriaLive("progress"),
       dismissible: false,
     });
   }
@@ -61,8 +97,8 @@ export function buildSidebarNotices({
       id: "offline",
       kind: "offline",
       text: networkMessage,
-      role: "status",
-      ariaLive: "polite",
+      role: resolveNoticeRole("offline"),
+      ariaLive: resolveNoticeAriaLive("offline"),
       dismissible: false,
     });
   }
@@ -73,8 +109,9 @@ export function buildSidebarNotices({
     const shouldAttachAddAnother =
       !addAnotherActionAttached &&
       showAddAnotherAction &&
-      queuedNotice.kind === "info" &&
-      queuedNotice.action === undefined;
+      (queuedNotice.kind === "success" || queuedNotice.kind === "info") &&
+      queuedNotice.action === undefined &&
+      queuedNotice.retryAction === undefined;
 
     if (shouldAttachAddAnother) {
       addAnotherActionAttached = true;
@@ -83,12 +120,14 @@ export function buildSidebarNotices({
     notices.push({
       id: queuedNotice.id,
       kind: queuedNotice.kind,
+      title: queuedNotice.title,
       text: queuedNotice.text,
-      role: queuedNotice.kind === "error" ? "alert" : "status",
-      ariaLive: queuedNotice.kind === "error" ? "assertive" : "polite",
+      role: resolveNoticeRole(queuedNotice.kind, queuedNotice.ariaLiveOverride),
+      ariaLive: resolveNoticeAriaLive(queuedNotice.kind, queuedNotice.ariaLiveOverride),
       dismissible: queuedNotice.dismissible,
       action:
         queuedNotice.action ??
+        queuedNotice.retryAction ??
         (shouldAttachAddAnother
           ? {
               label: "Add another",

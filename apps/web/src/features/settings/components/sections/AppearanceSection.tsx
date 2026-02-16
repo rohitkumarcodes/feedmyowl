@@ -239,12 +239,14 @@ export function AppearanceSection({
             </p>
           ) : null}
           {themeSaveMessage ? (
-            <p className={styles.inlineMessage} role="status">
+            <p className={styles.inlineMessageSuccess} role="status">
               {themeSaveMessage}
             </p>
           ) : null}
           {themeSaveError ? (
-            <p className={styles.inlineMessage}>{themeSaveError}</p>
+            <p className={styles.inlineMessageError} role="alert" aria-live="assertive">
+              {themeSaveError}
+            </p>
           ) : null}
         </OwlOptionsShutter>
       </div>

@@ -276,6 +276,7 @@ export function FeedsWorkspace({
     addFeedStage,
     addFeedProgressMessage,
     feedUrlInput,
+    addFeedFieldError,
     inlineDuplicateMessage,
     addFeedFolderIds,
     addFeedNewFolderNameInput,
@@ -866,6 +867,7 @@ export function FeedsWorkspace({
             isAddFeedFormVisible={isAddFeedFormVisible}
             addFeedStage={addFeedStage}
             feedUrlInput={feedUrlInput}
+            addFeedFieldError={addFeedFieldError}
             inlineDuplicateMessage={inlineDuplicateMessage}
             addFeedFolderIds={addFeedFolderIds}
             addFeedNewFolderNameInput={addFeedNewFolderNameInput}

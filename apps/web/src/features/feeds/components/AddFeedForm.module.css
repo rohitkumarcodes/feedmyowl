@@ -118,6 +118,21 @@
   font-size: var(--text-xs);
 }
 
+.inlineSuccessMessage {
+  color: var(--accent);
+  font-size: var(--text-xs);
+}
+
+.inlineWarningMessage {
+  color: var(--lp-text-main);
+  font-size: var(--text-xs);
+}
+
+.inlineErrorMessage {
+  color: var(--danger-text);
+  font-size: var(--text-xs);
+}
+
 .inlineDuplicateRow {
   align-items: center;
   display: flex;

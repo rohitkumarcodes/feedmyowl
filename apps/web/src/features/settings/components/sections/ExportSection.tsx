@@ -75,7 +75,11 @@ export function ExportSection() {
           ))}
         </div>
       </div>
-      {exportError ? <p className={styles.inlineMessage}>{exportError}</p> : null}
+      {exportError ? (
+        <p className={styles.inlineMessageError} role="alert" aria-live="assertive">
+          {exportError}
+        </p>
+      ) : null}
     </section>
   );
 }

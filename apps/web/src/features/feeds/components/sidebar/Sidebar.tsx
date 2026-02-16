@@ -39,6 +39,7 @@ interface SidebarProps {
   isAddFeedFormVisible: boolean;
   addFeedStage: AddFeedStage | null;
   feedUrlInput: string;
+  addFeedFieldError: string | null;
   inlineDuplicateMessage: string | null;
   addFeedFolderIds: string[];
   addFeedNewFolderNameInput: string;
@@ -109,6 +110,7 @@ export function Sidebar({
   isAddFeedFormVisible,
   addFeedStage,
   feedUrlInput,
+  addFeedFieldError,
   inlineDuplicateMessage,
   addFeedFolderIds,
   addFeedNewFolderNameInput,
@@ -182,6 +184,7 @@ export function Sidebar({
           isAddFeedFormVisible={isAddFeedFormVisible}
           addFeedStage={addFeedStage}
           feedUrlInput={feedUrlInput}
+          addFeedFieldError={addFeedFieldError}
           inlineDuplicateMessage={inlineDuplicateMessage}
           addFeedFolderIds={addFeedFolderIds}
           addFeedNewFolderNameInput={addFeedNewFolderNameInput}

@@ -80,7 +80,11 @@ export function DeleteAccountSection() {
               Cancel
             </button>
           </div>
-          {deleteError ? <p className={styles.inlineMessage}>{deleteError}</p> : null}
+          {deleteError ? (
+            <p className={styles.inlineMessageError} role="alert" aria-live="assertive">
+              {deleteError}
+            </p>
+          ) : null}
         </div>
       )}
     </section>

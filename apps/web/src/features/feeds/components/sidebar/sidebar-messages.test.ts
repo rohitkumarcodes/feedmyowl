@@ -8,15 +8,21 @@ describe("sidebar-messages", () => {
       networkMessage: "You’re offline. You can still read cached articles.",
       queuedNotices: [
         {
-          id: "info-1",
-          kind: "info",
+          id: "success-1",
+          kind: "success",
           text: "Feed added. Added to Uncategorized.",
+          dismissible: true,
+        },
+        {
+          id: "warning-1",
+          kind: "warning",
+          text: "Completed with issues: 2 succeeded, 1 need attention.",
           dismissible: true,
         },
         {
           id: "error-1",
           kind: "error",
-          text: "Could not connect to the server.",
+          text: "Couldn't reach FeedMyOwl. Check your connection and try again.",
           dismissible: true,
         },
       ],
@@ -27,7 +33,8 @@ describe("sidebar-messages", () => {
     expect(notices.map((notice) => notice.kind)).toEqual([
       "progress",
       "offline",
-      "info",
+      "success",
+      "warning",
       "error",
     ]);
 
@@ -43,13 +50,19 @@ describe("sidebar-messages", () => {
       dismissible: false,
     });
     expect(notices[2]).toMatchObject({
-      id: "info-1",
+      id: "success-1",
       role: "status",
       ariaLive: "polite",
       dismissible: true,
     });
     expect(notices[2].action?.label).toBe("Add another");
     expect(notices[3]).toMatchObject({
+      id: "warning-1",
+      role: "status",
+      ariaLive: "polite",
+      dismissible: true,
+    });
+    expect(notices[4]).toMatchObject({
       id: "error-1",
       role: "alert",
       ariaLive: "assertive",

@@ -28,6 +28,17 @@
   font-size: var(--text-base);
 }
 
+.supportHint {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.supportCode {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
 .button {
   background: var(--bg-primary);
   border: 1px solid var(--border);

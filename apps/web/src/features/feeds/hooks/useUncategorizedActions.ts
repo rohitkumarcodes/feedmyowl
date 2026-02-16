@@ -3,17 +3,20 @@
 import { useCallback, useState } from "react";
 import type { FeedViewModel } from "@/features/feeds/types/view-models";
 import type { SidebarScope } from "@/features/feeds/types/scopes";
+import type { FeedActionNoticeOptions } from "@/features/feeds/hooks/useFeedActionStatus";
 import {
   deleteUncategorizedFeeds as deleteUncategorizedFeedsRequest,
   moveUncategorizedFeedsToFolder as moveUncategorizedFeedsToFolderRequest,
 } from "@/lib/client/feeds";
+import type { ApiErrorBody } from "@/contracts/api/common";
+import { mapApiCallResultToUiMessage, type UiActionContext } from "@/lib/shared/ui-messages";
 
 interface UseUncategorizedActionsOptions {
   router: { refresh(): void };
   setFeeds: React.Dispatch<React.SetStateAction<FeedViewModel[]>>;
   setSelectedScope: React.Dispatch<React.SetStateAction<SidebarScope>>;
-  setInfoMessage: (message: string | null) => void;
-  setErrorMessage: (message: string | null) => void;
+  setInfoMessage: (message: string | null, options?: FeedActionNoticeOptions) => void;
+  setErrorMessage: (message: string | null, options?: FeedActionNoticeOptions) => void;
   setShowAddAnotherAction: React.Dispatch<React.SetStateAction<boolean>>;
   deletingFolderId: string | null;
   renamingFolderId: string | null;
@@ -33,6 +36,36 @@ export function useUncategorizedActions({
 }: UseUncategorizedActionsOptions) {
   const [isDeletingUncategorized, setIsDeletingUncategorized] = useState(false);
   const [isMovingUncategorized, setIsMovingUncategorized] = useState(false);
+
+  const handleApiFailure = useCallback(
+    (
+      result: {
+        status: number;
+        networkError: boolean;
+        body: Partial<ApiErrorBody> | null;
+        headers: Headers | null;
+      },
+      context: UiActionContext,
+      fallbackMessage: string,
+      retryAction?: () => void,
+    ) => {
+      const mapped = mapApiCallResultToUiMessage(result, context, fallbackMessage);
+      setErrorMessage(mapped.text, {
+        severity: mapped.severity,
+        title: mapped.title,
+        dedupeKey: mapped.dedupeKey,
+        source: "workspace",
+        retryAction:
+          retryAction && mapped.recommendedActionLabel === "Retry"
+            ? {
+                label: "Retry",
+                onAction: retryAction,
+              }
+            : undefined,
+      });
+    },
+    [setErrorMessage],
+  );
 
   const handleDeleteUncategorizedFeeds = useCallback(async (): Promise<boolean> => {
     if (
@@ -56,11 +89,14 @@ export function useUncategorizedActions({
       !("success" in result.body) ||
       !result.body.success
     ) {
-      if (result.networkError) {
-        setErrorMessage("Could not connect to the server.");
-      } else {
-        setErrorMessage(result.body?.error || "Could not delete uncategorized feeds.");
-      }
+      handleApiFailure(
+        result,
+        "uncategorized.delete",
+        "Couldn't delete uncategorized feeds. Try again.",
+        () => {
+          void handleDeleteUncategorizedFeeds();
+        },
+      );
       setIsDeletingUncategorized(false);
       return false;
     }
@@ -91,6 +127,7 @@ export function useUncategorizedActions({
     return true;
   }, [
     deletingFolderId,
+    handleApiFailure,
     isCreatingFolder,
     isDeletingUncategorized,
     renamingFolderId,
@@ -125,11 +162,14 @@ export function useUncategorizedActions({
         !("success" in result.body) ||
         !result.body.success
       ) {
-        if (result.networkError) {
-          setErrorMessage("Could not connect to the server.");
-        } else {
-          setErrorMessage(result.body?.error || "Could not move uncategorized feeds.");
-        }
+        handleApiFailure(
+          result,
+          "uncategorized.move",
+          "Couldn't move uncategorized feeds. Try again.",
+          () => {
+            void handleMoveUncategorizedFeeds(folderId);
+          },
+        );
         setIsMovingUncategorized(false);
         return false;
       }
@@ -156,19 +196,26 @@ export function useUncategorizedActions({
 
       const movedFeedCount = result.body.movedFeedCount ?? 0;
       const failedFeedCount = result.body.failedFeedCount ?? 0;
-      const totalUncategorizedCount = result.body.totalUncategorizedCount ?? 0;
 
-      setInfoMessage(
-        failedFeedCount > 0
-          ? `Moved ${movedFeedCount} of ${totalUncategorizedCount} uncategorized feed${
-              totalUncategorizedCount === 1 ? "" : "s"
-            }. ${failedFeedCount} failed and remained uncategorized.`
-          : movedFeedCount > 0
+      if (failedFeedCount > 0) {
+        setErrorMessage(
+          `Completed with issues: ${movedFeedCount} succeeded, ${failedFeedCount} need attention.`,
+          {
+            severity: "warning",
+            title: "Partial move",
+            source: "workspace",
+            dedupeKey: "uncategorized.move.partial",
+          },
+        );
+      } else {
+        setInfoMessage(
+          movedFeedCount > 0
             ? `Moved ${movedFeedCount} uncategorized feed${
                 movedFeedCount === 1 ? "" : "s"
               } to the selected folder.`
             : "No uncategorized feeds to move.",
-      );
+        );
+      }
 
       setIsMovingUncategorized(false);
       router.refresh();
@@ -176,6 +223,7 @@ export function useUncategorizedActions({
     },
     [
       deletingFolderId,
+      handleApiFailure,
       isCreatingFolder,
       isDeletingUncategorized,
       isMovingUncategorized,

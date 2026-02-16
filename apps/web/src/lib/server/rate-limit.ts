@@ -213,6 +213,7 @@ function toRateLimitResponse(result: SlidingWindowResult) {
     {
       error: "Rate limit exceeded. Please wait before trying again.",
       code: "rate_limited",
+      retryAfterSeconds: result.retryAfterSeconds,
     },
     {
       status: 429,
