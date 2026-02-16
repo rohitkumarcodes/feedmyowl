@@ -296,7 +296,6 @@ export function FeedsWorkspace({
     isMovingUncategorized,
     queuedNotices,
     setFeedUrlInput,
-    setAddFeedFolderIds,
     toggleAddFeedFolder,
     setAddFeedNewFolderNameInput,
     selectDiscoveryCandidate,
@@ -883,7 +882,6 @@ export function FeedsWorkspace({
             onCancelAddFeed={cancelAddFeedForm}
             onFeedUrlChange={setFeedUrlInput}
             onToggleAddFeedFolder={toggleAddFeedFolder}
-            onSetAddFeedFolders={setAddFeedFolderIds}
             onAddFeedNewFolderNameChange={setAddFeedNewFolderNameInput}
             onSelectDiscoveryCandidate={selectDiscoveryCandidate}
             onCreateFolderFromAddFeed={() => {

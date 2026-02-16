@@ -38,7 +38,6 @@ export interface AddFeedFormProps {
   createdFolderRenameId?: string | null;
   onFeedUrlChange: (value: string) => void;
   onToggleFolder: (folderId: string) => void;
-  onSetSelectedFolders: (folderIds: string[]) => void;
   onNewFolderNameChange: (value: string) => void;
   onSelectDiscoveryCandidate: (url: string) => void;
   onCreateFolderFromForm: () => void;
@@ -67,7 +66,6 @@ export function AddFeedForm({
   createdFolderRenameId,
   onFeedUrlChange,
   onToggleFolder,
-  onSetSelectedFolders,
   onNewFolderNameChange,
   onSelectDiscoveryCandidate,
   onCreateFolderFromForm,
@@ -174,18 +172,6 @@ export function AddFeedForm({
     if (canCreateFolder) {
       onCreateFolderFromForm();
     }
-  };
-
-  const handleSelectAllFilteredFolders = () => {
-    const filteredFolderIds = filteredFolders.map((folder) => folder.id);
-    const nextFolderIds = Array.from(
-      new Set([...selectedFolderIds, ...filteredFolderIds]),
-    );
-    onSetSelectedFolders(nextFolderIds);
-  };
-
-  const handleClearAllFolders = () => {
-    onSetSelectedFolders([]);
   };
 
   const handleUseExistingFolder = () => {
@@ -308,26 +294,6 @@ export function AddFeedForm({
             placeholder="Search folders"
             disabled={isAddingFeed || isCreatingFolder || availableFolders.length === 0}
           />
-          <div className={styles.folderToolActions}>
-            <button
-              type="button"
-              className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
-              onClick={handleSelectAllFilteredFolders}
-              disabled={filteredFolders.length === 0 || isAddingFeed || isCreatingFolder}
-            >
-              Select all
-            </button>
-            <button
-              type="button"
-              className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
-              onClick={handleClearAllFolders}
-              disabled={
-                selectedFolderIds.length === 0 || isAddingFeed || isCreatingFolder
-              }
-            >
-              Clear
-            </button>
-          </div>
         </div>
 
         {availableFolders.length === 0 ? (

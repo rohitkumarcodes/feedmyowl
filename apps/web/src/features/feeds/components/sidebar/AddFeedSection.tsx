@@ -35,7 +35,6 @@ interface AddFeedSectionProps {
   onCancelAddFeed: () => void;
   onFeedUrlChange: (value: string) => void;
   onToggleAddFeedFolder: (folderId: string) => void;
-  onSetAddFeedFolders: (folderIds: string[]) => void;
   onAddFeedNewFolderNameChange: (value: string) => void;
   onSelectDiscoveryCandidate: (url: string) => void;
   onCreateFolderFromAddFeed: () => void;
@@ -73,7 +72,6 @@ export function AddFeedSection({
   onCancelAddFeed,
   onFeedUrlChange,
   onToggleAddFeedFolder,
-  onSetAddFeedFolders,
   onAddFeedNewFolderNameChange,
   onSelectDiscoveryCandidate,
   onCreateFolderFromAddFeed,
@@ -377,7 +375,6 @@ export function AddFeedSection({
         createdFolderRenameId={createdFolderRenameId}
         onFeedUrlChange={onFeedUrlChange}
         onToggleFolder={onToggleAddFeedFolder}
-        onSetSelectedFolders={onSetAddFeedFolders}
         onNewFolderNameChange={onAddFeedNewFolderNameChange}
         onSelectDiscoveryCandidate={onSelectDiscoveryCandidate}
         onCreateFolderFromForm={onCreateFolderFromAddFeed}

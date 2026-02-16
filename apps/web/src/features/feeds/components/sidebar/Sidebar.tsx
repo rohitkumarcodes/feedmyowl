@@ -53,7 +53,6 @@ interface SidebarProps {
   onCancelAddFeed: () => void;
   onFeedUrlChange: (value: string) => void;
   onToggleAddFeedFolder: (folderId: string) => void;
-  onSetAddFeedFolders: (folderIds: string[]) => void;
   onAddFeedNewFolderNameChange: (value: string) => void;
   onSelectDiscoveryCandidate: (url: string) => void;
   onCreateFolderFromAddFeed: () => void;
@@ -124,7 +123,6 @@ export function Sidebar({
   onCancelAddFeed,
   onFeedUrlChange,
   onToggleAddFeedFolder,
-  onSetAddFeedFolders,
   onAddFeedNewFolderNameChange,
   onSelectDiscoveryCandidate,
   onCreateFolderFromAddFeed,
@@ -200,7 +198,6 @@ export function Sidebar({
           onCancelAddFeed={onCancelAddFeed}
           onFeedUrlChange={onFeedUrlChange}
           onToggleAddFeedFolder={onToggleAddFeedFolder}
-          onSetAddFeedFolders={onSetAddFeedFolders}
           onAddFeedNewFolderNameChange={onAddFeedNewFolderNameChange}
           onSelectDiscoveryCandidate={onSelectDiscoveryCandidate}
           onCreateFolderFromAddFeed={onCreateFolderFromAddFeed}
