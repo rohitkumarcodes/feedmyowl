@@ -1023,7 +1023,7 @@ export function FolderTree({
           onClick={() => setPendingDeleteFolderId(null)}
         >
           <div
-            className={`${primitiveStyles.dialog} ${styles.deleteDialog} ${styles.deleteFolderDialog}`}
+            className={`${primitiveStyles.dialog} ${styles.deleteDialog}`}
             role="dialog"
             aria-modal="true"
             onClick={(event) => event.stopPropagation()}
@@ -1031,7 +1031,7 @@ export function FolderTree({
             <h3>Delete folder</h3>
 
             {deleteFolderStep === "preview" ? (
-              <div className={styles.deleteFolderDialogStep}>
+              <>
                 {pendingDeleteStats.total === 0 ? (
                   <p>This folder is empty. Delete it?</p>
                 ) : (
@@ -1078,7 +1078,7 @@ export function FolderTree({
                     </p>
                   </>
                 )}
-                <div className={styles.deleteFolderDialogActions}>
+                <div className={styles.deleteDialogActions}>
                   <button
                     type="button"
                     className={primitiveStyles.button}
@@ -1094,9 +1094,9 @@ export function FolderTree({
                     Continue
                   </button>
                 </div>
-              </div>
+              </>
             ) : (
-              <div className={styles.deleteFolderDialogStep}>
+              <>
                 <p className={styles.deleteDialogSummary}>
                   How would you like to handle the {pendingDeleteStats.total} feed
                   {pendingDeleteStats.total === 1 ? "" : "s"} in this folder?
@@ -1143,7 +1143,7 @@ export function FolderTree({
                     </div>
                   </button>
                 </div>
-                <div className={styles.deleteFolderDialogActions}>
+                <div className={styles.deleteDialogActions}>
                   <button
                     type="button"
                     className={primitiveStyles.button}
@@ -1182,7 +1182,7 @@ export function FolderTree({
                     {isDeletingWithUnsubscribe ? "Deleting..." : "Delete"}
                   </button>
                 </div>
-              </div>
+              </>
             )}
           </div>
         </div>

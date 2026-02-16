@@ -1,5 +1,4 @@
 .root {
-  --sidebar-expand-left-gutter: 8px;
   background: var(--bg-primary);
   color: var(--text-primary);
   height: 100vh;
@@ -86,7 +85,7 @@
 
 .sidebarExpandToggle {
   bottom: 8px;
-  left: var(--sidebar-expand-left-gutter);
+  left: 0;
   position: absolute;
   z-index: 41;
 }

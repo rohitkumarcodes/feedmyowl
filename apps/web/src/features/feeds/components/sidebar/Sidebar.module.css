@@ -1,6 +1,5 @@
 .root {
   --sidebar-feed-indent: 16px;
-  --sidebar-folder-toggle-gutter: 6px;
   --sidebar-tree-toggle-col: 40px;
   --sidebar-tree-count-col: 33px;
   --sidebar-tree-actions-col: 40px;
@@ -295,7 +294,7 @@
 .allFeedsLabelShim {
   align-items: center;
   display: inline-flex;
-  padding-left: calc(8px + var(--sidebar-folder-toggle-gutter));
+  padding-left: 8px;
 }
 
 .folderToggleChevronPlaceholder {
@@ -355,7 +354,7 @@
 .folderToggle {
   justify-content: flex-start;
   min-width: var(--sidebar-tree-toggle-col);
-  padding: 0 2px 0 calc(8px + var(--sidebar-folder-toggle-gutter));
+  padding: 0 2px 0 8px;
   width: var(--sidebar-tree-toggle-col);
 }
 
@@ -434,36 +433,6 @@
 .deleteDialog {
   max-width: 480px !important;
   width: 480px;
-}
-
-.deleteFolderDialog {
-  display: grid;
-  gap: 8px;
-  grid-template-rows: auto 1fr;
-  height: min(82vh, 560px);
-  max-height: min(82vh, 560px);
-  max-width: 640px !important;
-  width: min(92vw, 640px);
-}
-
-.deleteFolderDialogStep {
-  align-content: start;
-  display: grid;
-  gap: 12px;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-.deleteFolderDialogActions {
-  display: grid;
-  gap: 8px;
-  justify-items: center;
-  margin: 4px auto 0;
-  width: 100%;
-}
-
-.deleteFolderDialogActions > button {
-  width: min(100%, 240px);
 }
 
 .deleteDialog h3 {

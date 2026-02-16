@@ -75,7 +75,6 @@ export function AddFeedForm({
   onSubmitFeed,
   onCancelAddFeed,
 }: AddFeedFormProps) {
-  const [folderQuery, setFolderQuery] = useState("");
   const [renameCreatedFolderValue, setRenameCreatedFolderValue] = useState("");
   const [isRenamingCreatedFolder, setIsRenamingCreatedFolder] = useState(false);
   const createdFolderInputRef = useRef<HTMLInputElement>(null);
@@ -128,18 +127,6 @@ export function AddFeedForm({
   ]
     .filter(Boolean)
     .join(" ");
-
-  const filteredFolders = useMemo(() => {
-    const query = folderQuery.trim().toLocaleLowerCase();
-
-    if (!query) {
-      return availableFolders;
-    }
-
-    return availableFolders.filter((folder) =>
-      folder.name.toLocaleLowerCase().includes(query),
-    );
-  }, [availableFolders, folderQuery]);
 
   const createdFolder = useMemo(
     () =>
@@ -216,7 +203,6 @@ export function AddFeedForm({
         className={primitiveStyles.input}
         value={feedUrlInput}
         onChange={(event) => onFeedUrlChange(event.currentTarget.value)}
-        placeholder="example.com or https://example.com/rss.xml"
       />
       {inlineDuplicateMessage ? (
         <div className={styles.inlineDuplicateRow}>
@@ -285,24 +271,11 @@ export function AddFeedForm({
 
       <fieldset className={styles.folderFieldset}>
         <legend className={styles.label}>Folders</legend>
-        <div className={styles.folderTools}>
-          <input
-            type="text"
-            className={primitiveStyles.input}
-            value={folderQuery}
-            onChange={(event) => setFolderQuery(event.currentTarget.value)}
-            placeholder="Search folders"
-            disabled={isAddingFeed || isCreatingFolder || availableFolders.length === 0}
-          />
-        </div>
-
         {availableFolders.length === 0 ? (
           <p className={styles.folderEmpty}>No folders yet. Create one below.</p>
-        ) : filteredFolders.length === 0 ? (
-          <p className={styles.folderEmpty}>No folders match your search.</p>
         ) : (
           <div className={styles.folderList}>
-            {filteredFolders.map((folder) => {
+            {availableFolders.map((folder) => {
               const isChecked = selectedFolderIds.includes(folder.id);
 
               return (

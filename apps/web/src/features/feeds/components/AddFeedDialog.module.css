@@ -19,7 +19,7 @@
   max-width: calc(100vw - 32px);
   overflow: auto;
   padding: 14px;
-  width: min(560px, calc(100vw - 32px));
+  width: min(420px, calc(100vw - 32px));
 }
 
 .header {

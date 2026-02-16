@@ -88,17 +88,6 @@
   border-color: var(--lp-focus);
 }
 
-.folderTools {
-  display: grid;
-  gap: 6px;
-  margin-bottom: 6px;
-}
-
-.folderToolActions {
-  display: flex;
-  gap: 6px;
-}
-
 .folderList {
   display: grid;
   gap: 4px;
