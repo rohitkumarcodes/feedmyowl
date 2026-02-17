@@ -1,5 +1,5 @@
 .root {
-  --sidebar-feed-indent: 16px;
+  --sidebar-feed-indent: 24px;
   --sidebar-tree-toggle-col: 40px;
   --sidebar-tree-count-col: 33px;
   --sidebar-tree-actions-col: 40px;
@@ -291,7 +291,7 @@
   align-items: center;
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--sidebar-tree-count-col);
-  padding: var(--lp-pad-y) 8px var(--lp-pad-y) 4px;
+  padding: var(--lp-pad-y) 8px var(--lp-pad-y) 0;
 }
 
 .folderRow:hover {
@@ -328,14 +328,7 @@
 }
 
 .folderToggleChevronPlaceholder {
-  align-items: center;
-  display: inline-flex;
-  font-size: 14px;
-  justify-content: center;
-  line-height: 1;
-  margin-right: 4px;
-  visibility: hidden;
-  width: 10px;
+  display: none;
 }
 
 .folderRowIcon {
@@ -346,7 +339,7 @@
 }
 
 .scopeRowIcon {
-  margin-right: 6px;
+  margin-right: 8px;
 }
 
 .folderIconSpacer {
