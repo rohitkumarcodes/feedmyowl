@@ -6,9 +6,32 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "@/app/auth-form.module.css";
 
+const REQUIREMENT_LABELS: Record<string, string> = {
+  emailAddress: "email address",
+  phoneNumber: "phone number",
+  firstName: "first name",
+  lastName: "last name",
+  username: "username",
+  legalAccepted: "terms acceptance",
+};
+
+function formatRequirement(field: string): string {
+  const explicitLabel = REQUIREMENT_LABELS[field];
+  if (explicitLabel) {
+    return explicitLabel;
+  }
+
+  return field
+    .replace(/_/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .toLowerCase();
+}
+
 export function SignUpForm() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const router = useRouter();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
@@ -29,31 +52,57 @@ export function SignUpForm() {
     }
 
     try {
+      const trimmedFirstName = firstName.trim();
+      const trimmedLastName = lastName.trim();
       const result = await signUp.create({
         emailAddress: email,
         password,
+        ...(trimmedFirstName ? { firstName: trimmedFirstName } : {}),
+        ...(trimmedLastName ? { lastName: trimmedLastName } : {}),
       });
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
         router.push("/feeds");
       } else if (result.status === "missing_requirements") {
-        const strategies = result.verifications.emailAddress.supportedStrategies;
-
-        if (strategies.includes("email_code")) {
+        try {
           await result.prepareEmailAddressVerification({
             strategy: "email_code",
           });
           setIsVerifyingEmail(true);
           setInfo("We sent a verification code to your email.");
-        } else if (strategies.includes("email_link")) {
-          await result.prepareEmailAddressVerification({
-            strategy: "email_link",
-            redirectUrl: `${window.location.origin}/sign-in`,
-          });
-          setInfo("We sent a verification link to your email.");
-        } else {
-          setError("Account created, but email verification is unavailable.");
+          return;
+        } catch {
+          try {
+            await result.prepareEmailAddressVerification({
+              strategy: "email_link",
+              redirectUrl: `${window.location.origin}/sign-in`,
+            });
+            setInfo("We sent a verification link to your email.");
+            return;
+          } catch {
+            const missingFields = result.missingFields ?? [];
+            const unverifiedFields = result.unverifiedFields ?? [];
+
+            if (missingFields.length > 0) {
+              const missing = missingFields.map(formatRequirement).join(", ");
+              setError(`Sign up needs additional fields: ${missing}.`);
+              return;
+            }
+
+            if (unverifiedFields.length > 0) {
+              const unverified = unverifiedFields.map(formatRequirement).join(", ");
+              setError(`Sign up still needs verification for: ${unverified}.`);
+              return;
+            }
+
+            const strategies = result.verifications.emailAddress.supportedStrategies;
+            const supportedStrategies = strategies.length > 0 ? strategies.join(", ") : "none";
+            setError(
+              `Email verification is not enabled for this sign up flow (supported strategies: ${supportedStrategies}).`,
+            );
+            return;
+          }
         }
       } else {
         setError("Account created, but more verification is required.");
@@ -124,6 +173,40 @@ export function SignUpForm() {
           </div>
         ) : (
           <>
+            <div className={styles.fieldGroup}>
+              <label className={styles.label} htmlFor="first-name">
+                First name (optional)
+              </label>
+              <div className={styles.inputWrapper}>
+                <input
+                  id="first-name"
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className={styles.input}
+                  placeholder="Your first name"
+                  autoComplete="given-name"
+                />
+              </div>
+            </div>
+
+            <div className={styles.fieldGroup}>
+              <label className={styles.label} htmlFor="last-name">
+                Last name (optional)
+              </label>
+              <div className={styles.inputWrapper}>
+                <input
+                  id="last-name"
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className={styles.input}
+                  placeholder="Your last name"
+                  autoComplete="family-name"
+                />
+              </div>
+            </div>
+
             <div className={styles.fieldGroup}>
               <label className={styles.label} htmlFor="email">
                 Email
