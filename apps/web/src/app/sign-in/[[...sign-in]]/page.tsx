@@ -9,8 +9,8 @@
  */
 
 import { redirect } from "next/navigation";
-import { getAuthUserId, SignInForm } from "@/lib/server/auth";
-import { authEntryAppearance } from "@/app/auth-entry-appearance";
+import { getAuthUserId } from "@/lib/server/auth";
+import { SignInForm } from "@/components/sign-in-form";
 import styles from "@/app/auth-page.module.css";
 
 /**
@@ -32,7 +32,7 @@ export default async function SignInPage() {
           <h1 className={styles.appName}>feed my owl</h1>
           <p className={styles.subtitle}>Welcome back! Please sign in to continue</p>
         </div>
-        <SignInForm appearance={authEntryAppearance} />
+        <SignInForm />
       </div>
     </div>
   );

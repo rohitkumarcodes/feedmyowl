@@ -1,0 +1,112 @@
+.form {
+  margin: 0;
+  padding: 18px 40px 20px;
+}
+
+.fieldGroup {
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+.labelRow {
+  align-items: center;
+  column-gap: 6px;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  margin-top: 0;
+  padding: 0;
+}
+
+.label {
+  color: #3d396e;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  margin: 0 0 4px;
+  display: block;
+}
+
+.actionLink {
+  color: #8480b5;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.actionLink:hover {
+  color: #3d396e;
+  text-decoration: underline;
+}
+
+.inputWrapper {
+  background: #ffffff;
+  border: 1px solid #6e6aa0;
+  border-radius: 4px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.inputWrapper:focus-within {
+  border: 1px solid #3d396e;
+  box-shadow: 0 0 0 1px #3d396e;
+}
+
+.input {
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  box-sizing: border-box;
+  color: #3d396e;
+  font-size: 14px;
+  outline: none;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.input::placeholder {
+  color: #b8b5d6;
+}
+
+.error {
+  color: #dc2626;
+  font-size: 13px;
+  margin: 0 0 12px;
+  padding: 0;
+}
+
+.submitButton {
+  background-color: #3d396e;
+  background-image: none;
+  border: none;
+  border-radius: 4px;
+  box-shadow: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 12px;
+  text-transform: none;
+  transition: opacity 0.2s;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.submitButton:hover:not(:disabled) {
+  background-image: none;
+  box-shadow: none;
+  opacity: 0.9;
+}
+
+.submitButton:active:not(:disabled) {
+  opacity: 0.8;
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

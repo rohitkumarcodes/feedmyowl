@@ -9,8 +9,8 @@
  */
 
 import { redirect } from "next/navigation";
-import { getAuthUserId, SignUpForm } from "@/lib/server/auth";
-import { authEntryAppearance } from "@/app/auth-entry-appearance";
+import { getAuthUserId } from "@/lib/server/auth";
+import { SignUpForm } from "@/components/sign-up-form";
 import styles from "@/app/auth-page.module.css";
 
 /**
@@ -32,7 +32,7 @@ export default async function SignUpPage() {
           <h1 className={styles.appName}>feed my owl</h1>
           <p className={styles.subtitle}>Sign up to continue</p>
         </div>
-        <SignUpForm appearance={authEntryAppearance} />
+        <SignUpForm />
       </div>
     </div>
   );
