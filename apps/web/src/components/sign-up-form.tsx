@@ -7,12 +7,12 @@ import Link from "next/link";
 import styles from "@/app/auth-form.module.css";
 
 const REQUIREMENT_LABELS: Record<string, string> = {
-  emailAddress: "email address",
-  phoneNumber: "phone number",
-  firstName: "first name",
-  lastName: "last name",
+  email_address: "email address",
+  phone_number: "phone number",
+  first_name: "first name",
+  last_name: "last name",
   username: "username",
-  legalAccepted: "terms acceptance",
+  legal_accepted: "terms acceptance",
 };
 
 function formatRequirement(field: string): string {
@@ -73,9 +73,7 @@ export function SignUpForm() {
         }
 
         const unverifiedFields = result.unverifiedFields ?? [];
-        const emailStrategies = result.verifications.emailAddress.supportedStrategies;
-
-        if (emailStrategies.includes("email_code")) {
+        if (unverifiedFields.includes("email_address")) {
           try {
             await result.prepareEmailAddressVerification({
               strategy: "email_code",
@@ -83,17 +81,9 @@ export function SignUpForm() {
             setIsVerifyingEmail(true);
             setInfo("We sent a verification code to your email.");
             return;
-          } catch (err: unknown) {
-            if (!emailStrategies.includes("email_link")) {
-              const message =
-                err instanceof Error ? err.message : "Unable to start email verification";
-              setError(message);
-              return;
-            }
+          } catch {
+            // Fall through and try email link verification as fallback.
           }
-        }
-
-        if (emailStrategies.includes("email_link")) {
           try {
             await result.prepareEmailAddressVerification({
               strategy: "email_link",
@@ -115,10 +105,8 @@ export function SignUpForm() {
           return;
         }
 
-        const supportedStrategies =
-          emailStrategies.length > 0 ? emailStrategies.join(", ") : "none";
         setError(
-          `Email verification is not enabled for this sign up flow (supported strategies: ${supportedStrategies}).`,
+          "Email verification is not enabled for this sign up flow.",
         );
         return;
       } else {
