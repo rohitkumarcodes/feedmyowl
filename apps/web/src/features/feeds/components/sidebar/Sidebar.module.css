@@ -230,6 +230,12 @@
   outline-offset: 2px;
 }
 
+/* Thin divider separating the system scope rows from the folder/feed tree. */
+.treeSectionDivider {
+  border-top: 1px solid var(--lp-border);
+  margin: 4px 12px;
+}
+
 .folderGroup + .folderGroup {
   margin-top: 1px;
 }

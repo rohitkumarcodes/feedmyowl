@@ -225,7 +225,7 @@ function FolderRow({
         aria-expanded={isExpanded}
       >
         <span className={styles.folderToggleContent} aria-hidden="true">
-          <span className={styles.folderToggleChevron}>{isExpanded ? "▾" : "▸"}</span>
+          <span className={styles.folderToggleChevron}>{isExpanded ? "▼" : "▶"}</span>
           <FolderRowIcon className={styles.folderRowIcon} />
         </span>
       </button>
@@ -804,6 +804,11 @@ export function FolderTree({
           </div>
         ) : null}
 
+        {/* Divider between system scope rows (Saved/All/Unread) and the folder tree. */}
+        {folders.length > 0 || uncategorizedFeeds.length > 0 ? (
+          <div className={styles.treeSectionDivider} role="separator" aria-hidden="true" />
+        ) : null}
+
         {uncategorizedFeeds.length > 0 ? (
           <div className={styles.folderGroup}>
             <div
@@ -820,7 +825,7 @@ export function FolderTree({
               >
                 <span className={styles.folderToggleContent} aria-hidden="true">
                   <span className={styles.folderToggleChevron}>
-                    {isUncategorizedExpanded ? "▾" : "▸"}
+                    {isUncategorizedExpanded ? "▼" : "▶"}
                   </span>
                   <FolderRowIcon className={styles.folderRowIcon} />
                 </span>

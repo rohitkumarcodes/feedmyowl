@@ -33,6 +33,16 @@
   padding-right: 12px;
 }
 
+/* Hash prefix rendered before each feed name (e.g. # The Verge). */
+.feedHashPrefix {
+  color: var(--lp-text-muted);
+  flex-shrink: 0;
+  font-size: var(--text-xs);
+  margin-right: 5px;
+  opacity: 0.6;
+  user-select: none;
+}
+
 .label {
   overflow: hidden;
   text-overflow: ellipsis;
