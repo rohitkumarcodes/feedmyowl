@@ -30,7 +30,7 @@ export default async function SignInPage() {
         <div className={styles.logoHeader}>
           <div className={styles.owlLogo}>{"{o,o}"}</div>
           <h1 className={styles.appName}>feed my owl</h1>
-          <p className={styles.subtitle}>Welcome back! Please sign in to continue</p>
+          <p className={styles.subtitle}>Sign in to continue</p>
         </div>
         <SignInForm />
       </div>
