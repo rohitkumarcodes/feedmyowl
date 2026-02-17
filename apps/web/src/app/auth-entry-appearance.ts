@@ -30,7 +30,7 @@ export const authEntryAppearance = {
     },
     form: {
       margin: "0",
-      padding: "14px 40px 24px",
+      padding: "0",
     },
     main: {
       padding: "0",
@@ -40,14 +40,10 @@ export const authEntryAppearance = {
       padding: "0",
     },
     formField: {
-      margin: "0 0 20px",
+      margin: "0",
     },
     formFieldLabelRow: {
-      alignItems: "center",
-      columnGap: "8px",
-      display: "flex",
-      justifyContent: "space-between",
-      marginBottom: "8px",
+      marginBottom: "0",
       padding: "0",
     },
     formFieldLabel: {
@@ -55,19 +51,6 @@ export const authEntryAppearance = {
       fontSize: "13px",
       fontWeight: "600",
       margin: "0",
-    },
-    lastAuthenticationStrategyBadge: {
-      backgroundColor: "#ebeaf4",
-      borderRadius: "999px",
-      color: "#8480b5",
-      display: "inline-flex",
-      fontSize: "11px",
-      fontWeight: "700",
-      justifyContent: "center",
-      lineHeight: "1.15",
-      margin: "0",
-      padding: "4px 8px",
-      verticalAlign: "middle",
     },
     formButtonPrimary: {
       backgroundColor: "#3d396e",
@@ -98,7 +81,7 @@ export const authEntryAppearance = {
     },
     footer: {
       borderTop: "1px solid #ebeaf4",
-      padding: "12px 40px 4px",
+      padding: "0",
       textAlign: "center",
     },
     footerAction: {

@@ -51,8 +51,8 @@
 .frame :global(.cl-form) {
   display: grid !important;
   margin: 0 !important;
-  padding: 16px 40px 20px !important;
-  row-gap: 16px !important;
+  padding: 20px 40px 16px !important;
+  row-gap: 0 !important;
 }
 
 .frame :global(.cl-formContainer) {
@@ -64,6 +64,10 @@
   margin: 0 !important;
 }
 
+.frame :global(.cl-formFieldRow:not(:last-child)) {
+  margin-bottom: 14px !important;
+}
+
 .frame :global(.cl-formField) {
   margin: 0 !important;
 }
@@ -71,8 +75,9 @@
 .frame :global(.cl-formFieldLabelRow) {
   align-items: center !important;
   column-gap: 8px !important;
+  display: flex !important;
   justify-content: space-between !important;
-  margin-bottom: 8px !important;
+  margin-bottom: 6px !important;
   padding: 0 !important;
 }
 
@@ -85,21 +90,31 @@
   font-size: 11px !important;
   font-weight: 700 !important;
   justify-content: center !important;
+  height: 20px !important;
   line-height: 1 !important;
   margin: 0 !important;
-  padding: 4px 8px !important;
+  padding: 0 8px !important;
   vertical-align: middle !important;
 }
 
+.frame :global(.cl-formFieldLabel) {
+  line-height: 20px !important;
+}
+
+.frame :global(.cl-formFieldHintText) {
+  line-height: 20px !important;
+  margin: 0 !important;
+}
+
 .frame :global(.cl-formButtonPrimary) {
-  margin-top: 2px !important;
+  margin-top: 6px !important;
 }
 
 .frame :global(.cl-footer) {
   border-top: 1px solid #ebeaf4 !important;
   display: grid !important;
-  gap: 4px !important;
-  padding: 10px 40px 2px !important;
+  gap: 0 !important;
+  padding: 8px 40px 0 !important;
   text-align: center !important;
 }
 
@@ -117,9 +132,9 @@
   font-size: 11px;
   letter-spacing: 0.05em;
   line-height: 1.2;
-  margin: 2px 0 0;
+  margin: 0;
   opacity: 0.6;
-  padding: 0 40px 6px;
+  padding: 2px 40px 6px;
   text-transform: uppercase;
 }
 
