@@ -39,15 +39,18 @@ export const authEntryAppearance = {
       margin: "0",
       padding: "0",
     },
+    formFieldRow: {
+      margin: "0 0 16px",
+    },
     formField: {
-      margin: "0 0 18px",
+      margin: "0",
     },
     formFieldLabelRow: {
       alignItems: "center",
       columnGap: "8px",
       display: "flex",
       justifyContent: "space-between",
-      marginBottom: "6px",
+      marginBottom: "8px",
       padding: "0",
     },
     formFieldLabel: {
@@ -58,9 +61,9 @@ export const authEntryAppearance = {
       margin: "0",
     },
     formFieldHintText: {
-      color: "#8480b5",
+      color: "#a5a2c9",
       fontSize: "13px",
-      fontWeight: "600",
+      fontWeight: "500",
       lineHeight: "20px",
       margin: "0",
     },
@@ -108,21 +111,32 @@ export const authEntryAppearance = {
     },
     footer: {
       borderTop: "1px solid #ebeaf4",
-      padding: "8px 40px 0",
+      padding: "8px 40px 2px",
       textAlign: "center",
     },
-    footerAction: {
+    footerItem: {
       margin: "0",
+      padding: "0",
+    },
+    footerAction: {
+      alignItems: "center",
+      display: "flex",
+      justifyContent: "center",
+      margin: "0",
+      textAlign: "center",
+      width: "100%",
     },
     footerActionText: {
       color: "#8480b5",
       fontSize: "14px",
+      fontWeight: "500",
+      lineHeight: "1.4",
       margin: "0",
     },
     footerActionLink: {
       color: "#3d396e",
       fontSize: "14px",
-      fontWeight: "700",
+      fontWeight: "600",
       textDecoration: "none",
     },
   },
