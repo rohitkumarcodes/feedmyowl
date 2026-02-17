@@ -9,7 +9,7 @@
 }
 
 .logoHeader {
-  margin-bottom: 20px;
+  padding: 40px 40px 20px;
   text-align: center;
 }
 
@@ -18,6 +18,7 @@
   font-size: 38px;
   font-weight: 700;
   line-height: 1.1;
+  margin-bottom: 8px;
 }
 
 .appName {
@@ -28,13 +29,31 @@
   margin: 0;
 }
 
-.frame {
-  width: min(100%, 440px);
+.subtitle {
+  color: #8480b5;
+  font-size: 14px;
+  margin: 8px 0 0;
 }
 
-.root :global(.cl-footer + div) {
+.frame {
+  background: #fff;
+  border: 1px solid #8480b5;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgb(61 57 110 / 4%);
+  overflow: hidden;
+  width: min(100%, 400px);
+}
+
+.frame :global(.cl-footer + div) {
+  color: #a0a0b0;
   font-size: 11px;
+  letter-spacing: 0.05em;
   opacity: 0.6;
+  text-transform: uppercase;
+}
+
+.frame :global(.cl-footer + div span) {
+  font-weight: 800;
 }
 
 @media (max-width: 640px) {

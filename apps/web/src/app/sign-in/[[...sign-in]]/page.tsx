@@ -26,11 +26,12 @@ export default async function SignInPage() {
 
   return (
     <div className={styles.root}>
-      <div className={styles.logoHeader}>
-        <div className={styles.owlLogo}>{"{o,o}"}</div>
-        <h1 className={styles.appName}>feed my owl</h1>
-      </div>
       <div className={styles.frame}>
+        <div className={styles.logoHeader}>
+          <div className={styles.owlLogo}>{"{o,o}"}</div>
+          <h1 className={styles.appName}>feed my owl</h1>
+          <p className={styles.subtitle}>Welcome back! Please sign in to continue</p>
+        </div>
         <SignInForm appearance={authEntryAppearance} />
       </div>
     </div>

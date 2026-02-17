@@ -13,40 +13,77 @@ export const authEntryAppearance = {
   },
   elements: {
     card: {
-      border: "1px solid #8480b5",
-      boxShadow: "0 2px 4px rgba(61, 57, 110, 0.04)",
-      backgroundColor: "#ffffff",
+      backgroundColor: "transparent",
+      border: "none",
+      borderRadius: "0",
+      boxShadow: "none",
+      padding: "0",
+    },
+    header: {
+      display: "none",
     },
     headerTitle: {
       display: "none",
     },
     headerSubtitle: {
-      fontSize: "14px",
-      marginTop: "8px",
-      textAlign: "center",
+      display: "none",
+    },
+    form: {
+      padding: "0 40px 30px",
+    },
+    formField: {
+      marginBottom: "24px",
+    },
+    formFieldLabel: {
+      color: "#3d396e",
+      fontSize: "13px",
+      fontWeight: "600",
+      marginBottom: "8px",
     },
     formButtonPrimary: {
-      fontSize: "14px",
-      textTransform: "none",
       backgroundColor: "#3d396e",
+      border: "none",
+      borderRadius: "4px",
+      color: "#fff",
+      cursor: "pointer",
+      fontSize: "15px",
+      fontWeight: "600",
+      padding: "12px",
+      textTransform: "none",
+      transition: "opacity 0.2s",
+      width: "100%",
       "&:hover": {
-        backgroundColor: "#2a274f",
+        opacity: "0.9",
       },
     },
     formFieldInput: {
+      background: "#ffffff",
       border: "1px solid #8480b5",
+      borderRadius: "4px",
+      color: "#3d396e",
+      fontSize: "14px",
+      padding: "12px",
       "&:focus": {
         border: "1px solid #3d396e",
       },
     },
+    footer: {
+      borderTop: "1px solid #ebeaf4",
+      padding: "24px 40px",
+      textAlign: "center",
+    },
+    footerAction: {
+      marginBottom: "16px",
+    },
     footerActionText: {
-      fontSize: "14px",
       color: "#8480b5",
+      fontSize: "14px",
     },
     footerActionLink: {
+      color: "#3d396e",
       fontSize: "14px",
       fontWeight: "700",
-      color: "#3d396e",
+      textDecoration: "none",
     },
   },
 } satisfies AuthEntryAppearance;
