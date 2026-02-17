@@ -1,6 +1,6 @@
 .root {
   align-items: center;
-  background: var(--bg-primary);
+  background: var(--brand-light);
   display: flex;
   justify-content: center;
   min-height: 100vh;
@@ -8,13 +8,58 @@
 }
 
 .frame {
-  background: var(--brand-light);
-  border: 1px solid var(--border);
-  padding: 8px;
+  width: min(100%, 440px);
 }
 
-:global(html[data-theme="dark"]) .frame {
-  background: var(--bg-secondary);
+.root :global(.cl-pageScrollBox) {
+  background-color: var(--brand-light);
+}
+
+.root :global(.cl-card) {
+  background-color: #fff;
+  border: 1px solid var(--brand-mid);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.root :global(.cl-headerTitle) {
+  color: var(--brand-deep);
+  font-family: inherit;
+  font-weight: 700;
+}
+
+.root :global(.cl-headerSubtitle) {
+  color: var(--brand-mid);
+}
+
+.root :global(.cl-formFieldInput) {
+  border: 1px solid var(--brand-mid);
+  border-radius: 4px;
+}
+
+.root :global(.cl-formFieldInput:focus) {
+  border-color: var(--brand-deep);
+  box-shadow: 0 0 0 1px var(--brand-deep);
+}
+
+.root :global(.cl-formButtonPrimary) {
+  background-color: var(--brand-deep);
+  border-radius: 4px;
+  color: #fff;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.root :global(.cl-formButtonPrimary:hover) {
+  background-color: #2a274f;
+}
+
+.root :global(.cl-footerActionLink) {
+  color: var(--brand-deep);
+}
+
+.root :global(.cl-footerActionLink:hover) {
+  color: var(--brand-mid);
 }
 
 @media (max-width: 640px) {
