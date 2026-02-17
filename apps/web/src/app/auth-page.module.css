@@ -9,7 +9,7 @@
 }
 
 .logoHeader {
-  padding: 40px 40px 20px;
+  padding: 36px 40px 18px;
   text-align: center;
 }
 
@@ -48,6 +48,8 @@
   color: #a0a0b0;
   font-size: 11px;
   letter-spacing: 0.05em;
+  line-height: 1.2;
+  margin: 0;
   opacity: 0.6;
   text-transform: uppercase;
 }
