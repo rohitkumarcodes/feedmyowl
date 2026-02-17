@@ -28,9 +28,14 @@
 }
 
 .actionLink {
+  background: none;
+  border: none;
   color: #8480b5;
+  cursor: pointer;
+  font-family: inherit;
   font-size: 12px;
   font-weight: 500;
+  padding: 0;
   text-decoration: none;
 }
 
@@ -74,6 +79,13 @@
 
 .error {
   color: #dc2626;
+  font-size: 13px;
+  margin: 0 0 12px;
+  padding: 0;
+}
+
+.info {
+  color: #3d396e;
   font-size: 13px;
   margin: 0 0 12px;
   padding: 0;
