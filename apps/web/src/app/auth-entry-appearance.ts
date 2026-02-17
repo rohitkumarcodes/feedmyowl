@@ -31,14 +31,25 @@ export const authEntryAppearance = {
   },
   elements: {
     /* -------------------------------------------------------------- */
-    /* Card — transparent because our .frame wrapper provides the box  */
+    /* Card wrappers — transparent because our .frame provides the box */
+    /* rootBox and cardBox are Clerk's outermost containers.           */
     /* -------------------------------------------------------------- */
+    rootBox: {
+      margin: "0",
+      padding: "0",
+    },
+    cardBox: {
+      margin: "0",
+      padding: "0",
+      boxShadow: "none",
+    },
     card: {
       backgroundColor: "transparent",
       border: "none",
       borderRadius: "0",
       boxShadow: "none",
       padding: "0",
+      gap: "0",
     },
 
     /* -------------------------------------------------------------- */
@@ -62,22 +73,29 @@ export const authEntryAppearance = {
       padding: "18px 40px 20px",
     },
     main: {
+      gap: "0",
+      margin: "0",
       padding: "0",
     },
     formContainer: {
+      gap: "0",
       margin: "0",
       padding: "0",
     },
 
     /* -------------------------------------------------------------- */
-    /* Form field rows — vertical gap between each field               */
-    /* 14px keeps sign-up compact without feeling cramped              */
+    /* Form field rows — vertical gap between each field.              */
+    /* Clerk adds its own margins by default; we zero everything out   */
+    /* and control spacing exclusively through formFieldRow margin.    */
     /* -------------------------------------------------------------- */
     formFieldRow: {
-      margin: "0 0 14px",
+      margin: "0 0 12px",
+      padding: "0",
     },
     formField: {
       margin: "0",
+      padding: "0",
+      gap: "0",
     },
 
     /* -------------------------------------------------------------- */
@@ -85,10 +103,11 @@ export const authEntryAppearance = {
     /* -------------------------------------------------------------- */
     formFieldLabelRow: {
       alignItems: "center",
-      columnGap: "8px",
+      columnGap: "6px",
       display: "flex",
       justifyContent: "space-between",
-      marginBottom: "6px",
+      marginBottom: "4px",
+      marginTop: "0",
       padding: "0",
     },
     formFieldLabel: {
@@ -147,22 +166,38 @@ export const authEntryAppearance = {
     },
 
     /* -------------------------------------------------------------- */
-    /* Text inputs — visible border, proper focus ring for a11y        */
-    /* Border color #6e6aa0 is between mid-lavender and deep indigo    */
+    /* Input group — the WRAPPER div around each <input>.              */
+    /* In Clerk v6, the visible border lives here, not on the input.   */
+    /* Without this, inputs appear borderless (white on white).        */
     /* -------------------------------------------------------------- */
-    formFieldInput: {
+    formFieldInputGroup: {
       background: "#ffffff",
       border: "1px solid #6e6aa0",
       borderRadius: "4px",
       boxSizing: "border-box",
-      color: "#3d396e",
-      fontSize: "14px",
-      padding: "12px",
-      width: "100%",
-      "&:focus": {
+      display: "flex",
+      alignItems: "center",
+      transition: "border-color 0.15s, box-shadow 0.15s",
+      "&:focus-within": {
         border: "1px solid #3d396e",
         boxShadow: "0 0 0 1px #3d396e",
       },
+    },
+
+    /* -------------------------------------------------------------- */
+    /* Text input — the actual <input> element inside the group.       */
+    /* Border is removed here because the group wrapper handles it.    */
+    /* -------------------------------------------------------------- */
+    formFieldInput: {
+      background: "transparent",
+      border: "none",
+      borderRadius: "4px",
+      boxSizing: "border-box",
+      color: "#3d396e",
+      fontSize: "14px",
+      outline: "none",
+      padding: "10px 12px",
+      width: "100%",
     },
 
     /* -------------------------------------------------------------- */
