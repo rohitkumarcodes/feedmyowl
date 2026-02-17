@@ -391,16 +391,16 @@
 .folderToggleContent {
   align-items: center;
   display: inline-flex;
-  gap: 4px;
+  gap: 2px;
 }
 
 .folderToggleChevron {
   align-items: center;
   display: inline-flex;
-  font-size: 14px;
+  font-size: 7px;
   justify-content: center;
   line-height: 1;
-  width: 10px;
+  width: 8px;
 }
 
 .folderToggleSpacer {

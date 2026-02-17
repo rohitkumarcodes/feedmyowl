@@ -35,22 +35,38 @@ export function TrashIcon({ className }: { className?: string }): ReactElement {
   );
 }
 
-export function FolderRowIcon({ className }: { className?: string }): ReactElement {
+export function FolderRowIcon({
+  className,
+  filled = false,
+}: {
+  className?: string;
+  /** When true, renders a solid filled folder (used for the active/selected state). */
+  filled?: boolean;
+}): ReactElement {
   return (
     <svg
       className={className}
       viewBox="0 0 24 24"
-      fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <path
-        d="M3 7.5H9L10.8 9.5H21V18.5H3V7.5Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="square"
-        strokeLinejoin="miter"
-      />
+      {filled ? (
+        /* Filled/solid folder — shown when this folder is the active scope. */
+        <path
+          d="M3 7.5H9L10.8 9.5H21V18.5H3V7.5Z"
+          fill="currentColor"
+        />
+      ) : (
+        /* Outlined folder — default (inactive) state. */
+        <path
+          d="M3 7.5H9L10.8 9.5H21V18.5H3V7.5Z"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="square"
+          strokeLinejoin="miter"
+          fill="none"
+        />
+      )}
     </svg>
   );
 }

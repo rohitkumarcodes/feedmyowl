@@ -226,7 +226,7 @@ function FolderRow({
       >
         <span className={styles.folderToggleContent} aria-hidden="true">
           <span className={styles.folderToggleChevron}>{isExpanded ? "▼" : "▶"}</span>
-          <FolderRowIcon className={styles.folderRowIcon} />
+          <FolderRowIcon className={styles.folderRowIcon} filled={isActive} />
         </span>
       </button>
 
@@ -827,7 +827,10 @@ export function FolderTree({
                   <span className={styles.folderToggleChevron}>
                     {isUncategorizedExpanded ? "▼" : "▶"}
                   </span>
-                  <FolderRowIcon className={styles.folderRowIcon} />
+                  <FolderRowIcon
+                    className={styles.folderRowIcon}
+                    filled={selectedScope.type === "uncategorized"}
+                  />
                 </span>
               </button>
               <button
