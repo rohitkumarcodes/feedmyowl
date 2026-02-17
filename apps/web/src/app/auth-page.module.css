@@ -44,97 +44,14 @@
   width: min(100%, 400px);
 }
 
-.frame :global(.cl-main) {
-  padding: 0 !important;
-}
-
-.frame :global(.cl-form) {
-  display: grid !important;
-  margin: 0 !important;
-  padding: 20px 40px 16px !important;
-  row-gap: 0 !important;
-}
-
-.frame :global(.cl-formContainer) {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-.frame :global(.cl-formFieldRow) {
-  margin: 0 !important;
-}
-
-.frame :global(.cl-formFieldRow:not(:last-child)) {
-  margin-bottom: 14px !important;
-}
-
-.frame :global(.cl-formField) {
-  margin: 0 !important;
-}
-
-.frame :global(.cl-formFieldLabelRow) {
-  align-items: center !important;
-  column-gap: 8px !important;
-  display: flex !important;
-  justify-content: space-between !important;
-  margin-bottom: 6px !important;
-  padding: 0 !important;
-}
-
-.frame :global(.cl-lastAuthenticationStrategyBadge) {
-  align-items: center !important;
-  background: #ebeaf4 !important;
-  border-radius: 999px !important;
-  color: #8480b5 !important;
-  display: inline-flex !important;
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  justify-content: center !important;
-  height: 20px !important;
-  line-height: 1 !important;
-  margin: 0 !important;
-  padding: 0 8px !important;
-  vertical-align: middle !important;
-}
-
-.frame :global(.cl-formFieldLabel) {
-  line-height: 20px !important;
-}
-
-.frame :global(.cl-formFieldHintText) {
-  line-height: 20px !important;
-  margin: 0 !important;
-}
-
-.frame :global(.cl-formButtonPrimary) {
-  margin-top: 6px !important;
-}
-
-.frame :global(.cl-footer) {
-  border-top: 1px solid #ebeaf4 !important;
-  display: grid !important;
-  gap: 0 !important;
-  padding: 8px 40px 0 !important;
-  text-align: center !important;
-}
-
-.frame :global(.cl-footerItem) {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-.frame :global(.cl-footerAction) {
-  margin: 0 !important;
-}
-
 .frame :global(.cl-footer + div) {
   color: #a0a0b0;
   font-size: 11px;
   letter-spacing: 0.05em;
   line-height: 1.2;
-  margin: 0;
+  margin: 2px 0 0;
   opacity: 0.6;
-  padding: 2px 40px 6px;
+  padding: 0 40px 6px;
   text-transform: uppercase;
 }
 

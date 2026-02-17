@@ -30,7 +30,7 @@ export const authEntryAppearance = {
     },
     form: {
       margin: "0",
-      padding: "0",
+      padding: "14px 40px 20px",
     },
     main: {
       padding: "0",
@@ -40,17 +40,44 @@ export const authEntryAppearance = {
       padding: "0",
     },
     formField: {
-      margin: "0",
+      margin: "0 0 18px",
     },
     formFieldLabelRow: {
-      marginBottom: "0",
+      alignItems: "center",
+      columnGap: "8px",
+      display: "flex",
+      justifyContent: "space-between",
+      marginBottom: "6px",
       padding: "0",
     },
     formFieldLabel: {
       color: "#3d396e",
       fontSize: "13px",
       fontWeight: "600",
+      lineHeight: "20px",
       margin: "0",
+    },
+    formFieldHintText: {
+      color: "#8480b5",
+      fontSize: "13px",
+      fontWeight: "600",
+      lineHeight: "20px",
+      margin: "0",
+    },
+    lastAuthenticationStrategyBadge: {
+      alignItems: "center",
+      backgroundColor: "#ebeaf4",
+      borderRadius: "999px",
+      color: "#8480b5",
+      display: "inline-flex",
+      fontSize: "11px",
+      fontWeight: "700",
+      height: "20px",
+      justifyContent: "center",
+      lineHeight: "1",
+      margin: "0",
+      padding: "0 8px",
+      verticalAlign: "middle",
     },
     formButtonPrimary: {
       backgroundColor: "#3d396e",
@@ -81,7 +108,7 @@ export const authEntryAppearance = {
     },
     footer: {
       borderTop: "1px solid #ebeaf4",
-      padding: "0",
+      padding: "8px 40px 0",
       textAlign: "center",
     },
     footerAction: {
