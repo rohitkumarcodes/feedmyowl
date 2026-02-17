@@ -65,14 +65,35 @@ export function SignUpForm() {
         await setActive({ session: result.createdSessionId });
         router.push("/feeds");
       } else if (result.status === "missing_requirements") {
-        try {
-          await result.prepareEmailAddressVerification({
-            strategy: "email_code",
-          });
-          setIsVerifyingEmail(true);
-          setInfo("We sent a verification code to your email.");
+        const missingFields = result.missingFields ?? [];
+        if (missingFields.length > 0) {
+          const missing = missingFields.map(formatRequirement).join(", ");
+          setError(`Sign up needs additional fields: ${missing}.`);
           return;
-        } catch {
+        }
+
+        const unverifiedFields = result.unverifiedFields ?? [];
+        const emailStrategies = result.verifications.emailAddress.supportedStrategies;
+
+        if (emailStrategies.includes("email_code")) {
+          try {
+            await result.prepareEmailAddressVerification({
+              strategy: "email_code",
+            });
+            setIsVerifyingEmail(true);
+            setInfo("We sent a verification code to your email.");
+            return;
+          } catch (err: unknown) {
+            if (!emailStrategies.includes("email_link")) {
+              const message =
+                err instanceof Error ? err.message : "Unable to start email verification";
+              setError(message);
+              return;
+            }
+          }
+        }
+
+        if (emailStrategies.includes("email_link")) {
           try {
             await result.prepareEmailAddressVerification({
               strategy: "email_link",
@@ -80,30 +101,26 @@ export function SignUpForm() {
             });
             setInfo("We sent a verification link to your email.");
             return;
-          } catch {
-            const missingFields = result.missingFields ?? [];
-            const unverifiedFields = result.unverifiedFields ?? [];
-
-            if (missingFields.length > 0) {
-              const missing = missingFields.map(formatRequirement).join(", ");
-              setError(`Sign up needs additional fields: ${missing}.`);
-              return;
-            }
-
-            if (unverifiedFields.length > 0) {
-              const unverified = unverifiedFields.map(formatRequirement).join(", ");
-              setError(`Sign up still needs verification for: ${unverified}.`);
-              return;
-            }
-
-            const strategies = result.verifications.emailAddress.supportedStrategies;
-            const supportedStrategies = strategies.length > 0 ? strategies.join(", ") : "none";
-            setError(
-              `Email verification is not enabled for this sign up flow (supported strategies: ${supportedStrategies}).`,
-            );
+          } catch (err: unknown) {
+            const message =
+              err instanceof Error ? err.message : "Unable to start email verification";
+            setError(message);
             return;
           }
         }
+
+        if (unverifiedFields.length > 0) {
+          const unverified = unverifiedFields.map(formatRequirement).join(", ");
+          setError(`Sign up still needs verification for: ${unverified}.`);
+          return;
+        }
+
+        const supportedStrategies =
+          emailStrategies.length > 0 ? emailStrategies.join(", ") : "none";
+        setError(
+          `Email verification is not enabled for this sign up flow (supported strategies: ${supportedStrategies}).`,
+        );
+        return;
       } else {
         setError("Account created, but more verification is required.");
       }
