@@ -1,70 +1,45 @@
 .root {
   align-items: center;
-  background: var(--brand-light);
+  background: #f7f7f8;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   min-height: 100vh;
   padding: 24px 16px;
+}
+
+.logoHeader {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.owlLogo {
+  color: #3d396e;
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.appName {
+  color: #3d396e;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin: 0;
 }
 
 .frame {
   width: min(100%, 440px);
 }
 
-.root :global(.cl-pageScrollBox) {
-  background-color: var(--brand-light);
-}
-
-.root :global(.cl-card) {
-  background-color: #fff;
-  border: 1px solid var(--brand-mid);
-  border-radius: 8px;
-  box-shadow: none;
-}
-
-.root :global(.cl-headerTitle) {
-  color: var(--brand-deep);
-  font-family: inherit;
-  font-weight: 700;
-}
-
-.root :global(.cl-headerSubtitle) {
-  color: var(--brand-mid);
-}
-
-.root :global(.cl-formFieldInput) {
-  border: 1px solid var(--brand-mid);
-  border-radius: 4px;
-}
-
-.root :global(.cl-formFieldInput:focus) {
-  border-color: var(--brand-deep);
-  box-shadow: 0 0 0 1px var(--brand-deep);
-}
-
-.root :global(.cl-formButtonPrimary) {
-  background-color: var(--brand-deep);
-  border-radius: 4px;
-  color: #fff;
-  font-weight: 600;
-  text-transform: none;
-}
-
-.root :global(.cl-formButtonPrimary:hover) {
-  background-color: #2a274f;
-}
-
-.root :global(.cl-footerActionLink) {
-  color: var(--brand-deep);
-}
-
-.root :global(.cl-footerActionLink:hover) {
-  color: var(--brand-mid);
+.root :global(.cl-footer + div) {
+  font-size: 11px;
+  opacity: 0.6;
 }
 
 @media (max-width: 640px) {
   .root {
-    align-items: flex-start;
+    justify-content: flex-start;
     padding-top: 72px;
   }
 

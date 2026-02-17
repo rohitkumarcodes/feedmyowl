@@ -10,6 +10,7 @@
 
 import { redirect } from "next/navigation";
 import { getAuthUserId, SignInForm } from "@/lib/server/auth";
+import { authEntryAppearance } from "@/app/auth-entry-appearance";
 import styles from "@/app/auth-page.module.css";
 
 /**
@@ -25,8 +26,12 @@ export default async function SignInPage() {
 
   return (
     <div className={styles.root}>
+      <div className={styles.logoHeader}>
+        <div className={styles.owlLogo}>{"{o,o}"}</div>
+        <h1 className={styles.appName}>feed my owl</h1>
+      </div>
       <div className={styles.frame}>
-        <SignInForm />
+        <SignInForm appearance={authEntryAppearance} />
       </div>
     </div>
   );
