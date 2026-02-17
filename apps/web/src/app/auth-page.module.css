@@ -9,7 +9,8 @@
 }
 
 .logoHeader {
-  padding: 36px 40px 18px;
+  border-bottom: 1px solid #ebeaf4;
+  padding: 32px 40px 22px;
   text-align: center;
 }
 
@@ -41,17 +42,19 @@
   border-radius: 4px;
   box-shadow: 0 2px 4px rgb(61 57 110 / 4%);
   overflow: hidden;
-  width: min(100%, 400px);
+  width: min(100%, 420px);
 }
 
 .frame :global(.cl-footer + div) {
-  color: #a0a0b0;
-  font-size: 11px;
+  background: transparent;
+  color: #b8b5d6;
+  font-size: 10px;
   letter-spacing: 0.05em;
   line-height: 1.2;
-  margin: 2px 0 0;
-  opacity: 0.6;
-  padding: 0 40px 6px;
+  margin: 0;
+  opacity: 0.55;
+  padding: 4px 40px 10px;
+  text-align: center;
   text-transform: uppercase;
 }
 
