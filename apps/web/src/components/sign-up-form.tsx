@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSignUp } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import styles from "@/app/auth-form.module.css";
 
 export function SignUpForm() {
@@ -44,49 +45,57 @@ export function SignUpForm() {
   };
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit}>
-      <div className={styles.fieldGroup}>
-        <label className={styles.label} htmlFor="email">
-          Email
-        </label>
-        <div className={styles.inputWrapper}>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className={styles.input}
-            placeholder="you@example.com"
-            required
-            autoComplete="email"
-          />
+    <>
+      <form className={styles.form} onSubmit={handleSubmit}>
+        <div className={styles.fieldGroup}>
+          <label className={styles.label} htmlFor="email">
+            Email
+          </label>
+          <div className={styles.inputWrapper}>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={styles.input}
+              placeholder="you@example.com"
+              required
+              autoComplete="email"
+            />
+          </div>
         </div>
-      </div>
 
-      <div className={styles.fieldGroup}>
-        <label className={styles.label} htmlFor="password">
-          Password
-        </label>
-        <div className={styles.inputWrapper}>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={styles.input}
-            placeholder="Create a password"
-            required
-            autoComplete="new-password"
-            minLength={8}
-          />
+        <div className={styles.fieldGroup}>
+          <label className={styles.label} htmlFor="password">
+            Password
+          </label>
+          <div className={styles.inputWrapper}>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={styles.input}
+              placeholder="Create a password"
+              required
+              autoComplete="new-password"
+              minLength={8}
+            />
+          </div>
         </div>
+
+        {error && <p className={styles.error}>{error}</p>}
+
+        <button type="submit" className={styles.submitButton} disabled={isLoading}>
+          {isLoading ? "Creating account..." : "Create account"}
+        </button>
+      </form>
+      <div className={styles.footer}>
+        <span className={styles.footerText}>Already have an account? </span>
+        <Link href="/sign-in" className={styles.footerLink}>
+          Sign in
+        </Link>
       </div>
-
-      {error && <p className={styles.error}>{error}</p>}
-
-      <button type="submit" className={styles.submitButton} disabled={isLoading}>
-        {isLoading ? "Creating account..." : "Create account"}
-      </button>
-    </form>
+    </>
   );
 }

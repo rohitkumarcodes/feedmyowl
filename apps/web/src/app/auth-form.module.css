@@ -110,3 +110,27 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.footer {
+  border-top: 1px solid #ebeaf4;
+  margin: 4px 0 0;
+  padding: 12px 40px 6px;
+  text-align: center;
+}
+
+.footerText {
+  color: #8480b5;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.footerLink {
+  color: #3d396e;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.footerLink:hover {
+  text-decoration: underline;
+}
