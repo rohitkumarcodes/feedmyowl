@@ -29,10 +29,21 @@ export const authEntryAppearance = {
       display: "none",
     },
     form: {
-      padding: "8px 40px 24px",
+      margin: "0",
+      padding: "0 40px 24px",
+    },
+    main: {
+      padding: "0",
+    },
+    formContainer: {
+      margin: "0",
+      padding: "0",
+    },
+    formFieldRow: {
+      margin: "0 0 20px",
     },
     formField: {
-      marginBottom: "20px",
+      margin: "0",
     },
     formFieldLabel: {
       color: "#3d396e",
@@ -69,11 +80,11 @@ export const authEntryAppearance = {
     },
     footer: {
       borderTop: "1px solid #ebeaf4",
-      padding: "18px 40px 14px",
+      padding: "16px 40px 8px",
       textAlign: "center",
     },
     footerAction: {
-      marginBottom: "10px",
+      margin: "0",
     },
     footerActionText: {
       color: "#8480b5",
