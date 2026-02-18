@@ -25,6 +25,17 @@
   position: relative;
 }
 
+.searchIcon {
+  color: var(--text-muted);
+  height: 14px;
+  left: 8px;
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+}
+
 .searchInput {
   background: var(--bg-primary);
   border: 1px solid var(--border);
@@ -32,7 +43,7 @@
   color: var(--text-primary);
   font-size: var(--text-sm);
   min-height: 34px;
-  padding: 6px 32px 6px 8px;
+  padding: 6px 32px 6px 28px;
   transition:
     border-color var(--transition-control),
     background-color var(--transition-control),

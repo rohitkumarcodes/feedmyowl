@@ -44,6 +44,8 @@
 
   --weight-normal: 400;
   --weight-semibold: 600;
+
+  --text-body: var(--text-primary);
 }
 
 *,
@@ -77,6 +79,7 @@ html[data-theme="dark"] {
   --danger-bg: rgb(220 88 88 / 20%);
   --danger-border: #d27575;
   --danger-text: #f2b7b7;
+  --text-body: #cdd2d9;
   color-scheme: dark;
 }
 
@@ -128,6 +131,29 @@ select {
   position: absolute;
   white-space: nowrap;
   width: 1px;
+}
+
+/* Thin, unobtrusive scrollbars for content panes */
+[data-article-list-root],
+[data-article-reader-root] {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-tertiary) transparent;
+}
+
+[data-article-list-root]::-webkit-scrollbar,
+[data-article-reader-root]::-webkit-scrollbar {
+  width: 6px;
+}
+
+[data-article-list-root]::-webkit-scrollbar-track,
+[data-article-reader-root]::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-article-list-root]::-webkit-scrollbar-thumb,
+[data-article-reader-root]::-webkit-scrollbar-thumb {
+  background: var(--bg-tertiary);
+  border-radius: 3px;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -156,6 +156,20 @@ export function ArticleList({
       <div className={styles.searchBar}>
         <div className={styles.searchControls}>
           <div className={styles.searchInputWrap}>
+            <svg
+              className={styles.searchIcon}
+              viewBox="0 0 16 16"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+              <path
+                d="M11.5 11.5 14 14"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
             <input
               ref={searchInputRef}
               id="article-search-input"
