@@ -225,8 +225,7 @@ function FolderRow({
         aria-expanded={isExpanded}
       >
         <span className={styles.folderToggleContent} aria-hidden="true">
-          <span className={styles.folderToggleChevron}>{isExpanded ? "▼" : "▶"}</span>
-          <FolderRowIcon className={styles.folderRowIcon} filled={isActive} />
+          <span className={styles.folderToggleChevron}>{isExpanded ? "▾" : "▸"}</span>
         </span>
       </button>
 
@@ -239,9 +238,10 @@ function FolderRow({
         aria-current={isActive ? "true" : undefined}
         aria-expanded={isExpanded}
       >
-        <span className={styles.folderNameWrap}>
-          <span className={styles.folderLabel}>{folder.name}</span>
+        <span className={styles.folderRowIconSlot} aria-hidden="true">
+          <FolderRowIcon className={styles.folderRowIcon} filled={isActive} />
         </span>
+        <span className={`${styles.folderLabel} ${styles.folderItemLabel}`}>{folder.name}</span>
         <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
           {unreadCount !== null ? unreadCount : feedCount}
         </span>
@@ -727,15 +727,11 @@ export function FolderTree({
             onClick={onSelectSaved}
             aria-current={selectedScope.type === "saved" ? "true" : undefined}
           >
-            <span className={styles.folderNameWrap}>
-                <span className={styles.allFeedsLabelShim} aria-hidden="true">
-                  <span className={styles.folderToggleChevronPlaceholder}>▸</span>
-                  <BookmarkRibbonIcon
-                    className={`${styles.folderRowIcon} ${styles.scopeRowIcon}`}
-                  />
-                </span>
-              <span className={styles.folderLabel}>Saved</span>
+            <span className={styles.systemArrowSlot} aria-hidden="true" />
+            <span className={styles.folderRowIconSlot} aria-hidden="true">
+              <BookmarkRibbonIcon className={`${styles.folderRowIcon} ${styles.scopeRowIcon}`} />
             </span>
+            <span className={`${styles.folderLabel} ${styles.systemItemLabel}`}>Saved</span>
             <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
               {savedArticleCount}
             </span>
@@ -757,15 +753,11 @@ export function FolderTree({
               onClick={onSelectAll}
               aria-current={selectedScope.type === "all" ? "true" : undefined}
             >
-              <span className={styles.folderNameWrap}>
-                <span className={styles.allFeedsLabelShim} aria-hidden="true">
-                  <span className={styles.folderToggleChevronPlaceholder}>▸</span>
-                  <StackedLayersIcon
-                    className={`${styles.folderRowIcon} ${styles.scopeRowIcon}`}
-                  />
-                </span>
-                <span className={styles.folderLabel}>All feeds</span>
+              <span className={styles.systemArrowSlot} aria-hidden="true" />
+              <span className={styles.folderRowIconSlot} aria-hidden="true">
+                <StackedLayersIcon className={`${styles.folderRowIcon} ${styles.scopeRowIcon}`} />
               </span>
+              <span className={`${styles.folderLabel} ${styles.systemItemLabel}`}>All feeds</span>
               <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
                 {feeds.length}
               </span>
@@ -789,13 +781,11 @@ export function FolderTree({
               onClick={onSelectUnread}
               aria-current={selectedScope.type === "unread" ? "true" : undefined}
             >
-              <span className={styles.folderNameWrap}>
-                <span className={styles.allFeedsLabelShim} aria-hidden="true">
-                  <span className={styles.folderToggleChevronPlaceholder}>▸</span>
-                  <EyeIcon className={`${styles.folderRowIcon} ${styles.scopeRowIcon}`} />
-                </span>
-                <span className={styles.folderLabel}>Unread</span>
+              <span className={styles.systemArrowSlot} aria-hidden="true" />
+              <span className={styles.folderRowIconSlot} aria-hidden="true">
+                <EyeIcon className={`${styles.folderRowIcon} ${styles.scopeRowIcon}`} />
               </span>
+              <span className={`${styles.folderLabel} ${styles.systemItemLabel}`}>Unread</span>
               <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
                 {unreadCounts?.total ?? 0}
               </span>
@@ -825,12 +815,8 @@ export function FolderTree({
               >
                 <span className={styles.folderToggleContent} aria-hidden="true">
                   <span className={styles.folderToggleChevron}>
-                    {isUncategorizedExpanded ? "▼" : "▶"}
+                    {isUncategorizedExpanded ? "▾" : "▸"}
                   </span>
-                  <FolderRowIcon
-                    className={styles.folderRowIcon}
-                    filled={selectedScope.type === "uncategorized"}
-                  />
                 </span>
               </button>
               <button
@@ -845,8 +831,14 @@ export function FolderTree({
                 aria-current={selectedScope.type === "uncategorized" ? "true" : undefined}
                 aria-expanded={isUncategorizedExpanded}
               >
-                <span className={styles.folderNameWrap}>
-                  <span className={styles.folderLabel}>Uncategorized</span>
+                <span className={styles.folderRowIconSlot} aria-hidden="true">
+                  <FolderRowIcon
+                    className={styles.folderRowIcon}
+                    filled={selectedScope.type === "uncategorized"}
+                  />
+                </span>
+                <span className={`${styles.folderLabel} ${styles.folderItemLabel}`}>
+                  Uncategorized
                 </span>
                 <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
                   {uncategorizedFeeds.length}

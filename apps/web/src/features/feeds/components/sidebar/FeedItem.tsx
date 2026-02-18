@@ -184,8 +184,13 @@ export function FeedItem({
         title={label}
         aria-current={isActive ? "true" : undefined}
       >
-        <span className={styles.feedHashPrefix} aria-hidden="true">#</span>
-        <span className={styles.label}>{label}</span>
+        <span className={styles.leading}>
+          <span className={styles.arrowSlot} aria-hidden="true" />
+          <span className={styles.iconSlot} aria-hidden="true">
+            <span className={styles.feedHashPrefix}>#</span>
+          </span>
+          <span className={styles.label}>{label}</span>
+        </span>
         {unreadCount !== null && unreadCount > 0 ? (
           <span
             className={styles.unreadBadge}
