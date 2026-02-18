@@ -100,7 +100,6 @@ interface UseAddFeedFlowOptions {
   ) => void;
   setNetworkMessage: React.Dispatch<React.SetStateAction<string | null>>;
   clearStatusMessages: () => void;
-  progressNotice: string | null;
   setProgressNotice: (message: string) => void;
   clearProgressNotice: () => void;
   setInfoMessage: (message: string | null, options?: FeedActionNoticeOptions) => void;
@@ -120,7 +119,6 @@ export function useAddFeedFlow({
   setMobileViewWithHistory,
   setNetworkMessage,
   clearStatusMessages,
-  progressNotice,
   setProgressNotice,
   clearProgressNotice,
   setInfoMessage,
@@ -240,10 +238,8 @@ export function useAddFeedFlow({
     setSelectedDiscoveryCandidateUrl("");
     setAddFeedFieldError(null);
     setAddFeedStage((previous) => (previous === "awaiting_selection" ? null : previous));
-    if (progressNotice) {
-      clearProgressNotice();
-    }
-  }, [clearProgressNotice, feedUrlInput, progressNotice]);
+    clearProgressNotice();
+  }, [clearProgressNotice, feedUrlInput]);
 
   const createFolderFromAddFeed = useCallback(async () => {
     const created = await createFolder(addFeedNewFolderNameInput);
@@ -471,6 +467,7 @@ export function useAddFeedFlow({
           const discoverResult = await discoverFeedForAdd(normalizedSingleUrl);
           if (!discoverResult.ok) {
             pushFlowError(discoverResult.failure);
+            setAddFeedFieldError(discoverResult.failure.error);
             setAddFeedStage(null);
             clearProgressNotice();
             setIsAddingFeed(false);
@@ -484,6 +481,7 @@ export function useAddFeedFlow({
               error: discoverBody.error,
               code: discoverBody.code,
             });
+            setAddFeedFieldError(discoverBody.error);
             setAddFeedStage(null);
             clearProgressNotice();
             setIsAddingFeed(false);
@@ -523,6 +521,7 @@ export function useAddFeedFlow({
         const createResult = await createFeedForAdd(candidateToCreateUrl);
         if (!createResult.ok) {
           pushFlowError(createResult.failure);
+          setAddFeedFieldError(createResult.failure.error);
           setAddFeedStage(null);
           clearProgressNotice();
           setIsAddingFeed(false);
@@ -536,6 +535,7 @@ export function useAddFeedFlow({
             error: createBody.error,
             code: createBody.code,
           });
+          setAddFeedFieldError(createBody.error);
           setAddFeedStage(null);
           clearProgressNotice();
           setIsAddingFeed(false);
@@ -595,6 +595,7 @@ export function useAddFeedFlow({
           error: "We couldn't add this feed right now. Try again.",
           code: "unexpected_failure",
         });
+        setAddFeedFieldError("We couldn't add this feed right now. Try again.");
         setAddFeedStage(null);
         clearProgressNotice();
         setIsAddingFeed(false);

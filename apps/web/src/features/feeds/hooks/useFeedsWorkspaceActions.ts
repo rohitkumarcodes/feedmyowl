@@ -96,7 +96,6 @@ export function useFeedsWorkspaceActions({
     setMobileViewWithHistory,
     setNetworkMessage,
     clearStatusMessages: status.clearStatusMessages,
-    progressNotice: status.progressNotice,
     setProgressNotice: status.setProgressNotice,
     clearProgressNotice: status.clearProgressNotice,
     setInfoMessage: status.setInfoMessage,
