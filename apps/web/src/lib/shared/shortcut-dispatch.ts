@@ -106,6 +106,14 @@ export function resolveShortcutAction(
     return "article.open";
   }
 
+  if (key === "s" && (context.isListContext || context.isReaderContext)) {
+    return "article.toggleSaved";
+  }
+
+  if (key === "o" && (context.isListContext || context.isReaderContext)) {
+    return "article.openOriginal";
+  }
+
   if (isQuestionMark(snapshot)) {
     return "shortcuts.open";
   }

@@ -43,7 +43,7 @@ interface AddFeedSectionProps {
     name: string,
   ) => Promise<boolean> | boolean;
   onDismissCreatedFolderRename: () => void;
-  onOpenExistingFeed: (url: string) => void;
+  onOpenExistingFeed: (url: string, existingFeedId?: string | null) => void;
   onSubmitFeed: (event: FormEvent<HTMLFormElement>) => void;
 
   onCreateFolder: (name: string) => boolean | Promise<boolean>;

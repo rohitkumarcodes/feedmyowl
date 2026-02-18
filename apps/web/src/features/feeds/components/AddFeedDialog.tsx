@@ -2,7 +2,7 @@
  * Centered modal dialog for adding feeds, matching the shortcuts popup style.
  */
 
-import { useEffect, useId, useRef } from "react";
+import { useCallback, useEffect, useId, useRef } from "react";
 import { AddFeedForm, type AddFeedFormProps } from "./AddFeedForm";
 import styles from "./AddFeedDialog.module.css";
 
@@ -23,6 +23,14 @@ function getFocusableElements(root: HTMLElement): HTMLElement[] {
 export function AddFeedDialog({ open, onClose, ...formProps }: AddFeedDialogProps) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const isCloseBlocked = formProps.isAddingFeed;
+
+  const requestClose = useCallback(() => {
+    if (isCloseBlocked) {
+      return;
+    }
+    onClose();
+  }, [isCloseBlocked, onClose]);
 
   useEffect(() => {
     if (!open) {
@@ -41,7 +49,7 @@ export function AddFeedDialog({ open, onClose, ...formProps }: AddFeedDialogProp
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        onClose();
+        requestClose();
         return;
       }
 
@@ -85,14 +93,14 @@ export function AddFeedDialog({ open, onClose, ...formProps }: AddFeedDialogProp
         previouslyFocused.focus();
       }
     };
-  }, [onClose, open]);
+  }, [open, requestClose]);
 
   if (!open) {
     return null;
   }
 
   return (
-    <div className={styles.backdrop} role="presentation" onClick={onClose}>
+    <div className={styles.backdrop} role="presentation" onClick={requestClose}>
       <div
         ref={dialogRef}
         className={styles.dialog}
@@ -108,15 +116,20 @@ export function AddFeedDialog({ open, onClose, ...formProps }: AddFeedDialogProp
           <button
             type="button"
             className={styles.closeButton}
-            onClick={onClose}
+            onClick={requestClose}
             aria-label="Close add feed dialog"
+            disabled={isCloseBlocked}
           >
             <span aria-hidden="true">x</span>
           </button>
         </div>
 
         <div className={styles.body}>
-          <AddFeedForm {...formProps} presentation="dialog" onCancelAddFeed={onClose} />
+          <AddFeedForm
+            {...formProps}
+            presentation="dialog"
+            onCancelAddFeed={requestClose}
+          />
         </div>
       </div>
     </div>

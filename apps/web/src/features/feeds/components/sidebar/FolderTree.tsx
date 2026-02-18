@@ -703,6 +703,8 @@ export function FolderTree({
           folderOptions={sortedFolders}
           selectedFolderIds={feed.folderIds}
           unreadCount={feedUnreadCount}
+          hasError={feed.lastFetchStatus === "error"}
+          errorMessage={feed.lastFetchErrorMessage ?? undefined}
           onSelect={() => onSelectFeed(feed.id)}
           onDelete={() => setPendingDeleteFeedId(feed.id)}
           onRename={(name) => onRequestFeedRename(feed.id, name)}

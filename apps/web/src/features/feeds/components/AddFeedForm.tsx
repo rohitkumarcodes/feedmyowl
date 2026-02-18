@@ -44,7 +44,7 @@ export interface AddFeedFormProps {
   onCreateFolderFromForm: () => void;
   onRenameFolderFromForm: (folderId: string, name: string) => Promise<boolean> | boolean;
   onDismissCreatedFolderRename: () => void;
-  onOpenExistingFeed: (url: string) => void;
+  onOpenExistingFeed: (url: string, existingFeedId?: string | null) => void;
   onSubmitFeed: (event: FormEvent<HTMLFormElement>) => void;
   onCancelAddFeed: () => void;
 }
@@ -103,8 +103,9 @@ export function AddFeedForm({
       ? "Add selected feed"
       : "Add feed";
 
-  const isSubmitDisabled =
-    isAddingFeed || Boolean(inlineDuplicateMessage) || !hasValidSelection;
+  const shouldBlockDuplicateSubmit =
+    Boolean(inlineDuplicateMessage) && selectedFolderIds.length === 0;
+  const isSubmitDisabled = isAddingFeed || shouldBlockDuplicateSubmit || !hasValidSelection;
   const feedUrlErrorId = "sidebar-feed-url-error";
   const feedUrlDuplicateId = "sidebar-feed-url-duplicate";
   const feedUrlDescriptionIds = [
@@ -213,6 +214,7 @@ export function AddFeedForm({
         className={primitiveStyles.input}
         value={feedUrlInput}
         onChange={(event) => onFeedUrlChange(event.currentTarget.value)}
+        disabled={isAddingFeed}
         aria-invalid={Boolean(addFeedFieldError || inlineDuplicateMessage)}
         aria-describedby={feedUrlDescriptionIds || undefined}
       />
@@ -230,6 +232,7 @@ export function AddFeedForm({
             type="button"
             className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
             onClick={() => onOpenExistingFeed(feedUrlInput)}
+            disabled={isAddingFeed}
           >
             Open existing feed
           </button>
@@ -275,7 +278,10 @@ export function AddFeedForm({
                       <button
                         type="button"
                         className={`${primitiveStyles.button} ${primitiveStyles.buttonCompact}`}
-                        onClick={() => onOpenExistingFeed(candidate.url)}
+                        onClick={() =>
+                          onOpenExistingFeed(candidate.url, candidate.existingFeedId)
+                        }
+                        disabled={isAddingFeed}
                       >
                         Open existing feed
                       </button>

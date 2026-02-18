@@ -19,6 +19,8 @@ interface UseKeyboardShortcutsOptions {
   onReaderScrollPageDown: () => boolean;
   onReaderScrollPageUp: () => boolean;
   onOpenArticle: () => void;
+  onToggleSaved: () => void;
+  onOpenOriginal: () => void;
   onRefreshFeeds: () => void;
   onCycleFocusPanes: () => void;
   onFocusSearch: () => void;
@@ -93,6 +95,8 @@ export function useKeyboardShortcuts({
   onReaderScrollPageDown,
   onReaderScrollPageUp,
   onOpenArticle,
+  onToggleSaved,
+  onOpenOriginal,
   onRefreshFeeds,
   onCycleFocusPanes,
   onFocusSearch,
@@ -197,6 +201,16 @@ export function useKeyboardShortcuts({
         return;
       }
 
+      if (action === "article.toggleSaved") {
+        onToggleSaved();
+        return;
+      }
+
+      if (action === "article.openOriginal") {
+        onOpenOriginal();
+        return;
+      }
+
       if (action === "feeds.refresh") {
         onRefreshFeeds();
         return;
@@ -244,7 +258,9 @@ export function useKeyboardShortcuts({
     onCycleFocusPanes,
     onFocusSearch,
     onOpenArticle,
+    onOpenOriginal,
     onOpenShortcuts,
     onRefreshFeeds,
+    onToggleSaved,
   ]);
 }

@@ -18,6 +18,10 @@ interface FeedItemProps {
   selectedFolderIds: string[];
   /** Unread article count for this feed — shown as a badge in checker mode. Null in reader mode. */
   unreadCount: number | null;
+  /** True when the last feed fetch failed — shows a warning dot in the sidebar row. */
+  hasError?: boolean;
+  /** Human-readable error message shown as tooltip on the warning dot. */
+  errorMessage?: string;
   onSelect: () => void;
   onDelete: () => void;
   onRename: (name: string) => boolean | Promise<boolean>;
@@ -37,6 +41,8 @@ export function FeedItem({
   folderOptions,
   selectedFolderIds,
   unreadCount,
+  hasError,
+  errorMessage,
   onSelect,
   onDelete,
   onRename,
@@ -191,6 +197,13 @@ export function FeedItem({
           </span>
           <span className={styles.label}>{label}</span>
         </span>
+        {hasError ? (
+          <span
+            className={styles.errorDot}
+            title={errorMessage || "Feed fetch failed"}
+            aria-label="Feed error"
+          />
+        ) : null}
         {unreadCount !== null && unreadCount > 0 ? (
           <span className={styles.unreadBadge} title={`${unreadCount} unread`}>
             {unreadCount}

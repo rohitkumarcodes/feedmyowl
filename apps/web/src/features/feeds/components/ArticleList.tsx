@@ -29,6 +29,8 @@ interface ArticleListProps {
   paginationIsLoading: boolean;
   paginationHasMore: boolean;
   paginationError: string | null;
+  /** Scroll position to restore on mobile when the list remounts after returning from reader. */
+  mobileInitialScrollTop?: number;
   searchInputRef: RefObject<HTMLInputElement | null>;
   onSearchQueryChange: (value: string) => void;
   onRequestLoadMore: () => void;
@@ -59,6 +61,7 @@ export function ArticleList({
   paginationIsLoading,
   paginationHasMore,
   paginationError,
+  mobileInitialScrollTop,
   searchInputRef,
   onSearchQueryChange,
   onRequestLoadMore,
@@ -67,6 +70,16 @@ export function ArticleList({
 }: ArticleListProps) {
   const listRootRef = useRef<HTMLElement>(null);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
+
+  /* Restore scroll position on mobile when the article list remounts after returning from reader. */
+  useEffect(() => {
+    if (!mobileInitialScrollTop || !listRootRef.current) {
+      return;
+    }
+
+    listRootRef.current.scrollTop = mobileInitialScrollTop;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- intentionally mount-only
+
   const normalizedQuery = searchQuery.trim();
   const hasQuery = normalizedQuery.length > 0;
   const showMinLengthHint = hasQuery && !searchIsActive;

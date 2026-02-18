@@ -129,6 +129,8 @@ export function FeedsWorkspace({
   const sidebarCollapsedRef = useRef(sidebarCollapsed);
   const listCollapsedRef = useRef(listCollapsed);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  /** Saves the article list scroll position before navigating to mobile reader. */
+  const mobileListScrollRef = useRef(0);
   const prefersReducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
@@ -572,6 +574,10 @@ export function FeedsWorkspace({
       await markArticleAsRead(articleId);
 
       if (isMobile) {
+        const listRoot = document.querySelector("[data-article-list-root]");
+        if (listRoot) {
+          mobileListScrollRef.current = listRoot.scrollTop;
+        }
         setMobileViewWithHistory("reader", true);
       }
     },
@@ -805,6 +811,16 @@ export function FeedsWorkspace({
         void openSelectedArticle(selectedArticleId);
       }
     },
+    onToggleSaved: () => {
+      if (openArticleId) {
+        void toggleArticleSaved(openArticleId);
+      }
+    },
+    onOpenOriginal: () => {
+      if (openArticle?.link) {
+        window.open(openArticle.link, "_blank", "noopener");
+      }
+    },
     onRefreshFeeds: () => {
       void handleRefresh();
     },
@@ -893,8 +909,8 @@ export function FeedsWorkspace({
               return renameFolderFromAddFeed(folderId, name);
             }}
             onDismissCreatedFolderRename={dismissCreatedFolderRename}
-            onOpenExistingFeed={(url) => {
-              openExistingFeed(url);
+            onOpenExistingFeed={(url, existingFeedId) => {
+              openExistingFeed(url, existingFeedId);
             }}
             onSubmitFeed={(event) => {
               void handleAddFeed(event);
@@ -973,6 +989,7 @@ export function FeedsWorkspace({
                 ? selectedScopePagination.error
                 : null
             }
+            mobileInitialScrollTop={isMobile ? mobileListScrollRef.current : 0}
             searchInputRef={searchInputRef}
             onSearchQueryChange={setSearchQuery}
             onRequestLoadMore={() => {

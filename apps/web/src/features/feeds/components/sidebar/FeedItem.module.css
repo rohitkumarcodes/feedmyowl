@@ -84,6 +84,16 @@
   opacity: 1;
 }
 
+/* Warning dot shown when the last feed fetch failed. */
+.errorDot {
+  background: #d97706;
+  border-radius: 50%;
+  flex-shrink: 0;
+  height: 6px;
+  margin-left: 6px;
+  width: 6px;
+}
+
 /* Unread article count badge — shown on each feed in checker mode. */
 .unreadBadge {
   align-items: center;

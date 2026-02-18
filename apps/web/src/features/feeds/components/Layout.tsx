@@ -2,10 +2,11 @@
  * Application shell with desktop panes / mobile view stack.
  */
 
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import primitiveStyles from "./LeftPanePrimitives.module.css";
 import styles from "./Layout.module.css";
 import { PaneToggleIcon } from "./PaneToggleIcon";
+import { useSwipeBack } from "@/features/feeds/hooks/useSwipeBack";
 
 interface LayoutProps {
   sidebar: ReactNode;
@@ -41,21 +42,39 @@ export function Layout({
   onMobileBackToFeeds,
   onMobileBackToArticles,
 }: LayoutProps) {
+  const mobileContainerRef = useRef<HTMLDivElement>(null);
+
+  useSwipeBack({
+    containerRef: mobileContainerRef,
+    mobileView,
+    onMobileBackToFeeds,
+    onMobileBackToArticles,
+  });
+
   if (isMobile) {
+    const viewIndex = mobileView === "feeds" ? 0 : mobileView === "articles" ? 1 : 2;
+
     return (
       <div className={`${styles.root} ${primitiveStyles.tokenScope}`}>
-        <div className={styles.mobileViews}>
-          {mobileView === "feeds" ? (
-            <nav className={styles.mobilePane} aria-label="Feed list" role="navigation">
+        <div className={styles.mobileViews} ref={mobileContainerRef}>
+          <div
+            className={styles.mobileSlideTrack}
+            style={{ transform: `translateX(-${viewIndex * 100}%)` }}
+          >
+            <nav
+              className={styles.mobileSlidePane}
+              aria-label="Feed list"
+              role="navigation"
+              aria-hidden={mobileView !== "feeds"}
+            >
               {sidebar}
             </nav>
-          ) : null}
 
-          {mobileView === "articles" ? (
             <section
-              className={styles.mobilePane}
+              className={styles.mobileSlidePane}
               aria-label="Article list"
               role="region"
+              aria-hidden={mobileView !== "articles"}
             >
               <div className={styles.mobileBackRow}>
                 <button type="button" onClick={onMobileBackToFeeds}>
@@ -65,13 +84,12 @@ export function Layout({
               </div>
               {articleList}
             </section>
-          ) : null}
 
-          {mobileView === "reader" ? (
             <section
-              className={styles.mobilePane}
+              className={styles.mobileSlidePane}
               aria-label="Article reader"
               role="main"
+              aria-hidden={mobileView !== "reader"}
             >
               <div className={styles.mobileBackRow}>
                 <button type="button" onClick={onMobileBackToArticles}>
@@ -80,7 +98,7 @@ export function Layout({
               </div>
               {articleReader}
             </section>
-          ) : null}
+          </div>
         </div>
       </div>
     );

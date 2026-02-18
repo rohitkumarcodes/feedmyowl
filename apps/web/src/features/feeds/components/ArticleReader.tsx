@@ -9,6 +9,7 @@ import { extractYouTubeVideoId } from "@/lib/shared/youtube";
 import { toRenderableHtml } from "@/utils/articleText";
 import type { ArticleViewModel } from "@/features/feeds/types/view-models";
 import { shouldFocusReaderRoot } from "@/features/feeds/state/article-reader-focus";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { BookmarkRibbonIcon } from "@/features/feeds/components/BookmarkRibbonIcon";
 import styles from "./ArticleReader.module.css";
 
@@ -16,6 +17,40 @@ interface ArticleReaderProps {
   article: ArticleViewModel | null;
   isSavingSaved?: boolean;
   onToggleSaved?: (articleId: string) => void;
+}
+
+function formatRelativeTime(date: Date): string | null {
+  const diffMs = Date.now() - date.getTime();
+  if (diffMs < 0) {
+    return null;
+  }
+
+  const seconds = Math.floor(diffMs / 1000);
+  if (seconds < 60) {
+    return "just now";
+  }
+
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) {
+    return `${minutes}m ago`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    return `${hours}h ago`;
+  }
+
+  const days = Math.floor(hours / 24);
+  if (days < 7) {
+    return `${days}d ago`;
+  }
+
+  const weeks = Math.floor(days / 7);
+  if (days < 30) {
+    return `${weeks}w ago`;
+  }
+
+  return null;
 }
 
 function formatPublicationDate(iso: string | null): string {
@@ -28,9 +63,12 @@ function formatPublicationDate(iso: string | null): string {
     return "Unknown publication date";
   }
 
-  return new Intl.DateTimeFormat("en-US", {
+  const dateStr = new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
   }).format(parsed);
+
+  const relative = formatRelativeTime(parsed);
+  return relative ? `${dateStr} (${relative})` : dateStr;
 }
 
 function isTrustedEmbedSource(url: string): boolean {
@@ -62,6 +100,7 @@ export function ArticleReader({
 }: ArticleReaderProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const youtubeVideoId = useMemo(() => {
     if (!article?.link) {
@@ -76,6 +115,18 @@ export function ArticleReader({
   useEffect(() => {
     setIsYouTubeEmbedLoaded(false);
   }, [article?.id, youtubeVideoId]);
+
+  /* Scroll the reader pane back to the top when a new article is opened. */
+  useEffect(() => {
+    if (!article?.id) {
+      return;
+    }
+
+    rootRef.current?.scrollTo({
+      top: 0,
+      behavior: prefersReducedMotion ? "instant" : "smooth",
+    });
+  }, [article?.id, prefersReducedMotion]);
 
   const sanitizedHtml = useMemo(() => {
     if (!article) {

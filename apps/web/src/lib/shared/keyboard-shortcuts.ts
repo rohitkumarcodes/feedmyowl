@@ -12,6 +12,8 @@ export type ShortcutActionId =
   | "reader.scroll.pageDown"
   | "reader.scroll.pageUp"
   | "article.open"
+  | "article.toggleSaved"
+  | "article.openOriginal"
   | "feeds.refresh"
   | "workspace.focusCycle"
   | "search.focus"
@@ -99,6 +101,18 @@ export const SHORTCUT_DEFINITIONS: readonly ShortcutDefinition[] = [
     group: "reading_actions",
     keys: ["Shift+Space", "PageUp"],
     description: "Scroll up one reading page with overlap (reader)",
+  },
+  {
+    id: "article.toggleSaved",
+    group: "reading_actions",
+    keys: ["s"],
+    description: "Save / unsave article",
+  },
+  {
+    id: "article.openOriginal",
+    group: "reading_actions",
+    keys: ["o"],
+    description: "Open original article in new tab",
   },
   {
     id: "feeds.refresh",

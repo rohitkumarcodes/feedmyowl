@@ -13,6 +13,13 @@ import {
   createFeed as createFeedRequest,
   discoverFeed as discoverFeedRequest,
 } from "@/lib/client/feeds";
+import {
+  getInlineDuplicateMessage,
+  mergeExistingFeedPatch,
+  resolveExistingFeedTargetId,
+  shouldBlockExactDuplicateAdd,
+  type AddFeedCreateResponseFeed,
+} from "@/features/feeds/hooks/add-feed-flow-utils";
 import { normalizeFeedUrl } from "@/lib/shared/feed-url";
 import { OFFLINE_CACHED_ARTICLES_MESSAGE } from "@/lib/shared/network-messages";
 import { mapApiCallResultToUiMessage } from "@/lib/shared/ui-messages";
@@ -74,20 +81,7 @@ interface RetryableApiResult {
 }
 
 interface FeedCreateResponse {
-  feed?: {
-    id: string;
-    title?: string | null;
-    customTitle?: string | null;
-    description?: string | null;
-    url: string;
-    folderIds?: string[];
-    lastFetchedAt?: string | null;
-    lastFetchStatus?: string | null;
-    lastFetchErrorCode?: string | null;
-    lastFetchErrorMessage?: string | null;
-    lastFetchErrorAt?: string | null;
-    createdAt?: string;
-  };
+  feed?: AddFeedCreateResponseFeed;
   duplicate?: boolean;
   mergedFolderCount?: number;
   message?: string;
@@ -230,6 +224,8 @@ export function useAddFeedFlow({
     return map;
   }, [feeds]);
 
+  const knownFeedIds = useMemo(() => new Set(feeds.map((feed) => feed.id)), [feeds]);
+
   const normalizedSingleUrlInput = useMemo(
     () => normalizeFeedUrl(feedUrlInput),
     [feedUrlInput],
@@ -309,22 +305,7 @@ export function useAddFeedFlow({
 
       setFeeds((previousFeeds) =>
         previousFeeds.map((feed) =>
-          feed.id === existingFeed.id
-            ? {
-                ...feed,
-                folderIds: existingFeed.folderIds ?? feed.folderIds,
-                customTitle: existingFeed.customTitle ?? feed.customTitle,
-                title: existingFeed.title ?? feed.title,
-                description: existingFeed.description ?? feed.description,
-                lastFetchedAt: existingFeed.lastFetchedAt ?? feed.lastFetchedAt,
-                lastFetchStatus: existingFeed.lastFetchStatus ?? feed.lastFetchStatus,
-                lastFetchErrorCode:
-                  existingFeed.lastFetchErrorCode ?? feed.lastFetchErrorCode,
-                lastFetchErrorMessage:
-                  existingFeed.lastFetchErrorMessage ?? feed.lastFetchErrorMessage,
-                lastFetchErrorAt: existingFeed.lastFetchErrorAt ?? feed.lastFetchErrorAt,
-              }
-            : feed,
+          feed.id === existingFeed.id ? mergeExistingFeedPatch(feed, existingFeed) : feed,
         ),
       );
     },
@@ -332,14 +313,15 @@ export function useAddFeedFlow({
   );
 
   const openExistingFeed = useCallback(
-    (url: string) => {
-      const normalizedUrl = normalizeFeedUrl(url);
-      if (!normalizedUrl) {
-        return;
-      }
+    (url: string, existingFeedId?: string | null) => {
+      const targetFeedId = resolveExistingFeedTargetId({
+        url,
+        existingFeedId,
+        knownFeedIds,
+        feedIdByNormalizedUrl,
+      });
 
-      const existingFeedId = feedIdByNormalizedUrl.get(normalizedUrl);
-      if (!existingFeedId) {
+      if (!targetFeedId) {
         setErrorMessage(
           "We couldn't find this feed in your library. Try adding it again.",
           {
@@ -351,7 +333,7 @@ export function useAddFeedFlow({
         return;
       }
 
-      setSelectedScope({ type: "feed", feedId: existingFeedId });
+      setSelectedScope({ type: "feed", feedId: targetFeedId });
       setIsAddFeedFormVisible(false);
       setShowAddAnotherAction(false);
       if (isMobile) {
@@ -361,6 +343,7 @@ export function useAddFeedFlow({
     [
       feedIdByNormalizedUrl,
       isMobile,
+      knownFeedIds,
       setErrorMessage,
       setMobileViewWithHistory,
       setSelectedScope,
@@ -456,7 +439,13 @@ export function useAddFeedFlow({
           return;
         }
 
-        if (normalizedExistingFeedUrls.has(normalizedSingleUrl)) {
+        let candidateToCreateUrl: string | null = null;
+        const shouldBlockExactDuplicate = shouldBlockExactDuplicateAdd({
+          isExactDuplicate: normalizedExistingFeedUrls.has(normalizedSingleUrl),
+          selectedFolderIds: addFeedFolderIds,
+        });
+
+        if (shouldBlockExactDuplicate) {
           setAddFeedFieldError("This feed is already in your library.");
           setAddFeedStage(null);
           clearProgressNotice();
@@ -464,8 +453,9 @@ export function useAddFeedFlow({
           return;
         }
 
-        let candidateToCreateUrl: string | null = null;
-        if (discoveryCandidates.length > 1) {
+        if (normalizedExistingFeedUrls.has(normalizedSingleUrl)) {
+          candidateToCreateUrl = normalizedSingleUrl;
+        } else if (discoveryCandidates.length > 1) {
           if (!selectedDiscoveryCandidateUrl) {
             setAddFeedFieldError("Choose one discovered feed URL to continue.");
             setAddFeedStage("awaiting_selection");
@@ -709,9 +699,10 @@ export function useAddFeedFlow({
     [setErrorMessage],
   );
 
-  const inlineDuplicateMessage = isSingleInputDuplicate
-    ? "This feed is already in your library."
-    : null;
+  const inlineDuplicateMessage = getInlineDuplicateMessage({
+    isExactDuplicate: isSingleInputDuplicate,
+    selectedFolderIds: addFeedFolderIds,
+  });
 
   return {
     isAddFeedFormVisible,
