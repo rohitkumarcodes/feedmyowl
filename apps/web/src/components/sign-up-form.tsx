@@ -105,9 +105,7 @@ export function SignUpForm() {
           return;
         }
 
-        setError(
-          "Email verification is not enabled for this sign up flow.",
-        );
+        setError("Email verification is not enabled for this sign up flow.");
         return;
       } else {
         setError("Account created, but more verification is required.");

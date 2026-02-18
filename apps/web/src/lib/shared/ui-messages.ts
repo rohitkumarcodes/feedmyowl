@@ -233,7 +233,11 @@ export function mapApiFailureToUiMessage({
   }
 
   if (status === 404) {
-    if (context === "feed.delete" || context === "feed.rename" || context === "feed.set_folders") {
+    if (
+      context === "feed.delete" ||
+      context === "feed.rename" ||
+      context === "feed.set_folders"
+    ) {
       return {
         severity: "warning",
         title: "Feed not found",
@@ -281,7 +285,8 @@ export function mapApiFailureToUiMessage({
   }
 
   const message = body?.error || fallbackMessage || contextDefaultMessage(context);
-  const hint = typeof body?.hint === "string" && body.hint.trim() ? body.hint.trim() : null;
+  const hint =
+    typeof body?.hint === "string" && body.hint.trim() ? body.hint.trim() : null;
 
   return {
     severity: "error",

@@ -55,7 +55,11 @@ function isTrustedEmbedSource(url: string): boolean {
 /**
  * Renders either a placeholder or the selected article reader view.
  */
-export function ArticleReader({ article, isSavingSaved, onToggleSaved }: ArticleReaderProps) {
+export function ArticleReader({
+  article,
+  isSavingSaved,
+  onToggleSaved,
+}: ArticleReaderProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
 

@@ -112,18 +112,19 @@ export async function patchFeedsRoute(request: NextRequest) {
     if (payload.action === "items.markAllRead") {
       const scopeType = payload.scopeType;
       if (typeof scopeType !== "string") {
-        return NextResponse.json(
-          { error: "scopeType is required." },
-          { status: 400 },
-        );
+        return NextResponse.json({ error: "scopeType is required." }, { status: 400 });
       }
 
-      const validScopeTypes = ["all", "unread", "saved", "uncategorized", "folder", "feed"];
+      const validScopeTypes = [
+        "all",
+        "unread",
+        "saved",
+        "uncategorized",
+        "folder",
+        "feed",
+      ];
       if (!validScopeTypes.includes(scopeType)) {
-        return NextResponse.json(
-          { error: "Invalid scopeType." },
-          { status: 400 },
-        );
+        return NextResponse.json({ error: "Invalid scopeType." }, { status: 400 });
       }
 
       let scope: MarkAllReadScope;
@@ -143,10 +144,7 @@ export async function patchFeedsRoute(request: NextRequest) {
       const result = await markAllFeedItemsReadForUser(appUser.id, scope);
 
       if (result.status === "scope_not_found") {
-        return NextResponse.json(
-          { error: "Scope not found." },
-          { status: 404 },
-        );
+        return NextResponse.json({ error: "Scope not found." }, { status: 404 });
       }
 
       return NextResponse.json({

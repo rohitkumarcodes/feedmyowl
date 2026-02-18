@@ -25,7 +25,12 @@ interface SettingsOverviewProps {
 /**
  * Renders minimal account settings for the reading MVP.
  */
-export function SettingsOverview({ email, owlAscii, themeMode, readingMode }: SettingsOverviewProps) {
+export function SettingsOverview({
+  email,
+  owlAscii,
+  themeMode,
+  readingMode,
+}: SettingsOverviewProps) {
   const themeControlsRef = useRef<HTMLDivElement | null>(null);
   const readingModeControlsRef = useRef<HTMLDivElement | null>(null);
   const owlControlsRef = useRef<HTMLDivElement | null>(null);
@@ -79,7 +84,12 @@ export function SettingsOverview({ email, owlAscii, themeMode, readingMode }: Se
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [isThemePanelExpanded, isReadingModePanelExpanded, isOwlPanelExpanded, isShortcutsPanelExpanded]);
+  }, [
+    isThemePanelExpanded,
+    isReadingModePanelExpanded,
+    isOwlPanelExpanded,
+    isShortcutsPanelExpanded,
+  ]);
 
   return (
     <div className={styles.root}>

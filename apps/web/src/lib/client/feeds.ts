@@ -68,21 +68,19 @@ export async function setItemSaved(itemId: string, saved: boolean) {
   });
 }
 
-export async function markAllItemsRead(
-  scopeType: string,
-  scopeId?: string,
-) {
-  return await callJson<
-    (MarkAllReadResponseBody & Partial<ApiErrorBody>) | ApiErrorBody
-  >("/api/feeds", {
-    method: "PATCH",
-    headers: JSON_HEADERS,
-    body: JSON.stringify({
-      action: "items.markAllRead",
-      scopeType,
-      ...(scopeId ? { scopeId } : {}),
-    }),
-  });
+export async function markAllItemsRead(scopeType: string, scopeId?: string) {
+  return await callJson<(MarkAllReadResponseBody & Partial<ApiErrorBody>) | ApiErrorBody>(
+    "/api/feeds",
+    {
+      method: "PATCH",
+      headers: JSON_HEADERS,
+      body: JSON.stringify({
+        action: "items.markAllRead",
+        scopeType,
+        ...(scopeId ? { scopeId } : {}),
+      }),
+    },
+  );
 }
 
 export async function deleteUncategorizedFeeds(confirm: boolean) {

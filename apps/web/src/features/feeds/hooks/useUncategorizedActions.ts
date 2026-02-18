@@ -9,7 +9,10 @@ import {
   moveUncategorizedFeedsToFolder as moveUncategorizedFeedsToFolderRequest,
 } from "@/lib/client/feeds";
 import type { ApiErrorBody } from "@/contracts/api/common";
-import { mapApiCallResultToUiMessage, type UiActionContext } from "@/lib/shared/ui-messages";
+import {
+  mapApiCallResultToUiMessage,
+  type UiActionContext,
+} from "@/lib/shared/ui-messages";
 
 interface UseUncategorizedActionsOptions {
   router: { refresh(): void };

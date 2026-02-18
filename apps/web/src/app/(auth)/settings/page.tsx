@@ -39,7 +39,9 @@ export default async function SettingsPage() {
   const safeEmail = user?.email ?? ensuredUser.email;
   const safeOwlAscii = user ? coerceOwlAscii(user.owlAscii) : DEFAULT_OWL_ASCII;
   const safeThemeMode = user ? coerceThemeMode(user.themeMode) : DEFAULT_THEME_MODE;
-  const safeReadingMode = user ? coerceReadingMode(user.readingMode) : DEFAULT_READING_MODE;
+  const safeReadingMode = user
+    ? coerceReadingMode(user.readingMode)
+    : DEFAULT_READING_MODE;
 
   return (
     <SettingsOverview

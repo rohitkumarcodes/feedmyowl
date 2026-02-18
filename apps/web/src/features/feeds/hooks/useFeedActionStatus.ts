@@ -115,8 +115,10 @@ export function useFeedActionStatus() {
           id: duplicate.id,
         };
 
-        return [dedupedNotice, ...previous.filter((candidate) => candidate.id !== duplicate.id)]
-          .slice(0, MAX_STATUS_NOTICES);
+        return [
+          dedupedNotice,
+          ...previous.filter((candidate) => candidate.id !== duplicate.id),
+        ].slice(0, MAX_STATUS_NOTICES);
       });
 
       return pushedNoticeId;

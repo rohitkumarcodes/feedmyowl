@@ -20,4 +20,3 @@ export function EyeIcon({ className }: { className?: string }): ReactElement {
     </svg>
   );
 }
-

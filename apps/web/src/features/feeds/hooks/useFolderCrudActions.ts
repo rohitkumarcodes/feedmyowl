@@ -11,7 +11,10 @@ import {
   renameFolder as renameFolderRequest,
 } from "@/lib/client/folders";
 import type { ApiErrorBody } from "@/contracts/api/common";
-import { mapApiCallResultToUiMessage, type UiActionContext } from "@/lib/shared/ui-messages";
+import {
+  mapApiCallResultToUiMessage,
+  type UiActionContext,
+} from "@/lib/shared/ui-messages";
 
 interface UseFolderCrudActionsOptions {
   router: { refresh(): void };
@@ -82,9 +85,14 @@ export function useFolderCrudActions({
       const result = await createFolderRequest(trimmedName);
       const body = result.body;
       if (!result.ok || !body?.folder?.id) {
-        handleApiFailure(result, "folder.create", "Couldn't create this folder. Try again.", () => {
-          void createFolder(trimmedName);
-        });
+        handleApiFailure(
+          result,
+          "folder.create",
+          "Couldn't create this folder. Try again.",
+          () => {
+            void createFolder(trimmedName);
+          },
+        );
         setIsCreatingFolder(false);
         return null;
       }
@@ -144,9 +152,14 @@ export function useFolderCrudActions({
 
       const result = await renameFolderRequest(folderId, name);
       if (!result.ok || !result.body?.folder?.id) {
-        handleApiFailure(result, "folder.rename", "Couldn't rename this folder. Try again.", () => {
-          void handleRenameFolder(folderId, name);
-        });
+        handleApiFailure(
+          result,
+          "folder.rename",
+          "Couldn't rename this folder. Try again.",
+          () => {
+            void handleRenameFolder(folderId, name);
+          },
+        );
         setRenamingFolderId(null);
         return false;
       }
@@ -196,9 +209,14 @@ export function useFolderCrudActions({
 
       const result = await deleteFolderRequest(folderId, mode);
       if (!result.ok) {
-        handleApiFailure(result, "folder.delete", "Couldn't delete this folder. Try again.", () => {
-          void handleDeleteFolder(folderId, mode);
-        });
+        handleApiFailure(
+          result,
+          "folder.delete",
+          "Couldn't delete this folder. Try again.",
+          () => {
+            void handleDeleteFolder(folderId, mode);
+          },
+        );
         setDeletingFolderId(null);
         return false;
       }

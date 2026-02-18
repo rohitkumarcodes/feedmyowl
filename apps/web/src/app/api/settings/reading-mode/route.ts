@@ -10,7 +10,10 @@ import type { SettingsReadingModePatchResponseBody } from "@/contracts/api/setti
 
 export async function PATCH(request: NextRequest) {
   try {
-    const csrfFailure = assertTrustedWriteOrigin(request, "api.settings.reading-mode.patch");
+    const csrfFailure = assertTrustedWriteOrigin(
+      request,
+      "api.settings.reading-mode.patch",
+    );
     if (csrfFailure) {
       return csrfFailure;
     }
@@ -26,7 +29,10 @@ export async function PATCH(request: NextRequest) {
     const readingMode = payload?.readingMode;
 
     if (typeof readingMode !== "string" || !isReadingMode(readingMode)) {
-      return NextResponse.json({ error: "Invalid reading mode selection." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid reading mode selection." },
+        { status: 400 },
+      );
     }
 
     await db
@@ -37,7 +43,9 @@ export async function PATCH(request: NextRequest) {
       })
       .where(eq(users.id, user.id));
 
-    return NextResponse.json({ readingMode } satisfies SettingsReadingModePatchResponseBody);
+    return NextResponse.json({
+      readingMode,
+    } satisfies SettingsReadingModePatchResponseBody);
   } catch (error) {
     return handleApiRouteError(error, "api.settings.reading-mode.patch");
   }

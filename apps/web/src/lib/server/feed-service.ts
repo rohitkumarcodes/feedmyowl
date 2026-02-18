@@ -885,9 +885,7 @@ export async function markAllFeedItemsReadForUser(
     const categorizedFeedIds = new Set(
       memberships.map((membership) => membership.feedId),
     );
-    targetFeedIds = userFeedIds.filter(
-      (feedId) => !categorizedFeedIds.has(feedId),
-    );
+    targetFeedIds = userFeedIds.filter((feedId) => !categorizedFeedIds.has(feedId));
   }
 
   if (targetFeedIds.length === 0) {
@@ -895,7 +893,10 @@ export async function markAllFeedItemsReadForUser(
   }
 
   const now = new Date();
-  const baseWhere = and(inArray(feedItems.feedId, targetFeedIds), isNull(feedItems.readAt));
+  const baseWhere = and(
+    inArray(feedItems.feedId, targetFeedIds),
+    isNull(feedItems.readAt),
+  );
   const whereClause =
     scope.type === "saved"
       ? and(baseWhere, sql`${feedItems.savedAt} is not null`)

@@ -241,7 +241,9 @@ function FolderRow({
         <span className={styles.folderRowIconSlot} aria-hidden="true">
           <FolderRowIcon className={styles.folderRowIcon} filled={isActive} />
         </span>
-        <span className={`${styles.folderLabel} ${styles.folderItemLabel}`}>{folder.name}</span>
+        <span className={`${styles.folderLabel} ${styles.folderItemLabel}`}>
+          {folder.name}
+        </span>
         <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
           {unreadCount !== null ? unreadCount : feedCount}
         </span>
@@ -729,9 +731,13 @@ export function FolderTree({
           >
             <span className={styles.systemArrowSlot} aria-hidden="true" />
             <span className={styles.folderRowIconSlot} aria-hidden="true">
-              <BookmarkRibbonIcon className={`${styles.folderRowIcon} ${styles.scopeRowIcon}`} />
+              <BookmarkRibbonIcon
+                className={`${styles.folderRowIcon} ${styles.scopeRowIcon}`}
+              />
             </span>
-            <span className={`${styles.folderLabel} ${styles.systemItemLabel}`}>Saved</span>
+            <span className={`${styles.folderLabel} ${styles.systemItemLabel}`}>
+              Saved
+            </span>
             <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
               {savedArticleCount}
             </span>
@@ -755,9 +761,13 @@ export function FolderTree({
             >
               <span className={styles.systemArrowSlot} aria-hidden="true" />
               <span className={styles.folderRowIconSlot} aria-hidden="true">
-                <StackedLayersIcon className={`${styles.folderRowIcon} ${styles.scopeRowIcon}`} />
+                <StackedLayersIcon
+                  className={`${styles.folderRowIcon} ${styles.scopeRowIcon}`}
+                />
               </span>
-              <span className={`${styles.folderLabel} ${styles.systemItemLabel}`}>All feeds</span>
+              <span className={`${styles.folderLabel} ${styles.systemItemLabel}`}>
+                All feeds
+              </span>
               <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
                 {feeds.length}
               </span>
@@ -785,7 +795,9 @@ export function FolderTree({
               <span className={styles.folderRowIconSlot} aria-hidden="true">
                 <EyeIcon className={`${styles.folderRowIcon} ${styles.scopeRowIcon}`} />
               </span>
-              <span className={`${styles.folderLabel} ${styles.systemItemLabel}`}>Unread</span>
+              <span className={`${styles.folderLabel} ${styles.systemItemLabel}`}>
+                Unread
+              </span>
               <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
                 {unreadCounts?.total ?? 0}
               </span>
@@ -796,7 +808,11 @@ export function FolderTree({
 
         {/* Divider between system scope rows (Saved/All/Unread) and the folder tree. */}
         {folders.length > 0 || uncategorizedFeeds.length > 0 ? (
-          <div className={styles.treeSectionDivider} role="separator" aria-hidden="true" />
+          <div
+            className={styles.treeSectionDivider}
+            role="separator"
+            aria-hidden="true"
+          />
         ) : null}
 
         {uncategorizedFeeds.length > 0 ? (

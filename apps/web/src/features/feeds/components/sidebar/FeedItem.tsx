@@ -192,10 +192,7 @@ export function FeedItem({
           <span className={styles.label}>{label}</span>
         </span>
         {unreadCount !== null && unreadCount > 0 ? (
-          <span
-            className={styles.unreadBadge}
-            title={`${unreadCount} unread`}
-          >
+          <span className={styles.unreadBadge} title={`${unreadCount} unread`}>
             {unreadCount}
           </span>
         ) : null}

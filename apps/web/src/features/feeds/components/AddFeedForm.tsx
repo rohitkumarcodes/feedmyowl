@@ -355,7 +355,9 @@ export function AddFeedForm({
 
       {createdFolder ? (
         <div className={styles.createdFolderRename}>
-          <p className={styles.inlineSuccessMessage}>Folder created. Rename now (optional).</p>
+          <p className={styles.inlineSuccessMessage}>
+            Folder created. Rename now (optional).
+          </p>
           <div className={styles.createdFolderRenameRow}>
             <input
               ref={createdFolderInputRef}

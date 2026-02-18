@@ -15,7 +15,10 @@ import {
 } from "@/lib/client/feeds";
 import type { ApiErrorBody } from "@/contracts/api/common";
 import { OFFLINE_CACHED_ARTICLES_MESSAGE } from "@/lib/shared/network-messages";
-import { mapApiCallResultToUiMessage, type UiActionContext } from "@/lib/shared/ui-messages";
+import {
+  mapApiCallResultToUiMessage,
+  type UiActionContext,
+} from "@/lib/shared/ui-messages";
 
 interface UseFeedCrudActionsOptions {
   allArticles: ArticleViewModel[];
@@ -102,7 +105,11 @@ export function useFeedCrudActions({
 
       const result = await markItemReadRequest(articleId);
       if (!result.ok) {
-        handleApiFailure(result, "article.mark_read", "Couldn't update read state. Try again.");
+        handleApiFailure(
+          result,
+          "article.mark_read",
+          "Couldn't update read state. Try again.",
+        );
       }
     },
     [allArticles, handleApiFailure, setFeeds],
@@ -123,7 +130,9 @@ export function useFeedCrudActions({
             scopeType === "unread" ||
             scopeType === "saved" ||
             (scopeType === "feed" && feed.id === scopeId) ||
-            (scopeType === "folder" && scopeId ? feed.folderIds.includes(scopeId) : false) ||
+            (scopeType === "folder" && scopeId
+              ? feed.folderIds.includes(scopeId)
+              : false) ||
             (scopeType === "uncategorized" && feed.folderIds.length === 0);
 
           if (!feedMatchesScope) {
@@ -266,9 +275,14 @@ export function useFeedCrudActions({
 
     const result = await refreshFeedsRequest();
     if (!result.ok) {
-      handleApiFailure(result, "feed.refresh", "Refresh didn't finish. Try again.", () => {
-        void handleRefresh();
-      });
+      handleApiFailure(
+        result,
+        "feed.refresh",
+        "Refresh didn't finish. Try again.",
+        () => {
+          void handleRefresh();
+        },
+      );
       setIsRefreshingFeeds(false);
       return;
     }
@@ -312,9 +326,14 @@ export function useFeedCrudActions({
 
       const result = await deleteFeedRequest(feedId);
       if (!result.ok) {
-        handleApiFailure(result, "feed.delete", "Couldn't delete this feed. Try again.", () => {
-          void handleDeleteFeed(feedId);
-        });
+        handleApiFailure(
+          result,
+          "feed.delete",
+          "Couldn't delete this feed. Try again.",
+          () => {
+            void handleDeleteFeed(feedId);
+          },
+        );
         setDeletingFeedId(null);
         return;
       }

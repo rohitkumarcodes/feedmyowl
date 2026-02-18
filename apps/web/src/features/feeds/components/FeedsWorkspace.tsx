@@ -990,9 +990,7 @@ export function FeedsWorkspace({
                 ? () => {
                     void markAllArticlesAsRead(
                       selectedArticleScope.type,
-                      "id" in selectedArticleScope
-                        ? selectedArticleScope.id
-                        : undefined,
+                      "id" in selectedArticleScope ? selectedArticleScope.id : undefined,
                     );
                   }
                 : undefined

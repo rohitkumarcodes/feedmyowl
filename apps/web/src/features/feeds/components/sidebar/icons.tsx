@@ -52,10 +52,7 @@ export function FolderRowIcon({
     >
       {filled ? (
         /* Filled/solid folder — shown when this folder is the active scope. */
-        <path
-          d="M3 7.5H9L10.8 9.5H21V18.5H3V7.5Z"
-          fill="currentColor"
-        />
+        <path d="M3 7.5H9L10.8 9.5H21V18.5H3V7.5Z" fill="currentColor" />
       ) : (
         /* Outlined folder — default (inactive) state. */
         <path

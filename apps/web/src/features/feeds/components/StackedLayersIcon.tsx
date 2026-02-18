@@ -21,4 +21,3 @@ export function StackedLayersIcon({ className }: { className?: string }): ReactE
     </svg>
   );
 }
-

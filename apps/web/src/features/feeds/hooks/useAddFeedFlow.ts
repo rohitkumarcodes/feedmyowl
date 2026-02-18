@@ -62,7 +62,9 @@ interface AddFeedFlowFailureResult {
   failure: AddFeedFlowFailure;
 }
 
-type AddFeedFlowResult<TResponse> = AddFeedFlowSuccess<TResponse> | AddFeedFlowFailureResult;
+type AddFeedFlowResult<TResponse> =
+  | AddFeedFlowSuccess<TResponse>
+  | AddFeedFlowFailureResult;
 
 interface RetryableApiResult {
   status: number;
@@ -338,11 +340,14 @@ export function useAddFeedFlow({
 
       const existingFeedId = feedIdByNormalizedUrl.get(normalizedUrl);
       if (!existingFeedId) {
-        setErrorMessage("We couldn't find this feed in your library. Try adding it again.", {
-          title: "Feed not found",
-          dedupeKey: "feed.add:open-existing-missing",
-          source: "add_feed",
-        });
+        setErrorMessage(
+          "We couldn't find this feed in your library. Try adding it again.",
+          {
+            title: "Feed not found",
+            dedupeKey: "feed.add:open-existing-missing",
+            source: "add_feed",
+          },
+        );
         return;
       }
 
@@ -388,12 +393,18 @@ export function useAddFeedFlow({
   );
 
   const createFeedForAdd = useCallback(
-    async (url: string): Promise<AddFeedFlowResult<ApiErrorResponse & FeedCreateResponse>> => {
+    async (
+      url: string,
+    ): Promise<AddFeedFlowResult<ApiErrorResponse & FeedCreateResponse>> => {
       const result = await createFeedRequest(url, addFeedFolderIds);
       if (!result.ok) {
         return {
           ok: false,
-          failure: mapAddFeedFailure(result, "We couldn't add this feed right now. Try again.", "create_failed"),
+          failure: mapAddFeedFailure(
+            result,
+            "We couldn't add this feed right now. Try again.",
+            "create_failed",
+          ),
         };
       }
 
@@ -589,13 +600,11 @@ export function useAddFeedFlow({
         setIsAddFeedFormVisible(false);
         router.refresh();
       } catch {
-        pushFlowError(
-          {
-            status: 500,
-            error: "We couldn't add this feed right now. Try again.",
-            code: "unexpected_failure",
-          },
-        );
+        pushFlowError({
+          status: 500,
+          error: "We couldn't add this feed right now. Try again.",
+          code: "unexpected_failure",
+        });
         setAddFeedStage(null);
         clearProgressNotice();
         setIsAddingFeed(false);

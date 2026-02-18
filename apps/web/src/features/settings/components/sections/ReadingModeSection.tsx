@@ -34,8 +34,7 @@ const READING_MODE_OPTIONS: Array<{
   {
     mode: "checker",
     label: "Updates Checker",
-    description:
-      "Stay current. Unread counts, badges, and tools to track what's new.",
+    description: "Stay current. Unread counts, badges, and tools to track what's new.",
   },
 ];
 
@@ -108,13 +107,17 @@ export function ReadingModeSection({
       <div ref={widthProbeRef} className={styles.owlWidthProbe} aria-hidden="true">
         <button type="button" className={styles.owlToggle} tabIndex={-1}>
           <span className={styles.owlToggleCaret}>▸</span>
-          <span className={styles.owlWidthProbeText}>Choose how you read your feeds.</span>
+          <span className={styles.owlWidthProbeText}>
+            Choose how you read your feeds.
+          </span>
         </button>
         <div className={styles.owlWidthProbeOptions}>
           {READING_MODE_OPTIONS.map((option) => (
             <label key={`probe-rm-${option.mode}`} className={styles.themeModeOption}>
               <input type="radio" name="reading-mode-probe" tabIndex={-1} />
-              <span className={`${styles.themeModeOptionLabel} ${styles.owlWidthProbeText}`}>
+              <span
+                className={`${styles.themeModeOptionLabel} ${styles.owlWidthProbeText}`}
+              >
                 {option.label}
               </span>
               <span

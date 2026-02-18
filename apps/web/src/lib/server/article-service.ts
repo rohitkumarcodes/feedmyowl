@@ -212,7 +212,7 @@ export async function listArticlePageForUser(params: {
       ? and(feedFilter, isNull(feedItems.readAt))
       : params.scope.type === "saved"
         ? and(feedFilter, sql`${feedItems.savedAt} is not null`)
-      : feedFilter;
+        : feedFilter;
 
   const whereClause = params.cursor
     ? and(
