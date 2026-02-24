@@ -66,7 +66,8 @@ export function mergeExistingFeedPatch(
     customTitle:
       patch.customTitle !== undefined ? patch.customTitle : currentFeed.customTitle,
     title: patch.title !== undefined ? patch.title : currentFeed.title,
-    description: patch.description !== undefined ? patch.description : currentFeed.description,
+    description:
+      patch.description !== undefined ? patch.description : currentFeed.description,
     lastFetchedAt:
       patch.lastFetchedAt !== undefined ? patch.lastFetchedAt : currentFeed.lastFetchedAt,
     lastFetchStatus:

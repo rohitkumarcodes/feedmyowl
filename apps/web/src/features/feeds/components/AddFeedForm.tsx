@@ -105,7 +105,8 @@ export function AddFeedForm({
 
   const shouldBlockDuplicateSubmit =
     Boolean(inlineDuplicateMessage) && selectedFolderIds.length === 0;
-  const isSubmitDisabled = isAddingFeed || shouldBlockDuplicateSubmit || !hasValidSelection;
+  const isSubmitDisabled =
+    isAddingFeed || shouldBlockDuplicateSubmit || !hasValidSelection;
   const feedUrlErrorId = "sidebar-feed-url-error";
   const feedUrlDuplicateId = "sidebar-feed-url-duplicate";
   const feedUrlDescriptionIds = [
