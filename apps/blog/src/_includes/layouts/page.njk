@@ -2,14 +2,7 @@
 layout: layouts/base.njk
 ---
 
-{#
-  Page Layout
-
-  Used for static pages (About, etc.).
-  Extends the base layout and adds a simple content wrapper.
-#}
-
-<article class="page-content">
+<article class="reader-page">
   <h1>{{ title }}</h1>
   {{ content | safe }}
 </article>

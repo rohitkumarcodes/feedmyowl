@@ -3,25 +3,23 @@ layout: layouts/base.njk
 title: changelog — feedmyowl
 permalink: /changelog/
 ---
-{# Changelog index as a quiet vertical stream: title, date, and excerpt. #}
-
-<section class="stream-index">
-  <h1>Changelog</h1>
+<article class="reader-page">
+  <h1>changelog</h1>
 
   {% set changelogEntries = collections.changelog | reverse %}
   {% if changelogEntries.length %}
-    <ul class="stream-list">
+    <ul class="entry-list">
       {% for entry in changelogEntries %}
-        <li class="stream-item">
-          <a href="{{ entry.url }}" class="stream-link">{{ entry.data.title }}</a>
-          <p class="stream-meta">{{ entry.date | readableDate }}</p>
-          <p class="stream-excerpt">
+        <li>
+          <h2><a href="{{ entry.url }}">{{ entry.data.title }}</a></h2>
+          <p class="entry-meta">{{ entry.date | readableDate }}</p>
+          <p>
             {{ (entry.data.description or entry.templateContent | striptags) | truncate(280, true, "…") }}
           </p>
         </li>
       {% endfor %}
     </ul>
   {% else %}
-    <p>No changelog entries yet.</p>
+    <p>no changelog entries yet.</p>
   {% endif %}
-</section>
+</article>

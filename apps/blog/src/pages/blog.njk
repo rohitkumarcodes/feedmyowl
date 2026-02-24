@@ -3,25 +3,23 @@ layout: layouts/base.njk
 title: blog — feedmyowl
 permalink: /blog/
 ---
-{# Blog index as a quiet vertical stream: title, date, and substantial excerpt. #}
-
-<section class="stream-index">
-  <h1>Blog</h1>
+<article class="reader-page">
+  <h1>blog</h1>
 
   {% set postslist = collections.posts | reverse %}
   {% if postslist.length %}
-    <ul class="stream-list">
+    <ul class="entry-list">
       {% for post in postslist %}
-        <li class="stream-item">
-          <a href="{{ post.url }}" class="stream-link">{{ post.data.title }}</a>
-          <p class="stream-meta">{{ post.date | readableDate }}</p>
-          <p class="stream-excerpt">
+        <li>
+          <h2><a href="{{ post.url }}">{{ post.data.title }}</a></h2>
+          <p class="entry-meta">{{ post.date | readableDate }}</p>
+          <p>
             {{ (post.data.description or post.templateContent | striptags) | truncate(320, true, "…") }}
           </p>
         </li>
       {% endfor %}
     </ul>
   {% else %}
-    <p>No posts yet.</p>
+    <p>no posts yet.</p>
   {% endif %}
-</section>
+</article>

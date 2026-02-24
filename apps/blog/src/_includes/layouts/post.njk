@@ -2,17 +2,10 @@
 layout: layouts/base.njk
 ---
 
-{#
-  Blog Post Layout
-
-  Used for individual blog posts.
-  Extends the base layout and adds post metadata (date, author).
-#}
-
-<article class="post-content">
-  <header class="post-header">
-    <h1>{{ title }}</h1>
+<article class="reader-page">
+  <h1>{{ title }}</h1>
+  <p class="post-meta">
     <time datetime="{{ date | htmlDateString }}">{{ date | readableDate }}</time>
-  </header>
+  </p>
   {{ content | safe }}
 </article>
