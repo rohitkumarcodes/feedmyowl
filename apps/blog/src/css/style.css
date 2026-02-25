@@ -1,41 +1,72 @@
-/**
- * feedmyowl website styles
- *
- * Reader-panel visual system adapted from the web app article reader.
+/*
+ * Inspired by Mozilla Firefox Reader Mode stylesheet (aboutReader.css):
+ * https://raw.githubusercontent.com/mozilla-firefox/firefox/main/toolkit/themes/shared/aboutReader.css
+ * Original source is licensed under Mozilla Public License 2.0 (MPL-2.0).
+ * This file is a FeedMyOwl adaptation for 11ty website content pages.
  */
 
 :root {
-  --brand-deep: #3d396e;
-  --brand-mid: #8480b5;
-  --brand-light: #ebeaf4;
+  --light-theme-background: #ffffff;
+  --light-theme-foreground: #000000;
+  --dark-theme-background: #ffffff;
+  --dark-theme-foreground: #000000;
+  --sepia-theme-background: #ffffff;
+  --sepia-theme-foreground: #000000;
 
-  --bg-primary: #ffffff;
-  --bg-secondary: #eeeff1;
-  --bg-tertiary: #e5e8ec;
-  --text-primary: #111827;
-  --text-secondary: #374151;
-  --text-muted: #6b7280;
-  --text-body: #111827;
-  --border: #c7cdd4;
-  --accent: var(--brand-deep);
-  --hover-surface: var(--bg-tertiary);
-  --transition-control: 80ms ease;
+  --content-width: 30em;
+  --body-padding: clamp(1rem, 4vw, 4rem);
+  --font-size: 20px;
+  --font-size-small: 0.85rem;
+  --line-height: 1.6em;
+  --text-alignment: start;
+  --word-spacing: 0;
+  --letter-spacing: 0;
+  --font-weight: 400;
+  --font-weight-bold: 600;
 
-  --font-serif: Charter, "Bitstream Charter", "Sitka Text", Cambria, serif;
-  --font-sans: "Noto Sans", "Liberation Sans", "Segoe UI", Arial, sans-serif;
-  --font-mono: "SF Mono", "Fira Code", Consolas, "Liberation Mono", Menlo, monospace;
+  --sans-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", Ubuntu, sans-serif;
+  --serif-font: Charter, "Iowan Old Style", "Palatino Linotype", Palatino, "URW Palladio L", Georgia, serif;
+  --mono-font: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 
-  --text-xs: 0.75rem;
-  --text-sm: 0.8125rem;
-  --text-base: 0.9375rem;
-  --text-xl: 1.5rem;
+  --main-background: var(--light-theme-background);
+  --main-foreground: var(--light-theme-foreground);
+  --link-foreground: #0000ee;
+  --visited-link-foreground: #551a8b;
+  --selected-background: rgba(0, 0, 0, 0.16);
+  --text-selected-background: var(--selected-background);
+  --text-selected-foreground: inherit;
 
-  --leading-tight: 1.3;
-  --leading-normal: 1.5;
-  --leading-relaxed: 1.65;
+  --header-border: rgba(0, 0, 0, 0.32);
+  --entry-separator: rgba(0, 0, 0, 0.32);
+  --chrome-muted: #000000;
+  --blockquote-border: currentColor;
+  --code-background: rgba(0, 0, 0, 0.06);
+}
 
-  --weight-normal: 400;
-  --weight-semibold: 600;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --main-background: var(--dark-theme-background);
+    --main-foreground: var(--dark-theme-foreground);
+    --link-foreground: #0000ee;
+    --visited-link-foreground: #551a8b;
+    --selected-background: rgba(0, 0, 0, 0.16);
+    --header-border: rgba(0, 0, 0, 0.32);
+    --entry-separator: rgba(0, 0, 0, 0.32);
+    --chrome-muted: #000000;
+    --code-background: rgba(0, 0, 0, 0.06);
+  }
+}
+
+body.reader-root.theme-sepia {
+  --main-background: var(--sepia-theme-background);
+  --main-foreground: var(--sepia-theme-foreground);
+  --link-foreground: #0000ee;
+  --visited-link-foreground: #551a8b;
+  --selected-background: rgba(0, 0, 0, 0.16);
+  --header-border: rgba(0, 0, 0, 0.32);
+  --entry-separator: rgba(0, 0, 0, 0.32);
+  --chrome-muted: #000000;
+  --code-background: rgba(0, 0, 0, 0.06);
 }
 
 *,
@@ -47,260 +78,287 @@
 html,
 body {
   margin: 0;
+  padding: 0;
+}
+
+body.reader-root {
+  background-color: var(--main-background);
+  color: var(--main-foreground);
+  font-family: var(--font-family, var(--serif-font));
+  line-height: var(--line-height);
   min-height: 100%;
 }
 
-html {
-  font-size: 16px;
+body.reader-root.serif {
+  --font-family: var(--serif-font);
 }
 
-body {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: var(--font-sans);
-  font-size: var(--text-base);
-  font-weight: var(--weight-normal);
-  line-height: var(--leading-normal);
+body.reader-root.sans-serif {
+  --font-family: var(--sans-font);
+}
+
+*::selection {
+  background-color: var(--text-selected-background);
+  color: var(--text-selected-foreground);
 }
 
 a {
-  color: var(--accent);
+  color: var(--link-foreground);
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+a:visited {
+  color: var(--visited-link-foreground);
+}
+
+a::selection {
+  background-color: var(--selected-background);
+  color: var(--main-foreground);
 }
 
 a:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline: 2px solid var(--link-foreground);
+  outline-offset: 1px;
 }
 
-.site-nav,
-.site-main {
+.site-header {
+  border-bottom: 1px solid var(--header-border);
   margin: 0 auto;
-  max-width: 40em;
-  padding-left: 36px;
-  padding-right: 36px;
+  max-width: calc(var(--content-width) + (2 * var(--body-padding)));
+  padding: 0.95rem var(--body-padding) 0.75rem;
 }
 
 .site-nav {
-  align-items: center;
+  align-items: baseline;
   display: flex;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
   justify-content: space-between;
-  line-height: var(--leading-normal);
-  padding-bottom: 12px;
-  padding-top: 16px;
 }
 
 .site-brand {
-  align-items: center;
-  color: var(--accent);
-  display: inline-flex;
-  flex-shrink: 0;
-  gap: 8px;
+  color: var(--main-foreground);
+  font-family: var(--sans-font);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
   text-decoration: none;
+  text-transform: lowercase;
 }
 
-.site-brand:hover {
-  color: var(--accent);
-}
-
-.site-brand-text {
-  font-size: 1.3125rem;
-  letter-spacing: 0.02em;
-  line-height: 1.1;
-}
-
-.site-brand-owl {
-  font-family: var(--font-mono);
-  font-size: 1.4rem;
-  line-height: 1;
-  white-space: nowrap;
+.site-brand:hover,
+.site-brand:focus-visible {
+  text-decoration: underline;
 }
 
 .menu-links {
-  color: var(--text-secondary);
   display: flex;
   flex-wrap: wrap;
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  justify-content: flex-end;
-  margin-left: auto;
-  text-align: right;
+  font-family: var(--sans-font);
+  font-size: var(--font-size-small);
+  gap: 0.25rem 0.6rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.menu-links li {
+  margin: 0;
 }
 
 .menu-links a {
-  color: var(--text-secondary);
+  color: var(--chrome-muted);
+  padding: 0.05rem 0;
   text-decoration: none;
-  transition: color var(--transition-control);
 }
 
 .menu-links a:hover,
+.menu-links a:focus-visible,
 .menu-links a[aria-current="page"] {
-  color: var(--text-primary);
+  color: var(--main-foreground);
   text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.menu-separator {
-  color: var(--text-muted);
-  margin-left: 0.35rem;
-  margin-right: 0.35rem;
 }
 
 .site-main {
-  padding-bottom: 30px;
-  padding-top: 30px;
+  padding: 1.5rem 0 3rem;
 }
 
-.reader-page {
-  color: var(--text-body);
-  font-family: var(--font-serif);
-  font-size: 1.1875rem;
-  line-height: var(--leading-relaxed);
+.container {
+  font-size: var(--font-size);
+  font-weight: var(--font-weight);
+  letter-spacing: var(--letter-spacing);
+  line-height: var(--line-height);
+  margin: 0 auto;
+  max-width: var(--content-width);
+  padding-inline: var(--body-padding);
+  text-align: var(--text-alignment);
+  word-spacing: var(--word-spacing);
+}
+
+.moz-reader-content {
+  display: block;
+}
+
+.reader-page h1,
+.reader-page h2,
+.reader-page h3 {
+  font-weight: var(--font-weight-bold);
 }
 
 .reader-page h1 {
-  color: var(--text-primary);
-  font-family: var(--font-sans);
-  font-size: var(--text-xl);
-  font-weight: var(--weight-semibold);
-  line-height: var(--leading-tight);
-  margin: 0 0 0.6em;
+  font-size: 1.6em;
+  line-height: 1.25;
+  margin: 0 0 1.2rem;
 }
 
 .reader-page h2 {
-  color: var(--text-primary);
-  font-family: var(--font-sans);
-  font-size: 1.25rem;
-  font-weight: var(--weight-semibold);
-  line-height: var(--leading-tight);
-  margin: 1.25em 0 0.5em;
+  font-size: 1.2em;
+  line-height: 1.5;
+  margin: 2rem 0 0.8rem;
 }
 
 .reader-page h3 {
-  color: var(--text-primary);
-  font-family: var(--font-sans);
-  font-size: 1.0625rem;
-  font-weight: var(--weight-semibold);
-  line-height: var(--leading-tight);
-  margin: 1em 0 0.5em;
+  font-size: 1em;
+  line-height: 1.66;
+  margin: 1.6rem 0 0.6rem;
 }
 
-.reader-page h4,
-.reader-page h5,
-.reader-page h6 {
-  color: var(--text-primary);
-  font-family: var(--font-sans);
-  font-size: 1rem;
-  font-weight: var(--weight-semibold);
-  margin: 1em 0 0.5em;
-}
-
-.reader-page p {
-  margin: 0 0 1.25em;
-}
-
-.reader-page a {
-  color: var(--accent);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.reader-page ul,
-.reader-page ol {
-  margin: 0 0 1em;
-  padding-left: 20px;
-}
-
-.reader-page li {
-  margin-bottom: 0.5em;
-}
-
-.reader-page blockquote {
-  background: var(--bg-secondary);
-  border-left: 3px solid var(--brand-mid);
-  border-radius: 2px;
-  color: var(--text-secondary);
-  margin: 0 0 1em;
-  padding: 12px 16px;
-}
-
-.reader-page img {
+.moz-reader-content * {
   height: auto;
   max-width: 100%;
 }
 
-.reader-page figure {
-  margin: 0 0 1em;
+.moz-reader-content p,
+.moz-reader-content code,
+.moz-reader-content pre,
+.moz-reader-content blockquote,
+.moz-reader-content ul,
+.moz-reader-content ol,
+.moz-reader-content li,
+.moz-reader-content figure {
+  margin: -10px -10px calc(8px + var(--line-height) * 0.4);
+  padding: 10px;
+  border-radius: 4px;
 }
 
-.reader-page figcaption {
-  color: var(--text-muted);
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  margin-top: 4px;
+.moz-reader-content p {
+  margin-bottom: calc(8px + var(--line-height) * 0.4);
 }
 
-.reader-page hr {
-  border: none;
-  border-top: 1px solid var(--border);
-  margin: 1em 0;
+.moz-reader-content li {
+  margin-bottom: 0;
 }
 
-.reader-page pre {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
+.moz-reader-content li > ul,
+.moz-reader-content li > ol {
+  margin-bottom: -10px;
+}
+
+.moz-reader-content blockquote {
+  border-inline-start: 2px solid var(--blockquote-border);
+  margin-inline: 0;
+  padding-inline-start: 1rem;
+}
+
+.moz-reader-content pre {
+  background-color: var(--code-background);
+  border: 1px solid var(--entry-separator);
+  border-radius: 4px;
+  font-family: var(--mono-font);
+  overflow: auto;
+  padding: 0.75rem;
+  white-space: pre-wrap;
+}
+
+.moz-reader-content code {
+  background-color: var(--code-background);
+  border-radius: 3px;
+  font-family: var(--mono-font);
+  font-size: 0.9em;
+  padding: 0.1em 0.3em;
+}
+
+.moz-reader-content pre code {
+  background-color: transparent;
   border-radius: 0;
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  margin-bottom: 1em;
-  overflow-x: auto;
-  padding: 12px;
-}
-
-.reader-page code {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 0;
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  padding: 1px 4px;
-}
-
-.reader-page pre code {
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  font-size: inherit;
+  display: block;
   padding: 0;
 }
 
-.reader-page table {
+.moz-reader-content p > img:only-child,
+.moz-reader-content p > a:only-child > img:only-child,
+.moz-reader-content figure img {
+  display: block;
+}
+
+.moz-reader-content img[moz-reader-center] {
+  margin-inline: auto;
+}
+
+.moz-reader-content img:not([moz-reader-center]) {
+  margin-left: var(--block-img-margin-left, unset);
+  margin-right: var(--block-img-margin-right, unset);
+}
+
+.moz-reader-content figcaption {
+  color: var(--chrome-muted);
+  font-size: 0.9em;
+  font-style: italic;
+  line-height: 1.48;
+}
+
+table,
+th,
+td {
+  border: 1px solid currentColor;
   border-collapse: collapse;
-  margin-bottom: 1em;
+  padding: 6px;
+  vertical-align: top;
+}
+
+table {
+  margin: 0.5rem 0 1rem;
   width: 100%;
 }
 
-.reader-page th,
-.reader-page td {
-  border: 1px solid var(--border);
-  font-size: var(--text-base);
-  padding: 6px 8px;
-  text-align: left;
+.moz-reader-wide-table {
+  display: block;
+  overflow-x: auto;
 }
 
-.reader-page th {
-  font-weight: var(--weight-semibold);
+.moz-reader-content table {
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.moz-reader-content .visually-hidden,
+.moz-reader-content .visuallyhidden,
+.moz-reader-content .sr-only {
+  border-width: 0;
+  display: inline-block;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  width: 1px;
+}
+
+.moz-reader-content .hidden,
+.moz-reader-content .invisible {
+  display: none;
 }
 
 .post-meta,
 .entry-meta {
-  color: var(--text-secondary);
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  font-variant-numeric: tabular-nums;
-  margin: 0 0 1em;
+  color: var(--chrome-muted);
+  font-family: var(--sans-font);
+  font-size: 0.72em;
+  letter-spacing: 0.03em;
+  line-height: 1.48;
+  margin: 0 0 0.75rem;
+  text-transform: uppercase;
 }
 
 .entry-list {
@@ -309,41 +367,70 @@ a:focus-visible {
   padding: 0;
 }
 
+.entry-list li {
+  margin: 0;
+  padding: 0;
+}
+
 .entry-list li + li {
-  margin-top: 2em;
+  border-top: 1px solid var(--entry-separator);
+  margin-top: 1.75rem;
+  padding-top: 1.5rem;
 }
 
 .entry-list h2 {
-  margin: 0;
+  margin-top: 0;
 }
 
 .entry-list h2 a {
-  color: var(--text-primary);
+  color: var(--main-foreground);
   text-decoration: none;
-  transition: color var(--transition-control);
 }
 
-.entry-list h2 a:hover {
-  color: var(--accent);
-}
-
-.entry-list p {
-  margin: 0.75em 0 0;
+.entry-list h2 a:hover,
+.entry-list h2 a:focus-visible {
+  color: var(--link-foreground);
+  text-decoration: underline;
 }
 
 @media (max-width: 900px) {
-  .site-nav,
-  .site-main {
-    padding-left: 16px;
-    padding-right: 16px;
+  :root {
+    --body-padding: 1rem;
+  }
+
+  .site-header {
+    padding-top: 0.85rem;
+  }
+
+  .site-nav {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media print {
+  .site-header {
+    display: none !important;
   }
 
   .site-main {
-    padding-bottom: 24px;
-    padding-top: 24px;
+    padding: 0;
   }
 
-  .site-brand-text {
-    font-size: 1.2rem;
+  .container {
+    max-width: 100%;
+    padding-inline: 0;
+  }
+
+  .moz-reader-content p,
+  .moz-reader-content code,
+  .moz-reader-content pre,
+  .moz-reader-content blockquote,
+  .moz-reader-content ul,
+  .moz-reader-content ol,
+  .moz-reader-content li,
+  .moz-reader-content figure {
+    margin: 0 0 10px !important;
+    padding: 0 !important;
   }
 }

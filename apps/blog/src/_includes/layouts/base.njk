@@ -13,26 +13,18 @@
     <link rel="stylesheet" href="/css/style.css" />
     <link rel="alternate" href="{{ metadata.feed.path }}" type="application/atom+xml" title="{{ metadata.title }}" />
   </head>
-  <body>
+  <body class="reader-root sans-serif">
     <header class="site-header">
       <nav class="site-nav" aria-label="Main navigation">
-        <a href="/" class="site-brand">
-          <span class="site-brand-owl">{o,o}</span>
-          <span class="site-brand-text">feed my owl</span>
-        </a>
-        <span class="menu-links">
-          <a href="/about/" {% if page.url == "/about/" %}aria-current="page"{% endif %}>about</a>
-          <span class="menu-separator" aria-hidden="true">|</span>
-          <a href="/features/" {% if page.url == "/features/" %}aria-current="page"{% endif %}>features</a>
-          <span class="menu-separator" aria-hidden="true">|</span>
-          <a href="/contact/" {% if page.url == "/contact/" %}aria-current="page"{% endif %}>contact</a>
-          <span class="menu-separator" aria-hidden="true">|</span>
-          <a href="/blog/" {% if page.url == "/blog/" %}aria-current="page"{% endif %}>blog</a>
-          <span class="menu-separator" aria-hidden="true">|</span>
-          <a href="/docs/" {% if page.url == "/docs/" %}aria-current="page"{% endif %}>docs</a>
-          <span class="menu-separator" aria-hidden="true">|</span>
-          <a href="/changelog/" {% if page.url == "/changelog/" %}aria-current="page"{% endif %}>changelog</a>
-        </span>
+        <a href="/" class="site-brand">feed my owl</a>
+        <ul class="menu-links" role="list">
+          <li><a href="/about/" {% if page.url == "/about/" %}aria-current="page"{% endif %}>about</a></li>
+          <li><a href="/features/" {% if page.url == "/features/" %}aria-current="page"{% endif %}>features</a></li>
+          <li><a href="/contact/" {% if page.url == "/contact/" %}aria-current="page"{% endif %}>contact</a></li>
+          <li><a href="/blog/" {% if page.url == "/blog/" %}aria-current="page"{% endif %}>blog</a></li>
+          <li><a href="/docs/" {% if page.url == "/docs/" %}aria-current="page"{% endif %}>docs</a></li>
+          <li><a href="/changelog/" {% if page.url == "/changelog/" %}aria-current="page"{% endif %}>changelog</a></li>
+        </ul>
       </nav>
     </header>
 
