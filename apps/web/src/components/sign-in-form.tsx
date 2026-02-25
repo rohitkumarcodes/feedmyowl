@@ -12,6 +12,7 @@ import {
   getSecondFactorDeliveryMessage,
   getSecondFactorInstructionMessage,
   isCodeBasedSecondFactor,
+  isSecondFactorRequiredError,
   pickPreferredSecondFactorOption,
   toSecondFactorOptions,
   type SecondFactorOption,
@@ -126,6 +127,7 @@ export function SignInForm() {
 
     const attemptPrimarySignIn = async () => {
       const result = await readySignIn.create({
+        strategy: "password",
         identifier: email,
         password,
       });
@@ -223,7 +225,18 @@ export function SignInForm() {
       if (isSecondFactorStep) {
         await attemptSecondFactorSignIn();
       } else {
-        await attemptPrimarySignIn();
+        try {
+          await attemptPrimarySignIn();
+        } catch (error) {
+          if (
+            isSecondFactorRequiredError(error) ||
+            readySignIn.status === "needs_second_factor"
+          ) {
+            await beginSecondFactorStep(readySignIn);
+            return;
+          }
+          throw error;
+        }
       }
     } catch (err: unknown) {
       setError(getClerkSignInErrorMessage(err));

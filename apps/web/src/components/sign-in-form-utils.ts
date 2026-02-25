@@ -1,4 +1,5 @@
 interface ClerkErrorEntry {
+  code?: string;
   longMessage?: string;
   message?: string;
 }
@@ -47,13 +48,22 @@ function isSecondFactorStrategy(strategy: unknown): strategy is SecondFactorStra
   );
 }
 
+function getClerkErrorEntries(error: unknown): ClerkErrorEntry[] {
+  if (typeof error !== "object" || error === null) {
+    return [];
+  }
+
+  const candidate = error as ClerkErrorShape;
+  return Array.isArray(candidate.errors) ? candidate.errors : [];
+}
+
 export function getClerkSignInErrorMessage(
   error: unknown,
   fallback = "Invalid email or password",
 ): string {
   if (typeof error === "object" && error !== null) {
     const candidate = error as ClerkErrorShape;
-    const firstError = candidate.errors?.[0];
+    const firstError = getClerkErrorEntries(error)[0];
     const detailedMessage = firstError?.longMessage ?? firstError?.message;
     if (typeof detailedMessage === "string" && detailedMessage.trim().length > 0) {
       return detailedMessage;
@@ -69,6 +79,32 @@ export function getClerkSignInErrorMessage(
   }
 
   return fallback;
+}
+
+export function isSecondFactorRequiredError(error: unknown): boolean {
+  const entries = getClerkErrorEntries(error);
+  for (const entry of entries) {
+    if (
+      typeof entry.code === "string" &&
+      /second[_-]?factor|needs_second_factor/i.test(entry.code)
+    ) {
+      return true;
+    }
+
+    const combinedMessage = `${entry.longMessage ?? ""} ${entry.message ?? ""}`.trim();
+    if (/second verification step|second factor/i.test(combinedMessage)) {
+      return true;
+    }
+  }
+
+  if (
+    error instanceof Error &&
+    /second verification step|second factor/i.test(error.message)
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 export function toSecondFactorOptions(input: unknown): SecondFactorOption[] {

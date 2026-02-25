@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getClerkSignInErrorMessage,
+  isSecondFactorRequiredError,
   getSecondFactorCodeInputLabel,
   getSecondFactorInstructionMessage,
   pickPreferredSecondFactorOption,
@@ -43,6 +44,32 @@ describe("getIncompleteSignInMessage", () => {
     expect(getIncompleteSignInMessage("pending")).toBe(
       "Sign-in could not be completed. Please try again.",
     );
+  });
+});
+
+describe("isSecondFactorRequiredError", () => {
+  it("detects second-factor requirement from Clerk error codes", () => {
+    expect(
+      isSecondFactorRequiredError({
+        errors: [{ code: "needs_second_factor", message: "More steps required" }],
+      }),
+    ).toBe(true);
+  });
+
+  it("detects second-factor requirement from Clerk error messages", () => {
+    expect(
+      isSecondFactorRequiredError({
+        errors: [{ longMessage: "This account requires a second verification step." }],
+      }),
+    ).toBe(true);
+  });
+
+  it("returns false for unrelated errors", () => {
+    expect(
+      isSecondFactorRequiredError({
+        errors: [{ code: "form_password_incorrect", message: "Wrong password" }],
+      }),
+    ).toBe(false);
   });
 });
 

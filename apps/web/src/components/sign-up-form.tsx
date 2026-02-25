@@ -39,6 +39,7 @@ export function SignUpForm() {
   const [info, setInfo] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const isAuthReady = isLoaded && Boolean(signUp) && Boolean(setActive);
 
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +47,8 @@ export function SignUpForm() {
     setError("");
     setIsLoading(true);
 
-    if (!isLoaded) {
+    if (!isAuthReady || !signUp || !setActive) {
+      setError("Sign-up is still loading. Refresh the page and try again.");
       setIsLoading(false);
       return;
     }
@@ -124,7 +126,8 @@ export function SignUpForm() {
     setError("");
     setIsLoading(true);
 
-    if (!isLoaded || !signUp) {
+    if (!isAuthReady || !signUp || !setActive) {
+      setError("Verification is still loading. Refresh the page and try again.");
       setIsLoading(false);
       return;
     }
@@ -252,14 +255,22 @@ export function SignUpForm() {
         {info && <p className={styles.info}>{info}</p>}
         {error && <p className={styles.error}>{error}</p>}
 
-        <button type="submit" className={styles.submitButton} disabled={isLoading}>
+        <button
+          type="submit"
+          className={styles.submitButton}
+          disabled={isLoading || !isAuthReady}
+        >
           {isVerifyingEmail
             ? isLoading
               ? "Verifying..."
-              : "Verify email"
+              : !isAuthReady
+                ? "Loading..."
+                : "Verify email"
             : isLoading
               ? "Creating account..."
-              : "Create account"}
+              : !isAuthReady
+                ? "Loading..."
+                : "Create account"}
         </button>
       </form>
       {isVerifyingEmail && (
