@@ -5,6 +5,10 @@ import { useSignIn } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "@/app/auth-form.module.css";
+import {
+  getClerkSignInErrorMessage,
+  getIncompleteSignInMessage,
+} from "@/components/sign-in-form-utils";
 
 export function SignInForm() {
   const { isLoaded, signIn, setActive } = useSignIn();
@@ -19,10 +23,21 @@ export function SignInForm() {
     setError("");
     setIsLoading(true);
 
-    if (!isLoaded) {
+    if (!isLoaded || !signIn || !setActive) {
+      setError("Sign-in is still loading. Refresh the page and try again.");
       setIsLoading(false);
       return;
     }
+
+    const activateSessionAndRedirect = async (sessionId: string | null | undefined) => {
+      if (!sessionId) {
+        setError("Sign-in succeeded but no session was created. Please try again.");
+        return;
+      }
+
+      await setActive({ session: sessionId });
+      router.push("/feeds");
+    };
 
     try {
       const result = await signIn.create({
@@ -31,12 +46,28 @@ export function SignInForm() {
       });
 
       if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
-        router.push("/feeds");
+        await activateSessionAndRedirect(result.createdSessionId);
+        return;
       }
+
+      if (result.status === "needs_first_factor") {
+        const firstFactorAttempt = await result.attemptFirstFactor({
+          strategy: "password",
+          password,
+        });
+
+        if (firstFactorAttempt.status === "complete") {
+          await activateSessionAndRedirect(firstFactorAttempt.createdSessionId);
+          return;
+        }
+
+        setError(getIncompleteSignInMessage(firstFactorAttempt.status));
+        return;
+      }
+
+      setError(getIncompleteSignInMessage(result.status));
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Invalid email or password";
-      setError(message);
+      setError(getClerkSignInErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
@@ -88,8 +119,12 @@ export function SignInForm() {
 
         {error && <p className={styles.error}>{error}</p>}
 
-        <button type="submit" className={styles.submitButton} disabled={isLoading}>
-          {isLoading ? "Signing in..." : "Sign in"}
+        <button
+          type="submit"
+          className={styles.submitButton}
+          disabled={isLoading || !isLoaded}
+        >
+          {isLoading ? "Signing in..." : !isLoaded ? "Loading..." : "Sign in"}
         </button>
       </form>
       <div className={styles.footer}>
