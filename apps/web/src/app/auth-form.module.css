@@ -22,8 +22,6 @@
 }
 
 .actionLink {
-  background: none;
-  border: 0;
   color: inherit;
   cursor: pointer;
   font-size: 0.875rem;
@@ -32,25 +30,20 @@
 }
 
 .inputWrapper {
-  border: 1px solid;
 }
 
 .input {
-  background: transparent;
-  border: 0;
-  border-radius: 0;
+  border: initial;
+  border-radius: initial;
   box-sizing: border-box;
-  padding: 8px;
+  padding: 0.35em 0.5em;
   width: 100%;
 }
 
 .input:focus {
-  outline: 1px solid;
-  outline-offset: -1px;
 }
 
 .error {
-  color: var(--danger-text);
   margin: 0 0 10px;
 }
 
@@ -59,11 +52,8 @@
 }
 
 .submitButton {
-  background: transparent;
-  border: 1px solid;
   cursor: pointer;
   margin-top: 4px;
-  padding: 8px;
   width: 100%;
 }
 

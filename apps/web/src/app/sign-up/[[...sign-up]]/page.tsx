@@ -27,10 +27,9 @@ export default async function SignUpPage() {
   return (
     <div className={styles.root}>
       <div className={styles.frame}>
-        <div className={styles.logoHeader}>
-          <div className={styles.owlLogo}>{"{o,o}"}</div>
-          <h1 className={styles.appName}>feed my owl</h1>
-          <p className={styles.subtitle}>Sign up to continue</p>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Sign up</h1>
+          <p className={styles.subtitle}>Create your account</p>
         </div>
         <SignUpForm />
       </div>

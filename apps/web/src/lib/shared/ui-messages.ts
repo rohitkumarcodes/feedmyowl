@@ -17,7 +17,6 @@ export type UiActionContext =
   | "uncategorized.move"
   | "settings.theme"
   | "settings.reading_mode"
-  | "settings.owl"
   | "settings.import"
   | "settings.export"
   | "account.delete";

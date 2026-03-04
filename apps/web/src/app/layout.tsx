@@ -14,19 +14,18 @@
  */
 
 import { AuthProvider } from "@/lib/server/auth";
-import { buildOwlFaviconDataUri, DEFAULT_OWL_ASCII } from "@/lib/shared/owl-brand";
 import type { Metadata } from "next";
 import "@/styles/globals.css";
 
 const clerkAppearance = {
   variables: {
-    colorPrimary: "#000000",
-    colorBackground: "#ffffff",
-    colorForeground: "#111111",
-    colorMutedForeground: "#444444",
-    colorInput: "#ffffff",
-    colorInputForeground: "#111111",
-    colorBorder: "#9a9a9a",
+    colorPrimary: "LinkText",
+    colorBackground: "Canvas",
+    colorForeground: "CanvasText",
+    colorMutedForeground: "CanvasText",
+    colorInput: "Field",
+    colorInputForeground: "FieldText",
+    colorBorder: "ButtonBorder",
     fontFamily: "sans-serif",
     fontSize: "1rem",
     borderRadius: "0",
@@ -43,9 +42,6 @@ const clerkAppearance = {
 export const metadata: Metadata = {
   title: "feed my owl",
   description: "A minimalist RSS/Atom feed reader that preserves your attention.",
-  icons: {
-    icon: buildOwlFaviconDataUri(DEFAULT_OWL_ASCII),
-  },
 };
 
 /**

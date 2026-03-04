@@ -56,9 +56,6 @@ export const users = pgTable("users", {
   /** User's email address (synced from Clerk) */
   email: varchar("email", { length: 255 }).notNull(),
 
-  /** Selected ASCII owl logo shown in app chrome and favicon */
-  owlAscii: varchar("owl_ascii", { length: 20 }).default("{o,o}").notNull(),
-
   /** Reading mode: "reader" (calm, no unread indicators) or "checker" (traditional RSS) */
   readingMode: varchar("reading_mode", { length: 20 }).default("reader").notNull(),
 

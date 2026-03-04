@@ -683,48 +683,6 @@ button.linkButton:hover:enabled {
   padding: 10px 0;
 }
 
-.owlOptionList {
-  display: grid;
-  gap: 12px;
-  padding: 0 10px;
-}
-
-.owlOption {
-  align-items: flex-start;
-  border: 0;
-  cursor: pointer;
-  display: grid;
-  gap: 8px 10px;
-  grid-template-columns: auto auto 1fr;
-  padding: 0;
-}
-
-.owlOptionSelected {
-}
-
-.owlOptionSelected .owlOptionAscii {
-}
-
-.owlOption input {
-  margin: 2px 0 0;
-}
-
-.owlOptionAscii {
-  font-family: var(--font-mono);
-  font-size: var(--text-base);
-  font-weight: var(--weight-semibold);
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.owlOptionText {
-  font-size: var(--text-sm);
-}
-
-.owlOptionEmphasis {
-  font-style: italic;
-}
-
 .owlOptionsShutterContent > .inlineActions,
 .owlOptionsShutterContent > .inlineMessage,
 .owlOptionsShutterContent > .inlineMessageSuccess,
@@ -748,18 +706,6 @@ button.linkButton:hover:enabled {
     margin-left: 0;
   }
 
-  .owlOption {
-    grid-template-columns: auto 1fr;
-  }
-
-  .owlOptionAscii {
-    grid-column: 2;
-  }
-
-  .owlOptionText {
-    grid-column: 1 / -1;
-  }
-
   .shortcutsPanelRow {
     gap: 8px;
     grid-template-columns: minmax(0, 1fr);
@@ -779,4 +725,3 @@ button.linkButton:hover:enabled {
     flex-direction: column;
   }
 }
-

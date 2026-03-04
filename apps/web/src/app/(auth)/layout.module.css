@@ -3,48 +3,6 @@
   position: relative;
 }
 
-.brandSlot {
-  display: flex;
-  justify-content: center;
-  left: 0;
-  position: fixed;
-  top: 12px;
-  width: var(--sidebar-pane-width);
-  z-index: 40;
-}
-
-.brand {
-  border: 1px solid;
-  display: inline-flex;
-  flex-direction: column;
-  gap: 6px;
-  max-width: calc(100% - 24px);
-  padding: 8px 10px;
-  text-align: center;
-  text-decoration: none;
-}
-
-.brandText {
-  font-size: 1.125rem;
-  line-height: 1.2;
-}
-
-.brandOwl {
-  font-family: var(--font-mono);
-  font-size: 1rem;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.brand:focus-visible {
-  outline: 2px solid;
-  outline-offset: 2px;
-}
-
-:global([data-sidebar-collapsed="true"]) .brandSlot {
-  display: none;
-}
-
 .accountControls {
   align-items: flex-end;
   display: flex;
@@ -58,8 +16,6 @@
 
 .optionsTrigger {
   align-items: center;
-  background: transparent;
-  border: 1px solid;
   cursor: pointer;
   display: inline-flex;
   height: 32px;
@@ -74,7 +30,6 @@
 }
 
 .optionsPopover {
-  border: 1px solid;
   max-width: calc(100vw - 24px);
   opacity: 0;
   padding: 6px;
@@ -127,8 +82,6 @@
 
 .optionsActionButton {
   align-items: center;
-  background: transparent;
-  border: 1px solid;
   color: inherit;
   cursor: pointer;
   display: inline-flex;
@@ -151,16 +104,4 @@
 .optionsActionButton:focus-visible {
   outline: 2px solid;
   outline-offset: 2px;
-}
-
-@media (max-width: 1120px) {
-  .brandSlot {
-    width: var(--sidebar-pane-width-compact);
-  }
-}
-
-@media (max-width: 767px) {
-  .brandSlot {
-    display: none;
-  }
 }

@@ -162,20 +162,12 @@ export function FeedsWorkspace({
     setFolders(initialFolders);
   }, [initialFolders]);
 
-  /* Sync collapsed states to data attributes on <html> so the
-     fixed-position brand logo (rendered in the server-side auth layout)
-     can be hidden via a pure CSS selector. */
   useEffect(() => {
     sidebarCollapsedRef.current = sidebarCollapsed;
-    document.documentElement.setAttribute(
-      "data-sidebar-collapsed",
-      String(sidebarCollapsed),
-    );
   }, [sidebarCollapsed]);
 
   useEffect(() => {
     listCollapsedRef.current = listCollapsed;
-    document.documentElement.setAttribute("data-list-collapsed", String(listCollapsed));
   }, [listCollapsed]);
 
   const {

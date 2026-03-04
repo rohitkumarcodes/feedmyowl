@@ -1,25 +1,25 @@
 :root {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f7f7f7;
-  --bg-tertiary: #efefef;
-  --bg-selected: #e6e6e6;
-  --text-primary: #111111;
-  --text-secondary: #333333;
-  --text-muted: #555555;
-  --border: #9a9a9a;
-  --accent: #0000ee;
-  --danger-bg: #fff0f0;
-  --danger-border: #aa4444;
-  --danger-text: #7a1f1f;
+  --bg-primary: Canvas;
+  --bg-secondary: Canvas;
+  --bg-tertiary: Canvas;
+  --bg-selected: Canvas;
+  --text-primary: CanvasText;
+  --text-secondary: CanvasText;
+  --text-muted: CanvasText;
+  --border: ButtonBorder;
+  --accent: LinkText;
+  --danger-bg: Canvas;
+  --danger-border: ButtonBorder;
+  --danger-text: CanvasText;
 
   --radius-control: 0;
-  --hover-surface: #f4f4f4;
+  --hover-surface: Canvas;
   --transition-control: 0s;
 
   --sidebar-pane-width: 240px;
   --sidebar-pane-width-compact: 220px;
-  --sidebar-header-reserve: 96px;
-  --sidebar-header-reserve-mobile: 56px;
+  --sidebar-header-reserve: 16px;
+  --sidebar-header-reserve-mobile: 16px;
 
   --font-serif: serif;
   --font-sans: sans-serif;
@@ -40,7 +40,7 @@
   --weight-medium: 500;
   --weight-semibold: 600;
 
-  --text-body: var(--text-primary);
+  --text-body: CanvasText;
 }
 
 html,
@@ -55,18 +55,22 @@ html {
 }
 
 body {
-  background: var(--bg-primary);
-  color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: var(--text-base);
   line-height: var(--leading-normal);
 }
 
-button,
-input,
-textarea,
-select {
-  font: inherit;
+button {
+  -webkit-appearance: auto !important;
+  appearance: auto !important;
+  background: ButtonFace !important;
+  border: 1px solid ButtonBorder !important;
+  border-radius: 2px !important;
+  color: ButtonText !important;
+}
+
+button:disabled {
+  color: GrayText !important;
 }
 
 .sr-only {
