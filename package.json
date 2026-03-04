@@ -17,6 +17,7 @@
     "build:web": "pnpm --filter web build",
     "build:blog": "pnpm --filter blog build",
     "lint:web": "pnpm --filter web lint",
+    "ui:check:web": "pnpm --filter web lint && pnpm --filter web typecheck && pnpm --filter web test",
     "test:web": "pnpm --filter web test",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,css,yaml,yml,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mjs,cjs,json,css,yaml,yml,md}\"",

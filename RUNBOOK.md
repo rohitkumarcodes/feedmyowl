@@ -15,6 +15,19 @@ From repo root:
 - `pnpm db:migrate`
 - `pnpm db:studio`
 
+## 2.1 UI change check routine
+Use this checklist for every UI task.
+
+1. Start local app with `pnpm dev:web`.
+2. Open the exact page/flow that changed and confirm the new UI matches the request.
+3. Check desktop and mobile layouts (for example around `1280px` and `390px` wide).
+4. Click through key interactions on that screen (buttons, forms, menus, dialogs).
+5. Verify non-happy-path states when relevant: loading, empty, and error.
+6. Check browser console/runtime logs for errors.
+7. Capture before/after screenshots for the changed screen and both viewport sizes.
+8. Run automated checks from repo root: `pnpm ui:check:web`.
+9. Report four things in your handoff: what changed, what was checked, screenshots, and any remaining risks.
+
 ## 3. User-facing surface
 - Add/rename/delete feed.
 - Create/rename/delete folder.

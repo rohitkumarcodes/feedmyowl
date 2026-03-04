@@ -299,9 +299,9 @@ export function SignInForm() {
                 <label className={styles.label} htmlFor="password">
                   Password
                 </label>
-                <a href="/forgot-password" className={styles.actionLink}>
+                <Link href="/forgot-password" className={styles.actionLink}>
                   Forgot password?
-                </a>
+                </Link>
               </div>
               <div className={styles.inputWrapper}>
                 <input
