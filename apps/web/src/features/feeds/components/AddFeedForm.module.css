@@ -1,4 +1,7 @@
 .form {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
   display: grid;
   gap: 8px;
   margin-top: 4px;
@@ -6,11 +9,15 @@
 }
 
 .formDialog {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   margin-top: 0;
   padding: 0;
 }
 
 .label {
+  color: var(--text-secondary);
   font-size: var(--text-xs);
   font-weight: var(--weight-semibold);
 }
@@ -24,7 +31,9 @@
 
 .folderFieldset,
 .discoveryFieldset {
-  border: 1px solid;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
   margin: 0;
   min-width: 0;
   padding: 8px;
@@ -39,10 +48,20 @@
 
 .discoveryOption {
   align-items: flex-start;
-  border: 1px solid;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
   display: flex;
   gap: 6px;
   padding: 6px;
+  transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control);
+}
+
+.discoveryOption:hover {
+  background: var(--hover-surface);
+  border-color: var(--border-strong);
 }
 
 .discoveryOption input {
@@ -56,6 +75,7 @@
 }
 
 .discoveryUrl {
+  color: var(--text-secondary);
   font-size: var(--text-xs);
   word-break: break-all;
 }
@@ -67,13 +87,19 @@
 }
 
 .badge {
-  border: 1px solid;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-secondary);
   display: inline-flex;
   font-size: var(--text-xs);
-  padding: 1px 6px;
+  padding: 2px 8px;
 }
 
 .badgeRecommended {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 36%, var(--border));
+  color: var(--accent);
   font-weight: var(--weight-semibold);
 }
 
@@ -107,6 +133,18 @@
   font-size: var(--text-xs);
 }
 
+.inlineSuccessMessage {
+  color: var(--accent);
+}
+
+.inlineWarningMessage {
+  color: #8b5e1e;
+}
+
+.inlineErrorMessage {
+  color: var(--danger-text);
+}
+
 .inlineDuplicateRow {
   align-items: center;
   display: flex;
@@ -115,7 +153,9 @@
 }
 
 .createdFolderRename {
-  border: 1px solid;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
   display: grid;
   gap: 6px;
   padding: 6px;

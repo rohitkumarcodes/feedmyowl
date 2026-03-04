@@ -1,15 +1,22 @@
 .root {
+  background:
+    radial-gradient(circle at 6% 4%, rgb(232 241 233 / 30%) 0, transparent 42%),
+    linear-gradient(180deg, rgb(255 253 248 / 88%) 0%, rgb(246 242 234 / 86%) 100%);
+  border: 1px solid color-mix(in srgb, var(--border) 74%, transparent);
+  border-radius: 10px;
+  box-shadow: var(--shadow-soft);
   display: grid;
   gap: 16px;
   margin: 0 auto;
   max-width: 36rem;
-  padding: 24px 16px;
+  padding: 24px 16px 20px;
 }
 
 .header {
+  border-bottom: 1px solid var(--border);
   display: grid;
   gap: 6px;
-  padding-bottom: 12px;
+  padding: 0 0 12px;
 }
 
 .header h1 {
@@ -26,16 +33,25 @@
 }
 
 .settingsOptions {
+  background: var(--bg-primary);
   display: grid;
   gap: 24px;
-  border: 1px solid;
-  border-radius: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 55%);
   padding: 16px;
 }
 
 .panel {
+  border-top: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
   display: grid;
   gap: 8px;
+  padding-top: 16px;
+}
+
+.panel:first-child {
+  border-top: 0;
+  padding-top: 0;
 }
 
 .themeModeGroup {
@@ -46,19 +62,27 @@
 
 .themeModeOption {
   align-items: flex-start;
-  border: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
   cursor: pointer;
   display: grid;
   gap: 8px 10px;
   grid-template-columns: auto 1fr;
-  padding: 0;
+  padding: 8px;
+  transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control);
   width: 100%;
 }
 
 .themeModeOptionSelected {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
 }
 
 .themeModeOptionSelected .themeModeOptionLabel {
+  color: var(--accent);
 }
 
 .themeModeOption input {
@@ -71,6 +95,7 @@
 }
 
 .themeModeOptionDescription {
+  color: var(--text-secondary);
   font-size: var(--text-sm);
   grid-column: 2;
   line-height: 1.45;
@@ -84,7 +109,7 @@
 }
 
 .owlPickerControls .owlToggle {
-  border: 0;
+  border: 1px solid var(--border);
   width: 100%;
 }
 
@@ -132,26 +157,32 @@
 }
 
 .muted {
+  color: var(--text-secondary);
   font-size: var(--text-sm);
 }
 
 .inlineMessage {
+  color: var(--text-secondary);
   font-size: var(--text-sm);
 }
 
 .inlineMessageSuccess {
+  color: var(--accent);
   font-size: var(--text-sm);
 }
 
 .inlineMessageWarning {
+  color: #7a5625;
   font-size: var(--text-sm);
 }
 
 .inlineMessageError {
+  color: var(--danger-text);
   font-size: var(--text-sm);
 }
 
 .importProgress {
+  color: var(--text-secondary);
   font-size: var(--text-sm);
 }
 
@@ -160,8 +191,10 @@
 }
 
 .linkButton {
-  border: 0;
-  border-radius: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
   cursor: pointer;
   display: inline-block;
   font-size: var(--text-sm);
@@ -170,15 +203,20 @@
   padding: 6px 10px;
   text-align: left;
   text-decoration: none;
-  transition: none;
+  transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control),
+    color var(--transition-control);
 }
 
 a.linkButton:hover,
 button.linkButton:hover:enabled {
+  background: var(--hover-surface);
+  border-color: var(--border-strong);
 }
 
 .linkButton:focus-visible {
-  outline: 2px solid;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -187,21 +225,28 @@ button.linkButton:hover:enabled {
 }
 
 .saveButton {
-  border: 1px solid;
-  border-radius: 0;
+  background: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 72%, black);
+  border-radius: var(--radius-control);
+  color: #fffef9;
   cursor: pointer;
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
   min-height: 32px;
   padding: 6px 14px;
-  transition: none;
+  transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control),
+    opacity var(--transition-control);
 }
 
 .saveButton:hover:enabled {
+  background: #264a3a;
+  border-color: #1f3d30;
 }
 
 .saveButton:focus-visible {
-  outline: 2px solid;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -211,6 +256,8 @@ button.linkButton:hover:enabled {
 }
 
 .saveButton:disabled:hover {
+  background: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 72%, black);
 }
 
 .compactButton {
@@ -262,6 +309,9 @@ button.linkButton:hover:enabled {
 }
 
 .importSummary {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
   display: grid;
   gap: 6px;
   padding: 8px;
@@ -269,11 +319,12 @@ button.linkButton:hover:enabled {
 
 /* Import Preview Styles */
 .importPreview {
+  background: var(--bg-secondary);
   display: grid;
   gap: 12px;
   padding: 12px;
-  border: 1px solid;
-  border-radius: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
 }
 
 .importPreviewHeader {
@@ -291,6 +342,7 @@ button.linkButton:hover:enabled {
 }
 
 .importPreviewMeta {
+  color: var(--text-secondary);
   font-size: var(--text-sm);
 }
 
@@ -308,29 +360,35 @@ button.linkButton:hover:enabled {
 }
 
 .importPreviewCountNew {
+  color: var(--accent);
 }
 
 .importPreviewCountDuplicate {
+  color: var(--text-secondary);
 }
 
 .importPreviewCountError {
+  color: var(--danger-text);
 }
 
 .importPreviewList {
+  background: var(--bg-primary);
   display: grid;
   gap: 8px;
   max-height: 300px;
   overflow-y: auto;
-  border: 1px solid;
-  border-radius: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
   padding: 8px;
 }
 
 .importPreviewEntry {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
   display: grid;
   gap: 4px;
   padding: 8px;
-  border-radius: 0;
+  border-radius: var(--radius-control);
   font-size: var(--text-sm);
 }
 
@@ -342,12 +400,16 @@ button.linkButton:hover:enabled {
 }
 
 .importPreviewEntryNew {
+  border-color: color-mix(in srgb, var(--accent) 24%, var(--border));
 }
 
 .importPreviewEntryDuplicate {
+  border-color: color-mix(in srgb, var(--border-strong) 70%, var(--border));
 }
 
 .importPreviewEntryError {
+  border-color: color-mix(in srgb, var(--danger-border) 56%, var(--border));
+  color: var(--danger-text);
 }
 
 .importPreviewEntryUrl {
@@ -365,16 +427,22 @@ button.linkButton:hover:enabled {
 }
 
 .importPreviewFolder {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
   display: inline-block;
   padding: 2px 6px;
-  border-radius: 0;
+  border-radius: 999px;
   font-size: var(--text-xs);
 }
 
 .importPreviewFolderChange {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+  color: var(--accent);
 }
 
 .importPreviewEntryErrorMsg {
+  color: var(--danger-text);
   font-size: var(--text-xs);
 }
 
@@ -422,6 +490,7 @@ button.linkButton:hover:enabled {
 }
 
 .feedsSectionDescription {
+  color: var(--text-secondary);
   font-size: var(--text-sm);
   margin: 0;
 }
@@ -433,21 +502,27 @@ button.linkButton:hover:enabled {
 }
 
 .exportFormatOption {
+  background: var(--bg-primary);
   border: 1px solid;
-  border-radius: 0;
+  border-color: var(--border);
+  border-radius: var(--radius-control);
   cursor: pointer;
   display: grid;
   gap: 2px;
   padding: 10px 14px;
   text-align: left;
-  transition: none;
+  transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control);
 }
 
 .exportFormatOption:hover {
+  background: var(--hover-surface);
+  border-color: var(--border-strong);
 }
 
 .exportFormatOption:focus-visible {
-  outline: 2px solid;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -457,6 +532,8 @@ button.linkButton:hover:enabled {
 }
 
 .exportFormatOption:disabled:hover {
+  background: var(--bg-primary);
+  border-color: var(--border);
 }
 
 .exportFormatLabel {
@@ -465,25 +542,34 @@ button.linkButton:hover:enabled {
 }
 
 .exportFormatSublabel {
+  color: var(--text-secondary);
   font-size: var(--text-xs);
 }
 
 .dropZone {
-  border: 2px dashed;
-  border-radius: 0;
+  background: var(--bg-secondary);
+  border: 2px dashed var(--border-strong);
+  border-radius: 8px;
   padding: 20px;
   text-align: center;
   cursor: pointer;
-  transition: none;
+  transition:
+    border-color var(--transition-control),
+    background-color var(--transition-control);
 }
 
 .dropZone:hover {
+  background: var(--hover-surface);
+  border-color: var(--accent);
 }
 
 .dropZoneDragOver {
+  background: var(--accent-soft);
+  border-color: var(--accent);
 }
 
 .dropZoneText {
+  color: var(--text-secondary);
   font-size: var(--text-sm);
 }
 
@@ -492,6 +578,8 @@ button.linkButton:hover:enabled {
 }
 
 .progressBarContainer {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
   border-radius: 0;
   height: 8px;
   overflow: hidden;
@@ -499,8 +587,9 @@ button.linkButton:hover:enabled {
 }
 
 .progressBar {
+  background: linear-gradient(90deg, var(--accent) 0%, #3c7057 100%);
   height: 100%;
-  transition: none;
+  transition: width var(--transition-control);
 }
 
 .importSummaryList {
@@ -517,31 +606,39 @@ button.linkButton:hover:enabled {
 }
 
 .importSummaryItemSuccess {
+  color: var(--accent);
 }
 
 .importSummaryItemWarning {
+  color: #7a5625;
 }
 
 .importSummaryItemError {
+  color: var(--danger-text);
 }
 
 .doneButton {
-  border: 0;
-  border-radius: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
   cursor: pointer;
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
   min-height: 32px;
   padding: 6px 14px;
-  transition: none;
+  transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control);
 }
 
 .doneButton:hover {
-  opacity: 0.9;
+  background: var(--hover-surface);
+  border-color: var(--border-strong);
 }
 
 .doneButton:focus-visible {
-  outline: 2px solid;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -554,8 +651,10 @@ button.linkButton:hover:enabled {
 
 .shortcutsToggle {
   align-items: center;
-  border: 0;
-  border-radius: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
   cursor: pointer;
   display: inline-flex;
   gap: 8px;
@@ -563,19 +662,26 @@ button.linkButton:hover:enabled {
   min-height: 32px;
   padding: 6px 10px;
   text-align: left;
-  transition: none;
+  transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control);
   width: 100%;
 }
 
 .shortcutsToggle:hover {
+  background: var(--hover-surface);
+  border-color: var(--border-strong);
 }
 
 .shortcutsToggle:focus-visible {
-  outline: 2px solid;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
 .shortcutsPanelContent {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
   display: grid;
   gap: 16px;
   padding: 6px 14px 14px;
@@ -611,7 +717,10 @@ button.linkButton:hover:enabled {
 }
 
 .shortcutsPanelKey {
-  border: 0;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   line-height: 1;
@@ -622,6 +731,7 @@ button.linkButton:hover:enabled {
 
 
 .shortcutsPanelDescription {
+  color: var(--text-secondary);
   font-size: var(--text-sm);
   line-height: 1.45;
   margin: 0;
@@ -629,8 +739,10 @@ button.linkButton:hover:enabled {
 
 .owlToggle {
   align-items: center;
-  border: 0;
-  border-radius: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
   cursor: pointer;
   display: inline-flex;
   gap: 8px;
@@ -638,14 +750,18 @@ button.linkButton:hover:enabled {
   min-height: 32px;
   padding: 6px 10px;
   text-align: left;
-  transition: none;
+  transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control);
 }
 
 .owlToggle:hover {
+  background: var(--hover-surface);
+  border-color: var(--border-strong);
 }
 
 .owlToggle:focus-visible {
-  outline: 2px solid;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -654,6 +770,8 @@ button.linkButton:hover:enabled {
 }
 
 .owlToggle:disabled:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border);
 }
 
 .owlToggleCaret {

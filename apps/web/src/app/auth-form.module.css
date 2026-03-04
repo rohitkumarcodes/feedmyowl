@@ -1,6 +1,6 @@
 .form {
   margin: 0;
-  padding: 16px;
+  padding: 18px 16px 16px;
 }
 
 .fieldGroup {
@@ -16,63 +16,121 @@
 }
 
 .label {
+  color: var(--text-secondary);
   display: block;
   font-size: 0.9375rem;
-  margin: 0 0 4px;
+  font-weight: var(--weight-medium);
+  margin: 0 0 6px;
 }
 
 .actionLink {
+  background: transparent;
+  border: 0;
   color: inherit;
   cursor: pointer;
   font-size: 0.875rem;
+  font-weight: var(--weight-medium);
   padding: 0;
   text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.actionLink:hover {
+  color: var(--accent);
 }
 
 .inputWrapper {
+  position: relative;
 }
 
 .input {
-  border: initial;
-  border-radius: initial;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
   box-sizing: border-box;
-  padding: 0.35em 0.5em;
+  min-height: 36px;
+  padding: 0.5em 0.6em;
+  transition:
+    border-color var(--transition-control),
+    box-shadow var(--transition-control);
   width: 100%;
 }
 
 .input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
+  outline: none;
+}
+
+.input:hover {
+  border-color: var(--border-strong);
 }
 
 .error {
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius-control);
+  color: var(--danger-text);
   margin: 0 0 10px;
+  padding: 8px 10px;
 }
 
 .info {
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: var(--radius-control);
+  color: var(--accent);
   margin: 0 0 10px;
+  padding: 8px 10px;
 }
 
 .submitButton {
+  background: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 72%, black);
+  border-radius: var(--radius-control);
+  color: #fffef9;
   cursor: pointer;
+  font-weight: var(--weight-semibold);
   margin-top: 4px;
+  min-height: 36px;
+  transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control),
+    opacity var(--transition-control);
   width: 100%;
+}
+
+.submitButton:hover:enabled {
+  background: #264a3a;
+  border-color: #1f3d30;
 }
 
 .submitButton:disabled {
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 0.62;
 }
 
 .footer {
-  border-top: 1px solid;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
   margin: 0;
   padding: 12px 16px;
   text-align: center;
 }
 
 .footerText {
+  color: var(--text-secondary);
   font-size: 0.9375rem;
 }
 
 .footerLink {
+  color: var(--accent);
   font-size: 0.9375rem;
+  font-weight: var(--weight-medium);
+  text-underline-offset: 2px;
+}
+
+.footerLink:hover {
+  color: #244838;
 }
