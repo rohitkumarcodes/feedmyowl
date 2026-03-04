@@ -30,7 +30,7 @@
   align-items: center;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-control);
+  border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
   display: inline-flex;
@@ -94,8 +94,7 @@
 
 .body {
   color: var(--text-body);
-  font-family: var(--font-serif);
-  font-size: 1.0625rem;
+  font-size: var(--text-base);
   line-height: var(--leading-relaxed);
   margin-top: 20px;
 }
@@ -114,7 +113,6 @@
 .body h5,
 .body h6 {
   color: var(--text-primary);
-  font-family: var(--font-sans);
   line-height: var(--leading-tight);
   margin: 1em 0 0.5em;
 }
@@ -131,7 +129,7 @@
 
 .body img {
   border: 1px solid var(--border);
-  border-radius: var(--radius-control);
+  border-radius: 0;
   box-shadow: none;
   height: auto;
   max-width: 100%;
@@ -154,9 +152,8 @@
 .body pre {
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-control);
+  border-radius: 0;
   color: var(--text-primary);
-  font-family: var(--font-mono);
   font-size: var(--text-sm);
   margin: 0 0 1em;
   overflow-x: auto;
@@ -166,9 +163,8 @@
 .body code {
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
-  border-radius: 3px;
+  border-radius: 0;
   color: var(--text-primary);
-  font-family: var(--font-mono);
   font-size: var(--text-sm);
   padding: 1px 4px;
 }
@@ -201,7 +197,7 @@
   aspect-ratio: 16 / 9;
   background: var(--bg-secondary);
   border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-control);
+  border-radius: 0;
   color: var(--text-secondary);
   display: flex;
   font-size: var(--text-sm);
@@ -215,7 +211,7 @@
   aspect-ratio: 16 / 9;
   background: var(--bg-secondary);
   border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-control);
+  border-radius: 0;
   display: flex;
   justify-content: center;
   margin-top: 16px;
@@ -224,7 +220,7 @@
 .videoButton {
   background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-control);
+  border-radius: 0;
   cursor: pointer;
   font-size: var(--text-sm);
   padding: 8px 12px;
@@ -245,7 +241,7 @@
 
 .videoFrame {
   aspect-ratio: 16 / 9;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   border: 0;
   display: block;
   margin-top: 16px;
@@ -254,7 +250,7 @@
 
 .safeEmbed {
   border: 0;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   display: block;
   margin: 0 0 1em;
   max-width: 100%;
@@ -262,7 +258,7 @@
 }
 
 .mediaElement {
-  border-radius: var(--radius-control);
+  border-radius: 0;
   display: block;
   margin: 0 0 1em;
   max-width: 100%;

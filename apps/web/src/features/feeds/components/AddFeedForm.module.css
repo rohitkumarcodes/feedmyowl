@@ -1,7 +1,7 @@
 .form {
   background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 0;
   display: grid;
   gap: 8px;
   margin-top: 4px;
@@ -33,7 +33,7 @@
 .discoveryFieldset {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-control);
+  border-radius: 0;
   margin: 0;
   min-width: 0;
   padding: 8px;
@@ -50,7 +50,7 @@
   align-items: flex-start;
   background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-control);
+  border-radius: 0;
   display: flex;
   gap: 6px;
   padding: 6px;
@@ -89,7 +89,7 @@
 .badge {
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 0;
   color: var(--text-secondary);
   display: inline-flex;
   font-size: var(--text-xs);
@@ -155,7 +155,7 @@
 .createdFolderRename {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-control);
+  border-radius: 0;
   display: grid;
   gap: 6px;
   padding: 6px;

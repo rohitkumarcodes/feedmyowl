@@ -11,8 +11,8 @@
   background: var(--bg-primary);
   border: 1px solid var(--border-strong);
   border-left: 4px solid var(--danger-border);
-  border-radius: 8px;
-  box-shadow: var(--shadow-soft);
+  border-radius: 0;
+  box-shadow: none;
   display: grid;
   gap: 10px;
   max-width: 28rem;
@@ -38,7 +38,7 @@
 .supportCode {
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
-  border-radius: 3px;
+  border-radius: 0;
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   padding: 2px 4px;
@@ -47,7 +47,7 @@
 .button {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-control);
+  border-radius: 0;
   cursor: pointer;
   color: var(--text-primary);
   font-size: var(--text-sm);

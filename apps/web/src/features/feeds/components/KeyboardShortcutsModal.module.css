@@ -13,8 +13,8 @@
 .dialog {
   background: var(--bg-primary);
   border: 1px solid var(--border-strong);
-  border-radius: 10px;
-  box-shadow: var(--shadow-soft);
+  border-radius: 0;
+  box-shadow: none;
   display: grid;
   gap: 12px;
   max-height: min(88vh, 640px);
@@ -43,7 +43,7 @@
   align-items: center;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-control);
+  border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
   display: inline-flex;
@@ -70,7 +70,7 @@
 .groups {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-control);
+  border-radius: 0;
   display: grid;
   gap: 12px;
   padding: 10px;
@@ -107,7 +107,7 @@
 .key {
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-control);
+  border-radius: 0;
   color: var(--text-primary);
   font-family: var(--font-mono);
   font-size: var(--text-xs);

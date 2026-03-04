@@ -104,8 +104,8 @@
 .paneToggleButton {
   background: var(--bg-primary);
   border-color: var(--border-strong);
-  border-radius: var(--radius-control);
-  box-shadow: var(--shadow-soft);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .paneToggleButton svg {
@@ -148,7 +148,7 @@
 .mobileBackRow button {
   background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-control);
+  border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
   font-size: var(--text-base);

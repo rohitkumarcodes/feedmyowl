@@ -40,7 +40,7 @@
 .searchInput {
   background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-control);
+  border-radius: 0;
   color: var(--text-primary);
   font-size: var(--text-sm);
   min-height: 34px;
@@ -66,11 +66,11 @@
   align-items: center;
   background: var(--bg-tertiary);
   border: 1px solid transparent;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   color: var(--text-secondary);
   cursor: pointer;
   display: inline-flex;
-  font-size: 18px;
+  font-size: var(--text-lg);
   height: 24px;
   justify-content: center;
   line-height: 1;
@@ -115,7 +115,7 @@
 .markAllReadButton {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-control);
+  border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
   font-size: var(--text-xs);
@@ -196,7 +196,7 @@
 .paginationRetry {
   background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-control);
+  border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
   font-size: var(--text-xs);

@@ -19,8 +19,8 @@
   align-items: center;
   background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-control);
-  box-shadow: var(--shadow-soft);
+  border-radius: 0;
+  box-shadow: none;
   color: var(--text-secondary);
   cursor: pointer;
   display: inline-flex;
@@ -48,8 +48,8 @@
 .optionsPopover {
   background: var(--bg-primary);
   border: 1px solid var(--border-strong);
-  border-radius: 8px;
-  box-shadow: var(--shadow-soft);
+  border-radius: 0;
+  box-shadow: none;
   max-width: calc(100vw - 24px);
   opacity: 0;
   padding: 6px;
@@ -103,7 +103,7 @@
 .optionsActionButton {
   align-items: center;
   border: 1px solid transparent;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   color: inherit;
   cursor: pointer;
   display: inline-flex;

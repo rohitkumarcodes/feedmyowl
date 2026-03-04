@@ -9,8 +9,8 @@
 .frame {
   background: var(--bg-primary);
   border: 1px solid var(--border-strong);
-  border-radius: 10px;
-  box-shadow: var(--shadow-soft);
+  border-radius: 0;
+  box-shadow: none;
   margin: 24px auto;
   max-width: 420px;
   overflow: hidden;

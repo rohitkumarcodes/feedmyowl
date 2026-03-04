@@ -13,8 +13,8 @@
 .dialog {
   background: var(--bg-primary);
   border: 1px solid var(--border-strong);
-  border-radius: 10px;
-  box-shadow: var(--shadow-soft);
+  border-radius: 0;
+  box-shadow: none;
   display: grid;
   gap: 12px;
   max-height: min(88vh, 760px);
@@ -43,7 +43,7 @@
   align-items: center;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-control);
+  border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
   display: inline-flex;

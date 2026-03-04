@@ -112,7 +112,7 @@ export function AccountControls() {
                     colorInput: "Field",
                     colorInputForeground: "FieldText",
                     colorBorder: "ButtonBorder",
-                    fontFamily: "sans-serif",
+                    fontFamily: "serif",
                     fontSize: "1rem",
                     borderRadius: "0",
                   },
