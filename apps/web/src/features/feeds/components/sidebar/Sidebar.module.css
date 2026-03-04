@@ -81,7 +81,8 @@
 
 .sidebarFolderForm {
   background: transparent;
-  border: 1px solid var(--border);
+  border: 0;
+  border-top: 1px solid var(--border);
   border-radius: 0;
   display: grid;
   gap: 8px;
@@ -126,13 +127,13 @@
 .sidebarMessage {
   align-items: flex-start;
   background: transparent;
-  border-left: 2px solid var(--border);
+  border-left: 0;
   border-radius: 0;
   box-shadow: none;
   display: flex;
   gap: 6px;
   margin-top: 6px;
-  padding: 6px 12px 6px calc(var(--sidebar-tree-toggle-col) + 2px);
+  padding: 6px 12px 6px var(--sidebar-tree-toggle-col);
 }
 
 .sidebarMessageText {
@@ -162,15 +163,15 @@
 }
 
 .sidebarMessageInfo {
-  border-left-color: var(--accent);
+  color: var(--accent);
 }
 
 .sidebarMessageSuccess {
-  border-left-color: var(--accent);
+  color: var(--accent);
 }
 
 .sidebarMessageWarning {
-  border-left-color: var(--border);
+  color: var(--text-secondary);
 }
 
 .sidebarMessageWarning .sidebarMessageText {
@@ -182,15 +183,15 @@
 }
 
 .sidebarMessageProgress {
-  border-left-color: var(--accent);
+  color: var(--accent);
 }
 
 .sidebarMessageOffline {
-  border-left-color: var(--border);
+  color: var(--text-secondary);
 }
 
 .sidebarMessageError {
-  border-left-color: var(--danger-border);
+  color: var(--danger-text);
 }
 
 .sidebarMessageError .sidebarMessageText {
@@ -203,15 +204,13 @@
 
 .sidebarMessageAction {
   background: transparent;
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
   font-size: var(--text-xs);
   padding: 2px 6px;
-  transition:
-    background-color var(--transition-control),
-    border-color var(--transition-control);
+  transition: color var(--transition-control);
 }
 
 .sidebarMessageDismiss {
@@ -229,8 +228,9 @@
 }
 
 .sidebarMessageAction:hover {
-  background: var(--accent-soft);
-  border-color: var(--border-strong);
+  background: transparent;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .sidebarMessageDismiss:focus-visible {
@@ -240,8 +240,8 @@
 
 /* Thin divider separating the system scope rows from the folder/feed tree. */
 .treeSectionDivider {
-  border-top: 1px solid var(--border);
-  margin: 6px 12px;
+  border-top: 0;
+  margin: 2px 12px;
 }
 
 .folderGroup + .folderGroup {
@@ -445,7 +445,7 @@
 
 .paneToggleButton {
   background: transparent;
-  border-color: var(--border);
+  border-color: transparent;
   border-radius: 0;
   box-shadow: none;
   min-height: 34px;

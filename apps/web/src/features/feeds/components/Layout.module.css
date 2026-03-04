@@ -32,14 +32,12 @@
 
 .sidebarPane {
   background: transparent;
-  border-right: 1px solid var(--border);
   box-shadow: none;
   overflow: hidden;
 }
 
 .listPane {
   background: transparent;
-  border-right: 1px solid var(--border);
   box-shadow: none;
   display: grid;
   grid-template-rows: 1fr auto;
@@ -60,7 +58,7 @@
 }
 
 .panesSidebarCollapsed {
-  grid-template-columns: 0 clamp(280px, 30vw, 420px) minmax(0, 1fr);
+  grid-template-columns: 0 clamp(280px, 30vw, 400px) minmax(0, 1fr);
 }
 
 .sidebarPaneCollapsed {
@@ -68,7 +66,7 @@
 }
 
 .panesListCollapsed {
-  grid-template-columns: 240px 0 minmax(0, 1fr);
+  grid-template-columns: 228px 0 minmax(0, 1fr);
 }
 
 .listPaneCollapsed {
@@ -95,7 +93,7 @@
 
 .paneToggleButton {
   background: transparent;
-  border-color: var(--border);
+  border-color: transparent;
   border-radius: 0;
   box-shadow: none;
 }
@@ -138,7 +136,7 @@
 
 .mobileBackRow button {
   background: transparent;
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
@@ -153,8 +151,7 @@
 }
 
 .mobileBackRow button:hover {
-  background: var(--accent-soft);
-  border-color: var(--border-strong);
+  background: transparent;
 }
 
 .mobileBackRow p {

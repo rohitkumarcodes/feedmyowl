@@ -24,6 +24,11 @@
   padding: 0 var(--sidebar-nav-pad-x);
 }
 
+.row:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .leading {
   align-items: center;
   display: grid;
@@ -106,7 +111,7 @@
 .multiFolderBadge {
   align-items: center;
   background: transparent;
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: 0;
   color: var(--text-secondary);
   display: inline-flex;

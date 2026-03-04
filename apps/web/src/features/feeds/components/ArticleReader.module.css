@@ -27,7 +27,7 @@
 .saveButton {
   align-items: center;
   background: transparent;
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
@@ -48,8 +48,9 @@
 }
 
 .saveButton:hover:not([disabled]) {
-  background: var(--accent-soft);
-  border-color: var(--border-strong);
+  background: transparent;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .saveButton[disabled] {
@@ -59,7 +60,6 @@
 
 .saveButton[data-saved="true"] {
   background: transparent;
-  border-color: var(--border-strong);
   color: var(--accent);
   font-weight: var(--weight-semibold);
 }
@@ -148,7 +148,8 @@
 
 .body pre {
   background: transparent;
-  border: 1px solid var(--border);
+  border: 0;
+  border-left: 2px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
   font-size: var(--text-sm);
@@ -159,7 +160,8 @@
 
 .body code {
   background: transparent;
-  border: 1px solid var(--border);
+  border: 0;
+  border-bottom: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
   font-size: var(--text-sm);
@@ -179,7 +181,8 @@
 
 .body th,
 .body td {
-  border: 1px solid var(--border);
+  border: 0;
+  border-bottom: 1px solid var(--border);
   font-size: var(--text-base);
   padding: 6px 8px;
   text-align: left;
@@ -216,7 +219,7 @@
 
 .videoButton {
   background: transparent;
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: 0;
   cursor: pointer;
   font-size: var(--text-sm);
@@ -232,8 +235,9 @@
 }
 
 .videoButton:hover {
-  background: var(--accent-soft);
-  border-color: var(--border-strong);
+  background: transparent;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .videoFrame {
