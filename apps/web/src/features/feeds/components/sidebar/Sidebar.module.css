@@ -8,7 +8,6 @@
   --sidebar-tree-count-col: 34px;
   --sidebar-tree-actions-col: 40px;
   --lp-row-height: var(--sidebar-nav-row-height);
-  background: var(--lp-surface-0);
   display: grid;
   grid-template-rows: auto 1fr auto;
   height: 100%;
@@ -99,7 +98,6 @@
 }
 
 .sidebarDuplicateText {
-  color: var(--text-secondary);
   font-size: var(--text-xs);
 }
 
@@ -109,7 +107,6 @@
 }
 
 .emptyLabel {
-  color: var(--lp-text-muted);
   font-size: var(--text-sm);
   padding: 8px 12px 8px
     calc(
@@ -120,7 +117,7 @@
 
 .sidebarMessage {
   align-items: flex-start;
-  border-top: 1px solid var(--lp-border);
+  border-top: 1px solid;
   display: flex;
   gap: 6px;
   margin-top: 8px;
@@ -128,7 +125,6 @@
 }
 
 .sidebarMessageText {
-  color: var(--lp-text-main);
   display: grid;
   flex: 1;
   font-size: var(--text-xs);
@@ -136,13 +132,12 @@
 }
 
 .sidebarMessageTitle {
-  color: var(--lp-text-main);
   font-weight: var(--weight-semibold);
 }
 
 .sidebarMessageIcon {
   align-items: center;
-  border: 1px solid var(--lp-border);
+  border: 1px solid;
   display: inline-flex;
   font-size: var(--text-xs);
   height: 16px;
@@ -152,53 +147,41 @@
 }
 
 .sidebarMessageInfo {
-  background: var(--lp-surface-0);
 }
 
 .sidebarMessageSuccess {
-  background: var(--lp-surface-0);
-  border-left: 2px solid var(--lp-focus);
+  border-left: 2px solid;
 }
 
 .sidebarMessageWarning {
-  background: var(--brand-light);
-  border-left: 2px solid var(--brand-mid);
+  border-left: 2px solid;
 }
 
 .sidebarMessageWarning .sidebarMessageText {
-  color: var(--text-primary);
 }
 
 .sidebarMessageWarning .sidebarMessageTitle {
-  color: var(--text-primary);
 }
 
 .sidebarMessageProgress {
-  background: var(--lp-surface-1);
 }
 
 .sidebarMessageOffline {
-  background: var(--lp-surface-1);
 }
 
 .sidebarMessageError {
-  background: var(--danger-bg);
-  border-left: 2px solid var(--danger-border);
+  border-left: 2px solid;
 }
 
 .sidebarMessageError .sidebarMessageText {
-  color: var(--danger-text);
 }
 
 .sidebarMessageError .sidebarMessageTitle {
-  color: var(--danger-text);
 }
 
 .sidebarMessageAction {
-  background: transparent;
-  border: 1px solid var(--lp-border);
+  border: 1px solid;
   border-radius: var(--radius-control);
-  color: var(--lp-text-main);
   cursor: pointer;
   font-size: var(--text-xs);
   padding: 2px 6px;
@@ -209,10 +192,8 @@
 }
 
 .sidebarMessageDismiss {
-  background: transparent;
   border: 0;
   border-radius: var(--radius-control);
-  color: var(--lp-text-muted);
   cursor: pointer;
   font-size: var(--text-xs);
   padding: 0;
@@ -222,23 +203,19 @@
 }
 
 .sidebarMessageDismiss:hover {
-  background: var(--lp-surface-hover);
-  color: var(--lp-text-main);
 }
 
 .sidebarMessageAction:hover {
-  background: var(--lp-surface-hover);
-  border-color: var(--lp-focus);
 }
 
 .sidebarMessageDismiss:focus-visible {
-  outline: 2px solid var(--lp-focus);
+  outline: 2px solid;
   outline-offset: 2px;
 }
 
 /* Thin divider separating the system scope rows from the folder/feed tree. */
 .treeSectionDivider {
-  border-top: 1px solid var(--lp-border);
+  border-top: 1px solid;
   margin: 8px 16px;
 }
 
@@ -253,7 +230,6 @@
 }
 
 .folderFeeds {
-  background: var(--lp-surface-0);
   padding-left: 0;
 }
 
@@ -269,20 +245,16 @@
 }
 
 .folderRowWrap:hover:not(.folderRowWrapActive) {
-  background: var(--lp-surface-hover);
 }
 
 .folderRowWrap:hover:not(.folderRowWrapActive) .folderToggle,
 .folderRowWrap:hover:not(.folderRowWrapActive) .folderActionsButton {
-  color: var(--lp-text-main);
 }
 
 .folderRowWrapActive {
-  background: var(--lp-surface-active);
 }
 
 .folderRowWrapActive::before {
-  background: var(--lp-focus);
   content: "";
   inset: 0 auto 0 0;
   position: absolute;
@@ -290,7 +262,6 @@
 }
 
 .folderRowWrapActive .folderRow {
-  border-left-color: transparent;
 }
 
 .folderRow {
@@ -306,7 +277,6 @@
 }
 
 .folderRow:hover {
-  background: transparent;
 }
 
 .folderLabel {
@@ -319,12 +289,10 @@
 }
 
 .systemItemLabel {
-  color: var(--lp-text-main);
   font-weight: var(--weight-semibold);
 }
 
 .folderItemLabel {
-  color: var(--lp-text-main);
   font-weight: 500;
 }
 
@@ -345,7 +313,6 @@
 
 .folderRowIconSlot {
   align-items: center;
-  color: var(--lp-text-muted);
   display: inline-flex;
   justify-content: center;
 }
@@ -357,16 +324,13 @@
 }
 
 .scopeRowIcon {
-  color: var(--text-secondary);
 }
 
 .folderRowWrapActive .folderRowIcon,
 .folderRowWrapActive .scopeRowIcon {
-  color: var(--lp-focus);
 }
 
 .rowCountAligned {
-  color: var(--lp-text-muted);
   font-variant-numeric: tabular-nums;
   margin-left: 0;
   padding-right: 1px;
@@ -405,7 +369,6 @@
 
 .folderToggleChevron {
   align-items: center;
-  color: var(--lp-text-muted);
   display: inline-flex;
   font-size: 10px;
   justify-content: center;
@@ -414,7 +377,6 @@
 }
 
 .folderRowWrapActive .folderToggleChevron {
-  color: var(--lp-focus);
 }
 
 .folderToggleSpacer {
@@ -428,7 +390,6 @@
 }
 
 .renameDuplicateHint {
-  color: var(--text-secondary);
   font-size: var(--text-xs);
 }
 
@@ -447,7 +408,6 @@
 }
 
 .paneToggleButton {
-  color: var(--lp-text-main);
   min-height: 40px;
   min-width: 40px;
 }
@@ -480,12 +440,10 @@
 }
 
 .deleteDialog h3 {
-  color: var(--lp-text-main);
   font-size: var(--text-base);
 }
 
 .deleteDialog p {
-  color: var(--text-secondary);
   font-size: var(--text-sm);
 }
 
@@ -508,17 +466,14 @@
 }
 
 .inlineField span {
-  color: var(--lp-text-muted);
   font-size: var(--text-xs);
 }
 
 .moveDialogHint {
-  color: var(--text-secondary);
   font-size: var(--text-xs);
 }
 
 .deleteDialogSummary {
-  color: var(--lp-text-main);
   font-size: var(--text-base);
   margin-bottom: 12px;
 }
@@ -526,7 +481,7 @@
 .deleteDialogFeedList {
   max-height: 200px;
   overflow-y: auto;
-  border: 1px solid var(--lp-border);
+  border: 1px solid;
   border-radius: var(--radius-control);
   margin-bottom: 12px;
 }
@@ -536,7 +491,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  border-bottom: 1px solid var(--lp-border);
+  border-bottom: 1px solid;
   font-size: var(--text-sm);
 }
 
@@ -552,11 +507,9 @@
 }
 
 .feedIndicatorExclusive {
-  background-color: var(--lp-color-red-500);
 }
 
 .feedIndicatorShared {
-  background-color: var(--lp-color-yellow-500);
 }
 
 .feedName {
@@ -568,11 +521,9 @@
 
 .feedIndicatorLabel {
   font-size: var(--text-xs);
-  color: var(--text-secondary);
 }
 
 .deleteDialogHint {
-  color: var(--text-secondary);
   font-size: var(--text-sm);
   margin-bottom: 12px;
   text-align: center;
@@ -590,9 +541,8 @@
   align-items: flex-start;
   gap: 12px;
   padding: 12px;
-  border: 2px solid var(--lp-border);
+  border: 2px solid;
   border-radius: var(--radius-control);
-  background: none;
   cursor: pointer;
   text-align: left;
   transition:
@@ -601,17 +551,13 @@
 }
 
 .deleteDialogOptionCard:hover {
-  background-color: var(--lp-surface-hover);
 }
 
 .deleteDialogOptionCardSelected {
-  border-color: var(--lp-focus);
-  background-color: var(--lp-surface-active);
 }
 
 .deleteDialogOptionIcon {
   flex-shrink: 0;
-  color: var(--lp-text-secondary);
 }
 
 .deleteDialogOptionContent {
@@ -622,12 +568,10 @@
 
 .deleteDialogOptionContent strong {
   font-size: var(--text-base);
-  color: var(--lp-text-main);
 }
 
 .deleteDialogOptionContent span {
   font-size: var(--text-sm);
-  color: var(--text-secondary);
 }
 
 .buttonIcon {
@@ -638,7 +582,6 @@
 
 .deleteDialogBackdropFixed {
   align-items: center;
-  background: var(--lp-overlay);
   display: flex;
   inset: 0;
   justify-content: center;

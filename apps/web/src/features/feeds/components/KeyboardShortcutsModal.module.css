@@ -1,6 +1,5 @@
 .backdrop {
   align-items: center;
-  background: rgb(0 0 0 / 48%);
   display: flex;
   inset: 0;
   justify-content: center;
@@ -10,8 +9,7 @@
 }
 
 .dialog {
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
+  border: 1px solid;
   border-radius: var(--radius-control);
   display: grid;
   gap: 12px;
@@ -30,17 +28,14 @@
 }
 
 .title {
-  color: var(--text-primary);
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
 }
 
 .closeButton {
   align-items: center;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
+  border: 1px solid;
   border-radius: var(--radius-control);
-  color: var(--text-primary);
   cursor: pointer;
   display: inline-flex;
   font-size: var(--text-sm);
@@ -55,21 +50,19 @@
 }
 
 .closeButton:hover {
-  background: var(--hover-surface);
 }
 
 .closeButton:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid;
   outline-offset: 2px;
 }
 
 .description {
-  color: var(--text-secondary);
   font-size: var(--text-sm);
 }
 
 .groups {
-  border: 1px solid var(--border);
+  border: 1px solid;
   border-radius: var(--radius-control);
   display: grid;
   gap: 12px;
@@ -82,7 +75,6 @@
 }
 
 .groupTitle {
-  color: var(--text-primary);
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
 }
@@ -106,10 +98,8 @@
 }
 
 .key {
-  background: var(--brand-light);
-  border: 1px solid var(--border);
+  border: 1px solid;
   border-radius: calc(var(--radius-control) - 2px);
-  color: var(--text-primary);
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   line-height: 1;
@@ -118,12 +108,7 @@
   text-align: center;
 }
 
-:global(html[data-theme="dark"]) .key {
-  background: var(--bg-secondary);
-}
-
 .rowDescription {
-  color: var(--text-secondary);
   font-size: var(--text-sm);
   white-space: nowrap;
 }

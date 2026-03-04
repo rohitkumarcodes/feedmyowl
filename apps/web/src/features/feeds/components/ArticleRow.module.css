@@ -1,8 +1,6 @@
 .row {
-  background: transparent;
   border: 0;
-  border-left: 2px solid transparent;
-  color: inherit;
+  border-left: 2px solid;
   cursor: pointer;
   display: grid;
   gap: 4px;
@@ -13,21 +11,17 @@
 }
 
 .row:hover {
-  background: var(--hover-surface);
 }
 
 .row:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid;
   outline-offset: 2px;
 }
 
 .rowSelected {
-  background: var(--bg-selected);
-  border-left-color: var(--accent);
 }
 
 .title {
-  color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
@@ -35,26 +29,21 @@
 }
 
 .titleRead {
-  color: var(--text-secondary);
   font-weight: var(--weight-normal);
   opacity: 0.72;
 }
 
 .meta {
-  color: var(--text-muted);
   font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
   line-height: var(--leading-tight);
 }
 
 .matchSource {
-  color: var(--text-muted);
   font-size: var(--text-xs);
   line-height: var(--leading-tight);
 }
 
 .match {
-  background: rgb(236 199 96 / 45%);
-  color: inherit;
   padding: 0 1px;
 }

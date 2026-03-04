@@ -11,7 +11,6 @@
 }
 
 .label {
-  color: var(--lp-text-muted);
   font-size: var(--text-xs);
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -24,14 +23,14 @@
 }
 
 .folderFieldset {
-  border: 1px solid var(--lp-border);
+  border: 1px solid;
   margin: 0;
   min-width: 0;
   padding: 6px;
 }
 
 .discoveryFieldset {
-  border: 1px solid var(--lp-border);
+  border: 1px solid;
   margin: 0;
   min-width: 0;
   padding: 6px;
@@ -46,8 +45,7 @@
 
 .discoveryOption {
   align-items: flex-start;
-  border: 1px solid var(--lp-border);
-  color: var(--lp-text-main);
+  border: 1px solid;
   display: flex;
   gap: 6px;
   padding: 6px;
@@ -64,7 +62,6 @@
 }
 
 .discoveryUrl {
-  color: var(--lp-text-muted);
   font-size: var(--text-xs);
   word-break: break-all;
 }
@@ -76,16 +73,13 @@
 }
 
 .badge {
-  background: var(--lp-surface-hover);
-  border: 1px solid var(--lp-border);
-  color: var(--lp-text-main);
+  border: 1px solid;
   display: inline-flex;
   font-size: var(--text-xs);
   padding: 1px 6px;
 }
 
 .badgeRecommended {
-  border-color: var(--lp-focus);
 }
 
 .folderList {
@@ -97,7 +91,6 @@
 
 .folderOption {
   align-items: center;
-  color: var(--lp-text-main);
   display: flex;
   gap: 6px;
   min-height: 24px;
@@ -114,22 +107,18 @@
 }
 
 .inlineMessage {
-  color: var(--text-secondary);
   font-size: var(--text-xs);
 }
 
 .inlineSuccessMessage {
-  color: var(--accent);
   font-size: var(--text-xs);
 }
 
 .inlineWarningMessage {
-  color: var(--lp-text-main);
   font-size: var(--text-xs);
 }
 
 .inlineErrorMessage {
-  color: var(--danger-text);
   font-size: var(--text-xs);
 }
 
@@ -141,7 +130,7 @@
 }
 
 .createdFolderRename {
-  border: 1px solid var(--lp-border);
+  border: 1px solid;
   display: grid;
   gap: 6px;
   padding: 6px;
@@ -165,3 +154,4 @@
     display: grid;
   }
 }
+

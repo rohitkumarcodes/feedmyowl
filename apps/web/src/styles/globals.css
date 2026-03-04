@@ -1,24 +1,5 @@
 :root {
-  /* Brand palette — deep indigo / muted lavender / pale lavender */
-  --brand-deep: #3d396e;
-  --brand-mid: #8480b5;
-  --brand-light: #ebeaf4;
-
-  --bg-primary: #f7f7f8;
-  --bg-secondary: #eeeff1;
-  --bg-tertiary: #e5e8ec;
-  --bg-selected: var(--brand-light);
-  --text-primary: #1f2328;
-  --text-secondary: #5f6670;
-  --text-muted: #77808a;
-  --border: #c7cdd4;
-  --accent: var(--brand-deep);
-  --danger-bg: rgb(177 44 44 / 8%);
-  --danger-border: #a34d4d;
-  --danger-text: #7a2f2f;
-
   --radius-control: 6px;
-  --hover-surface: var(--bg-tertiary);
   --transition-control: 80ms ease;
 
   /* Shared feeds-shell sizing so brand slot and sidebar reserve stay aligned. */
@@ -61,31 +42,11 @@ body {
 }
 
 html {
-  color-scheme: light;
   font-size: 16px;
   scrollbar-gutter: stable;
 }
 
-html[data-theme="dark"] {
-  --bg-primary: #16181b;
-  --bg-secondary: #1d2024;
-  --bg-tertiary: #2a2f36;
-  --bg-selected: #2d2b45;
-  --text-primary: #e6e9ed;
-  --text-secondary: #c1c8d0;
-  --text-muted: #9aa3ae;
-  --border: #3b434d;
-  --accent: var(--brand-mid);
-  --danger-bg: rgb(220 88 88 / 20%);
-  --danger-border: #d27575;
-  --danger-text: #f2b7b7;
-  --text-body: #cdd2d9;
-  color-scheme: dark;
-}
-
 body {
-  background: var(--bg-primary);
-  color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: var(--text-base);
   font-weight: var(--weight-normal);
@@ -109,7 +70,6 @@ p {
 }
 
 a {
-  color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -137,7 +97,6 @@ select {
 [data-article-list-root],
 [data-article-reader-root] {
   scrollbar-width: thin;
-  scrollbar-color: var(--bg-tertiary) transparent;
 }
 
 [data-article-list-root]::-webkit-scrollbar,
@@ -147,12 +106,10 @@ select {
 
 [data-article-list-root]::-webkit-scrollbar-track,
 [data-article-reader-root]::-webkit-scrollbar-track {
-  background: transparent;
 }
 
 [data-article-list-root]::-webkit-scrollbar-thumb,
 [data-article-reader-root]::-webkit-scrollbar-thumb {
-  background: var(--bg-tertiary);
   border-radius: 3px;
 }
 

@@ -11,15 +11,12 @@
   --lp-text-main: var(--text-primary);
   --lp-text-muted: var(--text-muted);
   --lp-focus: var(--accent);
-  --lp-overlay: rgb(0 0 0 / 24%);
 }
 
 .row {
   align-items: center;
-  background: transparent;
   border: 0;
-  border-left: 2px solid transparent;
-  color: var(--lp-text-main);
+  border-left: 2px solid;
   cursor: pointer;
   display: flex;
   line-height: var(--leading-tight);
@@ -31,11 +28,10 @@
 }
 
 .row:hover {
-  background: var(--lp-surface-hover);
 }
 
 .row:focus-visible {
-  outline: 2px solid var(--lp-focus);
+  outline: 2px solid;
   outline-offset: 2px;
 }
 
@@ -50,22 +46,17 @@
 }
 
 .rowActive {
-  background: var(--lp-surface-active);
-  border-left-color: var(--lp-focus);
 }
 
 .rowCount {
-  color: var(--lp-text-muted);
   font-size: var(--text-xs);
   margin-left: 8px;
 }
 
 .toolbarButton {
   align-items: center;
-  background: var(--lp-surface-1);
-  border: 1px solid var(--lp-border);
+  border: 1px solid;
   border-radius: var(--radius-control);
-  color: var(--lp-text-main);
   cursor: pointer;
   display: inline-flex;
   flex: 0 0 auto;
@@ -83,38 +74,31 @@
 }
 
 .toolbarButton:hover:enabled {
-  background: var(--lp-surface-hover);
 }
 
 .toolbarButton:focus-visible {
-  outline: 2px solid var(--lp-focus);
+  outline: 2px solid;
   outline-offset: 2px;
 }
 
 .toolbarButton:disabled {
-  color: var(--lp-text-muted);
   cursor: not-allowed;
   opacity: 0.72;
 }
 
 .toolbarButtonPrimary {
-  color: var(--lp-text-main);
 }
 
 .toolbarButtonSecondary {
-  color: var(--lp-text-main);
 }
 
 .toolbarButtonMuted {
-  color: var(--lp-text-main);
 }
 
 .iconButton {
   align-items: center;
-  background: transparent;
-  border: 1px solid transparent;
+  border: 1px solid;
   border-radius: var(--radius-control);
-  color: var(--lp-text-muted);
   cursor: pointer;
   display: flex;
   justify-content: center;
@@ -128,32 +112,24 @@
 }
 
 .iconButton:hover:enabled {
-  background: var(--lp-surface-hover);
-  border-color: var(--lp-border);
-  color: var(--lp-text-main);
 }
 
 .iconButton:focus-visible {
-  outline: 2px solid var(--lp-focus);
+  outline: 2px solid;
   outline-offset: 2px;
 }
 
 .iconButton:disabled {
-  color: var(--lp-text-muted);
   cursor: not-allowed;
 }
 
 .iconButtonSurface {
-  background: var(--lp-surface-0);
-  border-color: var(--lp-border);
 }
 
 .treeToggle {
   align-items: center;
-  background: transparent;
   border: 0;
   border-radius: var(--radius-control);
-  color: var(--lp-text-muted);
   cursor: pointer;
   display: flex;
   justify-content: center;
@@ -166,26 +142,21 @@
 }
 
 .treeToggle:hover {
-  background: var(--lp-surface-hover);
-  color: var(--lp-text-main);
 }
 
 .treeToggle:focus-visible {
-  outline: 2px solid var(--lp-focus);
+  outline: 2px solid;
   outline-offset: 2px;
 }
 
 .panel {
-  background: var(--lp-surface-0);
-  border: 1px solid var(--lp-border);
+  border: 1px solid;
   border-radius: var(--radius-control);
 }
 
 .input {
-  background: var(--lp-surface-1);
-  border: 1px solid var(--lp-border);
+  border: 1px solid;
   border-radius: var(--radius-control);
-  color: var(--lp-text-main);
   font-size: var(--text-sm);
   min-height: 36px;
   padding: 6px 8px;
@@ -197,20 +168,17 @@
 }
 
 .input:focus-visible {
-  outline: 2px solid var(--lp-focus);
+  outline: 2px solid;
   outline-offset: 2px;
 }
 
 .input:disabled {
-  color: var(--lp-text-muted);
   cursor: not-allowed;
 }
 
 .button {
-  background: var(--lp-surface-1);
-  border: 1px solid var(--lp-border);
+  border: 1px solid;
   border-radius: var(--radius-control);
-  color: var(--lp-text-main);
   cursor: pointer;
   font-size: var(--text-sm);
   min-height: 32px;
@@ -222,16 +190,14 @@
 }
 
 .button:hover:enabled {
-  background: var(--lp-surface-hover);
 }
 
 .button:focus-visible {
-  outline: 2px solid var(--lp-focus);
+  outline: 2px solid;
   outline-offset: 2px;
 }
 
 .button:disabled {
-  color: var(--lp-text-muted);
   cursor: not-allowed;
 }
 
@@ -242,13 +208,10 @@
 }
 
 .buttonDanger {
-  border-color: var(--danger-border);
-  color: var(--danger-text);
 }
 
 .menu {
-  background: var(--lp-surface-1);
-  border: 1px solid var(--lp-border);
+  border: 1px solid;
   border-radius: var(--radius-control);
   display: grid;
   min-width: 148px;
@@ -260,10 +223,8 @@
 }
 
 .menuItem {
-  background: transparent;
   border: 0;
   border-radius: calc(var(--radius-control) - 2px);
-  color: var(--lp-text-main);
   cursor: pointer;
   font-size: var(--text-sm);
   min-height: 32px;
@@ -275,22 +236,19 @@
 }
 
 .menuItem:hover:enabled {
-  background: var(--lp-surface-hover);
 }
 
 .menuItem:focus-visible {
-  outline: 2px solid var(--lp-focus);
+  outline: 2px solid;
   outline-offset: 1px;
 }
 
 .menuItem:disabled {
-  color: var(--lp-text-muted);
   cursor: not-allowed;
 }
 
 .popover {
-  background: var(--lp-surface-1);
-  border: 1px solid var(--lp-border);
+  border: 1px solid;
   border-radius: var(--radius-control);
   min-width: 204px;
   padding: 8px;
@@ -304,7 +262,6 @@
 }
 
 .mobileBackdrop {
-  background: var(--lp-overlay);
   border: 0;
   cursor: pointer;
   inset: 0;
@@ -313,8 +270,7 @@
 }
 
 .mobileSheet {
-  background: var(--lp-surface-1);
-  border: 1px solid var(--lp-border);
+  border: 1px solid;
   border-bottom: 0;
   border-left: 0;
   border-right: 0;
@@ -334,7 +290,6 @@
 
 .dialogBackdrop {
   align-items: center;
-  background: var(--lp-overlay);
   display: flex;
   inset: 0;
   justify-content: center;
@@ -343,8 +298,7 @@
 }
 
 .dialog {
-  background: var(--lp-surface-1);
-  border: 1px solid var(--lp-border);
+  border: 1px solid;
   border-radius: var(--radius-control);
   display: grid;
   gap: 8px;
@@ -353,11 +307,7 @@
 }
 
 .sectionDivider {
-  border-bottom: 1px solid rgb(132 128 181 / 20%);
-}
-
-:global(html[data-theme="dark"]) .sectionDivider {
-  border-bottom-color: var(--lp-border);
+  border-bottom: 1px solid;
 }
 
 @media (prefers-reduced-motion: reduce) {

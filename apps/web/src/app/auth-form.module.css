@@ -19,7 +19,6 @@
 }
 
 .label {
-  color: #3d396e;
   font-size: 13px;
   font-weight: 600;
   line-height: 20px;
@@ -28,9 +27,7 @@
 }
 
 .actionLink {
-  background: none;
   border: none;
-  color: #8480b5;
   cursor: pointer;
   font-family: inherit;
   font-size: 12px;
@@ -40,13 +37,11 @@
 }
 
 .actionLink:hover {
-  color: #3d396e;
   text-decoration: underline;
 }
 
 .inputWrapper {
-  background: #ffffff;
-  border: 1px solid #6e6aa0;
+  border: 1px solid;
   border-radius: 4px;
   box-sizing: border-box;
   display: flex;
@@ -57,16 +52,13 @@
 }
 
 .inputWrapper:focus-within {
-  border: 1px solid #3d396e;
-  box-shadow: 0 0 0 1px #3d396e;
+  border: 1px solid;
 }
 
 .input {
-  background: transparent;
   border: none;
   border-radius: 4px;
   box-sizing: border-box;
-  color: #3d396e;
   font-size: 14px;
   outline: none;
   padding: 10px 12px;
@@ -74,30 +66,24 @@
 }
 
 .input::placeholder {
-  color: #b8b5d6;
 }
 
 .error {
-  color: #dc2626;
   font-size: 13px;
   margin: 0 0 12px;
   padding: 0;
 }
 
 .info {
-  color: #3d396e;
   font-size: 13px;
   margin: 0 0 12px;
   padding: 0;
 }
 
 .submitButton {
-  background-color: #3d396e;
   background-image: none;
   border: none;
   border-radius: 4px;
-  box-shadow: none;
-  color: #fff;
   cursor: pointer;
   font-size: 15px;
   font-weight: 600;
@@ -110,7 +96,6 @@
 
 .submitButton:hover:not(:disabled) {
   background-image: none;
-  box-shadow: none;
   opacity: 0.9;
 }
 
@@ -130,13 +115,11 @@
 }
 
 .footerText {
-  color: #8480b5;
   font-size: 14px;
   font-weight: 500;
 }
 
 .footerLink {
-  color: #3d396e;
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
@@ -145,3 +128,4 @@
 .footerLink:hover {
   text-decoration: underline;
 }
+

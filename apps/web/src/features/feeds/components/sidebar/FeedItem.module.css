@@ -6,15 +6,12 @@
 }
 
 .rowWrap:hover:not(.rowWrapActive) {
-  background: var(--lp-surface-hover);
 }
 
 .rowWrapActive {
-  background: var(--lp-surface-active);
 }
 
 .rowWrapActive::before {
-  background: var(--lp-focus);
   content: "";
   bottom: 0;
   left: 0;
@@ -25,7 +22,6 @@
 }
 
 .rowWrapActive .row {
-  border-left-color: transparent;
 }
 
 .row {
@@ -54,7 +50,6 @@
 
 .iconSlot {
   align-items: center;
-  color: var(--lp-text-muted);
   display: inline-flex;
   justify-content: center;
 }
@@ -69,7 +64,6 @@
 }
 
 .label {
-  color: var(--text-secondary);
   font-weight: var(--weight-normal);
   overflow: hidden;
   padding-left: var(--sidebar-nav-text-gap);
@@ -80,13 +74,11 @@
 .rowWrapActive .iconSlot,
 .rowWrapActive .feedHashPrefix,
 .rowWrapActive .label {
-  color: var(--lp-focus);
   opacity: 1;
 }
 
 /* Warning dot shown when the last feed fetch failed. */
 .errorDot {
-  background: #d97706;
   border-radius: 50%;
   flex-shrink: 0;
   height: 6px;
@@ -97,9 +89,7 @@
 /* Unread article count badge — shown on each feed in checker mode. */
 .unreadBadge {
   align-items: center;
-  background: var(--lp-surface-1);
   border-radius: 8px;
-  color: var(--lp-text-main);
   display: inline-flex;
   flex-shrink: 0;
   font-size: 10px;
@@ -114,9 +104,7 @@
 
 .multiFolderBadge {
   align-items: center;
-  background: var(--brand-light);
   border-radius: 8px;
-  color: var(--brand-deep);
   display: inline-flex;
   flex-shrink: 0;
   font-size: 10px;
@@ -126,11 +114,6 @@
   margin-left: 6px;
   min-width: 16px;
   padding: 0 4px;
-}
-
-:global(html[data-theme="dark"]) .multiFolderBadge {
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
 }
 
 .actions {
@@ -166,7 +149,6 @@
 
 .folderEditorOption {
   align-items: center;
-  color: var(--lp-text-main);
   display: flex;
   gap: 6px;
   min-height: 24px;
@@ -177,7 +159,6 @@
 }
 
 .folderEditorEmpty {
-  color: var(--lp-text-muted);
   font-size: var(--text-xs);
 }
 

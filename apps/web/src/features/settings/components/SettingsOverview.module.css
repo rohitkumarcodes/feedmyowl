@@ -28,7 +28,7 @@
 .settingsOptions {
   display: grid;
   gap: 24px;
-  border: 1px solid var(--border);
+  border: 1px solid;
   border-radius: var(--radius-control);
   padding: 16px;
 }
@@ -46,9 +46,7 @@
 
 .themeModeOption {
   align-items: flex-start;
-  background: transparent;
   border: 0;
-  color: var(--text-primary);
   cursor: pointer;
   display: grid;
   gap: 8px 10px;
@@ -58,11 +56,9 @@
 }
 
 .themeModeOptionSelected {
-  color: var(--text-primary);
 }
 
 .themeModeOptionSelected .themeModeOptionLabel {
-  color: var(--accent);
 }
 
 .themeModeOption input {
@@ -70,20 +66,17 @@
 }
 
 .themeModeOptionLabel {
-  color: var(--text-primary);
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
 }
 
 .themeModeOptionDescription {
-  color: var(--text-secondary);
   font-size: var(--text-sm);
   grid-column: 2;
   line-height: 1.45;
 }
 
 .owlPickerControls {
-  background: var(--bg-primary);
   display: grid;
   gap: 0;
   max-width: min(100%, 560px);
@@ -91,7 +84,6 @@
 }
 
 .owlPickerControls .owlToggle {
-  background: transparent;
   border: 0;
   width: 100%;
 }
@@ -140,32 +132,26 @@
 }
 
 .muted {
-  color: var(--text-muted);
   font-size: var(--text-sm);
 }
 
 .inlineMessage {
-  color: var(--text-secondary);
   font-size: var(--text-sm);
 }
 
 .inlineMessageSuccess {
-  color: var(--accent);
   font-size: var(--text-sm);
 }
 
 .inlineMessageWarning {
-  color: var(--text-primary);
   font-size: var(--text-sm);
 }
 
 .inlineMessageError {
-  color: var(--text-error);
   font-size: var(--text-sm);
 }
 
 .importProgress {
-  color: var(--text-secondary);
   font-size: var(--text-sm);
 }
 
@@ -174,10 +160,8 @@
 }
 
 .linkButton {
-  background: var(--bg-primary);
   border: 0;
   border-radius: var(--radius-control);
-  color: var(--text-primary);
   cursor: pointer;
   display: inline-block;
   font-size: var(--text-sm);
@@ -194,24 +178,20 @@
 
 a.linkButton:hover,
 button.linkButton:hover:enabled {
-  background: var(--hover-surface);
 }
 
 .linkButton:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid;
   outline-offset: 2px;
 }
 
 .linkButton:disabled {
-  color: var(--text-muted);
   cursor: not-allowed;
 }
 
 .saveButton {
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
+  border: 1px solid;
   border-radius: var(--radius-control);
-  color: var(--text-primary);
   cursor: pointer;
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
@@ -224,11 +204,10 @@ button.linkButton:hover:enabled {
 }
 
 .saveButton:hover:enabled {
-  background: var(--hover-surface);
 }
 
 .saveButton:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid;
   outline-offset: 2px;
 }
 
@@ -238,7 +217,6 @@ button.linkButton:hover:enabled {
 }
 
 .saveButton:disabled:hover {
-  background: var(--bg-primary);
 }
 
 .compactButton {
@@ -280,7 +258,6 @@ button.linkButton:hover:enabled {
 }
 
 .deleteConfirm p {
-  color: var(--text-secondary);
   font-size: var(--text-sm);
 }
 
@@ -291,7 +268,6 @@ button.linkButton:hover:enabled {
 }
 
 .importSummary {
-  background: var(--bg-primary);
   display: grid;
   gap: 6px;
   padding: 8px;
@@ -299,11 +275,10 @@ button.linkButton:hover:enabled {
 
 /* Import Preview Styles */
 .importPreview {
-  background: var(--bg-primary);
   display: grid;
   gap: 12px;
   padding: 12px;
-  border: 1px solid var(--border);
+  border: 1px solid;
   border-radius: 6px;
 }
 
@@ -318,13 +293,11 @@ button.linkButton:hover:enabled {
 .importPreviewTitle {
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
-  color: var(--text-primary);
   margin: 0;
 }
 
 .importPreviewMeta {
   font-size: var(--text-sm);
-  color: var(--text-secondary);
 }
 
 .importPreviewCounts {
@@ -341,15 +314,12 @@ button.linkButton:hover:enabled {
 }
 
 .importPreviewCountNew {
-  color: var(--accent);
 }
 
 .importPreviewCountDuplicate {
-  color: var(--text-secondary);
 }
 
 .importPreviewCountError {
-  color: var(--text-error);
 }
 
 .importPreviewList {
@@ -357,7 +327,7 @@ button.linkButton:hover:enabled {
   gap: 8px;
   max-height: 300px;
   overflow-y: auto;
-  border: 1px solid var(--border);
+  border: 1px solid;
   border-radius: 4px;
   padding: 8px;
 }
@@ -366,7 +336,6 @@ button.linkButton:hover:enabled {
   display: grid;
   gap: 4px;
   padding: 8px;
-  background: var(--bg-secondary);
   border-radius: 4px;
   font-size: var(--text-sm);
 }
@@ -379,24 +348,19 @@ button.linkButton:hover:enabled {
 }
 
 .importPreviewEntryNew {
-  color: var(--accent);
 }
 
 .importPreviewEntryDuplicate {
-  color: var(--text-secondary);
 }
 
 .importPreviewEntryError {
-  color: var(--text-error);
 }
 
 .importPreviewEntryUrl {
-  color: var(--text-primary);
   word-break: break-all;
 }
 
 .importPreviewEntryTitle {
-  color: var(--text-primary);
   font-weight: var(--weight-medium);
 }
 
@@ -409,19 +373,14 @@ button.linkButton:hover:enabled {
 .importPreviewFolder {
   display: inline-block;
   padding: 2px 6px;
-  background: var(--bg-tertiary);
   border-radius: 3px;
   font-size: var(--text-xs);
-  color: var(--text-secondary);
 }
 
 .importPreviewFolderChange {
-  background: var(--accent-bg);
-  color: var(--accent);
 }
 
 .importPreviewEntryErrorMsg {
-  color: var(--text-error);
   font-size: var(--text-xs);
 }
 
@@ -436,11 +395,9 @@ button.linkButton:hover:enabled {
   align-items: center;
   justify-content: center;
   padding: 24px;
-  color: var(--text-secondary);
 }
 
 .importFailureList {
-  color: var(--text-secondary);
   display: grid;
   font-size: var(--text-sm);
   gap: 4px;
@@ -471,7 +428,6 @@ button.linkButton:hover:enabled {
 }
 
 .feedsSectionDescription {
-  color: var(--text-secondary);
   font-size: var(--text-sm);
   margin: 0;
 }
@@ -483,8 +439,7 @@ button.linkButton:hover:enabled {
 }
 
 .exportFormatOption {
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
+  border: 1px solid;
   border-radius: var(--radius-control);
   cursor: pointer;
   display: grid;
@@ -497,11 +452,10 @@ button.linkButton:hover:enabled {
 }
 
 .exportFormatOption:hover {
-  background: var(--hover-surface);
 }
 
 .exportFormatOption:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid;
   outline-offset: 2px;
 }
 
@@ -511,22 +465,19 @@ button.linkButton:hover:enabled {
 }
 
 .exportFormatOption:disabled:hover {
-  background: var(--bg-primary);
 }
 
 .exportFormatLabel {
-  color: var(--text-primary);
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
 }
 
 .exportFormatSublabel {
-  color: var(--text-secondary);
   font-size: var(--text-xs);
 }
 
 .dropZone {
-  border: 2px dashed var(--border);
+  border: 2px dashed;
   border-radius: var(--radius-control);
   padding: 20px;
   text-align: center;
@@ -537,27 +488,20 @@ button.linkButton:hover:enabled {
 }
 
 .dropZone:hover {
-  border-color: var(--text-muted);
-  background: var(--hover-surface);
 }
 
 .dropZoneDragOver {
-  border-color: var(--accent);
-  background: var(--accent-bg);
 }
 
 .dropZoneText {
-  color: var(--text-secondary);
   font-size: var(--text-sm);
 }
 
 .dropZoneTextAccent {
-  color: var(--accent);
   font-weight: var(--weight-semibold);
 }
 
 .progressBarContainer {
-  background: var(--bg-secondary);
   border-radius: 4px;
   height: 8px;
   overflow: hidden;
@@ -565,7 +509,6 @@ button.linkButton:hover:enabled {
 }
 
 .progressBar {
-  background: var(--accent);
   height: 100%;
   transition: width 200ms ease;
 }
@@ -584,22 +527,17 @@ button.linkButton:hover:enabled {
 }
 
 .importSummaryItemSuccess {
-  color: var(--accent);
 }
 
 .importSummaryItemWarning {
-  color: var(--text-secondary);
 }
 
 .importSummaryItemError {
-  color: var(--text-error);
 }
 
 .doneButton {
-  background: var(--accent);
   border: 0;
   border-radius: var(--radius-control);
-  color: var(--bg-primary);
   cursor: pointer;
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
@@ -613,12 +551,11 @@ button.linkButton:hover:enabled {
 }
 
 .doneButton:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid;
   outline-offset: 2px;
 }
 
 .shortcutsControls {
-  background: var(--bg-primary);
   display: grid;
   gap: 0;
   max-width: min(100%, 560px);
@@ -627,10 +564,8 @@ button.linkButton:hover:enabled {
 
 .shortcutsToggle {
   align-items: center;
-  background: transparent;
   border: 0;
   border-radius: var(--radius-control);
-  color: var(--text-primary);
   cursor: pointer;
   display: inline-flex;
   gap: 8px;
@@ -646,11 +581,10 @@ button.linkButton:hover:enabled {
 }
 
 .shortcutsToggle:hover {
-  background: var(--hover-surface);
 }
 
 .shortcutsToggle:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid;
   outline-offset: 2px;
 }
 
@@ -666,7 +600,6 @@ button.linkButton:hover:enabled {
 }
 
 .shortcutsPanelGroup h3 {
-  color: var(--text-primary);
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
   margin: 0;
@@ -691,9 +624,7 @@ button.linkButton:hover:enabled {
 }
 
 .shortcutsPanelKey {
-  background: var(--brand-light);
   border: 0;
-  color: var(--text-primary);
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   line-height: 1;
@@ -702,12 +633,7 @@ button.linkButton:hover:enabled {
   text-align: center;
 }
 
-:global(html[data-theme="dark"]) .shortcutsPanelKey {
-  background: var(--bg-secondary);
-}
-
 .shortcutsPanelDescription {
-  color: var(--text-secondary);
   font-size: var(--text-sm);
   line-height: 1.45;
   margin: 0;
@@ -715,10 +641,8 @@ button.linkButton:hover:enabled {
 
 .owlToggle {
   align-items: center;
-  background: var(--bg-primary);
   border: 0;
   border-radius: var(--radius-control);
-  color: var(--text-primary);
   cursor: pointer;
   display: inline-flex;
   gap: 8px;
@@ -733,21 +657,18 @@ button.linkButton:hover:enabled {
 }
 
 .owlToggle:hover {
-  background: var(--hover-surface);
 }
 
 .owlToggle:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid;
   outline-offset: 2px;
 }
 
 .owlToggle:disabled {
-  color: var(--text-muted);
   cursor: not-allowed;
 }
 
 .owlToggle:disabled:hover {
-  background: var(--bg-primary);
 }
 
 .owlToggleCaret {
@@ -785,9 +706,7 @@ button.linkButton:hover:enabled {
 
 .owlOption {
   align-items: flex-start;
-  background: transparent;
   border: 0;
-  color: var(--text-primary);
   cursor: pointer;
   display: grid;
   gap: 8px 10px;
@@ -796,11 +715,9 @@ button.linkButton:hover:enabled {
 }
 
 .owlOptionSelected {
-  color: var(--text-primary);
 }
 
 .owlOptionSelected .owlOptionAscii {
-  color: var(--accent);
 }
 
 .owlOption input {
@@ -816,7 +733,6 @@ button.linkButton:hover:enabled {
 }
 
 .owlOptionText {
-  color: var(--text-secondary);
   font-size: var(--text-sm);
 }
 

@@ -74,7 +74,7 @@ export function buildOwlFaviconDataUri(owlAscii: OwlAscii): string {
   const compactFace = owlCompactFaceMap[owlAscii];
   const svg = [
     "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'>",
-    "<text x='50%' y='56%' font-size='132' font-weight='700' text-anchor='middle' dominant-baseline='middle' font-family='ui-monospace, SFMono-Regular, Menlo, monospace' fill='#1f2328'>",
+    "<text x='50%' y='56%' font-size='132' font-weight='700' text-anchor='middle' dominant-baseline='middle' font-family='ui-monospace, SFMono-Regular, Menlo, monospace' fill='black'>",
     escapeXml(compactFace),
     "</text></svg>",
   ].join("");
