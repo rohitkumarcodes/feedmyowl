@@ -11,7 +11,7 @@
   --lp-text-main: var(--text-primary);
   --lp-text-muted: var(--text-muted);
   --lp-focus: var(--accent);
-  --lp-overlay: rgb(37 31 22 / 34%);
+  --lp-overlay: transparent;
 }
 
 .row {
@@ -56,7 +56,7 @@
 .rowActive {
   background: var(--lp-surface-active);
   border-left-color: var(--lp-focus);
-  border-color: color-mix(in srgb, var(--lp-focus) 26%, transparent);
+  border-color: var(--border);
 }
 
 .rowCount {
@@ -103,7 +103,7 @@
 
 .toolbarButtonPrimary {
   background: var(--accent-soft);
-  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+  border-color: var(--border);
   color: var(--accent);
 }
 
@@ -183,7 +183,7 @@
   background: var(--bg-primary);
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 50%);
+  box-shadow: none;
 }
 
 .input {
@@ -201,7 +201,7 @@
 
 .input:focus-visible {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+  box-shadow: none;
   outline: none;
 }
 
@@ -318,7 +318,7 @@
 }
 
 .mobileBackdrop {
-  background: linear-gradient(180deg, rgb(40 30 15 / 20%), rgb(40 30 15 / 34%));
+  background: transparent;
   border: 0;
   cursor: pointer;
   inset: 0;
@@ -334,7 +334,7 @@
   border-right: 0;
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
-  box-shadow: 0 -12px 28px rgb(40 30 15 / 20%);
+  box-shadow: none;
   bottom: 0;
   left: 0;
   max-height: min(70vh, 420px);
@@ -349,7 +349,7 @@
 
 .dialogBackdrop {
   align-items: center;
-  background: linear-gradient(180deg, rgb(40 30 15 / 12%), rgb(40 30 15 / 28%));
+  background: transparent;
   display: flex;
   inset: 0;
   justify-content: center;

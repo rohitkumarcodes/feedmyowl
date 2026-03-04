@@ -8,7 +8,7 @@
   --sidebar-tree-count-col: 34px;
   --sidebar-tree-actions-col: 40px;
   --lp-row-height: var(--sidebar-nav-row-height);
-  background: linear-gradient(180deg, rgb(250 245 236 / 96%) 0%, rgb(243 236 223 / 88%) 100%);
+  background: Canvas;
   display: grid;
   grid-template-rows: auto 1fr auto;
   height: 100%;
@@ -77,7 +77,7 @@
 }
 
 .formWrap {
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
+  border-bottom: 1px solid var(--border);
   padding: 4px 12px 0;
 }
 
@@ -112,7 +112,7 @@
 .sections {
   margin-top: 0;
   overflow: auto;
-  scrollbar-color: color-mix(in srgb, var(--border-strong) 68%, transparent) transparent;
+  scrollbar-color: auto;
 }
 
 .emptyLabel {
@@ -131,7 +131,7 @@
   border: 1px solid var(--border);
   border-top: 2px solid var(--border);
   border-radius: var(--radius-control);
-  box-shadow: 0 1px 2px rgb(40 30 15 / 8%);
+  box-shadow: none;
   display: flex;
   gap: 6px;
   margin-top: 8px;
@@ -173,15 +173,15 @@
 }
 
 .sidebarMessageWarning {
-  border-top-color: #b5792d;
+  border-top-color: var(--border);
 }
 
 .sidebarMessageWarning .sidebarMessageText {
-  color: #7a5625;
+  color: var(--text-secondary);
 }
 
 .sidebarMessageWarning .sidebarMessageTitle {
-  color: #5e3f16;
+  color: var(--text-primary);
 }
 
 .sidebarMessageProgress {
@@ -189,12 +189,12 @@
 }
 
 .sidebarMessageOffline {
-  border-top-color: #446784;
+  border-top-color: var(--border);
 }
 
 .sidebarMessageError {
   background: var(--danger-bg);
-  border-color: color-mix(in srgb, var(--danger-border) 74%, var(--border));
+  border-color: var(--danger-border);
   border-top-color: var(--danger-border);
 }
 
@@ -203,7 +203,7 @@
 }
 
 .sidebarMessageError .sidebarMessageTitle {
-  color: #6e241e;
+  color: var(--danger-text);
 }
 
 .sidebarMessageAction {
@@ -275,7 +275,7 @@
 }
 
 .folderRowWrap:hover:not(.folderRowWrapActive) {
-  background: rgb(255 255 255 / 34%);
+  background: var(--bg-secondary);
 }
 
 .folderRowWrap:hover:not(.folderRowWrapActive) .folderToggle,
@@ -284,7 +284,7 @@
 }
 
 .folderRowWrapActive {
-  background: color-mix(in srgb, var(--accent-soft) 70%, transparent);
+  background: var(--accent-soft);
 }
 
 .folderRowWrapActive::before {
@@ -646,7 +646,7 @@
 
 .deleteDialogBackdropFixed {
   align-items: center;
-  background: linear-gradient(180deg, rgb(40 30 15 / 16%), rgb(40 30 15 / 34%));
+  background: transparent;
   backdrop-filter: blur(2px);
   display: flex;
   inset: 0;

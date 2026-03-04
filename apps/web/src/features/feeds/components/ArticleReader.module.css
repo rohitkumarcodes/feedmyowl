@@ -1,5 +1,5 @@
 .root {
-  background: linear-gradient(180deg, rgb(255 253 248 / 100%) 0%, rgb(250 245 236 / 68%) 100%);
+  background: Canvas;
   height: 100%;
   overflow: auto;
   overscroll-behavior: contain;
@@ -61,7 +61,7 @@
 
 .saveButton[data-saved="true"] {
   background: var(--accent-soft);
-  border-color: color-mix(in srgb, var(--accent) 32%, var(--border));
+  border-color: var(--border);
   color: var(--accent);
   font-weight: var(--weight-semibold);
 }
@@ -130,15 +130,15 @@
 }
 
 .body img {
-  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  border: 1px solid var(--border);
   border-radius: var(--radius-control);
-  box-shadow: 0 5px 18px rgb(40 30 15 / 10%);
+  box-shadow: none;
   height: auto;
   max-width: 100%;
 }
 
 .body blockquote {
-  background: color-mix(in srgb, var(--accent-soft) 45%, transparent);
+  background: var(--accent-soft);
   border-left: 3px solid var(--accent);
   color: var(--text-secondary);
   margin: 0 0 1em;
@@ -164,10 +164,10 @@
 }
 
 .body code {
-  background: color-mix(in srgb, var(--bg-tertiary) 58%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
   border-radius: 3px;
-  color: #4a4034;
+  color: var(--text-primary);
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   padding: 1px 4px;

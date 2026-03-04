@@ -1,8 +1,6 @@
 .root {
-  background:
-    radial-gradient(circle at 6% 4%, rgb(232 241 233 / 30%) 0, transparent 42%),
-    linear-gradient(180deg, rgb(255 253 248 / 88%) 0%, rgb(246 242 234 / 86%) 100%);
-  border: 1px solid color-mix(in srgb, var(--border) 74%, transparent);
+  background: Canvas;
+  border: 1px solid var(--border);
   border-radius: 10px;
   box-shadow: var(--shadow-soft);
   display: grid;
@@ -38,12 +36,12 @@
   gap: 24px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 55%);
+  box-shadow: none;
   padding: 16px;
 }
 
 .panel {
-  border-top: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
+  border-top: 1px solid var(--border);
   display: grid;
   gap: 8px;
   padding-top: 16px;
@@ -78,7 +76,7 @@
 
 .themeModeOptionSelected {
   background: var(--accent-soft);
-  border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
+  border-color: var(--border);
 }
 
 .themeModeOptionSelected .themeModeOptionLabel {
@@ -172,7 +170,7 @@
 }
 
 .inlineMessageWarning {
-  color: #7a5625;
+  color: var(--text-secondary);
   font-size: var(--text-sm);
 }
 
@@ -226,9 +224,9 @@ button.linkButton:hover:enabled {
 
 .saveButton {
   background: var(--accent);
-  border: 1px solid color-mix(in srgb, var(--accent) 72%, black);
+  border: 1px solid var(--border);
   border-radius: var(--radius-control);
-  color: #fffef9;
+  color: ButtonText;
   cursor: pointer;
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
@@ -241,8 +239,8 @@ button.linkButton:hover:enabled {
 }
 
 .saveButton:hover:enabled {
-  background: #264a3a;
-  border-color: #1f3d30;
+  background: var(--hover-surface);
+  border-color: var(--border-strong);
 }
 
 .saveButton:focus-visible {
@@ -257,7 +255,7 @@ button.linkButton:hover:enabled {
 
 .saveButton:disabled:hover {
   background: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 72%, black);
+  border-color: var(--border);
 }
 
 .compactButton {
@@ -400,15 +398,15 @@ button.linkButton:hover:enabled {
 }
 
 .importPreviewEntryNew {
-  border-color: color-mix(in srgb, var(--accent) 24%, var(--border));
+  border-color: var(--border);
 }
 
 .importPreviewEntryDuplicate {
-  border-color: color-mix(in srgb, var(--border-strong) 70%, var(--border));
+  border-color: var(--border);
 }
 
 .importPreviewEntryError {
-  border-color: color-mix(in srgb, var(--danger-border) 56%, var(--border));
+  border-color: var(--border);
   color: var(--danger-text);
 }
 
@@ -437,7 +435,7 @@ button.linkButton:hover:enabled {
 
 .importPreviewFolderChange {
   background: var(--accent-soft);
-  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+  border-color: var(--border);
   color: var(--accent);
 }
 
@@ -587,7 +585,7 @@ button.linkButton:hover:enabled {
 }
 
 .progressBar {
-  background: linear-gradient(90deg, var(--accent) 0%, #3c7057 100%);
+  background: ButtonFace;
   height: 100%;
   transition: width var(--transition-control);
 }
@@ -610,7 +608,7 @@ button.linkButton:hover:enabled {
 }
 
 .importSummaryItemWarning {
-  color: #7a5625;
+  color: var(--text-secondary);
 }
 
 .importSummaryItemError {

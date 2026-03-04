@@ -59,7 +59,7 @@
 
 .input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
+  box-shadow: none;
   outline: none;
 }
 
@@ -78,7 +78,7 @@
 
 .info {
   background: var(--accent-soft);
-  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border: 1px solid var(--border);
   border-radius: var(--radius-control);
   color: var(--accent);
   margin: 0 0 10px;
@@ -86,10 +86,10 @@
 }
 
 .submitButton {
-  background: var(--accent);
-  border: 1px solid color-mix(in srgb, var(--accent) 72%, black);
+  background: ButtonFace;
+  border: 1px solid var(--border);
   border-radius: var(--radius-control);
-  color: #fffef9;
+  color: ButtonText;
   cursor: pointer;
   font-weight: var(--weight-semibold);
   margin-top: 4px;
@@ -102,8 +102,8 @@
 }
 
 .submitButton:hover:enabled {
-  background: #264a3a;
-  border-color: #1f3d30;
+  background: var(--hover-surface);
+  border-color: var(--border-strong);
 }
 
 .submitButton:disabled {
@@ -132,5 +132,5 @@
 }
 
 .footerLink:hover {
-  color: #244838;
+  color: LinkText;
 }

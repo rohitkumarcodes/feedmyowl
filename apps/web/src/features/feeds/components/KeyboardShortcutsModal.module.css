@@ -1,6 +1,6 @@
 .backdrop {
   align-items: center;
-  background: linear-gradient(180deg, rgb(40 30 15 / 16%), rgb(40 30 15 / 34%));
+  background: transparent;
   backdrop-filter: blur(2px);
   display: flex;
   inset: 0;

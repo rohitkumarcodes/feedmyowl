@@ -98,7 +98,7 @@
 
 .badgeRecommended {
   background: var(--accent-soft);
-  border-color: color-mix(in srgb, var(--accent) 36%, var(--border));
+  border-color: var(--border);
   color: var(--accent);
   font-weight: var(--weight-semibold);
 }
@@ -138,7 +138,7 @@
 }
 
 .inlineWarningMessage {
-  color: #8b5e1e;
+  color: var(--text-secondary);
 }
 
 .inlineErrorMessage {

@@ -23,12 +23,12 @@
 
 .row:hover {
   background: var(--bg-secondary);
-  border-color: color-mix(in srgb, var(--border) 75%, transparent);
+  border-color: var(--border);
 }
 
 .rowSelected {
   background: var(--accent-soft);
-  border-color: color-mix(in srgb, var(--accent) 28%, transparent);
+  border-color: var(--border);
   border-left-color: var(--accent);
 }
 
@@ -56,7 +56,7 @@
 }
 
 .match {
-  background: color-mix(in srgb, var(--accent-soft) 68%, transparent);
+  background: var(--accent-soft);
   border-radius: 2px;
   color: var(--accent);
   font-weight: var(--weight-semibold);
