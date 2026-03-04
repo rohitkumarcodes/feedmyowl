@@ -414,19 +414,9 @@
   color: var(--accent);
 }
 
-.folderToggleSpacer {
-  min-width: var(--sidebar-tree-toggle-col);
-  width: var(--sidebar-tree-toggle-col);
-}
-
 .renameForm {
   display: grid;
   gap: 8px;
-}
-
-.renameDuplicateHint {
-  color: var(--danger-text);
-  font-size: var(--text-xs);
 }
 
 .renameActions {

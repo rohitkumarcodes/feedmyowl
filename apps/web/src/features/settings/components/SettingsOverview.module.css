@@ -167,11 +167,6 @@
   font-size: var(--text-sm);
 }
 
-.inlineMessageWarning {
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-}
-
 .inlineMessageError {
   color: var(--danger-text);
   font-size: var(--text-sm);
@@ -261,14 +256,6 @@ button.linkButton:hover:enabled {
   width: fit-content;
 }
 
-.iconOnlyButton {
-  align-items: center;
-  display: inline-flex;
-  justify-content: center;
-  padding: 0;
-  width: 32px;
-}
-
 .deleteAccountButton {
   justify-self: start;
 }
@@ -311,60 +298,6 @@ button.linkButton:hover:enabled {
   display: grid;
   gap: 6px;
   padding: 8px;
-}
-
-/* Import Preview Styles */
-.importPreview {
-  background: transparent;
-  display: grid;
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: 0;
-}
-
-.importPreviewHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.importPreviewTitle {
-  font-size: var(--text-base);
-  font-weight: var(--weight-semibold);
-  margin: 0;
-}
-
-.importPreviewMeta {
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-}
-
-.importPreviewCounts {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.importPreviewCount {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--text-sm);
-}
-
-.importPreviewCountNew {
-  color: var(--accent);
-}
-
-.importPreviewCountDuplicate {
-  color: var(--text-secondary);
-}
-
-.importPreviewCountError {
-  color: var(--danger-text);
 }
 
 .importPreviewList {
@@ -431,30 +364,6 @@ button.linkButton:hover:enabled {
   font-size: var(--text-xs);
 }
 
-.importPreviewFolderChange {
-  background: transparent;
-  border-color: var(--border);
-  color: var(--accent);
-}
-
-.importPreviewEntryErrorMsg {
-  color: var(--danger-text);
-  font-size: var(--text-xs);
-}
-
-.importPreviewActions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.importPreviewLoading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
-
 .importFailureList {
   display: grid;
   font-size: var(--text-sm);
@@ -465,14 +374,6 @@ button.linkButton:hover:enabled {
 
 .downloadFailuresButton {
   justify-self: start;
-}
-
-.feedsSectionHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 
 .feedsImportSection {
@@ -583,7 +484,7 @@ button.linkButton:hover:enabled {
 }
 
 .progressBar {
-  background: ButtonFace;
+  background: var(--border-strong);
   height: 100%;
   transition: width var(--transition-control);
 }
@@ -799,7 +700,6 @@ button.linkButton:hover:enabled {
 .owlOptionsShutterContent > .inlineActions,
 .owlOptionsShutterContent > .inlineMessage,
 .owlOptionsShutterContent > .inlineMessageSuccess,
-.owlOptionsShutterContent > .inlineMessageWarning,
 .owlOptionsShutterContent > .inlineMessageError {
   padding: 0 10px;
 }

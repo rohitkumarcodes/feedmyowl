@@ -16,12 +16,11 @@
   --danger-text: CanvasText;
   --shadow-soft: none;
 
-  --radius-control: 0;
   --hover-surface: rgba(0, 0, 0, 0.04);
   --transition-control: 0.12s;
 
-  --sidebar-pane-width: 240px;
-  --sidebar-pane-width-compact: 220px;
+  --sidebar-pane-width: 228px;
+  --sidebar-pane-width-compact: 210px;
   --sidebar-header-reserve: 16px;
   --sidebar-header-reserve-mobile: 16px;
 

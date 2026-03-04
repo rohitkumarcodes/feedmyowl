@@ -1,5 +1,5 @@
 .workspace {
-  background: Canvas;
+  background: var(--bg-app);
   height: 100vh;
   position: relative;
 }

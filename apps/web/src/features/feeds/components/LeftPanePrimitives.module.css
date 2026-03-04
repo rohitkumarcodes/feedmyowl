@@ -2,16 +2,11 @@
   --lp-row-height: 34px;
   --lp-pad-x: 8px;
   --lp-pad-y: 6px;
-  --lp-gap: 6px;
   --lp-border: var(--border);
-  --lp-surface-0: var(--bg-primary);
-  --lp-surface-1: var(--bg-secondary);
   --lp-surface-hover: var(--hover-surface);
-  --lp-surface-active: var(--bg-selected);
   --lp-text-main: var(--text-primary);
   --lp-text-muted: var(--text-muted);
   --lp-focus: var(--accent);
-  --lp-overlay: transparent;
 }
 
 .row {
@@ -127,8 +122,8 @@
   cursor: pointer;
   display: flex;
   justify-content: center;
-  min-height: 34px;
-  min-width: 34px;
+  min-height: var(--lp-row-height);
+  min-width: var(--lp-row-height);
   padding: 0 6px;
   transition:
     background-color var(--transition-control),

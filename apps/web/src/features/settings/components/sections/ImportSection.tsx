@@ -54,7 +54,6 @@ export function ImportSection() {
   const [importError, setImportError] = useState<string | null>(null);
   const [importSummary, setImportSummary] = useState<ImportSummary | null>(null);
   const [importPreview, setImportPreview] = useState<FeedImportPreview | null>(null);
-  const [, setIsLoadingPreview] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [showPreviewList, setShowPreviewList] = useState(false);
 
@@ -96,7 +95,6 @@ export function ImportSection() {
     setImportProgress(null);
     setImportRetryDelaySeconds(null);
     setImportPreview(null);
-    setIsLoadingPreview(true);
 
     try {
       // Reject oversized files before reading into memory.
@@ -129,8 +127,6 @@ export function ImportSection() {
           ? error.message
           : "Could not read the selected import file.",
       );
-    } finally {
-      setIsLoadingPreview(false);
     }
   }
 
