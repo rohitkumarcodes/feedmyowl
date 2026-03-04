@@ -1,12 +1,12 @@
 .root {
-  background: Canvas;
+  background: transparent;
   border-radius: 0;
   box-shadow: none;
   display: grid;
-  gap: 16px;
+  gap: 14px;
   margin: 0 auto;
-  max-width: 36rem;
-  padding: 24px 16px 20px;
+  max-width: 40rem;
+  padding: 18px 14px 18px;
 }
 
 .header {
@@ -30,19 +30,19 @@
 }
 
 .settingsOptions {
-  background: var(--bg-primary);
+  background: transparent;
   display: grid;
-  gap: 24px;
+  gap: 20px;
   border-radius: 0;
   box-shadow: none;
-  padding: 16px;
+  padding: 0;
 }
 
 .panel {
   border-top: 1px solid var(--border);
   display: grid;
   gap: 8px;
-  padding-top: 16px;
+  padding-top: 14px;
 }
 
 .panel:first-child {
@@ -53,7 +53,7 @@
 .themeModeGroup {
   display: grid;
   gap: 12px;
-  padding: 0 10px;
+  padding: 0;
 }
 
 .themeModeOption {
@@ -73,8 +73,8 @@
 }
 
 .themeModeOptionSelected {
-  background: var(--accent-soft);
-  border-color: var(--border);
+  background: transparent;
+  border-color: var(--border-strong);
 }
 
 .themeModeOptionSelected .themeModeOptionLabel {
@@ -187,14 +187,14 @@
 }
 
 .linkButton {
-  background: var(--bg-secondary);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
   display: inline-block;
   font-size: var(--text-sm);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-normal);
   min-height: 32px;
   padding: 6px 10px;
   text-align: left;
@@ -207,7 +207,7 @@
 
 a.linkButton:hover,
 button.linkButton:hover:enabled {
-  background: var(--hover-surface);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
 }
 
@@ -221,10 +221,10 @@ button.linkButton:hover:enabled {
 }
 
 .saveButton {
-  background: var(--accent);
-  border: 1px solid var(--border);
+  background: transparent;
+  border: 1px solid var(--border-strong);
   border-radius: 0;
-  color: ButtonText;
+  color: var(--accent);
   cursor: pointer;
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
@@ -237,7 +237,7 @@ button.linkButton:hover:enabled {
 }
 
 .saveButton:hover:enabled {
-  background: var(--hover-surface);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
 }
 
@@ -252,8 +252,8 @@ button.linkButton:hover:enabled {
 }
 
 .saveButton:disabled:hover {
-  background: var(--accent);
-  border-color: var(--border);
+  background: transparent;
+  border-color: var(--border-strong);
 }
 
 .compactButton {
@@ -305,7 +305,7 @@ button.linkButton:hover:enabled {
 }
 
 .importSummary {
-  background: var(--bg-secondary);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 0;
   display: grid;
@@ -315,7 +315,7 @@ button.linkButton:hover:enabled {
 
 /* Import Preview Styles */
 .importPreview {
-  background: var(--bg-secondary);
+  background: transparent;
   display: grid;
   gap: 12px;
   padding: 12px;
@@ -368,7 +368,7 @@ button.linkButton:hover:enabled {
 }
 
 .importPreviewList {
-  background: var(--bg-primary);
+  background: transparent;
   display: grid;
   gap: 8px;
   max-height: 300px;
@@ -379,7 +379,7 @@ button.linkButton:hover:enabled {
 }
 
 .importPreviewEntry {
-  background: var(--bg-secondary);
+  background: transparent;
   border: 1px solid var(--border);
   display: grid;
   gap: 4px;
@@ -423,7 +423,7 @@ button.linkButton:hover:enabled {
 }
 
 .importPreviewFolder {
-  background: var(--bg-tertiary);
+  background: transparent;
   border: 1px solid var(--border);
   display: inline-block;
   padding: 2px 6px;
@@ -432,7 +432,7 @@ button.linkButton:hover:enabled {
 }
 
 .importPreviewFolderChange {
-  background: var(--accent-soft);
+  background: transparent;
   border-color: var(--border);
   color: var(--accent);
 }
@@ -498,7 +498,7 @@ button.linkButton:hover:enabled {
 }
 
 .exportFormatOption {
-  background: var(--bg-primary);
+  background: transparent;
   border: 1px solid;
   border-color: var(--border);
   border-radius: 0;
@@ -513,7 +513,7 @@ button.linkButton:hover:enabled {
 }
 
 .exportFormatOption:hover {
-  background: var(--hover-surface);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
 }
 
@@ -528,7 +528,7 @@ button.linkButton:hover:enabled {
 }
 
 .exportFormatOption:disabled:hover {
-  background: var(--bg-primary);
+  background: transparent;
   border-color: var(--border);
 }
 
@@ -543,7 +543,7 @@ button.linkButton:hover:enabled {
 }
 
 .dropZone {
-  background: var(--bg-secondary);
+  background: transparent;
   border: 2px dashed var(--border-strong);
   border-radius: 0;
   padding: 20px;
@@ -555,12 +555,12 @@ button.linkButton:hover:enabled {
 }
 
 .dropZone:hover {
-  background: var(--hover-surface);
+  background: var(--accent-soft);
   border-color: var(--accent);
 }
 
 .dropZoneDragOver {
-  background: var(--accent-soft);
+  background: transparent;
   border-color: var(--accent);
 }
 
@@ -574,7 +574,7 @@ button.linkButton:hover:enabled {
 }
 
 .progressBarContainer {
-  background: var(--bg-tertiary);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 0;
   height: 8px;
@@ -614,7 +614,7 @@ button.linkButton:hover:enabled {
 }
 
 .doneButton {
-  background: var(--bg-secondary);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
@@ -629,7 +629,7 @@ button.linkButton:hover:enabled {
 }
 
 .doneButton:hover {
-  background: var(--hover-surface);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
 }
 
@@ -647,7 +647,7 @@ button.linkButton:hover:enabled {
 
 .shortcutsToggle {
   align-items: center;
-  background: var(--bg-secondary);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
@@ -665,7 +665,7 @@ button.linkButton:hover:enabled {
 }
 
 .shortcutsToggle:hover {
-  background: var(--hover-surface);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
 }
 
@@ -675,7 +675,7 @@ button.linkButton:hover:enabled {
 }
 
 .shortcutsPanelContent {
-  background: var(--bg-secondary);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 0;
   display: grid;
@@ -713,7 +713,7 @@ button.linkButton:hover:enabled {
 }
 
 .shortcutsPanelKey {
-  background: var(--bg-tertiary);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
@@ -734,7 +734,7 @@ button.linkButton:hover:enabled {
 
 .owlToggle {
   align-items: center;
-  background: var(--bg-secondary);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
@@ -751,7 +751,7 @@ button.linkButton:hover:enabled {
 }
 
 .owlToggle:hover {
-  background: var(--hover-surface);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
 }
 
@@ -765,7 +765,7 @@ button.linkButton:hover:enabled {
 }
 
 .owlToggle:disabled:hover {
-  background: var(--bg-secondary);
+  background: transparent;
   border-color: var(--border);
 }
 

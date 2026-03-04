@@ -1,13 +1,14 @@
 .row {
   background: transparent;
-  border: 1px solid transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border);
   border-left: 2px solid transparent;
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
   display: grid;
-  gap: 4px;
-  padding: 12px;
+  gap: 3px;
+  padding: 10px 12px 9px;
   text-align: left;
   transition:
     background-color var(--transition-control),
@@ -22,14 +23,12 @@
 }
 
 .row:hover {
-  background: var(--bg-secondary);
-  border-color: var(--border);
+  background: var(--accent-soft);
 }
 
 .rowSelected {
   background: transparent;
-  border-color: transparent;
-  border-left-color: transparent;
+  border-left-color: var(--accent);
 }
 
 .rowSelected .title {

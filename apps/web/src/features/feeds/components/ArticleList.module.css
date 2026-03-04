@@ -1,5 +1,5 @@
 .root {
-  background: var(--bg-primary);
+  background: transparent;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -7,12 +7,12 @@
 }
 
 .searchBar {
-  background: Canvas;
+  background: transparent;
   border-bottom: 1px solid var(--border);
   box-shadow: none;
   display: grid;
   gap: 6px;
-  padding: 8px 10px;
+  padding: 6px 10px;
   position: sticky;
   top: 0;
   z-index: 2;
@@ -38,13 +38,13 @@
 }
 
 .searchInput {
-  background: var(--bg-primary);
+  background: Field;
   border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
   font-size: var(--text-sm);
-  min-height: 34px;
-  padding: 6px 30px 6px 28px;
+  min-height: 32px;
+  padding: 5px 30px 5px 28px;
   transition:
     border-color var(--transition-control),
     box-shadow var(--transition-control),
@@ -64,8 +64,8 @@
 
 .clearButton {
   align-items: center;
-  background: var(--bg-tertiary);
-  border: 1px solid transparent;
+  background: transparent;
+  border: 0;
   border-radius: 0;
   color: var(--text-secondary);
   cursor: pointer;
@@ -88,8 +88,7 @@
 }
 
 .clearButton:hover:not(:disabled) {
-  background: var(--bg-tertiary);
-  border-color: var(--border);
+  background: var(--accent-soft);
   color: var(--text-primary);
 }
 
@@ -106,14 +105,13 @@
 }
 
 .markAllReadBar {
-  border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: center;
-  padding: 6px 10px;
+  padding: 4px 10px;
 }
 
 .markAllReadButton {
-  background: var(--bg-secondary);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
@@ -132,16 +130,15 @@
 }
 
 .markAllReadButton:hover {
-  background: var(--hover-surface);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
 }
 
 .statusMessage {
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
+  background: transparent;
   color: var(--text-secondary);
   font-size: var(--text-sm);
-  padding: 10px;
+  padding: 6px 10px;
 }
 
 .emptyWrap {
@@ -163,11 +160,10 @@
 }
 
 .paginationStatus {
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border);
+  background: transparent;
   display: grid;
   gap: 8px;
-  padding: 10px;
+  padding: 8px 10px;
 }
 
 .paginationHint {
@@ -194,7 +190,7 @@
 }
 
 .paginationRetry {
-  background: var(--bg-primary);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
@@ -213,7 +209,7 @@
 }
 
 .paginationRetry:hover:not(:disabled) {
-  background: var(--hover-surface);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
 }
 

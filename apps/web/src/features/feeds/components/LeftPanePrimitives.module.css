@@ -1,7 +1,7 @@
 .tokenScope {
-  --lp-row-height: 36px;
-  --lp-pad-x: 10px;
-  --lp-pad-y: 8px;
+  --lp-row-height: 34px;
+  --lp-pad-x: 8px;
+  --lp-pad-y: 6px;
   --lp-gap: 6px;
   --lp-border: var(--border);
   --lp-surface-0: var(--bg-primary);
@@ -18,7 +18,6 @@
   align-items: center;
   background: transparent;
   border: 1px solid transparent;
-  border-left: 2px solid transparent;
   border-radius: 0;
   color: var(--lp-text-main);
   cursor: pointer;
@@ -40,7 +39,8 @@
 }
 
 .row:hover {
-  background: var(--lp-surface-hover);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .rowStrong {
@@ -55,9 +55,10 @@
 
 .rowActive {
   background: transparent;
-  border-left-color: transparent;
   border-color: transparent;
   color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .rowCount {
@@ -67,7 +68,7 @@
 
 .toolbarButton {
   align-items: center;
-  background: var(--bg-secondary);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
@@ -78,8 +79,8 @@
   font-weight: var(--weight-normal);
   gap: 4px;
   justify-content: center;
-  min-height: 30px;
-  padding: 4px 8px;
+  min-height: 28px;
+  padding: 3px 8px;
   transition:
     background-color var(--transition-control),
     border-color var(--transition-control),
@@ -98,18 +99,19 @@
 }
 
 .toolbarButton:hover:not(:disabled) {
-  background: var(--hover-surface);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
 }
 
 .toolbarButtonPrimary {
-  background: var(--accent-soft);
-  border-color: var(--border);
+  background: transparent;
+  border-color: var(--border-strong);
   color: var(--accent);
+  font-weight: var(--weight-semibold);
 }
 
 .toolbarButtonSecondary {
-  background: var(--bg-primary);
+  background: transparent;
 }
 
 .toolbarButtonMuted {
@@ -118,15 +120,15 @@
 
 .iconButton {
   align-items: center;
-  background: var(--bg-secondary);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
   display: flex;
   justify-content: center;
-  min-height: 40px;
-  min-width: 40px;
+  min-height: 34px;
+  min-width: 34px;
   padding: 0 6px;
   transition:
     background-color var(--transition-control),
@@ -144,12 +146,12 @@
 }
 
 .iconButton:hover:not(:disabled) {
-  background: var(--hover-surface);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
 }
 
 .iconButtonSurface {
-  background: var(--bg-primary);
+  background: transparent;
   box-shadow: none;
 }
 
@@ -162,8 +164,8 @@
   cursor: pointer;
   display: flex;
   justify-content: center;
-  min-height: 40px;
-  min-width: 40px;
+  min-height: 34px;
+  min-width: 34px;
   padding: 0 4px;
   transition:
     background-color var(--transition-control),
@@ -176,24 +178,24 @@
 }
 
 .treeToggle:hover {
-  background: var(--hover-surface);
+  background: var(--accent-soft);
   color: var(--text-primary);
 }
 
 .panel {
-  background: var(--bg-primary);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 0;
   box-shadow: none;
 }
 
 .input {
-  background: var(--bg-primary);
+  background: Field;
   border: 1px solid var(--border);
   border-radius: 0;
   font-size: var(--text-sm);
-  min-height: 36px;
-  padding: 6px 8px;
+  min-height: 34px;
+  padding: 5px 8px;
   transition:
     border-color var(--transition-control),
     box-shadow var(--transition-control);
@@ -216,13 +218,13 @@
 }
 
 .button {
-  background: var(--bg-secondary);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
   font-size: var(--text-sm);
-  min-height: 32px;
+  min-height: 30px;
   padding: 4px 10px;
   transition:
     background-color var(--transition-control),
@@ -242,7 +244,7 @@
 }
 
 .button:hover:not(:disabled) {
-  background: var(--hover-surface);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
 }
 
@@ -253,14 +255,14 @@
 }
 
 .buttonDanger {
-  background: var(--danger-bg);
+  background: transparent;
   border-color: var(--danger-border);
   color: var(--danger-text);
 }
 
 .menu {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-strong);
+  background: Canvas;
+  border: 1px solid var(--border);
   border-radius: 0;
   box-shadow: none;
   display: grid;
@@ -298,13 +300,21 @@
 }
 
 .menuItem:hover:not(:disabled) {
-  background: var(--hover-surface);
+  background: var(--accent-soft);
   border-color: var(--border);
 }
 
+.menuItemDanger {
+  color: var(--danger-text);
+}
+
+.menuItemCancel {
+  color: var(--text-secondary);
+}
+
 .popover {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-strong);
+  background: Canvas;
+  border: 1px solid var(--border);
   border-radius: 0;
   box-shadow: none;
   min-width: 204px;
@@ -328,13 +338,13 @@
 }
 
 .mobileSheet {
-  background: var(--bg-primary);
+  background: Canvas;
   border: 1px solid var(--border);
   border-bottom: 0;
   border-left: 0;
   border-right: 0;
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
   box-shadow: none;
   bottom: 0;
   left: 0;
@@ -359,8 +369,8 @@
 }
 
 .dialog {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-strong);
+  background: Canvas;
+  border: 1px solid var(--border);
   border-radius: 0;
   box-shadow: none;
   display: grid;

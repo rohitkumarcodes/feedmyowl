@@ -1,5 +1,5 @@
 .shell {
-  background: Canvas;
+  background: transparent;
   display: grid;
   grid-template-rows: auto 1fr;
   min-height: 100vh;
@@ -10,7 +10,7 @@
   align-items: flex-end;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   margin-left: auto;
   margin-right: max(12px, calc(env(safe-area-inset-right) + 8px));
   padding-top: max(8px, env(safe-area-inset-top));
@@ -22,7 +22,7 @@
 
 .optionsTrigger {
   align-items: center;
-  background: var(--bg-primary);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 0;
   box-shadow: none;
@@ -45,19 +45,19 @@
 }
 
 .optionsTrigger:hover {
-  background: var(--hover-surface);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
   color: var(--text-primary);
 }
 
 .optionsPopover {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-strong);
+  background: Canvas;
+  border: 1px solid var(--border);
   border-radius: 0;
   box-shadow: none;
   max-width: calc(100vw - 24px);
   opacity: 0;
-  padding: 6px;
+  padding: 4px;
   pointer-events: none;
   position: absolute;
   right: 0;
@@ -116,8 +116,8 @@
   gap: 8px;
   justify-content: flex-start;
   line-height: 1.2;
-  min-height: 32px;
-  padding: 6px 8px;
+  min-height: 30px;
+  padding: 5px 8px;
   text-decoration: none;
   transition:
     background-color var(--transition-control),
@@ -138,7 +138,7 @@
 }
 
 .optionsActionButton:hover {
-  background: var(--hover-surface);
+  background: var(--accent-soft);
   border-color: var(--border);
   color: var(--text-primary);
 }

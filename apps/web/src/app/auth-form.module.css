@@ -1,10 +1,10 @@
 .form {
   margin: 0;
-  padding: 18px 16px 16px;
+  padding: 14px;
 }
 
 .fieldGroup {
-  margin: 0 0 12px;
+  margin: 0 0 10px;
 }
 
 .labelRow {
@@ -44,7 +44,7 @@
 }
 
 .input {
-  background: var(--bg-primary);
+  background: Field;
   border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
@@ -68,8 +68,9 @@
 }
 
 .error {
-  background: var(--danger-bg);
-  border: 1px solid var(--danger-border);
+  background: transparent;
+  border: 0;
+  border-left: 2px solid var(--danger-border);
   border-radius: 0;
   color: var(--danger-text);
   margin: 0 0 10px;
@@ -77,8 +78,9 @@
 }
 
 .info {
-  background: var(--accent-soft);
-  border: 1px solid var(--border);
+  background: transparent;
+  border: 0;
+  border-left: 2px solid var(--accent);
   border-radius: 0;
   color: var(--accent);
   margin: 0 0 10px;
@@ -86,10 +88,10 @@
 }
 
 .submitButton {
-  background: ButtonFace;
-  border: 1px solid var(--border);
+  background: transparent;
+  border: 1px solid var(--border-strong);
   border-radius: 0;
-  color: ButtonText;
+  color: var(--accent);
   cursor: pointer;
   font-weight: var(--weight-semibold);
   margin-top: 4px;
@@ -102,7 +104,7 @@
 }
 
 .submitButton:hover:enabled {
-  background: var(--hover-surface);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
 }
 
@@ -112,10 +114,10 @@
 }
 
 .footer {
-  background: var(--bg-secondary);
+  background: transparent;
   border-top: 1px solid var(--border);
   margin: 0;
-  padding: 12px 16px;
+  padding: 10px 14px;
   text-align: center;
 }
 

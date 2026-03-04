@@ -5,20 +5,20 @@
   --bg-tertiary: Canvas;
   --bg-selected: Canvas;
   --text-primary: CanvasText;
-  --text-secondary: CanvasText;
-  --text-muted: CanvasText;
+  --text-secondary: GrayText;
+  --text-muted: GrayText;
   --border: ButtonBorder;
   --border-strong: ButtonBorder;
   --accent: LinkText;
-  --accent-soft: transparent;
+  --accent-soft: rgba(0, 0, 0, 0.04);
   --danger-bg: Canvas;
   --danger-border: ButtonBorder;
   --danger-text: CanvasText;
   --shadow-soft: none;
 
   --radius-control: 0;
-  --hover-surface: Canvas;
-  --transition-control: 0s;
+  --hover-surface: rgba(0, 0, 0, 0.04);
+  --transition-control: 0.12s;
 
   --sidebar-pane-width: 240px;
   --sidebar-pane-width-compact: 220px;
@@ -81,7 +81,7 @@ textarea {
 }
 
 button {
-  background: ButtonFace;
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 0;
   cursor: pointer;
@@ -90,10 +90,6 @@ button {
 button:hover:not(:disabled) {
   background: var(--hover-surface);
   border-color: var(--border-strong);
-}
-
-button:active:not(:disabled) {
-  transform: translateY(1px);
 }
 
 button:disabled,

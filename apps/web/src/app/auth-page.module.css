@@ -1,25 +1,26 @@
 .root {
   align-items: center;
-  background: Canvas;
+  background: transparent;
   display: grid;
   min-height: 100vh;
-  padding: 20px;
+  padding: 16px;
 }
 
 .frame {
-  background: var(--bg-primary);
+  background: transparent;
+  border: 1px solid var(--border);
   border-radius: 0;
   box-shadow: none;
-  margin: 24px auto;
+  margin: 16px auto;
   max-width: 420px;
   overflow: hidden;
   width: 100%;
 }
 
 .header {
-  background: Canvas;
+  background: transparent;
   border-bottom: 1px solid var(--border);
-  padding: 14px 16px 12px;
+  padding: 12px 14px 10px;
 }
 
 .title {
@@ -38,11 +39,11 @@
 
 @media (max-width: 640px) {
   .root {
-    padding: 12px;
+    padding: 10px;
   }
 
   .frame {
-    margin: 12px auto;
+    margin: 10px auto;
     max-width: 100%;
   }
 }
