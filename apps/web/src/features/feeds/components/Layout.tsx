@@ -122,40 +122,32 @@ export function Layout({
     ? `${styles.listPane} ${styles.listPaneCollapsed}`
     : styles.listPane;
 
-  /* Position the list expand tab at the left edge of the reader pane. */
-  const listExpandClassName = sidebarCollapsed
-    ? `${styles.listExpandToggle} ${styles.listExpandToggleSidebarCollapsed}`
-    : styles.listExpandToggle;
-
   return (
     <div className={`${styles.root} ${primitiveStyles.tokenScope}`}>
-      {/* Sidebar expand tab — bottom-left, visible when sidebar is collapsed */}
-      {sidebarCollapsed ? (
-        <div className={styles.sidebarExpandToggle}>
-          <button
-            type="button"
-            className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.paneToggleButton} ${styles.expandButton}`}
-            onClick={onToggleSidebar}
-            aria-label="Expand sidebar"
-            title="Expand sidebar"
-          >
-            <PaneToggleIcon variant="sidebar" />
-          </button>
-        </div>
-      ) : null}
-
-      {/* List expand tab — bottom, at the left edge of reader pane */}
-      {listCollapsed ? (
-        <div className={listExpandClassName}>
-          <button
-            type="button"
-            className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.paneToggleButton} ${styles.expandButton}`}
-            onClick={onToggleList}
-            aria-label="Expand article list"
-            title="Expand article list"
-          >
-            <PaneToggleIcon variant="list" />
-          </button>
+      {sidebarCollapsed || listCollapsed ? (
+        <div className={styles.desktopControlsRow}>
+          {sidebarCollapsed ? (
+            <button
+              type="button"
+              className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.paneToggleButton} ${styles.expandButton}`}
+              onClick={onToggleSidebar}
+              aria-label="Expand sidebar"
+              title="Expand sidebar"
+            >
+              <PaneToggleIcon variant="sidebar" />
+            </button>
+          ) : null}
+          {listCollapsed ? (
+            <button
+              type="button"
+              className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.paneToggleButton} ${styles.expandButton}`}
+              onClick={onToggleList}
+              aria-label="Expand article list"
+              title="Expand article list"
+            >
+              <PaneToggleIcon variant="list" />
+            </button>
+          ) : null}
         </div>
       ) : null}
 
@@ -166,17 +158,19 @@ export function Layout({
 
         <section className={listPaneClassName} aria-label="Article list" role="region">
           <div className={styles.listPaneContent}>{articleList}</div>
-          <div className={styles.listCollapseToggle}>
-            <button
-              type="button"
-              className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.paneToggleButton}`}
-              onClick={onCollapseList}
-              aria-label="Collapse article list"
-              title="Collapse article list"
-            >
-              <PaneToggleIcon variant="list" />
-            </button>
-          </div>
+          {!listCollapsed ? (
+            <div className={styles.listCollapseToggle}>
+              <button
+                type="button"
+                className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.paneToggleButton}`}
+                onClick={onCollapseList}
+                aria-label="Collapse article list"
+                title="Collapse article list"
+              >
+                <PaneToggleIcon variant="list" />
+              </button>
+            </div>
+          ) : null}
         </section>
 
         <section className={styles.readerPane} aria-label="Article reader" role="main">

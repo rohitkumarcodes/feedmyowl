@@ -20,10 +20,8 @@
 
 .feedName {
   color: var(--text-muted);
-  letter-spacing: 0.05em;
   font-size: var(--text-xs);
   margin: 0;
-  text-transform: uppercase;
 }
 
 .saveButton {

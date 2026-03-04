@@ -10,7 +10,6 @@
 .panel {
   background: var(--bg-primary);
   border: 1px solid var(--border-strong);
-  border-left: 4px solid var(--danger-border);
   border-radius: 0;
   box-shadow: none;
   display: grid;

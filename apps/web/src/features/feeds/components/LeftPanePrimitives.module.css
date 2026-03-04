@@ -54,9 +54,10 @@
 }
 
 .rowActive {
-  background: var(--lp-surface-active);
-  border-left-color: var(--lp-focus);
-  border-color: var(--border);
+  background: transparent;
+  border-left-color: transparent;
+  border-color: transparent;
+  color: var(--accent);
 }
 
 .rowCount {

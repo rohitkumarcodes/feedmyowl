@@ -8,7 +8,6 @@
 
 .frame {
   background: var(--bg-primary);
-  border: 1px solid var(--border-strong);
   border-radius: 0;
   box-shadow: none;
   margin: 24px auto;

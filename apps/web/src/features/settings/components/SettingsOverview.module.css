@@ -1,6 +1,5 @@
 .root {
   background: Canvas;
-  border: 1px solid var(--border);
   border-radius: 0;
   box-shadow: none;
   display: grid;
@@ -34,7 +33,6 @@
   background: var(--bg-primary);
   display: grid;
   gap: 24px;
-  border: 1px solid var(--border);
   border-radius: 0;
   box-shadow: none;
   padding: 16px;

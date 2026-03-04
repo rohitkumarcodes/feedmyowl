@@ -12,22 +12,7 @@
 }
 
 .rowWrapActive {
-  background: var(--accent-soft);
-}
-
-.rowWrapActive::before {
-  background: var(--accent);
-  content: "";
-  bottom: 0;
-  left: 0;
-  position: absolute;
-  top: 0;
-  width: 3px;
-  z-index: 1;
-}
-
-.rowWrapActive .row {
-  border-left-color: transparent;
+  background: transparent;
 }
 
 .row {
@@ -64,12 +49,7 @@
 
 /* Hash prefix rendered before each feed name (e.g. # The Verge). */
 .feedHashPrefix {
-  color: var(--text-muted);
-  flex-shrink: 0;
-  font-size: var(--text-xs);
-  margin-right: 0;
-  opacity: 0.7;
-  user-select: none;
+  display: none;
 }
 
 .label {
@@ -86,6 +66,12 @@
 .rowWrapActive .label {
   color: var(--accent);
   opacity: 1;
+}
+
+.rowWrapActive .label {
+  font-weight: var(--weight-semibold);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* Warning dot shown when the last feed fetch failed. */

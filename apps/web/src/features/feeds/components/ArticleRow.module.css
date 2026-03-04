@@ -27,9 +27,14 @@
 }
 
 .rowSelected {
-  background: var(--accent-soft);
-  border-color: var(--border);
-  border-left-color: var(--accent);
+  background: transparent;
+  border-color: transparent;
+  border-left-color: transparent;
+}
+
+.rowSelected .title {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .title {
@@ -56,9 +61,11 @@
 }
 
 .match {
-  background: var(--accent-soft);
+  background: transparent;
   border-radius: 0;
-  color: var(--accent);
+  color: inherit;
   font-weight: var(--weight-semibold);
-  padding: 0 1px;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
