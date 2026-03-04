@@ -54,7 +54,7 @@
 }
 
 .toolbarIconSpinning {
-  animation: toolbarSpin 700ms linear infinite;
+  animation: none;
 }
 
 @keyframes toolbarSpin {
@@ -181,25 +181,20 @@
 
 .sidebarMessageAction {
   border: 1px solid;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   cursor: pointer;
   font-size: var(--text-xs);
   padding: 2px 6px;
-  transition:
-    border-color var(--transition-control),
-    background-color var(--transition-control),
-    color var(--transition-control);
+  transition: none;
 }
 
 .sidebarMessageDismiss {
   border: 0;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   cursor: pointer;
   font-size: var(--text-xs);
   padding: 0;
-  transition:
-    background-color var(--transition-control),
-    color var(--transition-control);
+  transition: none;
 }
 
 .sidebarMessageDismiss:hover {
@@ -225,7 +220,7 @@
 
 .folderFeedsShutter {
   overflow: hidden;
-  transition: height 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: none;
   will-change: height;
 }
 
@@ -241,7 +236,7 @@
     minmax(0, 1fr)
     var(--sidebar-tree-actions-col);
   position: relative;
-  transition: background-color var(--transition-control);
+  transition: none;
 }
 
 .folderRowWrap:hover:not(.folderRowWrapActive) {
@@ -483,7 +478,7 @@
   max-height: 200px;
   overflow-y: auto;
   border: 1px solid;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   margin-bottom: 12px;
 }
 
@@ -543,12 +538,10 @@
   gap: 12px;
   padding: 12px;
   border: 2px solid;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   cursor: pointer;
   text-align: left;
-  transition:
-    border-color var(--transition-control),
-    background-color var(--transition-control);
+  transition: none;
 }
 
 .deleteDialogOptionCard:hover {

@@ -29,7 +29,7 @@
   display: grid;
   gap: 24px;
   border: 1px solid;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   padding: 16px;
 }
 
@@ -161,7 +161,7 @@
 
 .linkButton {
   border: 0;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   cursor: pointer;
   display: inline-block;
   font-size: var(--text-sm);
@@ -170,10 +170,7 @@
   padding: 6px 10px;
   text-align: left;
   text-decoration: none;
-  transition:
-    border-color var(--transition-control),
-    background-color var(--transition-control),
-    color var(--transition-control);
+  transition: none;
 }
 
 a.linkButton:hover,
@@ -191,16 +188,13 @@ button.linkButton:hover:enabled {
 
 .saveButton {
   border: 1px solid;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   cursor: pointer;
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
   min-height: 32px;
   padding: 6px 14px;
-  transition:
-    border-color var(--transition-control),
-    background-color var(--transition-control),
-    color var(--transition-control);
+  transition: none;
 }
 
 .saveButton:hover:enabled {
@@ -279,7 +273,7 @@ button.linkButton:hover:enabled {
   gap: 12px;
   padding: 12px;
   border: 1px solid;
-  border-radius: 6px;
+  border-radius: 0;
 }
 
 .importPreviewHeader {
@@ -328,7 +322,7 @@ button.linkButton:hover:enabled {
   max-height: 300px;
   overflow-y: auto;
   border: 1px solid;
-  border-radius: 4px;
+  border-radius: 0;
   padding: 8px;
 }
 
@@ -336,7 +330,7 @@ button.linkButton:hover:enabled {
   display: grid;
   gap: 4px;
   padding: 8px;
-  border-radius: 4px;
+  border-radius: 0;
   font-size: var(--text-sm);
 }
 
@@ -373,7 +367,7 @@ button.linkButton:hover:enabled {
 .importPreviewFolder {
   display: inline-block;
   padding: 2px 6px;
-  border-radius: 3px;
+  border-radius: 0;
   font-size: var(--text-xs);
 }
 
@@ -440,15 +434,13 @@ button.linkButton:hover:enabled {
 
 .exportFormatOption {
   border: 1px solid;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   cursor: pointer;
   display: grid;
   gap: 2px;
   padding: 10px 14px;
   text-align: left;
-  transition:
-    border-color var(--transition-control),
-    background-color var(--transition-control);
+  transition: none;
 }
 
 .exportFormatOption:hover {
@@ -478,13 +470,11 @@ button.linkButton:hover:enabled {
 
 .dropZone {
   border: 2px dashed;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   padding: 20px;
   text-align: center;
   cursor: pointer;
-  transition:
-    border-color var(--transition-control),
-    background-color var(--transition-control);
+  transition: none;
 }
 
 .dropZone:hover {
@@ -502,7 +492,7 @@ button.linkButton:hover:enabled {
 }
 
 .progressBarContainer {
-  border-radius: 4px;
+  border-radius: 0;
   height: 8px;
   overflow: hidden;
   width: 100%;
@@ -510,7 +500,7 @@ button.linkButton:hover:enabled {
 
 .progressBar {
   height: 100%;
-  transition: width 200ms ease;
+  transition: none;
 }
 
 .importSummaryList {
@@ -537,13 +527,13 @@ button.linkButton:hover:enabled {
 
 .doneButton {
   border: 0;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   cursor: pointer;
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
   min-height: 32px;
   padding: 6px 14px;
-  transition: opacity var(--transition-control);
+  transition: none;
 }
 
 .doneButton:hover {
@@ -565,7 +555,7 @@ button.linkButton:hover:enabled {
 .shortcutsToggle {
   align-items: center;
   border: 0;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   cursor: pointer;
   display: inline-flex;
   gap: 8px;
@@ -573,10 +563,7 @@ button.linkButton:hover:enabled {
   min-height: 32px;
   padding: 6px 10px;
   text-align: left;
-  transition:
-    border-color var(--transition-control),
-    background-color var(--transition-control),
-    color var(--transition-control);
+  transition: none;
   width: 100%;
 }
 
@@ -633,8 +620,6 @@ button.linkButton:hover:enabled {
   text-align: center;
 }
 
-:global(html[data-theme="dark"]) .shortcutsPanelKey {
-}
 
 .shortcutsPanelDescription {
   font-size: var(--text-sm);
@@ -645,7 +630,7 @@ button.linkButton:hover:enabled {
 .owlToggle {
   align-items: center;
   border: 0;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   cursor: pointer;
   display: inline-flex;
   gap: 8px;
@@ -653,10 +638,7 @@ button.linkButton:hover:enabled {
   min-height: 32px;
   padding: 6px 10px;
   text-align: left;
-  transition:
-    border-color var(--transition-control),
-    background-color var(--transition-control),
-    color var(--transition-control);
+  transition: none;
 }
 
 .owlToggle:hover {
@@ -684,7 +666,7 @@ button.linkButton:hover:enabled {
 
 .owlOptionsShutter {
   overflow: hidden;
-  transition: height 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: none;
   will-change: height;
 }
 

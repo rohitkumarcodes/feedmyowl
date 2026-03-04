@@ -1,16 +1,13 @@
 .row {
-  border: 0;
+  background: transparent;
+  border: 1px solid transparent;
   border-left: 2px solid transparent;
   cursor: pointer;
   display: grid;
   gap: 4px;
-  padding: 16px 14px;
+  padding: 12px;
   text-align: left;
-  transition: background-color var(--transition-control);
   width: 100%;
-}
-
-.row:hover {
 }
 
 .row:focus-visible {
@@ -23,7 +20,6 @@
 }
 
 .title {
-  font-family: var(--font-sans);
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
   line-height: var(--leading-tight);
@@ -31,12 +27,10 @@
 
 .titleRead {
   font-weight: var(--weight-normal);
-  opacity: 0.72;
 }
 
 .meta {
   font-size: var(--text-sm);
-  font-variant-numeric: tabular-nums;
   line-height: var(--leading-tight);
 }
 
@@ -46,6 +40,6 @@
 }
 
 .match {
+  font-weight: var(--weight-semibold);
   padding: 0 1px;
 }
-

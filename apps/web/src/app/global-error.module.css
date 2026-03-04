@@ -35,16 +35,13 @@
 
 .button {
   border: 1px solid;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   cursor: pointer;
   font-size: var(--text-sm);
   justify-self: start;
   min-height: 32px;
   padding: 5px 10px;
-  transition:
-    border-color var(--transition-control),
-    background-color var(--transition-control),
-    color var(--transition-control);
+  transition: none;
 }
 
 .button:hover {

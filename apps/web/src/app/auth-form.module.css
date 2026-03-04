@@ -1,131 +1,88 @@
 .form {
   margin: 0;
-  padding: 18px 40px 20px;
+  padding: 16px;
 }
 
 .fieldGroup {
-  margin: 0 0 16px;
-  padding: 0;
+  margin: 0 0 12px;
 }
 
 .labelRow {
-  align-items: center;
-  column-gap: 6px;
+  align-items: baseline;
   display: flex;
+  gap: 8px;
   justify-content: space-between;
   margin-bottom: 4px;
-  margin-top: 0;
-  padding: 0;
 }
 
 .label {
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 20px;
-  margin: 0 0 4px;
   display: block;
+  font-size: 0.9375rem;
+  margin: 0 0 4px;
 }
 
 .actionLink {
-  border: none;
+  background: none;
+  border: 0;
+  color: inherit;
   cursor: pointer;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 0.875rem;
   padding: 0;
-  text-decoration: none;
-}
-
-.actionLink:hover {
   text-decoration: underline;
 }
 
 .inputWrapper {
   border: 1px solid;
-  border-radius: 4px;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
-}
-
-.inputWrapper:focus-within {
-  border: 1px solid;
 }
 
 .input {
-  border: none;
-  border-radius: 4px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   box-sizing: border-box;
-  font-size: 14px;
-  outline: none;
-  padding: 10px 12px;
+  padding: 8px;
   width: 100%;
 }
 
-.input::placeholder {
+.input:focus {
+  outline: 1px solid;
+  outline-offset: -1px;
 }
 
 .error {
-  font-size: 13px;
-  margin: 0 0 12px;
-  padding: 0;
+  color: var(--danger-text);
+  margin: 0 0 10px;
 }
 
 .info {
-  font-size: 13px;
-  margin: 0 0 12px;
-  padding: 0;
+  margin: 0 0 10px;
 }
 
 .submitButton {
-  background-image: none;
-  border: none;
-  border-radius: 4px;
+  background: transparent;
+  border: 1px solid;
   cursor: pointer;
-  font-size: 15px;
-  font-weight: 600;
-  padding: 12px;
-  text-transform: none;
-  transition: opacity 0.2s;
+  margin-top: 4px;
+  padding: 8px;
   width: 100%;
-  margin-top: 8px;
-}
-
-.submitButton:hover:not(:disabled) {
-  background-image: none;
-  opacity: 0.9;
-}
-
-.submitButton:active:not(:disabled) {
-  opacity: 0.8;
 }
 
 .submitButton:disabled {
-  opacity: 0.6;
   cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .footer {
-  margin: 4px 0 0;
-  padding: 12px 40px 20px;
+  border-top: 1px solid;
+  margin: 0;
+  padding: 12px 16px;
   text-align: center;
 }
 
 .footerText {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 0.9375rem;
 }
 
 .footerLink {
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
+  font-size: 0.9375rem;
 }
-
-.footerLink:hover {
-  text-decoration: underline;
-}
-

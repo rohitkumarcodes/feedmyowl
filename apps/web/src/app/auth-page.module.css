@@ -1,52 +1,43 @@
 .root {
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
   min-height: 100vh;
-  padding: 24px 16px;
-}
-
-.logoHeader {
-  padding: 32px 40px 22px;
-  text-align: center;
-}
-
-.owlLogo {
-  font-size: 38px;
-  font-weight: 700;
-  line-height: 1.1;
-  margin-bottom: 8px;
-}
-
-.appName {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  margin: 0;
-}
-
-.subtitle {
-  font-size: 14px;
-  margin: 8px 0 0;
+  padding: 20px;
 }
 
 .frame {
   border: 1px solid;
-  border-radius: 4px;
-  overflow: hidden;
-  width: min(100%, 420px);
+  margin: 24px auto;
+  max-width: 420px;
+}
+
+.logoHeader {
+  border-bottom: 1px solid;
+  padding: 16px;
+  text-align: center;
+}
+
+.owlLogo {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  margin-bottom: 8px;
+}
+
+.appName {
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.9375rem;
+  margin: 8px 0 0;
 }
 
 @media (max-width: 640px) {
   .root {
-    justify-content: flex-start;
-    padding-top: 72px;
+    padding: 12px;
   }
 
   .frame {
-    width: 100%;
+    margin: 12px auto;
+    max-width: 100%;
   }
 }
-
-

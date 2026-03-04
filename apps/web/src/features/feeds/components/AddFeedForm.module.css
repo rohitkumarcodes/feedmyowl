@@ -1,6 +1,6 @@
 .form {
   display: grid;
-  gap: 6px;
+  gap: 8px;
   margin-top: 4px;
   padding: 8px;
 }
@@ -12,28 +12,22 @@
 
 .label {
   font-size: var(--text-xs);
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  font-weight: var(--weight-semibold);
 }
 
 .actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   margin-top: 4px;
 }
 
-.folderFieldset {
-  border: 1px solid;
-  margin: 0;
-  min-width: 0;
-  padding: 6px;
-}
-
+.folderFieldset,
 .discoveryFieldset {
   border: 1px solid;
   margin: 0;
   min-width: 0;
-  padding: 6px;
+  padding: 8px;
 }
 
 .discoveryList {
@@ -80,6 +74,7 @@
 }
 
 .badgeRecommended {
+  font-weight: var(--weight-semibold);
 }
 
 .folderList {
@@ -106,18 +101,8 @@
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
-.inlineMessage {
-  font-size: var(--text-xs);
-}
-
-.inlineSuccessMessage {
-  font-size: var(--text-xs);
-}
-
-.inlineWarningMessage {
-  font-size: var(--text-xs);
-}
-
+.inlineSuccessMessage,
+.inlineWarningMessage,
 .inlineErrorMessage {
   font-size: var(--text-xs);
 }
@@ -154,4 +139,3 @@
     display: grid;
   }
 }
-

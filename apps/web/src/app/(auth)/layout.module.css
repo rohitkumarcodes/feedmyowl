@@ -3,89 +3,37 @@
   position: relative;
 }
 
-.shell[data-theme-mode="dark"] {
-  --bg-primary: #16181b;
-  --bg-secondary: #1d2024;
-  --bg-tertiary: #2a2f36;
-  --bg-selected: #2d2b45;
-  --text-primary: #e6e9ed;
-  --text-secondary: #c1c8d0;
-  --text-muted: #9aa3ae;
-  --border: #3b434d;
-  --accent: var(--brand-mid);
-  --danger-bg: rgb(220 88 88 / 20%);
-  --danger-border: #d27575;
-  --danger-text: #f2b7b7;
-  color-scheme: dark;
-}
-
-/* Server-rendered fallback for saved "system" theme before client bootstrap runs. */
-@media (prefers-color-scheme: dark) {
-  .shell[data-theme-mode="system"] {
-    --bg-primary: #16181b;
-    --bg-secondary: #1d2024;
-    --bg-tertiary: #2a2f36;
-    --bg-selected: #2d2b45;
-    --text-primary: #e6e9ed;
-    --text-secondary: #c1c8d0;
-    --text-muted: #9aa3ae;
-    --border: #3b434d;
-    --accent: var(--brand-mid);
-    --danger-bg: rgb(220 88 88 / 20%);
-    --danger-border: #d27575;
-    --danger-text: #f2b7b7;
-    color-scheme: dark;
-  }
-
-  .shell[data-theme-mode="system"] .brand {
-  }
-}
-
 .brandSlot {
-  /* Fixed brand slot; sidebar header reserve uses --sidebar-header-reserve to clear this block. */
   display: flex;
   justify-content: center;
   left: 0;
   position: fixed;
-  top: 18px;
+  top: 12px;
   width: var(--sidebar-pane-width);
   z-index: 40;
 }
 
 .brand {
-  align-items: center;
+  border: 1px solid;
   display: inline-flex;
   flex-direction: column;
-  font-weight: var(--weight-normal);
-  gap: 8px;
-  justify-content: center;
-  max-width: calc(100% - 32px);
-  padding: 6px 14px;
+  gap: 6px;
+  max-width: calc(100% - 24px);
+  padding: 8px 10px;
   text-align: center;
   text-decoration: none;
-  transition: color var(--transition-control);
-  width: fit-content;
 }
 
 .brandText {
-  font-size: 1.3125rem;
-  letter-spacing: 0.02em;
-  line-height: 1.1;
+  font-size: 1.125rem;
+  line-height: 1.2;
 }
 
 .brandOwl {
   font-family: var(--font-mono);
-  font-size: 1.4rem;
-  font-weight: var(--weight-normal);
-  letter-spacing: 0.01em;
+  font-size: 1rem;
   line-height: 1;
   white-space: nowrap;
-}
-
-.brand:hover {
-}
-
-.shell[data-theme-mode="dark"] .brand {
 }
 
 .brand:focus-visible {
@@ -93,43 +41,31 @@
   outline-offset: 2px;
 }
 
-/* Hide the brand logo when sidebar is collapsed.
-   The data attribute is set on <html> by FeedsWorkspace. */
 :global([data-sidebar-collapsed="true"]) .brandSlot {
   display: none;
 }
 
 .accountControls {
-  --options-trigger-size: 32px;
   align-items: flex-end;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   position: fixed;
-  right: max(20px, calc(env(safe-area-inset-right) + 12px));
-  top: 10px;
+  right: max(12px, calc(env(safe-area-inset-right) + 8px));
+  top: max(8px, env(safe-area-inset-top));
   z-index: 40;
 }
 
 .optionsTrigger {
   align-items: center;
+  background: transparent;
   border: 1px solid;
-  border-radius: var(--radius-control);
   cursor: pointer;
   display: inline-flex;
-  height: var(--options-trigger-size);
+  height: 32px;
   justify-content: center;
   padding: 0;
-  position: relative;
-  transition:
-    border-color var(--transition-control),
-    background-color var(--transition-control),
-    color var(--transition-control);
-  width: var(--options-trigger-size);
-  z-index: 2;
-}
-
-.optionsTrigger:hover {
+  width: 32px;
 }
 
 .optionsTrigger:focus-visible {
@@ -138,47 +74,31 @@
 }
 
 .optionsPopover {
-  display: grid;
-  gap: 0;
+  border: 1px solid;
   max-width: calc(100vw - 24px);
   opacity: 0;
-  overflow: auto;
-  padding: 0;
+  padding: 6px;
   pointer-events: none;
   position: absolute;
   right: 0;
-  top: calc(100% + 8px);
-  transform: translateY(-4px);
-  transform-origin: top right;
-  transition:
-    opacity 320ms ease,
-    transform 320ms ease,
-    visibility 320ms step-end;
+  top: calc(100% + 6px);
   visibility: hidden;
   width: min(214px, calc(100vw - 24px));
-  z-index: 1;
 }
 
 .optionsPopoverOpen {
   opacity: 1;
   pointer-events: auto;
-  transform: translateY(0);
-  transition:
-    opacity 320ms ease,
-    transform 320ms ease,
-    visibility 0s;
   visibility: visible;
 }
 
 .optionsActions {
   display: grid;
-  gap: 2px;
+  gap: 4px;
 }
 
 .optionsActionsBox {
-  border: 1px solid;
-  border-radius: var(--radius-control);
-  padding: 6px;
+  display: grid;
 }
 
 .optionsActionSlot {
@@ -207,20 +127,18 @@
 
 .optionsActionButton {
   align-items: center;
-  border: 0;
-  border-radius: var(--radius-control);
+  background: transparent;
+  border: 1px solid;
+  color: inherit;
   cursor: pointer;
   display: inline-flex;
   font-size: var(--text-sm);
   gap: 8px;
   justify-content: flex-start;
   line-height: 1.2;
-  min-height: 34px;
-  padding: 7px 10px;
+  min-height: 32px;
+  padding: 6px 8px;
   text-decoration: none;
-  transition:
-    background-color var(--transition-control),
-    color var(--transition-control);
   width: 100%;
 }
 
@@ -235,23 +153,9 @@
   outline-offset: 2px;
 }
 
-.optionsActionButton:hover {
-}
-
 @media (max-width: 1120px) {
   .brandSlot {
     width: var(--sidebar-pane-width-compact);
-  }
-}
-
-@media (max-width: 900px) {
-  .brandSlot {
-    top: 12px;
-  }
-
-  .accountControls {
-    right: max(14px, calc(env(safe-area-inset-right) + 8px));
-    top: 8px;
   }
 }
 
@@ -259,27 +163,4 @@
   .brandSlot {
     display: none;
   }
-
-  .accountControls {
-    gap: 6px;
-    right: max(12px, calc(env(safe-area-inset-right) + 8px));
-    top: max(8px, env(safe-area-inset-top));
-  }
-
-  .optionsPopover {
-    width: min(214px, calc(100vw - 24px));
-  }
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .optionsTrigger:hover,
-  .optionsActionButton:hover {
-    transition: none;
-  }
-
-  .optionsPopover,
-  .optionsPopoverOpen {
-    transition: none;
-  }
-}
-

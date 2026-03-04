@@ -105,16 +105,16 @@ export function AccountControls() {
                 afterSignOutUrl="/sign-in"
                 appearance={{
                   variables: {
-                    colorPrimary: "var(--accent)",
-                    colorBackground: "var(--bg-primary)",
-                    colorForeground: "var(--text-primary)",
-                    colorMutedForeground: "var(--text-secondary)",
-                    colorInput: "var(--bg-primary)",
-                    colorInputForeground: "var(--text-primary)",
-                    colorBorder: "var(--border)",
-                    fontFamily: "var(--font-sans)",
-                    fontSize: "0.9375rem",
-                    borderRadius: "var(--radius-control)",
+                    colorPrimary: "#000000",
+                    colorBackground: "#ffffff",
+                    colorForeground: "#111111",
+                    colorMutedForeground: "#444444",
+                    colorInput: "#ffffff",
+                    colorInputForeground: "#111111",
+                    colorBorder: "#9a9a9a",
+                    fontFamily: "sans-serif",
+                    fontSize: "1rem",
+                    borderRadius: "0",
                   },
                   elements: {
                     userButtonBox: styles.optionsClerkHiddenBox,

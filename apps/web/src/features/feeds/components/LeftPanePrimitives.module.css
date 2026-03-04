@@ -5,7 +5,7 @@
   --lp-gap: 6px;
   --lp-border: var(--border);
   --lp-surface-0: var(--bg-primary);
-  --lp-surface-1: var(--bg-primary);
+  --lp-surface-1: var(--bg-secondary);
   --lp-surface-hover: var(--hover-surface);
   --lp-surface-active: var(--bg-selected);
   --lp-text-main: var(--text-primary);
@@ -16,7 +16,8 @@
 
 .row {
   align-items: center;
-  border: 0;
+  background: transparent;
+  border: 1px solid transparent;
   border-left: 2px solid transparent;
   cursor: pointer;
   display: flex;
@@ -24,11 +25,7 @@
   min-height: var(--lp-row-height);
   padding: var(--lp-pad-y) var(--lp-pad-x);
   text-align: left;
-  transition: background-color var(--transition-control);
   width: 100%;
-}
-
-.row:hover {
 }
 
 .row:focus-visible {
@@ -57,8 +54,9 @@
 
 .toolbarButton {
   align-items: center;
+  background: transparent;
   border: 1px solid;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   cursor: pointer;
   display: inline-flex;
   flex: 0 0 auto;
@@ -68,14 +66,7 @@
   justify-content: center;
   min-height: 30px;
   padding: 4px 8px;
-  transition:
-    background-color var(--transition-control),
-    border-color var(--transition-control),
-    color var(--transition-control);
   white-space: nowrap;
-}
-
-.toolbarButton:hover:enabled {
 }
 
 .toolbarButton:focus-visible {
@@ -99,21 +90,15 @@
 
 .iconButton {
   align-items: center;
-  border: 1px solid transparent;
-  border-radius: var(--radius-control);
+  background: transparent;
+  border: 1px solid;
+  border-radius: 0;
   cursor: pointer;
   display: flex;
   justify-content: center;
   min-height: 40px;
   min-width: 40px;
   padding: 0 6px;
-  transition:
-    background-color var(--transition-control),
-    border-color var(--transition-control),
-    color var(--transition-control);
-}
-
-.iconButton:hover:enabled {
 }
 
 .iconButton:focus-visible {
@@ -130,20 +115,15 @@
 
 .treeToggle {
   align-items: center;
-  border: 0;
-  border-radius: var(--radius-control);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 0;
   cursor: pointer;
   display: flex;
   justify-content: center;
   min-height: 40px;
   min-width: 40px;
   padding: 0 4px;
-  transition:
-    background-color var(--transition-control),
-    color var(--transition-control);
-}
-
-.treeToggle:hover {
 }
 
 .treeToggle:focus-visible {
@@ -153,19 +133,15 @@
 
 .panel {
   border: 1px solid;
-  border-radius: var(--radius-control);
+  border-radius: 0;
 }
 
 .input {
   border: 1px solid;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   font-size: var(--text-sm);
   min-height: 36px;
   padding: 6px 8px;
-  transition:
-    border-color var(--transition-control),
-    background-color var(--transition-control),
-    color var(--transition-control);
   width: 100%;
 }
 
@@ -179,19 +155,13 @@
 }
 
 .button {
+  background: transparent;
   border: 1px solid;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   cursor: pointer;
   font-size: var(--text-sm);
   min-height: 32px;
   padding: 4px 10px;
-  transition:
-    border-color var(--transition-control),
-    background-color var(--transition-control),
-    color var(--transition-control);
-}
-
-.button:hover:enabled {
 }
 
 .button:focus-visible {
@@ -213,8 +183,9 @@
 }
 
 .menu {
+  background: var(--bg-primary);
   border: 1px solid;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   display: grid;
   min-width: 148px;
   padding: 2px;
@@ -225,19 +196,14 @@
 }
 
 .menuItem {
-  border: 0;
-  border-radius: calc(var(--radius-control) - 2px);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 0;
   cursor: pointer;
   font-size: var(--text-sm);
   min-height: 32px;
   padding: 6px 10px;
   text-align: left;
-  transition:
-    background-color var(--transition-control),
-    color var(--transition-control);
-}
-
-.menuItem:hover:enabled {
 }
 
 .menuItem:focus-visible {
@@ -250,8 +216,9 @@
 }
 
 .popover {
+  background: var(--bg-primary);
   border: 1px solid;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   min-width: 204px;
   padding: 8px;
 }
@@ -272,12 +239,13 @@
 }
 
 .mobileSheet {
+  background: var(--bg-primary);
   border: 1px solid;
   border-bottom: 0;
   border-left: 0;
   border-right: 0;
-  border-top-left-radius: var(--radius-control);
-  border-top-right-radius: var(--radius-control);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
   bottom: 0;
   left: 0;
   max-height: min(70vh, 420px);
@@ -300,8 +268,9 @@
 }
 
 .dialog {
+  background: var(--bg-primary);
   border: 1px solid;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   display: grid;
   gap: 8px;
   max-width: min(92vw, 360px);
@@ -310,19 +279,6 @@
 
 .sectionDivider {
   border-bottom: 1px solid;
-}
-
-:global(html[data-theme="dark"]) .sectionDivider {
-  border-bottom-color: var(--lp-border);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .row:hover,
-  .toolbarButton:hover:enabled,
-  .iconButton:hover:enabled,
-  .button:hover:enabled {
-    transition: none;
-  }
 }
 
 @media (max-width: 767px) {
@@ -340,4 +296,3 @@
     align-items: flex-end;
   }
 }
-

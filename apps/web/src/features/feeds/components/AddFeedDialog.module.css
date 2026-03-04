@@ -9,14 +9,15 @@
 }
 
 .dialog {
+  background: var(--bg-primary);
   border: 1px solid;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   display: grid;
   gap: 12px;
   max-height: min(88vh, 760px);
   max-width: calc(100vw - 32px);
   overflow: auto;
-  padding: 14px;
+  padding: 12px;
   width: min(420px, calc(100vw - 32px));
 }
 
@@ -34,8 +35,9 @@
 
 .closeButton {
   align-items: center;
+  background: transparent;
   border: 1px solid;
-  border-radius: var(--radius-control);
+  border-radius: 0;
   cursor: pointer;
   display: inline-flex;
   font-size: var(--text-sm);
@@ -43,13 +45,6 @@
   min-height: 30px;
   min-width: 30px;
   padding: 4px;
-  transition:
-    border-color var(--transition-control),
-    background-color var(--transition-control),
-    color var(--transition-control);
-}
-
-.closeButton:hover {
 }
 
 .closeButton:focus-visible {
@@ -60,10 +55,3 @@
 .body {
   padding: 0;
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .closeButton:hover {
-    transition: none;
-  }
-}
-
