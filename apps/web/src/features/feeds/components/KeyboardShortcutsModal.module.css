@@ -108,6 +108,9 @@
   text-align: center;
 }
 
+:global(html[data-theme="dark"]) .key {
+}
+
 .rowDescription {
   font-size: var(--text-sm);
   white-space: nowrap;
@@ -129,3 +132,4 @@
     transition: none;
   }
 }
+

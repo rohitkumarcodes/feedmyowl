@@ -11,12 +11,13 @@
   --lp-text-main: var(--text-primary);
   --lp-text-muted: var(--text-muted);
   --lp-focus: var(--accent);
+  --lp-overlay: rgb(0 0 0 / 24%);
 }
 
 .row {
   align-items: center;
   border: 0;
-  border-left: 2px solid;
+  border-left: 2px solid transparent;
   cursor: pointer;
   display: flex;
   line-height: var(--leading-tight);
@@ -46,6 +47,7 @@
 }
 
 .rowActive {
+  border-left-color: var(--lp-focus);
 }
 
 .rowCount {
@@ -97,7 +99,7 @@
 
 .iconButton {
   align-items: center;
-  border: 1px solid;
+  border: 1px solid transparent;
   border-radius: var(--radius-control);
   cursor: pointer;
   display: flex;
@@ -310,6 +312,10 @@
   border-bottom: 1px solid;
 }
 
+:global(html[data-theme="dark"]) .sectionDivider {
+  border-bottom-color: var(--lp-border);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .row:hover,
   .toolbarButton:hover:enabled,
@@ -334,3 +340,4 @@
     align-items: flex-end;
   }
 }
+

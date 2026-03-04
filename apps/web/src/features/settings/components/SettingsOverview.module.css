@@ -633,6 +633,9 @@ button.linkButton:hover:enabled {
   text-align: center;
 }
 
+:global(html[data-theme="dark"]) .shortcutsPanelKey {
+}
+
 .shortcutsPanelDescription {
   font-size: var(--text-sm);
   line-height: 1.45;
@@ -794,3 +797,4 @@ button.linkButton:hover:enabled {
     flex-direction: column;
   }
 }
+

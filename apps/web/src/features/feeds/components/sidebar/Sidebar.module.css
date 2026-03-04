@@ -262,6 +262,7 @@
 }
 
 .folderRowWrapActive .folderRow {
+  border-left-color: transparent;
 }
 
 .folderRow {
@@ -589,3 +590,4 @@
   position: fixed;
   z-index: 80;
 }
+

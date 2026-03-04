@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { AppearanceSection } from "@/features/settings/components/sections/AppearanceSection";
 import { DeleteAccountSection } from "@/features/settings/components/sections/DeleteAccountSection";
 import { ExportSection } from "@/features/settings/components/sections/ExportSection";
 import { ImportSection } from "@/features/settings/components/sections/ImportSection";
@@ -11,11 +12,13 @@ import { ReadingModeSection } from "@/features/settings/components/sections/Read
 import { BackIcon } from "@/features/settings/components/icons";
 import type { OwlAscii } from "@/lib/shared/owl-brand";
 import type { ReadingMode } from "@/lib/shared/reading-mode";
+import type { ThemeMode } from "@/lib/shared/theme-mode";
 import styles from "./SettingsOverview.module.css";
 
 interface SettingsOverviewProps {
   email: string;
   owlAscii: OwlAscii;
+  themeMode: ThemeMode;
   readingMode: ReadingMode;
 }
 
@@ -25,18 +28,26 @@ interface SettingsOverviewProps {
 export function SettingsOverview({
   email,
   owlAscii,
+  themeMode,
   readingMode,
 }: SettingsOverviewProps) {
+  const themeControlsRef = useRef<HTMLDivElement | null>(null);
   const readingModeControlsRef = useRef<HTMLDivElement | null>(null);
   const owlControlsRef = useRef<HTMLDivElement | null>(null);
   const shortcutsControlsRef = useRef<HTMLDivElement | null>(null);
 
+  const [isThemePanelExpanded, setIsThemePanelExpanded] = useState(false);
   const [isReadingModePanelExpanded, setIsReadingModePanelExpanded] = useState(false);
   const [isOwlPanelExpanded, setIsOwlPanelExpanded] = useState(false);
   const [isShortcutsPanelExpanded, setIsShortcutsPanelExpanded] = useState(false);
 
   useEffect(() => {
-    if (!isReadingModePanelExpanded && !isOwlPanelExpanded && !isShortcutsPanelExpanded) {
+    if (
+      !isThemePanelExpanded &&
+      !isReadingModePanelExpanded &&
+      !isOwlPanelExpanded &&
+      !isShortcutsPanelExpanded
+    ) {
       return;
     }
 
@@ -46,16 +57,23 @@ export function SettingsOverview({
         return;
       }
 
+      const clickedInsideTheme = themeControlsRef.current?.contains(target) ?? false;
       const clickedInsideReadingMode =
         readingModeControlsRef.current?.contains(target) ?? false;
       const clickedInsideOwl = owlControlsRef.current?.contains(target) ?? false;
       const clickedInsideShortcuts =
         shortcutsControlsRef.current?.contains(target) ?? false;
 
-      if (clickedInsideReadingMode || clickedInsideOwl || clickedInsideShortcuts) {
+      if (
+        clickedInsideTheme ||
+        clickedInsideReadingMode ||
+        clickedInsideOwl ||
+        clickedInsideShortcuts
+      ) {
         return;
       }
 
+      setIsThemePanelExpanded(false);
       setIsReadingModePanelExpanded(false);
       setIsOwlPanelExpanded(false);
       setIsShortcutsPanelExpanded(false);
@@ -67,6 +85,7 @@ export function SettingsOverview({
       document.removeEventListener("pointerdown", handlePointerDown);
     };
   }, [
+    isThemePanelExpanded,
     isReadingModePanelExpanded,
     isOwlPanelExpanded,
     isShortcutsPanelExpanded,
@@ -88,6 +107,12 @@ export function SettingsOverview({
       </header>
 
       <div className={styles.settingsOptions}>
+        <AppearanceSection
+          themeMode={themeMode}
+          controlsRef={themeControlsRef}
+          isExpanded={isThemePanelExpanded}
+          setIsExpanded={setIsThemePanelExpanded}
+        />
         <ReadingModeSection
           readingMode={readingMode}
           controlsRef={readingModeControlsRef}

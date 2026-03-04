@@ -105,6 +105,13 @@ export function AccountControls() {
                 afterSignOutUrl="/sign-in"
                 appearance={{
                   variables: {
+                    colorPrimary: "var(--accent)",
+                    colorBackground: "var(--bg-primary)",
+                    colorForeground: "var(--text-primary)",
+                    colorMutedForeground: "var(--text-secondary)",
+                    colorInput: "var(--bg-primary)",
+                    colorInputForeground: "var(--text-primary)",
+                    colorBorder: "var(--border)",
                     fontFamily: "var(--font-sans)",
                     fontSize: "0.9375rem",
                     borderRadius: "var(--radius-control)",

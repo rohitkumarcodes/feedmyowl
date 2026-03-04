@@ -1,1 +1,1 @@
-ALTER TABLE "users" DROP COLUMN "theme_mode";
+-- Custom SQL migration file, put your code below! --

@@ -3,6 +3,44 @@
   position: relative;
 }
 
+.shell[data-theme-mode="dark"] {
+  --bg-primary: #16181b;
+  --bg-secondary: #1d2024;
+  --bg-tertiary: #2a2f36;
+  --bg-selected: #2d2b45;
+  --text-primary: #e6e9ed;
+  --text-secondary: #c1c8d0;
+  --text-muted: #9aa3ae;
+  --border: #3b434d;
+  --accent: var(--brand-mid);
+  --danger-bg: rgb(220 88 88 / 20%);
+  --danger-border: #d27575;
+  --danger-text: #f2b7b7;
+  color-scheme: dark;
+}
+
+/* Server-rendered fallback for saved "system" theme before client bootstrap runs. */
+@media (prefers-color-scheme: dark) {
+  .shell[data-theme-mode="system"] {
+    --bg-primary: #16181b;
+    --bg-secondary: #1d2024;
+    --bg-tertiary: #2a2f36;
+    --bg-selected: #2d2b45;
+    --text-primary: #e6e9ed;
+    --text-secondary: #c1c8d0;
+    --text-muted: #9aa3ae;
+    --border: #3b434d;
+    --accent: var(--brand-mid);
+    --danger-bg: rgb(220 88 88 / 20%);
+    --danger-border: #d27575;
+    --danger-text: #f2b7b7;
+    color-scheme: dark;
+  }
+
+  .shell[data-theme-mode="system"] .brand {
+  }
+}
+
 .brandSlot {
   /* Fixed brand slot; sidebar header reserve uses --sidebar-header-reserve to clear this block. */
   display: flex;
@@ -45,6 +83,9 @@
 }
 
 .brand:hover {
+}
+
+.shell[data-theme-mode="dark"] .brand {
 }
 
 .brand:focus-visible {
@@ -241,3 +282,4 @@
     transition: none;
   }
 }
+
