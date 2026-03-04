@@ -134,7 +134,6 @@
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  transition: opacity var(--transition-control);
 }
 
 .actionsUnreadBadge {
@@ -151,25 +150,24 @@
   min-width: 16px;
   padding: 0 4px;
   pointer-events: none;
-  transition: opacity var(--transition-control);
 }
 
 .actionsHoverSwap .actionsButton {
-  opacity: 0;
+  display: none;
   pointer-events: none;
 }
 
 .rowWrap:hover .actionsHoverSwap .actionsButton,
 .actionsHoverSwap:focus-within .actionsButton,
 .actionsOpen .actionsButton {
-  opacity: 1;
+  display: flex;
   pointer-events: auto;
 }
 
 .rowWrap:hover .actionsHoverSwap .actionsUnreadBadge,
 .actionsHoverSwap:focus-within .actionsUnreadBadge,
 .actionsOpen .actionsUnreadBadge {
-  opacity: 0;
+  display: none;
 }
 
 .renameForm {

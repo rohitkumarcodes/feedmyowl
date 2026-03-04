@@ -179,10 +179,11 @@ export function FeedItem({
     }
   };
 
-  const hasUnreadCount = unreadCount !== null && unreadCount > 0;
-  const showInlineUnreadBadge = isMobile && hasUnreadCount;
-  const showActionsUnreadBadge = !isMobile && hasUnreadCount;
+  const hasUnreadCountValue = unreadCount !== null;
+  const showInlineUnreadBadge = isMobile && hasUnreadCountValue;
+  const showActionsUnreadBadge = !isMobile && hasUnreadCountValue;
   const keepActionsVisible = isMenuOpen || isRenameOpen || isFoldersOpen;
+  const unreadDisplayCount = unreadCount ?? 0;
 
   return (
     <div className={`${styles.rowWrap} ${isActive ? styles.rowWrapActive : ""}`}>
@@ -210,8 +211,8 @@ export function FeedItem({
           />
         ) : null}
         {showInlineUnreadBadge ? (
-          <span className={styles.unreadBadge} title={`${unreadCount} unread`}>
-            {unreadCount}
+          <span className={styles.unreadBadge} title={`${unreadDisplayCount} unread`}>
+            {unreadDisplayCount}
           </span>
         ) : null}
         {selectedFolderIds.length > 1 ? (
@@ -225,14 +226,14 @@ export function FeedItem({
       </button>
 
       <div
-        className={`${styles.actions} ${!isMobile ? styles.actionsHoverSwap : ""} ${
+        className={`${styles.actions} ${showActionsUnreadBadge ? styles.actionsHoverSwap : ""} ${
           keepActionsVisible ? styles.actionsOpen : ""
         }`}
         ref={actionsRef}
       >
         {showActionsUnreadBadge ? (
-          <span className={styles.actionsUnreadBadge} title={`${unreadCount} unread`}>
-            {unreadCount}
+          <span className={styles.actionsUnreadBadge} title={`${unreadDisplayCount} unread`}>
+            {unreadDisplayCount}
           </span>
         ) : null}
         <button
