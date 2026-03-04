@@ -44,9 +44,8 @@
 }
 
 .input {
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--border);
+  background: Field;
+  border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
   box-sizing: border-box;
@@ -59,13 +58,13 @@
 }
 
 .input:focus {
-  border-bottom-color: var(--accent);
+  border-color: var(--accent);
   box-shadow: none;
   outline: none;
 }
 
 .input:hover {
-  border-bottom-color: var(--border-strong);
+  border-color: var(--border-strong);
 }
 
 .error {
@@ -90,7 +89,7 @@
 
 .submitButton {
   background: transparent;
-  border: 0;
+  border: 1px solid var(--border-strong);
   border-radius: 0;
   color: var(--accent);
   cursor: pointer;
@@ -105,9 +104,8 @@
 }
 
 .submitButton:hover:enabled {
-  background: transparent;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  background: var(--accent-soft);
+  border-color: var(--border-strong);
 }
 
 .submitButton:disabled {
@@ -117,7 +115,7 @@
 
 .footer {
   background: transparent;
-  border-top: 0;
+  border-top: 1px solid var(--border);
   margin: 0;
   padding: 10px 14px;
   text-align: center;

@@ -179,6 +179,11 @@ export function FeedItem({
     }
   };
 
+  const hasUnreadCount = unreadCount !== null && unreadCount > 0;
+  const showInlineUnreadBadge = isMobile && hasUnreadCount;
+  const showActionsUnreadBadge = !isMobile && hasUnreadCount;
+  const keepActionsVisible = isMenuOpen || isRenameOpen || isFoldersOpen;
+
   return (
     <div className={`${styles.rowWrap} ${isActive ? styles.rowWrapActive : ""}`}>
       <button
@@ -204,7 +209,7 @@ export function FeedItem({
             aria-label="Feed error"
           />
         ) : null}
-        {unreadCount !== null && unreadCount > 0 ? (
+        {showInlineUnreadBadge ? (
           <span className={styles.unreadBadge} title={`${unreadCount} unread`}>
             {unreadCount}
           </span>
@@ -219,10 +224,20 @@ export function FeedItem({
         ) : null}
       </button>
 
-      <div className={styles.actions} ref={actionsRef}>
+      <div
+        className={`${styles.actions} ${!isMobile ? styles.actionsHoverSwap : ""} ${
+          keepActionsVisible ? styles.actionsOpen : ""
+        }`}
+        ref={actionsRef}
+      >
+        {showActionsUnreadBadge ? (
+          <span className={styles.actionsUnreadBadge} title={`${unreadCount} unread`}>
+            {unreadCount}
+          </span>
+        ) : null}
         <button
           type="button"
-          className={primitiveStyles.iconButton}
+          className={`${primitiveStyles.iconButton} ${styles.actionsButton}`}
           onClick={() => setIsMenuOpen((previous) => !previous)}
           aria-label={`Open actions for ${label}`}
           aria-expanded={isMenuOpen || isRenameOpen || isFoldersOpen}

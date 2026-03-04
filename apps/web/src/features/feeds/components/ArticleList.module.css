@@ -8,7 +8,7 @@
 
 .searchBar {
   background: transparent;
-  border-bottom: 0;
+  border-bottom: 1px solid var(--border);
   box-shadow: none;
   display: grid;
   gap: 6px;
@@ -38,14 +38,13 @@
 }
 
 .searchInput {
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--border);
+  background: Field;
+  border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
   font-size: var(--text-sm);
   min-height: 32px;
-  padding: 5px 30px 5px 24px;
+  padding: 5px 30px 5px 28px;
   transition:
     border-color var(--transition-control),
     box-shadow var(--transition-control),
@@ -54,13 +53,13 @@
 }
 
 .searchInput:focus-visible {
-  border-bottom-color: var(--accent);
+  border-color: var(--accent);
   box-shadow: none;
   outline: none;
 }
 
 .searchInput:hover {
-  border-bottom-color: var(--border-strong);
+  border-color: var(--border-strong);
 }
 
 .clearButton {
@@ -113,14 +112,16 @@
 
 .markAllReadButton {
   background: transparent;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
   font-size: var(--text-xs);
   min-height: 28px;
   padding: 4px 10px;
-  transition: color var(--transition-control);
+  transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control);
 }
 
 .markAllReadButton:focus-visible {
@@ -129,9 +130,8 @@
 }
 
 .markAllReadButton:hover {
-  background: transparent;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  background: var(--accent-soft);
+  border-color: var(--border-strong);
 }
 
 .statusMessage {
@@ -191,14 +191,16 @@
 
 .paginationRetry {
   background: transparent;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
   font-size: var(--text-xs);
   min-height: 28px;
   padding: 2px 10px;
-  transition: color var(--transition-control);
+  transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control);
 }
 
 .paginationRetry:focus-visible {
@@ -207,9 +209,8 @@
 }
 
 .paginationRetry:hover:not(:disabled) {
-  background: transparent;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  background: var(--accent-soft);
+  border-color: var(--border-strong);
 }
 
 .paginationRetry:disabled {

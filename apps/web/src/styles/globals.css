@@ -10,14 +10,14 @@
   --border: ButtonBorder;
   --border-strong: ButtonBorder;
   --accent: LinkText;
-  --accent-soft: rgba(0, 0, 0, 0.025);
+  --accent-soft: rgba(0, 0, 0, 0.04);
   --danger-bg: Canvas;
   --danger-border: ButtonBorder;
   --danger-text: CanvasText;
   --shadow-soft: none;
 
   --radius-control: 0;
-  --hover-surface: rgba(0, 0, 0, 0.02);
+  --hover-surface: rgba(0, 0, 0, 0.04);
   --transition-control: 0.12s;
 
   --sidebar-pane-width: 240px;
@@ -82,14 +82,14 @@ textarea {
 
 button {
   background: transparent;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 0;
   cursor: pointer;
 }
 
 button:hover:not(:disabled) {
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  background: var(--hover-surface);
+  border-color: var(--border-strong);
 }
 
 button:disabled,

@@ -23,7 +23,7 @@
 .optionsTrigger {
   align-items: center;
   background: transparent;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 0;
   box-shadow: none;
   color: var(--text-secondary);
@@ -45,15 +45,14 @@
 }
 
 .optionsTrigger:hover {
-  background: transparent;
+  background: var(--accent-soft);
+  border-color: var(--border-strong);
   color: var(--text-primary);
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 .optionsPopover {
   background: Canvas;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 0;
   box-shadow: none;
   max-width: calc(100vw - 24px);
@@ -108,7 +107,7 @@
 
 .optionsActionButton {
   align-items: center;
-  border: 0;
+  border: 1px solid transparent;
   border-radius: 0;
   color: inherit;
   cursor: pointer;
@@ -120,7 +119,10 @@
   min-height: 30px;
   padding: 5px 8px;
   text-decoration: none;
-  transition: color var(--transition-control);
+  transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control),
+    color var(--transition-control);
   width: 100%;
 }
 
@@ -136,8 +138,7 @@
 }
 
 .optionsActionButton:hover {
-  background: transparent;
+  background: var(--accent-soft);
+  border-color: var(--border);
   color: var(--text-primary);
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }

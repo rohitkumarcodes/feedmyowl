@@ -17,7 +17,7 @@
 .row {
   align-items: center;
   background: transparent;
-  border: 0;
+  border: 1px solid transparent;
   border-radius: 0;
   color: var(--lp-text-main);
   cursor: pointer;
@@ -27,6 +27,8 @@
   padding: var(--lp-pad-y) var(--lp-pad-x);
   text-align: left;
   transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control),
     color var(--transition-control);
   width: 100%;
 }
@@ -53,6 +55,7 @@
 
 .rowActive {
   background: transparent;
+  border-color: transparent;
   color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -66,7 +69,7 @@
 .toolbarButton {
   align-items: center;
   background: transparent;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
@@ -76,9 +79,11 @@
   font-weight: var(--weight-normal);
   gap: 4px;
   justify-content: center;
-  min-height: 26px;
-  padding: 2px 6px;
+  min-height: 28px;
+  padding: 3px 8px;
   transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control),
     color var(--transition-control);
   white-space: nowrap;
 }
@@ -94,13 +99,13 @@
 }
 
 .toolbarButton:hover:not(:disabled) {
-  background: transparent;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  background: var(--accent-soft);
+  border-color: var(--border-strong);
 }
 
 .toolbarButtonPrimary {
   background: transparent;
+  border-color: var(--border-strong);
   color: var(--accent);
   font-weight: var(--weight-semibold);
 }
@@ -116,17 +121,18 @@
 .iconButton {
   align-items: center;
   background: transparent;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
   display: flex;
   justify-content: center;
-  min-height: 30px;
-  min-width: 30px;
+  min-height: 34px;
+  min-width: 34px;
   padding: 0 6px;
   transition:
-    color var(--transition-control);
+    background-color var(--transition-control),
+    border-color var(--transition-control);
 }
 
 .iconButton:focus-visible {
@@ -140,8 +146,8 @@
 }
 
 .iconButton:hover:not(:disabled) {
-  background: transparent;
-  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--border-strong);
 }
 
 .iconButtonSurface {
@@ -152,14 +158,14 @@
 .treeToggle {
   align-items: center;
   background: transparent;
-  border: 0;
+  border: 1px solid transparent;
   border-radius: 0;
   color: var(--text-secondary);
   cursor: pointer;
   display: flex;
   justify-content: center;
-  min-height: 30px;
-  min-width: 30px;
+  min-height: 34px;
+  min-width: 34px;
   padding: 0 4px;
   transition:
     background-color var(--transition-control),
@@ -172,25 +178,24 @@
 }
 
 .treeToggle:hover {
-  background: transparent;
-  color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text-primary);
 }
 
 .panel {
   background: transparent;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 0;
   box-shadow: none;
 }
 
 .input {
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--border);
+  background: Field;
+  border: 1px solid var(--border);
   border-radius: 0;
   font-size: var(--text-sm);
   min-height: 34px;
-  padding: 5px 0;
+  padding: 5px 8px;
   transition:
     border-color var(--transition-control),
     box-shadow var(--transition-control);
@@ -198,13 +203,13 @@
 }
 
 .input:focus-visible {
-  border-bottom-color: var(--accent);
+  border-color: var(--accent);
   box-shadow: none;
   outline: none;
 }
 
 .input:hover:not(:disabled) {
-  border-bottom-color: var(--border-strong);
+  border-color: var(--border-strong);
 }
 
 .input:disabled {
@@ -214,7 +219,7 @@
 
 .button {
   background: transparent;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
@@ -222,6 +227,8 @@
   min-height: 30px;
   padding: 4px 10px;
   transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control),
     color var(--transition-control),
     opacity var(--transition-control);
 }
@@ -237,9 +244,8 @@
 }
 
 .button:hover:not(:disabled) {
-  background: transparent;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  background: var(--accent-soft);
+  border-color: var(--border-strong);
 }
 
 .buttonCompact {
@@ -250,17 +256,18 @@
 
 .buttonDanger {
   background: transparent;
+  border-color: var(--danger-border);
   color: var(--danger-text);
 }
 
 .menu {
-  background: var(--bg-primary);
+  background: Canvas;
   border: 1px solid var(--border);
   border-radius: 0;
   box-shadow: none;
   display: grid;
   min-width: 148px;
-  padding: 4px 0;
+  padding: 2px;
   position: absolute;
   right: 0;
   top: calc(100% + 4px);
@@ -269,15 +276,17 @@
 
 .menuItem {
   background: transparent;
-  border: 0;
+  border: 1px solid transparent;
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
   font-size: var(--text-sm);
-  min-height: 30px;
-  padding: 4px 10px;
+  min-height: 32px;
+  padding: 6px 10px;
   text-align: left;
-  transition: color var(--transition-control);
+  transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control);
 }
 
 .menuItem:focus-visible {
@@ -291,9 +300,8 @@
 }
 
 .menuItem:hover:not(:disabled) {
-  background: transparent;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  background: var(--accent-soft);
+  border-color: var(--border);
 }
 
 .menuItemDanger {
@@ -305,8 +313,8 @@
 }
 
 .popover {
-  background: var(--bg-primary);
-  border: 0;
+  background: Canvas;
+  border: 1px solid var(--border);
   border-radius: 0;
   box-shadow: none;
   min-width: 204px;
@@ -330,9 +338,11 @@
 }
 
 .mobileSheet {
-  background: var(--bg-primary);
-  border: 0;
-  border-top: 1px solid var(--border);
+  background: Canvas;
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-left: 0;
+  border-right: 0;
   border-top-left-radius: 0;
   border-top-right-radius: 0;
   box-shadow: none;
@@ -359,7 +369,7 @@
 }
 
 .dialog {
-  background: var(--bg-primary);
+  background: Canvas;
   border: 1px solid var(--border);
   border-radius: 0;
   box-shadow: none;

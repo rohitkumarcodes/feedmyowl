@@ -24,11 +24,6 @@
   padding: 0 var(--sidebar-nav-pad-x);
 }
 
-.row:hover {
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
 .leading {
   align-items: center;
   display: grid;
@@ -111,7 +106,7 @@
 .multiFolderBadge {
   align-items: center;
   background: transparent;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-secondary);
   display: inline-flex;
@@ -132,6 +127,49 @@
   min-width: var(--sidebar-tree-actions-col);
   position: relative;
   width: var(--sidebar-tree-actions-col);
+}
+
+.actionsButton {
+  left: 50%;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: opacity var(--transition-control);
+}
+
+.actionsUnreadBadge {
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 0;
+  color: var(--accent);
+  display: inline-flex;
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  height: 16px;
+  justify-content: center;
+  line-height: 1;
+  min-width: 16px;
+  padding: 0 4px;
+  pointer-events: none;
+  transition: opacity var(--transition-control);
+}
+
+.actionsHoverSwap .actionsButton {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.rowWrap:hover .actionsHoverSwap .actionsButton,
+.actionsHoverSwap:focus-within .actionsButton,
+.actionsOpen .actionsButton {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.rowWrap:hover .actionsHoverSwap .actionsUnreadBadge,
+.actionsHoverSwap:focus-within .actionsUnreadBadge,
+.actionsOpen .actionsUnreadBadge {
+  opacity: 0;
 }
 
 .renameForm {

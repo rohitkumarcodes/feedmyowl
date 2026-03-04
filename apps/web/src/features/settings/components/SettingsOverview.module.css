@@ -10,10 +10,10 @@
 }
 
 .header {
-  border-bottom: 0;
+  border-bottom: 1px solid var(--border);
   display: grid;
   gap: 6px;
-  padding: 0 0 8px;
+  padding: 0 0 12px;
 }
 
 .header h1 {
@@ -39,10 +39,10 @@
 }
 
 .panel {
-  border-top: 0;
+  border-top: 1px solid var(--border);
   display: grid;
   gap: 8px;
-  padding-top: 8px;
+  padding-top: 14px;
 }
 
 .panel:first-child {
@@ -59,20 +59,22 @@
 .themeModeOption {
   align-items: flex-start;
   background: transparent;
-  border: 0;
+  border: 1px solid transparent;
   border-radius: 0;
   cursor: pointer;
   display: grid;
   gap: 8px 10px;
   grid-template-columns: auto 1fr;
   padding: 8px;
-  transition: color var(--transition-control);
+  transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control);
   width: 100%;
 }
 
 .themeModeOptionSelected {
   background: transparent;
-  border-color: transparent;
+  border-color: var(--border-strong);
 }
 
 .themeModeOptionSelected .themeModeOptionLabel {
@@ -103,7 +105,7 @@
 }
 
 .owlPickerControls .owlToggle {
-  border: 0;
+  border: 1px solid var(--border);
   width: 100%;
 }
 
@@ -186,7 +188,7 @@
 
 .linkButton {
   background: transparent;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
@@ -197,14 +199,16 @@
   padding: 6px 10px;
   text-align: left;
   text-decoration: none;
-  transition: color var(--transition-control);
+  transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control),
+    color var(--transition-control);
 }
 
 a.linkButton:hover,
 button.linkButton:hover:enabled {
-  background: transparent;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  background: var(--accent-soft);
+  border-color: var(--border-strong);
 }
 
 .linkButton:focus-visible {
@@ -218,7 +222,7 @@ button.linkButton:hover:enabled {
 
 .saveButton {
   background: transparent;
-  border: 0;
+  border: 1px solid var(--border-strong);
   border-radius: 0;
   color: var(--accent);
   cursor: pointer;
@@ -227,14 +231,14 @@ button.linkButton:hover:enabled {
   min-height: 32px;
   padding: 6px 14px;
   transition:
-    color var(--transition-control),
+    background-color var(--transition-control),
+    border-color var(--transition-control),
     opacity var(--transition-control);
 }
 
 .saveButton:hover:enabled {
-  background: transparent;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  background: var(--accent-soft);
+  border-color: var(--border-strong);
 }
 
 .saveButton:focus-visible {
@@ -249,7 +253,7 @@ button.linkButton:hover:enabled {
 
 .saveButton:disabled:hover {
   background: transparent;
-  border-color: transparent;
+  border-color: var(--border-strong);
 }
 
 .compactButton {
@@ -302,7 +306,7 @@ button.linkButton:hover:enabled {
 
 .importSummary {
   background: transparent;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 0;
   display: grid;
   gap: 6px;
@@ -315,7 +319,7 @@ button.linkButton:hover:enabled {
   display: grid;
   gap: 12px;
   padding: 12px;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 0;
 }
 
@@ -369,15 +373,14 @@ button.linkButton:hover:enabled {
   gap: 8px;
   max-height: 300px;
   overflow-y: auto;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 0;
   padding: 8px;
 }
 
 .importPreviewEntry {
   background: transparent;
-  border: 0;
-  border-left: 1px solid var(--border);
+  border: 1px solid var(--border);
   display: grid;
   gap: 4px;
   padding: 8px;
@@ -421,8 +424,7 @@ button.linkButton:hover:enabled {
 
 .importPreviewFolder {
   background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--border);
+  border: 1px solid var(--border);
   display: inline-block;
   padding: 2px 6px;
   border-radius: 0;
@@ -497,20 +499,22 @@ button.linkButton:hover:enabled {
 
 .exportFormatOption {
   background: transparent;
-  border: 0;
+  border: 1px solid;
+  border-color: var(--border);
   border-radius: 0;
   cursor: pointer;
   display: grid;
   gap: 2px;
   padding: 10px 14px;
   text-align: left;
-  transition: color var(--transition-control);
+  transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control);
 }
 
 .exportFormatOption:hover {
-  background: transparent;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  background: var(--accent-soft);
+  border-color: var(--border-strong);
 }
 
 .exportFormatOption:focus-visible {
@@ -525,7 +529,7 @@ button.linkButton:hover:enabled {
 
 .exportFormatOption:disabled:hover {
   background: transparent;
-  border-color: transparent;
+  border-color: var(--border);
 }
 
 .exportFormatLabel {
@@ -551,7 +555,7 @@ button.linkButton:hover:enabled {
 }
 
 .dropZone:hover {
-  background: transparent;
+  background: var(--accent-soft);
   border-color: var(--accent);
 }
 
@@ -571,8 +575,7 @@ button.linkButton:hover:enabled {
 
 .progressBarContainer {
   background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: 0;
   height: 8px;
   overflow: hidden;
@@ -580,7 +583,7 @@ button.linkButton:hover:enabled {
 }
 
 .progressBar {
-  background: var(--accent);
+  background: ButtonFace;
   height: 100%;
   transition: width var(--transition-control);
 }
@@ -612,7 +615,7 @@ button.linkButton:hover:enabled {
 
 .doneButton {
   background: transparent;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
@@ -620,13 +623,14 @@ button.linkButton:hover:enabled {
   font-weight: var(--weight-semibold);
   min-height: 32px;
   padding: 6px 14px;
-  transition: color var(--transition-control);
+  transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control);
 }
 
 .doneButton:hover {
-  background: transparent;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  background: var(--accent-soft);
+  border-color: var(--border-strong);
 }
 
 .doneButton:focus-visible {
@@ -644,7 +648,7 @@ button.linkButton:hover:enabled {
 .shortcutsToggle {
   align-items: center;
   background: transparent;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
@@ -654,14 +658,15 @@ button.linkButton:hover:enabled {
   min-height: 32px;
   padding: 6px 10px;
   text-align: left;
-  transition: color var(--transition-control);
+  transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control);
   width: 100%;
 }
 
 .shortcutsToggle:hover {
-  background: transparent;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  background: var(--accent-soft);
+  border-color: var(--border-strong);
 }
 
 .shortcutsToggle:focus-visible {
@@ -671,7 +676,7 @@ button.linkButton:hover:enabled {
 
 .shortcutsPanelContent {
   background: transparent;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 0;
   display: grid;
   gap: 16px;
@@ -709,8 +714,7 @@ button.linkButton:hover:enabled {
 
 .shortcutsPanelKey {
   background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
   font-family: var(--font-mono);
@@ -731,7 +735,7 @@ button.linkButton:hover:enabled {
 .owlToggle {
   align-items: center;
   background: transparent;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
@@ -741,13 +745,14 @@ button.linkButton:hover:enabled {
   min-height: 32px;
   padding: 6px 10px;
   text-align: left;
-  transition: color var(--transition-control);
+  transition:
+    background-color var(--transition-control),
+    border-color var(--transition-control);
 }
 
 .owlToggle:hover {
-  background: transparent;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  background: var(--accent-soft);
+  border-color: var(--border-strong);
 }
 
 .owlToggle:focus-visible {
@@ -761,7 +766,7 @@ button.linkButton:hover:enabled {
 
 .owlToggle:disabled:hover {
   background: transparent;
-  border-color: transparent;
+  border-color: var(--border);
 }
 
 .owlToggleCaret {
