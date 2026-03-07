@@ -1,14 +1,14 @@
 .row {
   background: transparent;
   border: 0;
-  border-bottom: 1px dashed var(--border);
-  border-left: 3px solid transparent;
+  border-bottom: 1px solid var(--border);
+  border-left: 2px solid transparent;
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
   display: grid;
-  gap: 5px;
-  padding: 12px 14px 11px;
+  gap: 3px;
+  padding: 10px 12px 9px;
   text-align: left;
   transition:
     background-color var(--transition-control),
@@ -23,23 +23,23 @@
 }
 
 .row:hover {
-  background: rgba(232, 215, 176, 0.36);
+  background: var(--accent-soft);
 }
 
 .rowSelected {
-  background: rgba(239, 227, 200, 0.72);
+  background: transparent;
   border-left-color: var(--accent);
 }
 
 .rowSelected .title {
-  text-decoration: none;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .title {
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
   line-height: var(--leading-tight);
-  text-wrap: balance;
 }
 
 .titleRead {
@@ -49,27 +49,22 @@
 
 .meta {
   color: var(--text-secondary);
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  letter-spacing: 0.05em;
+  font-size: var(--text-sm);
   line-height: var(--leading-tight);
-  text-transform: uppercase;
 }
 
 .matchSource {
   color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
+  font-size: var(--text-xs);
   line-height: var(--leading-tight);
 }
 
 .match {
-  background: rgba(15, 79, 181, 0.1);
-  border-bottom: 1px solid rgba(15, 79, 181, 0.28);
+  background: transparent;
   border-radius: 0;
   color: inherit;
   font-weight: var(--weight-semibold);
-  padding: 0 2px;
-  text-decoration: none;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }

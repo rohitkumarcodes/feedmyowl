@@ -1,32 +1,19 @@
 .root {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0)),
-    var(--bg-primary);
-  border: 1px solid var(--border-strong);
+  background: transparent;
   border-radius: 0;
-  box-shadow: var(--shadow-soft);
+  box-shadow: none;
   display: grid;
   gap: 14px;
   margin: 0 auto;
-  max-width: 44rem;
-  padding: 16px 16px 20px;
-  position: relative;
-}
-
-.root::before {
-  color: var(--text-secondary);
-  content: "section.settings";
-  display: block;
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  max-width: 40rem;
+  padding: 18px 14px 18px;
 }
 
 .header {
-  border-bottom: 1px dashed var(--border);
+  border-bottom: 1px solid var(--border);
   display: grid;
   gap: 6px;
-  padding: 0 0 14px;
+  padding: 0 0 12px;
 }
 
 .header h1 {
@@ -45,24 +32,22 @@
 .settingsOptions {
   background: transparent;
   display: grid;
-  gap: 14px;
+  gap: 20px;
   border-radius: 0;
   box-shadow: none;
   padding: 0;
 }
 
 .panel {
-  background: linear-gradient(180deg, rgba(239, 227, 200, 0.55), rgba(239, 227, 200, 0)),
-    transparent;
-  border: 1px solid var(--border);
+  border-top: 1px solid var(--border);
   display: grid;
-  gap: 10px;
-  padding: 14px;
+  gap: 8px;
+  padding-top: 14px;
 }
 
 .panel:first-child {
-  border-top: 1px solid var(--border);
-  padding-top: 14px;
+  border-top: 0;
+  padding-top: 0;
 }
 
 .themeModeGroup {
@@ -73,8 +58,8 @@
 
 .themeModeOption {
   align-items: flex-start;
-  background: rgba(252, 248, 239, 0.7);
-  border: 1px solid var(--border);
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: 0;
   cursor: pointer;
   display: grid;
@@ -88,12 +73,12 @@
 }
 
 .themeModeOptionSelected {
-  background: rgba(239, 227, 200, 0.72);
+  background: transparent;
   border-color: var(--border-strong);
 }
 
 .themeModeOptionSelected .themeModeOptionLabel {
-  color: var(--text-primary);
+  color: var(--accent);
 }
 
 .themeModeOption input {
@@ -101,11 +86,8 @@
 }
 
 .themeModeOptionLabel {
-  font-family: var(--font-mono);
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
 }
 
 .themeModeOptionDescription {
@@ -172,31 +154,26 @@
 
 .muted {
   color: var(--text-secondary);
-  font-family: var(--font-mono);
   font-size: var(--text-sm);
 }
 
 .inlineMessage {
   color: var(--text-secondary);
-  font-family: var(--font-mono);
   font-size: var(--text-sm);
 }
 
 .inlineMessageSuccess {
-  color: var(--text-primary);
-  font-family: var(--font-mono);
+  color: var(--accent);
   font-size: var(--text-sm);
 }
 
 .inlineMessageError {
   color: var(--danger-text);
-  font-family: var(--font-mono);
   font-size: var(--text-sm);
 }
 
 .importProgress {
   color: var(--text-secondary);
-  font-family: var(--font-mono);
   font-size: var(--text-sm);
 }
 
@@ -205,22 +182,18 @@
 }
 
 .linkButton {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-strong);
+  background: transparent;
+  border: 1px solid var(--border);
   border-radius: 0;
-  box-shadow: 2px 2px 0 rgba(88, 76, 57, 0.14);
   color: var(--text-primary);
   cursor: pointer;
   display: inline-block;
-  font-family: var(--font-mono);
   font-size: var(--text-sm);
   font-weight: var(--weight-normal);
-  letter-spacing: 0.05em;
   min-height: 32px;
   padding: 6px 10px;
   text-align: left;
   text-decoration: none;
-  text-transform: uppercase;
   transition:
     background-color var(--transition-control),
     border-color var(--transition-control),
@@ -229,7 +202,7 @@
 
 a.linkButton:hover,
 button.linkButton:hover:enabled {
-  background: var(--bg-selected);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
 }
 
@@ -243,19 +216,15 @@ button.linkButton:hover:enabled {
 }
 
 .saveButton {
-  background: var(--bg-secondary);
+  background: transparent;
   border: 1px solid var(--border-strong);
   border-radius: 0;
-  box-shadow: 2px 2px 0 rgba(88, 76, 57, 0.14);
-  color: var(--text-primary);
+  color: var(--accent);
   cursor: pointer;
-  font-family: var(--font-mono);
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.05em;
   min-height: 32px;
   padding: 6px 14px;
-  text-transform: uppercase;
   transition:
     background-color var(--transition-control),
     border-color var(--transition-control),
@@ -263,7 +232,7 @@ button.linkButton:hover:enabled {
 }
 
 .saveButton:hover:enabled {
-  background: var(--bg-selected);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
 }
 
@@ -323,7 +292,7 @@ button.linkButton:hover:enabled {
 }
 
 .importSummary {
-  background: rgba(239, 227, 200, 0.38);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 0;
   display: grid;
@@ -337,13 +306,13 @@ button.linkButton:hover:enabled {
   gap: 8px;
   max-height: 300px;
   overflow-y: auto;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border);
   border-radius: 0;
   padding: 8px;
 }
 
 .importPreviewEntry {
-  background: rgba(252, 248, 239, 0.72);
+  background: transparent;
   border: 1px solid var(--border);
   display: grid;
   gap: 4px;
@@ -387,7 +356,7 @@ button.linkButton:hover:enabled {
 }
 
 .importPreviewFolder {
-  background: rgba(239, 227, 200, 0.58);
+  background: transparent;
   border: 1px solid var(--border);
   display: inline-block;
   padding: 2px 6px;
@@ -419,7 +388,6 @@ button.linkButton:hover:enabled {
 
 .feedsSectionDescription {
   color: var(--text-secondary);
-  font-family: var(--font-mono);
   font-size: var(--text-sm);
   margin: 0;
 }
@@ -431,7 +399,7 @@ button.linkButton:hover:enabled {
 }
 
 .exportFormatOption {
-  background: rgba(252, 248, 239, 0.72);
+  background: transparent;
   border: 1px solid;
   border-color: var(--border);
   border-radius: 0;
@@ -446,7 +414,7 @@ button.linkButton:hover:enabled {
 }
 
 .exportFormatOption:hover {
-  background: var(--bg-selected);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
 }
 
@@ -466,11 +434,8 @@ button.linkButton:hover:enabled {
 }
 
 .exportFormatLabel {
-  font-family: var(--font-mono);
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
 }
 
 .exportFormatSublabel {
@@ -479,7 +444,7 @@ button.linkButton:hover:enabled {
 }
 
 .dropZone {
-  background: rgba(239, 227, 200, 0.22);
+  background: transparent;
   border: 2px dashed var(--border-strong);
   border-radius: 0;
   padding: 20px;
@@ -491,18 +456,17 @@ button.linkButton:hover:enabled {
 }
 
 .dropZone:hover {
-  background: rgba(232, 215, 176, 0.32);
+  background: var(--accent-soft);
   border-color: var(--accent);
 }
 
 .dropZoneDragOver {
-  background: rgba(232, 215, 176, 0.32);
+  background: transparent;
   border-color: var(--accent);
 }
 
 .dropZoneText {
   color: var(--text-secondary);
-  font-family: var(--font-mono);
   font-size: var(--text-sm);
 }
 
@@ -511,7 +475,7 @@ button.linkButton:hover:enabled {
 }
 
 .progressBarContainer {
-  background: rgba(239, 227, 200, 0.55);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 0;
   height: 8px;
@@ -520,7 +484,7 @@ button.linkButton:hover:enabled {
 }
 
 .progressBar {
-  background: var(--accent);
+  background: var(--border-strong);
   height: 100%;
   transition: width var(--transition-control);
 }
@@ -535,12 +499,11 @@ button.linkButton:hover:enabled {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-family: var(--font-mono);
   font-size: var(--text-sm);
 }
 
 .importSummaryItemSuccess {
-  color: var(--text-primary);
+  color: var(--accent);
 }
 
 .importSummaryItemWarning {
@@ -552,26 +515,22 @@ button.linkButton:hover:enabled {
 }
 
 .doneButton {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-strong);
+  background: transparent;
+  border: 1px solid var(--border);
   border-radius: 0;
-  box-shadow: 2px 2px 0 rgba(88, 76, 57, 0.14);
   color: var(--text-primary);
   cursor: pointer;
-  font-family: var(--font-mono);
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.05em;
   min-height: 32px;
   padding: 6px 14px;
-  text-transform: uppercase;
   transition:
     background-color var(--transition-control),
     border-color var(--transition-control);
 }
 
 .doneButton:hover {
-  background: var(--bg-selected);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
 }
 
@@ -589,21 +548,17 @@ button.linkButton:hover:enabled {
 
 .shortcutsToggle {
   align-items: center;
-  background: rgba(252, 248, 239, 0.72);
-  border: 1px solid var(--border-strong);
+  background: transparent;
+  border: 1px solid var(--border);
   border-radius: 0;
-  box-shadow: 2px 2px 0 rgba(88, 76, 57, 0.14);
   color: var(--text-primary);
   cursor: pointer;
   display: inline-flex;
-  font-family: var(--font-mono);
   gap: 8px;
   justify-content: flex-start;
-  letter-spacing: 0.05em;
   min-height: 32px;
   padding: 6px 10px;
   text-align: left;
-  text-transform: uppercase;
   transition:
     background-color var(--transition-control),
     border-color var(--transition-control);
@@ -611,7 +566,7 @@ button.linkButton:hover:enabled {
 }
 
 .shortcutsToggle:hover {
-  background: var(--bg-selected);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
 }
 
@@ -621,7 +576,7 @@ button.linkButton:hover:enabled {
 }
 
 .shortcutsPanelContent {
-  background: rgba(239, 227, 200, 0.32);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 0;
   display: grid;
@@ -659,8 +614,8 @@ button.linkButton:hover:enabled {
 }
 
 .shortcutsPanelKey {
-  background: rgba(252, 248, 239, 0.72);
-  border: 1px solid var(--border-strong);
+  background: transparent;
+  border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
   font-family: var(--font-mono);
@@ -673,7 +628,6 @@ button.linkButton:hover:enabled {
 
 .shortcutsPanelDescription {
   color: var(--text-secondary);
-  font-family: var(--font-mono);
   font-size: var(--text-sm);
   line-height: 1.45;
   margin: 0;
@@ -681,28 +635,24 @@ button.linkButton:hover:enabled {
 
 .owlToggle {
   align-items: center;
-  background: rgba(252, 248, 239, 0.72);
-  border: 1px solid var(--border-strong);
+  background: transparent;
+  border: 1px solid var(--border);
   border-radius: 0;
-  box-shadow: 2px 2px 0 rgba(88, 76, 57, 0.14);
   color: var(--text-primary);
   cursor: pointer;
   display: inline-flex;
-  font-family: var(--font-mono);
   gap: 8px;
   justify-content: flex-start;
-  letter-spacing: 0.05em;
   min-height: 32px;
   padding: 6px 10px;
   text-align: left;
-  text-transform: uppercase;
   transition:
     background-color var(--transition-control),
     border-color var(--transition-control);
 }
 
 .owlToggle:hover {
-  background: var(--bg-selected);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
 }
 
@@ -717,7 +667,7 @@ button.linkButton:hover:enabled {
 
 .owlToggle:disabled:hover {
   background: transparent;
-  border-color: var(--border-strong);
+  border-color: var(--border);
 }
 
 .owlToggleCaret {

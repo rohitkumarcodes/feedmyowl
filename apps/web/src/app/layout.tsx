@@ -19,15 +19,14 @@ import "@/styles/globals.css";
 
 const clerkAppearance = {
   variables: {
-    colorPrimary: "#0f4fb5",
-    colorBackground: "#fcf8ef",
-    colorForeground: "#2f2619",
-    colorMutedForeground: "#655844",
-    colorInput: "#fcf8ef",
-    colorInputForeground: "#2f2619",
-    colorBorder: "#584c39",
-    fontFamily:
-      '"Iowan Old Style","Palatino Linotype","Book Antiqua","URW Palladio L",Georgia,serif',
+    colorPrimary: "LinkText",
+    colorBackground: "Canvas",
+    colorForeground: "CanvasText",
+    colorMutedForeground: "CanvasText",
+    colorInput: "Field",
+    colorInputForeground: "FieldText",
+    colorBorder: "ButtonBorder",
+    fontFamily: "serif",
     fontSize: "1rem",
     borderRadius: "0",
   },

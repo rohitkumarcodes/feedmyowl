@@ -1,23 +1,22 @@
 :root {
-  --bg-app: #f4ecdc;
-  --bg-primary: #fcf8ef;
-  --bg-secondary: #efe3c8;
-  --bg-tertiary: #e8d7b0;
-  --bg-selected: #ead7ac;
-  --text-primary: #2f2619;
-  --text-secondary: #655844;
-  --text-muted: #8a7f6d;
-  --border: #a49475;
-  --border-strong: #584c39;
-  --accent: #0f4fb5;
-  --accent-soft: rgba(15, 79, 181, 0.1);
-  --accent-strong: #083987;
-  --danger-bg: #fff2ed;
-  --danger-border: #a55a4a;
-  --danger-text: #6f2d20;
-  --shadow-soft: 4px 4px 0 rgba(88, 76, 57, 0.18);
+  --bg-app: Canvas;
+  --bg-primary: Canvas;
+  --bg-secondary: Canvas;
+  --bg-tertiary: Canvas;
+  --bg-selected: Canvas;
+  --text-primary: CanvasText;
+  --text-secondary: GrayText;
+  --text-muted: GrayText;
+  --border: ButtonBorder;
+  --border-strong: ButtonBorder;
+  --accent: LinkText;
+  --accent-soft: rgba(0, 0, 0, 0.04);
+  --danger-bg: Canvas;
+  --danger-border: ButtonBorder;
+  --danger-text: CanvasText;
+  --shadow-soft: none;
 
-  --hover-surface: rgba(88, 76, 57, 0.08);
+  --hover-surface: rgba(0, 0, 0, 0.04);
   --transition-control: 0.12s;
 
   --sidebar-pane-width: 228px;
@@ -25,15 +24,9 @@
   --sidebar-header-reserve: 16px;
   --sidebar-header-reserve-mobile: 16px;
 
-  --font-sans:
-    "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "URW Palladio L", Georgia,
-    serif;
-  --font-serif:
-    "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "URW Palladio L", Georgia,
-    serif;
-  --font-mono:
-    "Iosevka", "SFMono-Regular", "Cascadia Mono", "Liberation Mono", "Courier New",
-    monospace;
+  --font-sans: serif;
+  --font-serif: serif;
+  --font-mono: monospace;
 
   --text-xs: 0.8em;
   --text-sm: 0.875em;
@@ -53,12 +46,6 @@
   --text-body: var(--text-primary);
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
 html,
 body {
   height: 100%;
@@ -66,32 +53,16 @@ body {
 }
 
 html {
-  background: var(--bg-app);
   color-scheme: light;
   font-size: 16px;
 }
 
 body {
-  background:
-    linear-gradient(rgba(88, 76, 57, 0.06) 1px, transparent 1px) 0 0 / 100% 2.35rem,
-    linear-gradient(90deg, rgba(88, 76, 57, 0.03) 1px, transparent 1px) 0 0 / 2.35rem
-      100%,
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.72), transparent 34%),
-    var(--bg-app);
+  background-color: var(--bg-app);
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: var(--text-base);
   line-height: var(--leading-normal);
-}
-
-a {
-  color: var(--accent);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.18em;
-}
-
-a:hover {
-  color: var(--accent-strong);
 }
 
 button,
@@ -100,7 +71,6 @@ select,
 textarea {
   color: var(--text-primary);
   font-family: inherit;
-  font-size: inherit;
   transition:
     background-color var(--transition-control),
     border-color var(--transition-control),
@@ -110,15 +80,14 @@ textarea {
 }
 
 button {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-strong);
+  background: transparent;
+  border: 1px solid var(--border);
   border-radius: 0;
-  box-shadow: 2px 2px 0 rgba(88, 76, 57, 0.14);
   cursor: pointer;
 }
 
 button:hover:not(:disabled) {
-  background: var(--bg-selected);
+  background: var(--hover-surface);
   border-color: var(--border-strong);
 }
 
@@ -133,9 +102,9 @@ textarea:disabled {
 input,
 select,
 textarea {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-strong);
+  background: Field;
+  color: FieldText;
+  border: 1px solid var(--border);
   border-radius: 0;
 }
 
@@ -153,11 +122,6 @@ textarea:hover:not(:disabled) {
 ::selection {
   background: var(--accent-soft);
   color: var(--text-primary);
-}
-
-hr {
-  border: 0;
-  border-top: 1px solid var(--border);
 }
 
 @media (prefers-reduced-motion: reduce) {

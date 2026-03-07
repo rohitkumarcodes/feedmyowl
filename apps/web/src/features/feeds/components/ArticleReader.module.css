@@ -6,61 +6,36 @@
 }
 
 .content {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0)),
-    var(--bg-primary);
-  border: 1px solid var(--border);
-  box-shadow: 5px 5px 0 rgba(88, 76, 57, 0.16);
-  margin: 18px auto 24px;
-  max-width: 44rem;
-  padding: 16px 20px 28px;
-  position: relative;
-}
-
-.content::before {
-  color: var(--text-secondary);
-  content: "article.post";
-  display: inline-block;
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  letter-spacing: 0.08em;
-  margin-bottom: 12px;
-  text-transform: uppercase;
+  margin: 0 auto;
+  max-width: 41rem;
+  padding: 16px 18px 24px;
 }
 
 .headerRow {
   align-items: center;
-  border-bottom: 1px dashed var(--border);
   display: flex;
   gap: 12px;
   justify-content: space-between;
-  padding-bottom: 10px;
 }
 
 .feedName {
   color: var(--text-muted);
-  font-family: var(--font-mono);
   font-size: var(--text-xs);
-  letter-spacing: 0.08em;
   margin: 0;
-  text-transform: uppercase;
 }
 
 .saveButton {
   align-items: center;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-strong);
+  background: transparent;
+  border: 1px solid var(--border);
   border-radius: 0;
-  box-shadow: 2px 2px 0 rgba(88, 76, 57, 0.14);
   color: var(--text-primary);
   cursor: pointer;
   display: inline-flex;
   flex: 0 0 auto;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   gap: 6px;
-  letter-spacing: 0.05em;
   padding: 3px 8px;
-  text-transform: uppercase;
   transition:
     background-color var(--transition-control),
     border-color var(--transition-control),
@@ -73,7 +48,7 @@
 }
 
 .saveButton:hover:not([disabled]) {
-  background: var(--bg-selected);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
 }
 
@@ -83,9 +58,9 @@
 }
 
 .saveButton[data-saved="true"] {
-  background: rgba(15, 79, 181, 0.08);
+  background: transparent;
   border-color: var(--border-strong);
-  color: var(--text-primary);
+  color: var(--accent);
   font-weight: var(--weight-semibold);
 }
 
@@ -103,28 +78,23 @@
 
 .title {
   color: var(--text-primary);
-  font-size: clamp(2rem, 2vw + 1rem, 2.7rem);
+  font-size: var(--text-2xl);
   font-weight: var(--weight-semibold);
   line-height: var(--leading-tight);
-  margin: 14px 0 0;
-  text-wrap: balance;
+  margin-top: 6px;
 }
 
 .meta {
   color: var(--text-secondary);
-  border-bottom: 1px solid var(--border);
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  letter-spacing: 0.05em;
-  margin-top: 12px;
-  padding-bottom: 14px;
+  font-size: var(--text-sm);
+  margin-top: 6px;
 }
 
 .body {
   color: var(--text-body);
   font-size: var(--text-base);
   line-height: var(--leading-relaxed);
-  margin-top: 18px;
+  margin-top: 16px;
 }
 
 .body:empty {
@@ -141,10 +111,8 @@
 .body h5,
 .body h6 {
   color: var(--text-primary);
-  border-top: 1px solid var(--border);
   line-height: var(--leading-tight);
-  margin: 1.2em 0 0.5em;
-  padding-top: 0.45em;
+  margin: 1em 0 0.5em;
 }
 
 .body ul,
@@ -158,8 +126,7 @@
 }
 
 .body img {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: 0;
   box-shadow: none;
   height: auto;
@@ -167,11 +134,10 @@
 }
 
 .body blockquote {
-  background: rgba(239, 227, 200, 0.42);
-  border-left: 4px solid var(--accent);
+  border-left: 3px solid var(--accent);
   color: var(--text-secondary);
   margin: 0 0 1em;
-  padding: 10px 12px;
+  padding: 2px 0 2px 10px;
 }
 
 .body hr {
@@ -181,11 +147,10 @@
 }
 
 .body pre {
-  background: var(--bg-tertiary);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
-  font-family: var(--font-mono);
   font-size: var(--text-sm);
   margin: 0 0 1em;
   overflow-x: auto;
@@ -193,11 +158,10 @@
 }
 
 .body code {
-  background: rgba(239, 227, 200, 0.48);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
-  font-family: var(--font-mono);
   font-size: var(--text-sm);
   padding: 1px 4px;
 }
@@ -222,17 +186,13 @@
 }
 
 .body th {
-  background: rgba(239, 227, 200, 0.58);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  background: transparent;
 }
 
 .imagePlaceholder {
   align-items: center;
   aspect-ratio: 16 / 9;
-  background: rgba(239, 227, 200, 0.58);
+  background: transparent;
   border: 1px dashed var(--border-strong);
   border-radius: 0;
   color: var(--text-secondary);
@@ -246,7 +206,7 @@
 .videoPlaceholder {
   align-items: center;
   aspect-ratio: 16 / 9;
-  background: rgba(239, 227, 200, 0.58);
+  background: transparent;
   border: 1px dashed var(--border-strong);
   border-radius: 0;
   display: flex;
@@ -255,16 +215,12 @@
 }
 
 .videoButton {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-strong);
+  background: transparent;
+  border: 1px solid var(--border);
   border-radius: 0;
-  box-shadow: 2px 2px 0 rgba(88, 76, 57, 0.14);
   cursor: pointer;
-  font-family: var(--font-mono);
   font-size: var(--text-sm);
-  letter-spacing: 0.05em;
   padding: 8px 12px;
-  text-transform: uppercase;
   transition:
     background-color var(--transition-control),
     border-color var(--transition-control);
@@ -276,7 +232,7 @@
 }
 
 .videoButton:hover {
-  background: var(--bg-selected);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
 }
 
@@ -290,7 +246,7 @@
 }
 
 .safeEmbed {
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: 0;
   display: block;
   margin: 0 0 1em;
@@ -299,7 +255,6 @@
 }
 
 .mediaElement {
-  border: 1px solid var(--border);
   border-radius: 0;
   display: block;
   margin: 0 0 1em;
@@ -312,20 +267,16 @@
   display: flex;
   height: 100%;
   justify-content: center;
-  padding: 22px;
+  padding: 20px;
 }
 
 .emptyText {
-  background: rgba(239, 227, 200, 0.45);
-  border: 1px dashed var(--border);
   color: var(--text-secondary);
   font-size: var(--text-base);
-  padding: 16px 18px;
 }
 
 @media (max-width: 900px) {
   .content {
-    margin: 12px;
-    padding: 14px 14px 22px;
+    padding: 12px 12px 18px;
   }
 }

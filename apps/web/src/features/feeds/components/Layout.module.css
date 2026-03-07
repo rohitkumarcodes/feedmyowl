@@ -1,116 +1,64 @@
 .root {
-  background: transparent;
-  box-sizing: border-box;
+  background: var(--bg-app);
   display: flex;
   flex-direction: column;
-  gap: 10px;
   height: 100vh;
-  padding:
-    max(12px, env(safe-area-inset-top))
-    max(12px, env(safe-area-inset-right))
-    max(12px, env(safe-area-inset-bottom))
-    max(12px, env(safe-area-inset-left));
   position: relative;
-}
-
-.root::before {
-  color: var(--text-secondary);
-  content: "feedmyowl/index.html";
-  display: block;
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .desktopControlsRow {
   align-items: center;
   display: flex;
-  gap: 8px;
-  min-height: 38px;
-  padding: 0;
+  gap: 6px;
+  min-height: 40px;
+  padding: 4px 6px;
 }
 
 .panes {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0)),
-    var(--bg-secondary);
-  border: 1px solid var(--border-strong);
-  box-shadow: var(--shadow-soft);
+  background: transparent;
   display: grid;
   flex: 1;
   grid-template-columns:
     var(--sidebar-pane-width)
     clamp(280px, 30vw, 400px)
     minmax(0, 1fr);
+  height: auto;
   min-height: 0;
-  overflow: hidden;
 }
 
 .sidebarPane,
 .listPane,
 .readerPane {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0)),
-    var(--bg-primary);
   min-height: 0;
   min-width: 0;
-  position: relative;
 }
 
-.sidebarPane,
-.readerPane {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  overflow: hidden;
-}
-
-.listPane {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.sidebarPane,
-.listPane {
+.sidebarPane {
+  background: transparent;
   border-right: 1px solid var(--border);
+  box-shadow: none;
+  overflow: hidden;
 }
 
-.sidebarPane::before,
-.listPane::before,
-.readerPane::before {
-  align-items: center;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
-  color: var(--text-secondary);
-  display: flex;
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  letter-spacing: 0.08em;
-  min-height: 34px;
-  padding: 6px 10px;
-  text-transform: uppercase;
-}
-
-.sidebarPane::before {
-  content: "<nav> feeds";
-}
-
-.listPane::before {
-  content: "<section> articles";
-}
-
-.readerPane::before {
-  content: "<article> reader";
-}
-
-.sidebarPane > *,
-.listPane > *,
-.readerPane > * {
-  min-height: 0;
+.listPane {
+  background: transparent;
+  border-right: 1px solid var(--border);
+  box-shadow: none;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
 }
 
 .listPaneContent {
   min-height: 0;
+  overflow: hidden;
+}
+
+.readerPane {
+  background: transparent;
+  box-shadow: none;
   overflow: hidden;
 }
 
@@ -136,12 +84,10 @@
 
 .listCollapseToggle {
   align-items: center;
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border);
   display: flex;
   justify-content: center;
   min-height: 44px;
-  padding: 6px 8px;
+  padding: 4px 8px;
 }
 
 .expandButton {
@@ -151,8 +97,10 @@
 }
 
 .paneToggleButton {
-  background: var(--bg-primary);
-  border-color: var(--border-strong);
+  background: transparent;
+  border-color: var(--border);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .paneToggleButton svg {
@@ -160,10 +108,6 @@
 }
 
 .mobileViews {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0)),
-    var(--bg-secondary);
-  border: 1px solid var(--border-strong);
-  box-shadow: var(--shadow-soft);
   flex: 1;
   height: 100%;
   min-height: 0;
@@ -173,13 +117,10 @@
 .mobileSlideTrack {
   display: flex;
   height: 100%;
-  transition: transform var(--transition-control);
   width: 300%;
 }
 
 .mobileSlidePane {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0)),
-    var(--bg-primary);
   flex: 0 0 calc(100% / 3);
   height: 100%;
   overflow: hidden;
@@ -187,28 +128,22 @@
 
 .mobileBackRow {
   align-items: center;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
   display: flex;
   gap: 10px;
-  min-height: 42px;
+  min-height: 40px;
   padding: 6px 10px;
 }
 
 .mobileBackRow button {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-strong);
+  background: transparent;
+  border: 1px solid var(--border);
   border-radius: 0;
-  box-shadow: 2px 2px 0 rgba(88, 76, 57, 0.14);
   color: var(--text-primary);
   cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  letter-spacing: 0.06em;
+  font-size: var(--text-base);
   min-height: 30px;
   padding: 2px 10px;
   text-decoration: none;
-  text-transform: uppercase;
 }
 
 .mobileBackRow button:focus-visible {
@@ -216,18 +151,15 @@
 }
 
 .mobileBackRow button:hover {
-  background: var(--bg-selected);
+  background: var(--accent-soft);
   border-color: var(--border-strong);
 }
 
 .mobileBackRow p {
   color: var(--text-secondary);
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  letter-spacing: 0.06em;
+  font-size: var(--text-sm);
   overflow: hidden;
   text-overflow: ellipsis;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
