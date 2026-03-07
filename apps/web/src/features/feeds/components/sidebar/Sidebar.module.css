@@ -16,7 +16,9 @@
 }
 
 .top {
-  padding: var(--sidebar-header-reserve) 0 0;
+  background: linear-gradient(180deg, rgba(239, 227, 200, 0.65), rgba(239, 227, 200, 0));
+  border-bottom: 1px solid var(--border);
+  padding: var(--sidebar-header-reserve) 0 10px;
 }
 
 .toolbar {
@@ -76,15 +78,17 @@
 }
 
 .formWrap {
-  padding: 4px 12px;
+  padding: 6px 12px 0;
 }
 
 .sidebarFolderForm {
-  background: transparent;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0)),
+    var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 0;
   display: grid;
   gap: 8px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
   margin-top: 4px;
   padding: 8px;
 }
@@ -104,43 +108,53 @@
 
 .sidebarDuplicateText {
   color: var(--text-secondary);
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .sections {
   margin-top: 0;
   overflow: auto;
+  padding: 10px 0 12px;
   scrollbar-color: auto;
 }
 
 .emptyLabel {
   color: var(--text-secondary);
-  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
   padding: 8px 12px 8px
     calc(
       var(--sidebar-nav-pad-x) + var(--sidebar-tree-toggle-col) +
         var(--sidebar-nav-icon-col) + var(--sidebar-nav-text-gap)
     );
+  text-transform: uppercase;
 }
 
 .sidebarMessage {
   align-items: flex-start;
-  background: transparent;
-  border-left: 2px solid var(--border);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-left-width: 4px;
   border-radius: 0;
-  box-shadow: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
   display: flex;
   gap: 6px;
-  margin-top: 6px;
-  padding: 6px 12px 6px calc(var(--sidebar-tree-toggle-col) + 2px);
+  margin: 8px 10px 0;
+  padding: 8px 10px;
 }
 
 .sidebarMessageText {
   color: var(--text-secondary);
   display: grid;
   flex: 1;
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
   gap: 2px;
+  letter-spacing: 0.04em;
 }
 
 .sidebarMessageTitle {
@@ -202,13 +216,17 @@
 }
 
 .sidebarMessageAction {
-  background: transparent;
-  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-strong);
   border-radius: 0;
+  box-shadow: 2px 2px 0 rgba(88, 76, 57, 0.14);
   color: var(--text-primary);
   cursor: pointer;
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
+  letter-spacing: 0.04em;
   padding: 2px 6px;
+  text-transform: uppercase;
   transition:
     background-color var(--transition-control),
     border-color var(--transition-control);
@@ -229,7 +247,7 @@
 }
 
 .sidebarMessageAction:hover {
-  background: var(--accent-soft);
+  background: var(--bg-selected);
   border-color: var(--border-strong);
 }
 
@@ -240,8 +258,8 @@
 
 /* Thin divider separating the system scope rows from the folder/feed tree. */
 .treeSectionDivider {
-  border-top: 1px solid var(--border);
-  margin: 6px 12px;
+  border-top: 1px dashed var(--border);
+  margin: 10px 12px;
 }
 
 .folderGroup + .folderGroup {
@@ -270,7 +288,7 @@
 }
 
 .folderRowWrap:hover:not(.folderRowWrapActive) {
-  background: transparent;
+  background: rgba(232, 215, 176, 0.28);
 }
 
 .folderRowWrap:hover:not(.folderRowWrapActive) .folderToggle,
@@ -279,7 +297,7 @@
 }
 
 .folderRowWrapActive {
-  background: transparent;
+  background: rgba(239, 227, 200, 0.55);
 }
 
 .folderRow {
@@ -298,8 +316,7 @@
 
 .folderRow:hover {
   background: transparent;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  text-decoration: none;
 }
 
 .folderLabel {
@@ -312,7 +329,10 @@
 }
 
 .systemItemLabel {
+  font-family: var(--font-mono);
   font-weight: var(--weight-semibold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .folderItemLabel {
@@ -356,14 +376,13 @@
 }
 
 .folderRowWrapActive .folderLabel {
-  color: var(--accent);
+  color: var(--text-primary);
   font-weight: var(--weight-semibold);
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 .rowCountAligned {
   color: var(--text-muted);
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   margin-left: 0;
   padding-right: 1px;
@@ -422,7 +441,7 @@
 .renameActions {
   display: flex;
   gap: 6px;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .sidebarCollapseToggle {
@@ -434,10 +453,9 @@
 }
 
 .paneToggleButton {
-  background: transparent;
-  border-color: var(--border);
+  background: var(--bg-primary);
+  border-color: var(--border-strong);
   border-radius: 0;
-  box-shadow: none;
   min-height: 34px;
   min-width: 34px;
 }
@@ -476,6 +494,7 @@
 
 .deleteDialog p {
   color: var(--text-secondary);
+  font-family: var(--font-mono);
   font-size: var(--text-sm);
 }
 
@@ -499,11 +518,13 @@
 
 .inlineField span {
   color: var(--text-secondary);
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
 }
 
 .moveDialogHint {
   color: var(--text-secondary);
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
 }
 
@@ -516,7 +537,7 @@
   background: transparent;
   max-height: 200px;
   overflow-y: auto;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: 0;
   margin-bottom: 12px;
 }
@@ -560,6 +581,7 @@
 
 .feedIndicatorLabel {
   color: var(--text-muted);
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
 }
 
@@ -628,7 +650,7 @@
 
 .deleteDialogBackdropFixed {
   align-items: center;
-  background: transparent;
+  background: rgba(47, 38, 25, 0.08);
   backdrop-filter: none;
   display: flex;
   inset: 0;

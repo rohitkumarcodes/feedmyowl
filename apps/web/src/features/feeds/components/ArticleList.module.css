@@ -7,15 +7,24 @@
 }
 
 .searchBar {
-  background: transparent;
+  background: linear-gradient(180deg, rgba(239, 227, 200, 0.85), rgba(239, 227, 200, 0)),
+    var(--bg-primary);
   border-bottom: 1px solid var(--border);
-  box-shadow: none;
   display: grid;
-  gap: 6px;
-  padding: 6px 10px;
+  gap: 8px;
+  padding: 10px 12px;
   position: sticky;
   top: 0;
   z-index: 2;
+}
+
+.searchBar::before {
+  color: var(--text-secondary);
+  content: "<form> search";
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .searchControls {
@@ -38,13 +47,15 @@
 }
 
 .searchInput {
-  background: Field;
-  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-strong);
   border-radius: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
   color: var(--text-primary);
+  font-family: var(--font-mono);
   font-size: var(--text-sm);
-  min-height: 32px;
-  padding: 5px 30px 5px 28px;
+  min-height: 36px;
+  padding: 6px 32px 6px 30px;
   transition:
     border-color var(--transition-control),
     box-shadow var(--transition-control),
@@ -54,7 +65,7 @@
 
 .searchInput:focus-visible {
   border-color: var(--accent);
-  box-shadow: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
   outline: none;
 }
 
@@ -67,6 +78,7 @@
   background: transparent;
   border: 0;
   border-radius: 0;
+  box-shadow: none;
   color: var(--text-secondary);
   cursor: pointer;
   display: inline-flex;
@@ -88,7 +100,7 @@
 }
 
 .clearButton:hover:not(:disabled) {
-  background: var(--accent-soft);
+  background: rgba(232, 215, 176, 0.42);
   color: var(--text-primary);
 }
 
@@ -99,26 +111,38 @@
 }
 
 .searchHint,
-.searchMeta {
+.searchMeta,
+.statusMessage,
+.paginationHint,
+.paginationSentinel,
+.paginationError p {
   color: var(--text-secondary);
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
+  letter-spacing: 0.04em;
 }
 
 .markAllReadBar {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
   display: flex;
-  justify-content: center;
-  padding: 4px 10px;
+  justify-content: flex-start;
+  padding: 8px 12px;
 }
 
 .markAllReadButton {
-  background: transparent;
-  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-strong);
   border-radius: 0;
+  box-shadow: 2px 2px 0 rgba(88, 76, 57, 0.14);
   color: var(--text-primary);
   cursor: pointer;
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
+  letter-spacing: 0.05em;
   min-height: 28px;
   padding: 4px 10px;
+  text-transform: uppercase;
   transition:
     background-color var(--transition-control),
     border-color var(--transition-control);
@@ -130,15 +154,14 @@
 }
 
 .markAllReadButton:hover {
-  background: var(--accent-soft);
+  background: var(--bg-selected);
   border-color: var(--border-strong);
 }
 
 .statusMessage {
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  padding: 6px 10px;
+  background: rgba(239, 227, 200, 0.45);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 12px;
 }
 
 .emptyWrap {
@@ -147,7 +170,7 @@
   flex: 1;
   justify-content: center;
   min-height: 0;
-  padding: 20px;
+  padding: 24px 16px;
 }
 
 .emptyWrapInitial {
@@ -155,25 +178,25 @@
 }
 
 .empty {
+  background: rgba(239, 227, 200, 0.4);
+  border: 1px dashed var(--border);
   color: var(--text-secondary);
   font-size: var(--text-base);
+  max-width: 26rem;
+  padding: 16px 18px;
+  text-align: center;
 }
 
 .paginationStatus {
-  background: transparent;
+  background: linear-gradient(180deg, rgba(239, 227, 200, 0.5), rgba(239, 227, 200, 0));
+  border-top: 1px solid var(--border);
   display: grid;
   gap: 8px;
-  padding: 8px 10px;
-}
-
-.paginationHint {
-  color: var(--text-secondary);
-  font-size: var(--text-xs);
+  padding: 10px 12px 12px;
 }
 
 .paginationSentinel {
   color: var(--text-muted);
-  font-size: var(--text-xs);
   min-height: 12px;
 }
 
@@ -186,18 +209,21 @@
 
 .paginationError p {
   color: var(--danger-text);
-  font-size: var(--text-xs);
 }
 
 .paginationRetry {
-  background: transparent;
-  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-strong);
   border-radius: 0;
+  box-shadow: 2px 2px 0 rgba(88, 76, 57, 0.14);
   color: var(--text-primary);
   cursor: pointer;
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
+  letter-spacing: 0.04em;
   min-height: 28px;
   padding: 2px 10px;
+  text-transform: uppercase;
   transition:
     background-color var(--transition-control),
     border-color var(--transition-control);
@@ -209,7 +235,7 @@
 }
 
 .paginationRetry:hover:not(:disabled) {
-  background: var(--accent-soft);
+  background: var(--bg-selected);
   border-color: var(--border-strong);
 }
 
