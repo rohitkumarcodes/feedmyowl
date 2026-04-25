@@ -116,6 +116,16 @@ export async function deleteAccount(confirm = true) {
   });
 }
 
+export async function resetAccount(confirm = true) {
+  return await callJson<
+    (AccountDeleteResponseBody & Partial<ApiErrorBody>) | ApiErrorBody
+  >("/api/feeds", {
+    method: "PATCH",
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ action: "account.reset", confirm }),
+  });
+}
+
 export async function refreshFeeds() {
   return await callJson<Partial<RefreshResponseBody> & Partial<ApiErrorBody>>(
     "/api/refresh",

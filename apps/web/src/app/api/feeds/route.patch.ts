@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, eq, users } from "@/lib/server/database";
+import { db, eq, users, feeds, folders, feedFolderMemberships } from "@/lib/server/database";
 import { deleteAuthUser } from "@/lib/server/auth";
 import { handleApiRouteError } from "@/lib/server/api-errors";
 import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
@@ -31,6 +31,7 @@ import { getAppUser, parseRouteJson } from "./route.shared";
  *   - uncategorized.delete
  *   - uncategorized.move_to_folder
  *   - account.delete
+ *   - account.reset
  */
 export async function patchFeedsRoute(request: NextRequest) {
   try {
@@ -221,6 +222,29 @@ export async function patchFeedsRoute(request: NextRequest) {
       }
 
       await db.delete(users).where(eq(users.id, appUser.id));
+
+      return NextResponse.json({ success: true } satisfies AccountDeleteResponseBody);
+    }
+
+    if (payload.action === "account.reset") {
+      const confirmed = payload.confirm === true;
+      if (!confirmed) {
+        return NextResponse.json(
+          { error: "Account reset must be explicitly confirmed." },
+          { status: 400 },
+        );
+      }
+
+      const userId = appUser.id;
+
+      // Delete feed memberships first (before feeds are deleted)
+      await db.delete(feedFolderMemberships).where(eq(feedFolderMemberships.userId, userId));
+
+      // Delete feeds - cascade deletes feed_items as well
+      await db.delete(feeds).where(eq(feeds.userId, userId));
+
+      // Delete folders - cascade deletes any remaining memberships
+      await db.delete(folders).where(eq(folders.userId, userId));
 
       return NextResponse.json({ success: true } satisfies AccountDeleteResponseBody);
     }

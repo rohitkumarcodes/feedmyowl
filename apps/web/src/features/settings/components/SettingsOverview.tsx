@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { DeleteAccountSection } from "@/features/settings/components/sections/DeleteAccountSection";
+import { ResetAccountSection } from "@/features/settings/components/sections/ResetAccountSection";
 import { ExportSection } from "@/features/settings/components/sections/ExportSection";
 import { ImportSection } from "@/features/settings/components/sections/ImportSection";
 import { KeyboardShortcutsSection } from "@/features/settings/components/sections/KeyboardShortcutsSection";
@@ -89,6 +90,7 @@ export function SettingsOverview({
           isExpanded={isShortcutsPanelExpanded}
           setIsExpanded={setIsShortcutsPanelExpanded}
         />
+        <ResetAccountSection />
         <DeleteAccountSection />
       </div>
     </div>
