@@ -6,6 +6,7 @@ const baseContext = {
   isTypingTarget: false,
   isListContext: false,
   isReaderContext: false,
+  isSidebarContext: false,
   isShortcutsModalOpen: false,
 } as const;
 
@@ -67,6 +68,31 @@ describe("shortcut-dispatch", () => {
         isReaderContext: true,
       }),
     ).toBe("article.next.arrow");
+  });
+
+  it("maps sidebar arrow keys in sidebar context, taking priority over list/reader", () => {
+    expect(
+      resolveShortcutAction(eventSnapshot("ArrowDown"), {
+        ...baseContext,
+        isSidebarContext: true,
+      }),
+    ).toBe("sidebar.next.arrow");
+
+    expect(
+      resolveShortcutAction(eventSnapshot("ArrowUp"), {
+        ...baseContext,
+        isSidebarContext: true,
+      }),
+    ).toBe("sidebar.previous.arrow");
+
+    expect(
+      resolveShortcutAction(eventSnapshot("ArrowDown"), {
+        ...baseContext,
+        isSidebarContext: true,
+        isListContext: true,
+        isReaderContext: true,
+      }),
+    ).toBe("sidebar.next.arrow");
   });
 
   it("maps reader scroll keys only in reader context", () => {

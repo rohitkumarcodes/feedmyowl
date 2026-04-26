@@ -5,15 +5,25 @@
 import { useEffect } from "react";
 import { resolveShortcutAction } from "@/lib/shared/shortcut-dispatch";
 
+/**
+ * Which pane the user most recently interacted with. Drives Up/Down arrow
+ * routing so the selection stays "sticky" to that pane even after the
+ * browser moves DOM focus elsewhere (e.g. focusReaderTitle after a click).
+ */
+export type LastInteractedPane = "sidebar" | "list" | "reader" | "none";
+
 interface UseKeyboardShortcutsOptions {
   enabled: boolean;
   isShortcutsModalOpen: boolean;
   isListContextTarget: (target: EventTarget | null) => boolean;
   isReaderContextTarget: (target: EventTarget | null) => boolean;
+  lastInteractedPane: LastInteractedPane;
   onNextArticleVim: () => void;
   onPreviousArticleVim: () => void;
   onNextArticleArrow: () => void;
   onPreviousArticleArrow: () => void;
+  onNextSidebarItem: () => void;
+  onPreviousSidebarItem: () => void;
   onReaderScrollLineDown: () => boolean;
   onReaderScrollLineUp: () => boolean;
   onReaderScrollPageDown: () => boolean;
@@ -86,10 +96,13 @@ export function useKeyboardShortcuts({
   isShortcutsModalOpen,
   isListContextTarget,
   isReaderContextTarget,
+  lastInteractedPane,
   onNextArticleVim,
   onPreviousArticleVim,
   onNextArticleArrow,
   onPreviousArticleArrow,
+  onNextSidebarItem,
+  onPreviousSidebarItem,
   onReaderScrollLineDown,
   onReaderScrollLineUp,
   onReaderScrollPageDown,
@@ -109,6 +122,17 @@ export function useKeyboardShortcuts({
     }
 
     function handleKeyDown(event: KeyboardEvent) {
+      // Combine focus-target signals with the "last interacted pane" signal
+      // so arrow keys keep moving the selection in whichever pane the user
+      // last touched, even after openSelectedArticle / focusReaderTitle move
+      // DOM focus to the reader. The dispatcher's priority order
+      // (sidebar > list > reader for arrows) resolves overlaps.
+      const isListContext =
+        isListContextTarget(event.target) || lastInteractedPane === "list";
+      const isReaderContext =
+        isReaderContextTarget(event.target) || lastInteractedPane === "reader";
+      const isSidebarContext = lastInteractedPane === "sidebar";
+
       const action = resolveShortcutAction(
         {
           key: event.key,
@@ -120,8 +144,9 @@ export function useKeyboardShortcuts({
         {
           enabled,
           isTypingTarget: isTypingTarget(event.target),
-          isListContext: isListContextTarget(event.target),
-          isReaderContext: isReaderContextTarget(event.target),
+          isListContext,
+          isReaderContext,
+          isSidebarContext,
           isShortcutsModalOpen,
         },
       );
@@ -196,6 +221,16 @@ export function useKeyboardShortcuts({
         return;
       }
 
+      if (action === "sidebar.next.arrow") {
+        onNextSidebarItem();
+        return;
+      }
+
+      if (action === "sidebar.previous.arrow") {
+        onPreviousSidebarItem();
+        return;
+      }
+
       if (action === "article.open") {
         onOpenArticle();
         return;
@@ -246,10 +281,13 @@ export function useKeyboardShortcuts({
     isListContextTarget,
     isReaderContextTarget,
     isShortcutsModalOpen,
+    lastInteractedPane,
     onNextArticleVim,
     onPreviousArticleVim,
     onNextArticleArrow,
     onPreviousArticleArrow,
+    onNextSidebarItem,
+    onPreviousSidebarItem,
     onReaderScrollLineDown,
     onReaderScrollLineUp,
     onReaderScrollPageDown,

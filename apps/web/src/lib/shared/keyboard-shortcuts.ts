@@ -7,6 +7,8 @@ export type ShortcutActionId =
   | "article.previous.vim"
   | "article.next.arrow"
   | "article.previous.arrow"
+  | "sidebar.next.arrow"
+  | "sidebar.previous.arrow"
   | "reader.scroll.lineDown"
   | "reader.scroll.lineUp"
   | "reader.scroll.pageDown"
@@ -71,6 +73,18 @@ export const SHORTCUT_DEFINITIONS: readonly ShortcutDefinition[] = [
     group: "navigation",
     keys: ["ArrowUp"],
     description: "ArrowUp: Select previous article (list)",
+  },
+  {
+    id: "sidebar.next.arrow",
+    group: "navigation",
+    keys: ["ArrowDown"],
+    description: "ArrowDown: Select next item (sidebar)",
+  },
+  {
+    id: "sidebar.previous.arrow",
+    group: "navigation",
+    keys: ["ArrowUp"],
+    description: "ArrowUp: Select previous item (sidebar)",
   },
   {
     id: "reader.scroll.lineDown",

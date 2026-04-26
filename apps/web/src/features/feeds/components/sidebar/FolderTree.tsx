@@ -237,6 +237,7 @@ function FolderRow({
         onClick={handleFolderRowClick}
         aria-current={isActive ? "true" : undefined}
         aria-expanded={isExpanded}
+        data-sidebar-row={`folder:${folder.id}`}
       >
         <span className={styles.folderRowIconSlot} aria-hidden="true">
           <FolderRowIcon className={styles.folderRowIcon} filled={isActive} />
@@ -694,6 +695,7 @@ export function FolderTree({
       return (
         <FeedItem
           key={`${feed.id}`}
+          feedId={feed.id}
           label={label}
           isActive={isActive}
           isMobile={isMobile}
@@ -730,6 +732,7 @@ export function FolderTree({
             } ${selectedScope.type === "saved" ? primitiveStyles.rowActive : ""}`}
             onClick={onSelectSaved}
             aria-current={selectedScope.type === "saved" ? "true" : undefined}
+            data-sidebar-row="saved"
           >
             <span className={styles.systemArrowSlot} aria-hidden="true" />
             <span className={styles.folderRowIconSlot} aria-hidden="true">
@@ -760,6 +763,7 @@ export function FolderTree({
               } ${selectedScope.type === "all" ? primitiveStyles.rowActive : ""}`}
               onClick={onSelectAll}
               aria-current={selectedScope.type === "all" ? "true" : undefined}
+              data-sidebar-row="all"
             >
               <span className={styles.systemArrowSlot} aria-hidden="true" />
               <span className={styles.folderRowIconSlot} aria-hidden="true">
@@ -792,6 +796,7 @@ export function FolderTree({
               } ${selectedScope.type === "unread" ? primitiveStyles.rowActive : ""}`}
               onClick={onSelectUnread}
               aria-current={selectedScope.type === "unread" ? "true" : undefined}
+              data-sidebar-row="unread"
             >
               <span className={styles.systemArrowSlot} aria-hidden="true" />
               <span className={styles.folderRowIconSlot} aria-hidden="true">
@@ -848,6 +853,7 @@ export function FolderTree({
                 }}
                 aria-current={selectedScope.type === "uncategorized" ? "true" : undefined}
                 aria-expanded={isUncategorizedExpanded}
+                data-sidebar-row="uncategorized"
               >
                 <span className={styles.folderRowIconSlot} aria-hidden="true">
                   <FolderRowIcon

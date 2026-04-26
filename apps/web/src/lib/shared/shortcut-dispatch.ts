@@ -17,6 +17,7 @@ export interface ShortcutDispatchContext {
   isTypingTarget: boolean;
   isListContext: boolean;
   isReaderContext: boolean;
+  isSidebarContext: boolean;
   isShortcutsModalOpen: boolean;
 }
 
@@ -72,6 +73,14 @@ export function resolveShortcutAction(
 
   if (key === "k" && (context.isListContext || context.isReaderContext)) {
     return "article.previous.vim";
+  }
+
+  if (key === "ArrowDown" && context.isSidebarContext) {
+    return "sidebar.next.arrow";
+  }
+
+  if (key === "ArrowUp" && context.isSidebarContext) {
+    return "sidebar.previous.arrow";
   }
 
   if (key === "ArrowDown" && context.isListContext) {

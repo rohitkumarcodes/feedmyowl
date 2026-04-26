@@ -176,7 +176,11 @@ export function Sidebar({
   }, [folders, pendingAutoRenameFolderName]);
 
   return (
-    <div className={`${styles.root} ${primitiveStyles.tokenScope}`}>
+    <div
+      className={`${styles.root} ${primitiveStyles.tokenScope}`}
+      data-sidebar-root
+      tabIndex={-1}
+    >
       <div className={styles.top}>
         <AddFeedSection
           isMobile={isMobile}

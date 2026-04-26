@@ -9,6 +9,10 @@ import { Layout } from "./Layout";
 import { Sidebar } from "./sidebar/Sidebar";
 import { resolveVimArticleNavigation } from "@/features/feeds/state/article-keyboard-navigation";
 import {
+  parseSidebarRowKey,
+  resolveSidebarArrowNavigation,
+} from "@/features/feeds/state/sidebar-keyboard-navigation";
+import {
   scrollReaderByLine,
   scrollReaderByPage,
 } from "@/features/feeds/state/article-reader-scroll";
@@ -43,7 +47,10 @@ import {
   selectScopeLabel,
   selectVisibleArticles,
 } from "@/features/feeds/state/feeds-workspace.selectors";
-import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import {
+  useKeyboardShortcuts,
+  type LastInteractedPane,
+} from "@/hooks/useKeyboardShortcuts";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { useFeedsWorkspaceActions } from "@/features/feeds/hooks/useFeedsWorkspaceActions";
 import { useFeedsWorkspaceMobile } from "@/features/feeds/hooks/useFeedsWorkspaceMobile";
@@ -120,6 +127,13 @@ export function FeedsWorkspace({
   const [selectedScope, setSelectedScope] = useState<SidebarScope>({ type: "none" });
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
   const [openArticleId, setOpenArticleId] = useState<string | null>(null);
+  /**
+   * Pane the user most recently interacted with. Drives Up/Down arrow
+   * routing so selection stays "sticky" to whichever pane the user last
+   * touched, even after focus moves to the reader on article-open.
+   */
+  const [lastInteractedPane, setLastInteractedPane] =
+    useState<LastInteractedPane>("none");
   const [liveMessage, setLiveMessage] = useState("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [listCollapsed, setListCollapsed] = useState(false);
@@ -432,6 +446,81 @@ export function FeedsWorkspace({
     return activeElement instanceof Node ? listRoot.contains(activeElement) : false;
   }, []);
 
+  /**
+   * Marks the reader as the last-interacted pane when the user clicks or
+   * scrolls within it, so subsequent ArrowUp/Down keys scroll the reader
+   * instead of moving article-list selection.
+   */
+  useEffect(() => {
+    const handleReaderInteract = (event: Event) => {
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+      const readerRoot = document.querySelector<HTMLElement>(
+        "[data-article-reader-root]",
+      );
+      if (readerRoot && readerRoot.contains(target)) {
+        setLastInteractedPane("reader");
+      }
+    };
+
+    document.addEventListener("mousedown", handleReaderInteract);
+    document.addEventListener("wheel", handleReaderInteract, { passive: true });
+
+    return () => {
+      document.removeEventListener("mousedown", handleReaderInteract);
+      document.removeEventListener("wheel", handleReaderInteract);
+    };
+  }, []);
+
+  /**
+   * Marks the article list as the last-interacted pane when the user clicks
+   * inside it (selecting an article, scrolling). Mirrors the reader handler.
+   */
+  useEffect(() => {
+    const handleListInteract = (event: Event) => {
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+      const listRoot = document.querySelector<HTMLElement>("[data-article-list-root]");
+      if (listRoot && listRoot.contains(target)) {
+        setLastInteractedPane("list");
+      }
+    };
+
+    document.addEventListener("mousedown", handleListInteract);
+
+    return () => {
+      document.removeEventListener("mousedown", handleListInteract);
+    };
+  }, []);
+
+  /**
+   * Marks the sidebar as the last-interacted pane when the user clicks
+   * inside it. Catches all click paths (folders, feed rows, scope rows)
+   * without each handler having to remember to set the state.
+   */
+  useEffect(() => {
+    const handleSidebarInteract = (event: Event) => {
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+      const sidebarRoot = document.querySelector<HTMLElement>("[data-sidebar-root]");
+      if (sidebarRoot && sidebarRoot.contains(target)) {
+        setLastInteractedPane("sidebar");
+      }
+    };
+
+    document.addEventListener("mousedown", handleSidebarInteract);
+
+    return () => {
+      document.removeEventListener("mousedown", handleSidebarInteract);
+    };
+  }, []);
+
   const isReaderContextTarget = useCallback((target: EventTarget | null): boolean => {
     const readerRoot = document.querySelector<HTMLElement>("[data-article-reader-root]");
     if (!readerRoot) {
@@ -561,6 +650,11 @@ export function FeedsWorkspace({
     async (articleId: string) => {
       setSelectedArticleId(articleId);
       setOpenArticleId(articleId);
+      // Opening from the list keeps the user in "list" mode so subsequent
+      // ArrowUp/Down keep navigating articles rather than scrolling the
+      // reader. The reader takes over only after the user explicitly
+      // clicks/scrolls inside it (see handleReaderInteract below).
+      setLastInteractedPane("list");
       focusReaderTitle();
       clearStatusMessages();
       await markArticleAsRead(articleId);
@@ -672,6 +766,8 @@ export function FeedsWorkspace({
 
   const moveSelectionByArrow = useCallback(
     (step: 1 | -1) => {
+      setLastInteractedPane("list");
+
       if (visibleArticles.length === 0) {
         setSelectedArticleId(null);
         return;
@@ -690,6 +786,63 @@ export function FeedsWorkspace({
       setSelectedArticleId(visibleArticles[nextIndex].id);
     },
     [selectedArticleId, visibleArticles],
+  );
+
+  /**
+   * Reads the visible sidebar rows from the DOM in render order. Each
+   * selectable row carries a `data-sidebar-row="<scope-key>"` attribute
+   * (see Sidebar/FolderTree/FeedItem). Using the DOM as the source of
+   * truth means the order automatically tracks expand/collapse state and
+   * conditional rows (Saved/All/Unread/Uncategorized) without lifting that
+   * state into this component.
+   */
+  const readVisibleSidebarScopes = useCallback((): SidebarScope[] => {
+    const nodes = document.querySelectorAll<HTMLElement>("[data-sidebar-row]");
+    const scopes: SidebarScope[] = [];
+    nodes.forEach((node) => {
+      const rowKey = node.getAttribute("data-sidebar-row");
+      if (!rowKey) {
+        return;
+      }
+      const scope = parseSidebarRowKey(rowKey);
+      if (scope) {
+        scopes.push(scope);
+      }
+    });
+    return scopes;
+  }, []);
+
+  const scrollSidebarRowIntoView = useCallback((scope: SidebarScope) => {
+    let key: string;
+    if (scope.type === "folder") {
+      key = `folder:${scope.folderId}`;
+    } else if (scope.type === "feed") {
+      key = `feed:${scope.feedId}`;
+    } else {
+      key = scope.type;
+    }
+    const element = document.querySelector(`[data-sidebar-row="${key}"]`);
+    if (element) {
+      element.scrollIntoView({ block: "nearest" });
+    }
+  }, []);
+
+  const moveSidebarSelectionByArrow = useCallback(
+    (step: 1 | -1) => {
+      setLastInteractedPane("sidebar");
+      const visibleScopes = readVisibleSidebarScopes();
+      const next = resolveSidebarArrowNavigation({
+        step,
+        currentScope: selectedScope,
+        visibleScopes,
+      });
+      if (!next) {
+        return;
+      }
+      setSelectedScope(next);
+      scrollSidebarRowIntoView(next);
+    },
+    [readVisibleSidebarScopes, scrollSidebarRowIntoView, selectedScope],
   );
 
   const navigateAndOpenByVim = useCallback(
@@ -739,6 +892,7 @@ export function FeedsWorkspace({
       const openArticle = selectOpenArticle(allArticles, openArticleId);
 
       setSelectedScope(nextScope);
+      setLastInteractedPane("sidebar");
 
       if (wasSearchActive) {
         setSearchQuery("");
@@ -790,10 +944,13 @@ export function FeedsWorkspace({
     isShortcutsModalOpen,
     isListContextTarget,
     isReaderContextTarget,
+    lastInteractedPane,
     onNextArticleVim: () => navigateAndOpenByVim(1),
     onPreviousArticleVim: () => navigateAndOpenByVim(-1),
     onNextArticleArrow: () => moveSelectionByArrow(1),
     onPreviousArticleArrow: () => moveSelectionByArrow(-1),
+    onNextSidebarItem: () => moveSidebarSelectionByArrow(1),
+    onPreviousSidebarItem: () => moveSidebarSelectionByArrow(-1),
     onReaderScrollLineDown: () => scrollReaderByKeyboardLine(1),
     onReaderScrollLineUp: () => scrollReaderByKeyboardLine(-1),
     onReaderScrollPageDown: () => scrollReaderByKeyboardPage(1),

@@ -8,6 +8,7 @@ import primitiveStyles from "../LeftPanePrimitives.module.css";
 import styles from "./FeedItem.module.css";
 
 interface FeedItemProps {
+  feedId: string;
   label: string;
   isActive: boolean;
   isMobile: boolean;
@@ -32,6 +33,7 @@ interface FeedItemProps {
  * Renders one feed row with active styling and an overflow control.
  */
 export function FeedItem({
+  feedId,
   label,
   isActive,
   isMobile,
@@ -195,6 +197,7 @@ export function FeedItem({
         onClick={onSelect}
         title={label}
         aria-current={isActive ? "true" : undefined}
+        data-sidebar-row={`feed:${feedId}`}
       >
         <span className={styles.leading}>
           <span className={styles.arrowSlot} aria-hidden="true" />
@@ -232,7 +235,10 @@ export function FeedItem({
         ref={actionsRef}
       >
         {showActionsUnreadBadge ? (
-          <span className={styles.actionsUnreadBadge} title={`${unreadDisplayCount} unread`}>
+          <span
+            className={styles.actionsUnreadBadge}
+            title={`${unreadDisplayCount} unread`}
+          >
             {unreadDisplayCount}
           </span>
         ) : null}
