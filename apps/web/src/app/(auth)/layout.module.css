@@ -13,7 +13,6 @@
   gap: 4px;
   margin-left: auto;
   margin-right: max(12px, calc(env(safe-area-inset-right) + 8px));
-  padding-top: max(8px, env(safe-area-inset-top));
   position: sticky;
   top: 0;
   width: fit-content;
