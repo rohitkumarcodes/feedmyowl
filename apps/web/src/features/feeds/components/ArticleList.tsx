@@ -4,7 +4,6 @@
 
 import { useEffect, useRef, type RefObject } from "react";
 import { ArticleRow } from "./ArticleRow";
-import { ArticleListSkeleton } from "./ArticleListSkeleton";
 import type { ArticleSearchHighlights } from "@/features/feeds/state/article-search";
 import type { ArticleViewModel } from "@/features/feeds/types/view-models";
 import type { ReadingMode } from "@/lib/shared/reading-mode";
@@ -241,7 +240,9 @@ export function ArticleList({
       ) : null}
 
       {articles.length === 0 && isLoading ? (
-        <ArticleListSkeleton />
+        <div className={styles.emptyWrap}>
+          <p className={styles.empty}>Loading&hellip;</p>
+        </div>
       ) : articles.length === 0 ? (
         <div
           className={`${styles.emptyWrap} ${isInitialScopeEmpty ? styles.emptyWrapInitial : ""}`}
