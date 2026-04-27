@@ -140,7 +140,7 @@
 .shortcutsWidthProbeContent {
   display: grid;
   gap: 10px;
-  padding: 0 10px 10px;
+  padding: 0;
 }
 
 .shortcutsWidthProbeText {
@@ -618,62 +618,8 @@ button.linkButton:hover:enabled {
 }
 
 .shortcutsPanelContent {
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 0;
   display: grid;
-  gap: 16px;
-  padding: 6px 14px 14px;
-}
-
-.shortcutsPanelGroup {
-  display: grid;
-  gap: 12px;
-}
-
-.shortcutsPanelGroup h3 {
-  font-size: var(--text-base);
-  font-weight: var(--weight-semibold);
-  margin: 0;
-}
-
-.shortcutsPanelRows {
-  display: grid;
-  gap: 10px;
-}
-
-.shortcutsPanelRow {
-  align-items: start;
-  display: grid;
-  gap: 14px;
-  grid-template-columns: minmax(104px, 128px) minmax(0, 1fr);
-}
-
-.shortcutsPanelKeys {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.shortcutsPanelKey {
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 0;
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  line-height: 1;
-  min-width: 24px;
-  padding: 5px 8px;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.shortcutsPanelDescription {
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  line-height: 1.45;
-  margin: 0;
+  padding-top: 6px;
 }
 
 .owlToggle {
@@ -761,11 +707,6 @@ button.linkButton:hover:enabled {
 
   .headerTopRow .compactButton {
     margin-left: 0;
-  }
-
-  .shortcutsPanelRow {
-    gap: 8px;
-    grid-template-columns: minmax(0, 1fr);
   }
 
   .feedsImportSection {

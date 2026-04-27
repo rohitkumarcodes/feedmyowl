@@ -1,0 +1,107 @@
+.reference {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  display: grid;
+  gap: 16px;
+  padding: 10px;
+}
+
+.paneGuide {
+  display: grid;
+  gap: 8px;
+}
+
+.sectionTitle,
+.groupTitle {
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  margin: 0;
+}
+
+.paneDiagram {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.35;
+  margin: 0;
+  overflow-x: auto;
+  padding: 8px;
+  white-space: pre;
+}
+
+.paneHelp {
+  display: grid;
+  gap: 4px;
+}
+
+.paneHelpItem {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.paneHelpItem strong {
+  color: var(--text-primary);
+  font-weight: var(--weight-semibold);
+}
+
+.groups {
+  display: grid;
+  gap: 12px;
+}
+
+.group {
+  display: grid;
+  gap: 8px;
+}
+
+.rows {
+  display: grid;
+  gap: 6px;
+}
+
+.row {
+  align-items: start;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(104px, 128px) minmax(0, 1fr);
+}
+
+.keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.key {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1;
+  min-width: 24px;
+  padding: 4px 6px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.rowDescription {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  .row {
+    gap: 6px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

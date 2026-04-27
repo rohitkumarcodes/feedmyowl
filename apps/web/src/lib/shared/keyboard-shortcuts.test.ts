@@ -65,8 +65,8 @@ describe("keyboard-shortcuts definitions", () => {
       (shortcut) => shortcut.id === "article.previous.vim",
     );
 
-    expect(nextVim?.description).toContain("Open next article");
-    expect(previousVim?.description).toContain("Open previous article");
+    expect(nextVim?.description).toBe("Open the next article");
+    expect(previousVim?.description).toBe("Open the previous article");
   });
 
   it("documents vertical arrows once for context-specific navigation", () => {
@@ -76,9 +76,7 @@ describe("keyboard-shortcuts definitions", () => {
 
     expect(arrowShortcuts).toHaveLength(1);
     expect(arrowShortcuts[0]?.id).toBe("navigation.verticalArrows");
-    expect(arrowShortcuts[0]?.description).toBe(
-      "Move selection in sidebar/list; scroll reader",
-    );
+    expect(arrowShortcuts[0]?.description).toBe("Move up or down in the active pane");
   });
 
   it("keeps Space as the primary reader paging shortcut", () => {
@@ -93,5 +91,19 @@ describe("keyboard-shortcuts definitions", () => {
     expect(pageDown?.description).toContain("PageDown");
     expect(pageUp?.keys).toEqual(["Shift+Space"]);
     expect(pageUp?.description).toContain("PageUp");
+  });
+
+  it("uses beginner-friendly pane names in shortcut descriptions", () => {
+    const descriptions = SHORTCUT_DEFINITIONS.map((shortcut) => shortcut.description);
+
+    expect(descriptions).toContain("Move to the next pane");
+    expect(descriptions).toContain("Move to the previous pane");
+    expect(descriptions).toContain("Jump between Sidebar, Article list, and Reader");
+    expect(descriptions.some((description) => description.includes("list/reader"))).toBe(
+      false,
+    );
+    expect(descriptions.some((description) => description.includes("sidebar/list"))).toBe(
+      false,
+    );
   });
 });

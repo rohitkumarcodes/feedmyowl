@@ -1,14 +1,11 @@
 "use client";
 
 import { useId, useRef, type RefObject } from "react";
+import { KeyboardShortcutsReference } from "@/components/KeyboardShortcutsReference";
 import { OwlOptionsShutter } from "@/features/settings/components/OwlOptionsShutter";
 import { KeyboardIcon } from "@/features/settings/components/icons";
 import { useMeasuredWidthPx } from "@/features/settings/components/useMeasuredWidthPx";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
-import {
-  getShortcutKeyLabel,
-  SHORTCUT_GROUPS,
-} from "@/lib/shared/keyboard-shortcuts";
 import styles from "../SettingsOverview.module.css";
 
 interface KeyboardShortcutsSectionProps {
@@ -42,32 +39,7 @@ export function KeyboardShortcutsSection({
           <span className={styles.shortcutsWidthProbeText}>Show keyboard shortcuts</span>
         </button>
         <div className={styles.shortcutsWidthProbeContent}>
-          {SHORTCUT_GROUPS.map((group) => (
-            <section key={`probe-${group.id}`} className={styles.shortcutsPanelGroup}>
-              <h3 className={styles.shortcutsWidthProbeText}>{group.label}</h3>
-              <div className={styles.shortcutsPanelRows}>
-                {group.shortcuts.map((shortcut) => (
-                  <div key={`probe-${shortcut.id}`} className={styles.shortcutsPanelRow}>
-                    <div className={styles.shortcutsPanelKeys}>
-                      {shortcut.keys.map((key) => (
-                        <kbd
-                          key={`probe-${shortcut.id}-${key}`}
-                          className={styles.shortcutsPanelKey}
-                        >
-                          {getShortcutKeyLabel(key)}
-                        </kbd>
-                      ))}
-                    </div>
-                    <p
-                      className={`${styles.shortcutsPanelDescription} ${styles.shortcutsWidthProbeText}`}
-                    >
-                      {shortcut.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ))}
+          <KeyboardShortcutsReference />
         </div>
       </div>
       <div
@@ -98,30 +70,7 @@ export function KeyboardShortcutsSection({
           contentId={shortcutsPanelId}
         >
           <div className={styles.shortcutsPanelContent}>
-            {SHORTCUT_GROUPS.map((group) => (
-              <section key={group.id} className={styles.shortcutsPanelGroup}>
-                <h3>{group.label}</h3>
-                <div className={styles.shortcutsPanelRows}>
-                  {group.shortcuts.map((shortcut) => (
-                    <div key={shortcut.id} className={styles.shortcutsPanelRow}>
-                      <div className={styles.shortcutsPanelKeys}>
-                        {shortcut.keys.map((key) => (
-                          <kbd
-                            key={`${shortcut.id}-${key}`}
-                            className={styles.shortcutsPanelKey}
-                          >
-                            {getShortcutKeyLabel(key)}
-                          </kbd>
-                        ))}
-                      </div>
-                      <p className={styles.shortcutsPanelDescription}>
-                        {shortcut.description}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ))}
+            <KeyboardShortcutsReference />
           </div>
         </OwlOptionsShutter>
       </div>
