@@ -143,9 +143,7 @@ export function ArticleList({
   const shouldShowPaginationStatus =
     !searchIsActive &&
     paginationInitialized &&
-    (Boolean(paginationError) ||
-      paginationHasMore ||
-      articles.length > 0);
+    (Boolean(paginationError) || articles.length > 0);
 
   return (
     <section
