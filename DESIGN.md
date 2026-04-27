@@ -52,6 +52,8 @@ Three stacked views:
   - `error` is dismissible and shown with stronger contrast.
 - Add-feed submit must never fail silently; unexpected client exceptions surface explicit error notice text.
 - Settings feed import is preview-before-import and shows numeric progress while processing feed URLs.
+- New users land on `/onboarding`, where feed import is the primary setup action.
+- Settings includes backup/restore controls for JSON backups and local reminder cadence.
 - Settings delete entry point is text-first (`Delete account...`) before confirmation.
 - Settings keyboard shortcuts use a collapsed-by-default toggle (caret then keyboard icon)
   that expands with shutter motion into a boxed grouped reference.

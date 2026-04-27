@@ -47,9 +47,8 @@ export function ResetAccountSection() {
       ) : (
         <div className={styles.deleteConfirm}>
           <p>
-            This will permanently delete all your feeds, folders, and reading
-            history. Your account will remain, but you will start fresh. This
-            cannot be undone.
+            This will permanently delete all your feeds, folders, and reading history.
+            Your account will remain, but you will start fresh. This cannot be undone.
           </p>
           <div className={styles.inlineActions}>
             <button

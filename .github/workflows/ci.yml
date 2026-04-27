@@ -28,6 +28,9 @@ jobs:
       - name: Format Check
         run: pnpm format:check
 
+      - name: Architecture Boundary Check
+        run: pnpm check:architecture
+
       - name: Lint
         run: pnpm lint
 
@@ -36,6 +39,12 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+      - name: Install Playwright Browsers
+        run: pnpm --filter web exec playwright install --with-deps chromium
+
+      - name: Smoke Tests
+        run: pnpm smoke:web
 
       - name: Build
         run: pnpm build

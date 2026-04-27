@@ -7,3 +7,4 @@
  * Keep server-only auth APIs in "@/lib/server/auth".
  */
 export { UserButton as UserMenu } from "@clerk/nextjs";
+export { useSignIn, useSignUp } from "@clerk/nextjs";

@@ -52,7 +52,7 @@ export function ExportSection() {
   }
 
   return (
-    <section className={styles.panel}>
+    <section id="export-feeds" className={styles.panel}>
       <h2>Export feeds</h2>
       <p className={styles.feedsSectionDescription}>
         Download a backup of your subscriptions.

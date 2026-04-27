@@ -88,14 +88,19 @@
 }
 
 .submitButton {
+  align-items: center;
   background: transparent;
   border: 1px solid var(--border-strong);
   border-radius: 0;
   color: var(--accent);
   cursor: pointer;
+  display: inline-flex;
   font-weight: var(--weight-semibold);
+  justify-content: center;
   margin-top: 4px;
   min-height: 36px;
+  padding: 0.5em 0.6em;
+  text-decoration: none;
   transition:
     background-color var(--transition-control),
     border-color var(--transition-control),

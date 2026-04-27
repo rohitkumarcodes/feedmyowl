@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useSignUp } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useSignUp } from "@/lib/client/auth-client";
+import { isClientDemoModeEnabled } from "@/lib/shared/demo-mode";
 import styles from "@/app/auth-form.module.css";
 
 const REQUIREMENT_LABELS: Record<string, string> = {
@@ -28,6 +29,95 @@ function formatRequirement(field: string): string {
 }
 
 export function SignUpForm() {
+  if (isClientDemoModeEnabled()) {
+    return <DemoSignUpForm />;
+  }
+
+  return <ClerkSignUpForm />;
+}
+
+function DemoSignUpForm() {
+  return (
+    <>
+      <form className={styles.form}>
+        <div className={styles.fieldGroup}>
+          <label className={styles.label} htmlFor="first-name">
+            First name (optional)
+          </label>
+          <div className={styles.inputWrapper}>
+            <input
+              id="first-name"
+              type="text"
+              className={styles.input}
+              placeholder="Your first name"
+              autoComplete="given-name"
+            />
+          </div>
+        </div>
+
+        <div className={styles.fieldGroup}>
+          <label className={styles.label} htmlFor="last-name">
+            Last name (optional)
+          </label>
+          <div className={styles.inputWrapper}>
+            <input
+              id="last-name"
+              type="text"
+              className={styles.input}
+              placeholder="Your last name"
+              autoComplete="family-name"
+            />
+          </div>
+        </div>
+
+        <div className={styles.fieldGroup}>
+          <label className={styles.label} htmlFor="email">
+            Email
+          </label>
+          <div className={styles.inputWrapper}>
+            <input
+              id="email"
+              type="email"
+              className={styles.input}
+              placeholder="you@example.com"
+              autoComplete="email"
+            />
+          </div>
+        </div>
+
+        <div className={styles.fieldGroup}>
+          <label className={styles.label} htmlFor="password">
+            Password
+          </label>
+          <div className={styles.inputWrapper}>
+            <input
+              id="password"
+              type="password"
+              className={styles.input}
+              placeholder="Create a password"
+              autoComplete="new-password"
+            />
+          </div>
+        </div>
+
+        <p className={styles.info}>
+          Demo mode is active. Continue to onboarding to inspect the import flow.
+        </p>
+        <Link href="/onboarding" className={styles.submitButton}>
+          Open onboarding
+        </Link>
+      </form>
+      <div className={styles.footer}>
+        <span className={styles.footerText}>Already have an account? </span>
+        <Link href="/sign-in" className={styles.footerLink}>
+          Sign in
+        </Link>
+      </div>
+    </>
+  );
+}
+
+function ClerkSignUpForm() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const router = useRouter();
   const [firstName, setFirstName] = useState("");
@@ -65,7 +155,7 @@ export function SignUpForm() {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        router.push("/feeds");
+        router.push("/onboarding");
       } else if (result.status === "missing_requirements") {
         const missingFields = result.missingFields ?? [];
         if (missingFields.length > 0) {
@@ -139,7 +229,7 @@ export function SignUpForm() {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        router.push("/feeds");
+        router.push("/onboarding");
       } else {
         setError("Verification did not complete. Please try the code again.");
       }

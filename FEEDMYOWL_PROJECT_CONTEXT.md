@@ -35,6 +35,8 @@ Core loop:
 - Account settings (including configurable ASCII owl logo) and account deletion.
 - Account appearance mode toggle (`system` / `light` / `dark`) for authenticated routes.
 - Feed import preview + progress feedback in settings.
+- Post-sign-up onboarding with a direct import path.
+- Settings backup/restore controls with JSON backup download and local reminder cadence.
 - Desktop/tablet keyboard shortcuts with in-app help modal and one-time hint.
 - Semantic sidebar notices (`error`, `progress`, `offline`, `info`) with accessibility roles.
 - Settings keyboard shortcuts toggle panel (collapsed by default).
@@ -192,11 +194,19 @@ From repo root:
 - `pnpm dev:blog`
 - `pnpm test:web`
 - `pnpm lint:web`
+- `pnpm check:architecture`
+- `pnpm smoke:web`
 - `pnpm build:web`
 - `pnpm build:blog`
 - `pnpm db:generate`
 - `pnpm db:migrate`
 - `pnpm db:studio`
+
+## 10.1 Agent workflow defaults
+- `AGENTS.md` is the architecture source of truth.
+- `AGENT_TASK_GUIDE.md` gives copy-paste prompts for non-programmer task delegation.
+- `pnpm check:architecture` enforces service boundary imports.
+- `pnpm smoke:web` uses `FEEDMYOWL_DEMO_MODE=1` to check UI flows with fixture data.
 
 ## 11. Import/export roadmap (beginner-friendly)
 - Selective export so users can export all feeds or only chosen folders/feeds.

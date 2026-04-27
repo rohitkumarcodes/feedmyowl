@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, eq, users, feeds, folders, feedFolderMemberships } from "@/lib/server/database";
+import {
+  db,
+  eq,
+  users,
+  feeds,
+  folders,
+  feedFolderMemberships,
+} from "@/lib/server/database";
 import { deleteAuthUser } from "@/lib/server/auth";
 import { handleApiRouteError } from "@/lib/server/api-errors";
 import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
@@ -238,7 +245,9 @@ export async function patchFeedsRoute(request: NextRequest) {
       const userId = appUser.id;
 
       // Delete feed memberships first (before feeds are deleted)
-      await db.delete(feedFolderMemberships).where(eq(feedFolderMemberships.userId, userId));
+      await db
+        .delete(feedFolderMemberships)
+        .where(eq(feedFolderMemberships.userId, userId));
 
       // Delete feeds - cascade deletes feed_items as well
       await db.delete(feeds).where(eq(feeds.userId, userId));

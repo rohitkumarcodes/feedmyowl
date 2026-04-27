@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
+import { getAuthUserId } from "@/lib/server/auth";
 
 /**
  * This page checks auth at request time and redirects — it must never
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   try {
-    const { userId } = await auth();
+    const userId = await getAuthUserId();
     if (userId) {
       redirect("/feeds");
     }

@@ -187,6 +187,10 @@ Manual refresh only (background jobs deferred).
   - If one OPML feed has multiple categories, FeedMyOwl assigns that feed to multiple folders.
 - Feed export:
   - Settings offers OPML and JSON export downloads.
+- Backup and restore:
+  - Settings offers a JSON backup download.
+  - Users can choose a local backup reminder cadence: off, weekly, monthly, or quarterly.
+  - Restore entry points return users to the import flow, which accepts FeedMyOwl JSON.
 - Keyboard shortcuts settings section:
   - Shows a toggle button under `Keyboard shortcuts` with caret then keyboard icon.
   - Default state is collapsed.
@@ -212,6 +216,10 @@ Manual refresh only (background jobs deferred).
   - Deletion requires explicit second-step confirmation (`Yes, delete my account`).
 - Persistence:
   - Account-wide (stored on user record), so selection follows sign-in across sessions/devices.
+
+## 10.1 Onboarding
+- After sign-up, users land on `/onboarding`.
+- Onboarding exposes the same import flow as settings and includes a direct path to `/feeds`.
 
 ## 11. Message semantics and title tone
 - Sidebar message variants:

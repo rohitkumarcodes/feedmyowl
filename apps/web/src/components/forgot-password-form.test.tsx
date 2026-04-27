@@ -17,7 +17,7 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-vi.mock("@clerk/nextjs", () => ({
+vi.mock("@/lib/client/auth-client", () => ({
   useSignIn: () => ({
     isLoaded: true,
     signIn: {
@@ -57,7 +57,9 @@ describe("ForgotPasswordForm", () => {
 
     expect(await screen.findByLabelText("Verification code")).toBeInTheDocument();
     expect(screen.getByLabelText("New password")).toBeInTheDocument();
-    expect(screen.getByText("We sent a verification code to your email.")).toBeInTheDocument();
+    expect(
+      screen.getByText("We sent a verification code to your email."),
+    ).toBeInTheDocument();
   });
 
   it("submits code + new password and redirects on success", async () => {
@@ -87,7 +89,9 @@ describe("ForgotPasswordForm", () => {
         password: "new-password-123",
       }),
     );
-    await waitFor(() => expect(mockSetActive).toHaveBeenCalledWith({ session: "sess_123" }));
+    await waitFor(() =>
+      expect(mockSetActive).toHaveBeenCalledWith({ session: "sess_123" }),
+    );
     await waitFor(() => expect(routerPush).toHaveBeenCalledWith("/feeds"));
   });
 });

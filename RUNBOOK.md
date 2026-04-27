@@ -9,6 +9,8 @@ From repo root:
 - `pnpm dev:blog`
 - `pnpm test:web`
 - `pnpm lint:web`
+- `pnpm check:architecture`
+- `pnpm smoke:web`
 - `pnpm build:web`
 - `pnpm build:blog`
 - `pnpm db:generate`
@@ -25,8 +27,18 @@ Use this checklist for every UI task.
 5. Verify non-happy-path states when relevant: loading, empty, and error.
 6. Check browser console/runtime logs for errors.
 7. Capture before/after screenshots for the changed screen and both viewport sizes.
-8. Run automated checks from repo root: `pnpm ui:check:web`.
-9. Report four things in your handoff: what changed, what was checked, screenshots, and any remaining risks.
+8. Run automated checks from repo root: `pnpm ui:check:web` and `pnpm check:architecture`.
+9. Run `pnpm smoke:web` for broad UI-flow changes. If Playwright browsers are not installed locally, run `pnpm --filter web exec playwright install chromium` first.
+10. Report four things in your handoff: what changed, what was checked, screenshots, and any remaining risks.
+
+## 2.2 Local demo mode for coding agents
+Use demo mode when checking UI without a real account or production-like data:
+
+```bash
+FEEDMYOWL_DEMO_MODE=1 pnpm dev:web
+```
+
+Demo mode renders `/feeds`, `/settings`, and `/onboarding` with local fixture data. It is blocked on Vercel production.
 
 ## 3. User-facing surface
 - Add/rename/delete feed.
@@ -49,6 +61,8 @@ Use this checklist for every UI task.
 - Settings import rate-limit handling retries `429` chunk responses up to 2 times using `Retry-After`.
 - Settings keyboard shortcuts toggle panel (collapsed by default).
 - Settings feed export downloads (OPML or JSON).
+- Settings backup/restore panel with JSON backup download and local backup reminder cadence.
+- Post-sign-up onboarding at `/onboarding` with feed import.
 - Account deletion.
 
 ## 4. Active API routes
@@ -71,6 +85,12 @@ Use this checklist for every UI task.
 - `PATCH /api/settings/theme`
 - `POST /api/webhooks/clerk`
 - `POST /api/webhooks/stripe`
+
+## 4.1 Agent workflow guardrails
+- `AGENT_TASK_GUIDE.md` contains copy-paste prompts for common tasks.
+- `AGENT_HANDOFF_TEMPLATE.md` and `.github/pull_request_template.md` define the handoff fields expected from agents.
+- `pnpm check:architecture` rejects direct imports of service SDKs outside the approved boundary files.
+- `pnpm smoke:web` runs Playwright checks against demo data across desktop and mobile.
 
 ## 5. Security and reliability defaults (2026-02-11)
 - Manual refresh only (background jobs deferred).

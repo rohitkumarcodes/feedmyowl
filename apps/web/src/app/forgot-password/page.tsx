@@ -19,7 +19,9 @@ export default async function ForgotPasswordPage() {
       <div className={styles.frame}>
         <div className={styles.header}>
           <h1 className={styles.title}>Reset password</h1>
-          <p className={styles.subtitle}>We&apos;ll send a verification code to your email.</p>
+          <p className={styles.subtitle}>
+            We&apos;ll send a verification code to your email.
+          </p>
         </div>
         <ForgotPasswordForm />
       </div>

@@ -3,9 +3,10 @@ import "server-only";
 /**
  * Module Boundary: Authentication
  *
- * This file is the ONLY place in the codebase that imports from @clerk/nextjs.
- * All authentication logic goes through this file. If we ever switch from
- * Clerk to another auth provider, only this file needs to change. (Principle 4)
+ * This file is the server-side boundary for Clerk authentication. Server
+ * components and API routes should use this file instead of importing Clerk
+ * directly. If we ever switch from Clerk to another auth provider, server auth
+ * logic changes here. (Principle 4)
  *
  * Current implementation: Clerk (@clerk/nextjs)
  *
@@ -17,14 +18,16 @@ import "server-only";
  *   - deleteAuthUser(): Delete a Clerk user account
  *   - verifyClerkWebhook(): Verify Clerk webhook signatures (via svix)
  *
- * Exception: middleware.ts also imports from @clerk/nextjs/server directly,
- * because Next.js middleware runs in a special edge context and needs
- * the clerkMiddleware wrapper. This is architectural boilerplate that would
- * be replaced by equivalent boilerplate from any new auth provider.
+ * Exceptions: middleware.ts imports from @clerk/nextjs/server because Next.js
+ * middleware runs in a special edge context and needs the clerkMiddleware
+ * wrapper. lib/client/auth-client.ts imports Clerk client hooks and UI pieces
+ * for browser components. Both exceptions are enforced by the architecture
+ * boundary check.
  */
 
 import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import { Webhook } from "svix";
+import { isDemoModeEnabled } from "@/lib/shared/demo-mode";
 
 /**
  * Re-export Clerk UI components through this module boundary.
@@ -104,6 +107,10 @@ export async function getCurrentUser() {
  * Returns null when no user is signed in.
  */
 export async function getAuthUserId(): Promise<string | null> {
+  if (isDemoModeEnabled()) {
+    return null;
+  }
+
   const { userId } = await auth();
   return userId ?? null;
 }

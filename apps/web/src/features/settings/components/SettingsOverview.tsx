@@ -6,6 +6,7 @@ import { DeleteAccountSection } from "@/features/settings/components/sections/De
 import { ResetAccountSection } from "@/features/settings/components/sections/ResetAccountSection";
 import { ExportSection } from "@/features/settings/components/sections/ExportSection";
 import { ImportSection } from "@/features/settings/components/sections/ImportSection";
+import { BackupRestoreSection } from "@/features/settings/components/sections/BackupRestoreSection";
 import { KeyboardShortcutsSection } from "@/features/settings/components/sections/KeyboardShortcutsSection";
 import { ReadingModeSection } from "@/features/settings/components/sections/ReadingModeSection";
 import { BackIcon } from "@/features/settings/components/icons";
@@ -20,10 +21,7 @@ interface SettingsOverviewProps {
 /**
  * Renders minimal account settings for the reading MVP.
  */
-export function SettingsOverview({
-  email,
-  readingMode,
-}: SettingsOverviewProps) {
+export function SettingsOverview({ email, readingMode }: SettingsOverviewProps) {
   const readingModeControlsRef = useRef<HTMLDivElement | null>(null);
   const shortcutsControlsRef = useRef<HTMLDivElement | null>(null);
 
@@ -85,6 +83,7 @@ export function SettingsOverview({
         />
         <ImportSection />
         <ExportSection />
+        <BackupRestoreSection />
         <KeyboardShortcutsSection
           controlsRef={shortcutsControlsRef}
           isExpanded={isShortcutsPanelExpanded}

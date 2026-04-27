@@ -2,8 +2,9 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useSignIn } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import { useSignIn } from "@/lib/client/auth-client";
+import { isClientDemoModeEnabled } from "@/lib/shared/demo-mode";
 import styles from "@/app/auth-form.module.css";
 import {
   getClerkSignInErrorMessage,
@@ -13,6 +14,51 @@ import {
 type ResetStep = "request" | "verify";
 
 export function ForgotPasswordForm() {
+  if (isClientDemoModeEnabled()) {
+    return <DemoForgotPasswordForm />;
+  }
+
+  return <ClerkForgotPasswordForm />;
+}
+
+function DemoForgotPasswordForm() {
+  return (
+    <>
+      <form className={styles.form}>
+        <div className={styles.fieldGroup}>
+          <label className={styles.label} htmlFor="email">
+            Email
+          </label>
+          <div className={styles.inputWrapper}>
+            <input
+              id="email"
+              type="email"
+              className={styles.input}
+              placeholder="you@example.com"
+              autoComplete="email"
+            />
+          </div>
+        </div>
+
+        <p className={styles.info}>
+          Demo mode is active, so password reset email delivery is disabled.
+        </p>
+        <Link href="/sign-in" className={styles.submitButton}>
+          Back to sign in
+        </Link>
+      </form>
+
+      <div className={styles.footer}>
+        <span className={styles.footerText}>Remembered your password? </span>
+        <Link href="/sign-in" className={styles.footerLink}>
+          Sign in
+        </Link>
+      </div>
+    </>
+  );
+}
+
+function ClerkForgotPasswordForm() {
   const { isLoaded, signIn, setActive } = useSignIn();
   const router = useRouter();
   const [step, setStep] = useState<ResetStep>("request");
@@ -69,7 +115,9 @@ export function ForgotPasswordForm() {
 
       setError(getIncompleteSignInMessage(requestResult.status));
     } catch (caughtError: unknown) {
-      setError(getClerkSignInErrorMessage(caughtError, "Could not start password reset."));
+      setError(
+        getClerkSignInErrorMessage(caughtError, "Could not start password reset."),
+      );
     } finally {
       setIsLoading(false);
     }

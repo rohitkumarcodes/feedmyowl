@@ -21,7 +21,7 @@ export const dynamic = "force-dynamic";
 export default async function SignUpPage() {
   const userId = await getAuthUserId();
   if (userId) {
-    redirect("/feeds");
+    redirect("/onboarding");
   }
 
   return (

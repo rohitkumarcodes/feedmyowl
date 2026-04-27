@@ -329,7 +329,7 @@ export function ImportSection() {
     : null;
 
   return (
-    <section className={styles.panel}>
+    <section id="import-feeds" className={styles.panel}>
       <h2>Import feeds</h2>
       <p className={styles.feedsSectionDescription}>Supports OPML, XML, or JSON files.</p>
       <div className={styles.feedsImportSection}>

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useSignIn } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useSignIn } from "@/lib/client/auth-client";
+import { isClientDemoModeEnabled } from "@/lib/shared/demo-mode";
 import styles from "@/app/auth-form.module.css";
 import {
   getClerkSignInErrorMessage,
@@ -19,6 +20,70 @@ import {
 } from "@/components/sign-in-form-utils";
 
 export function SignInForm() {
+  if (isClientDemoModeEnabled()) {
+    return <DemoSignInForm />;
+  }
+
+  return <ClerkSignInForm />;
+}
+
+function DemoSignInForm() {
+  return (
+    <>
+      <form className={styles.form}>
+        <div className={styles.fieldGroup}>
+          <label className={styles.label} htmlFor="email">
+            Email
+          </label>
+          <div className={styles.inputWrapper}>
+            <input
+              id="email"
+              type="email"
+              className={styles.input}
+              placeholder="you@example.com"
+              autoComplete="email"
+            />
+          </div>
+        </div>
+
+        <div className={styles.fieldGroup}>
+          <div className={styles.labelRow}>
+            <label className={styles.label} htmlFor="password">
+              Password
+            </label>
+            <Link href="/forgot-password" className={styles.actionLink}>
+              Forgot password?
+            </Link>
+          </div>
+          <div className={styles.inputWrapper}>
+            <input
+              id="password"
+              type="password"
+              className={styles.input}
+              placeholder="Enter your password"
+              autoComplete="current-password"
+            />
+          </div>
+        </div>
+
+        <p className={styles.info}>
+          Demo mode is active. Open feeds directly to inspect the workspace.
+        </p>
+        <Link href="/feeds" className={styles.submitButton}>
+          Open demo feeds
+        </Link>
+      </form>
+      <div className={styles.footer}>
+        <span className={styles.footerText}>Don&apos;t have an account? </span>
+        <Link href="/sign-up" className={styles.footerLink}>
+          Sign up
+        </Link>
+      </div>
+    </>
+  );
+}
+
+function ClerkSignInForm() {
   const { isLoaded, signIn, setActive } = useSignIn();
   const router = useRouter();
   const [email, setEmail] = useState("");

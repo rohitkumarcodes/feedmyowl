@@ -26,6 +26,8 @@ import {
 } from "@/lib/server/retention";
 import { listArticlePageForUser } from "@/lib/server/article-service";
 import { coerceReadingMode, DEFAULT_READING_MODE } from "@/lib/shared/reading-mode";
+import { getDemoFeeds, getDemoFolders } from "@/lib/server/demo-data";
+import { isDemoModeEnabled } from "@/lib/shared/demo-mode";
 
 /**
  * This page reads per-user data at request time — never statically prerender.
@@ -48,6 +50,21 @@ function createEmptyInitialPaginationByScopeKey() {
  * Loads authenticated feed data and renders the interactive workspace.
  */
 export default async function FeedsPage() {
+  if (isDemoModeEnabled()) {
+    return (
+      <FeedsWorkspace
+        initialFeeds={getDemoFeeds()}
+        initialFolders={getDemoFolders()}
+        initialPaginationByScopeKey={createInitialPaginationByScopeKey({
+          scopeKey: scopeToKey({ type: "all" }),
+          nextCursor: null,
+          hasMore: false,
+        })}
+        initialReadingMode="checker"
+      />
+    );
+  }
+
   const { appUser: ensuredUser } = await getAuthenticatedAppUser();
 
   if (!ensuredUser) {

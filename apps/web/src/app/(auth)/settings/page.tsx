@@ -3,6 +3,7 @@ import { db, eq, users } from "@/lib/server/database";
 import { ensureUserRecord } from "@/lib/server/app-user";
 import { SettingsOverview } from "@/features/settings/components/SettingsOverview";
 import { coerceReadingMode, DEFAULT_READING_MODE } from "@/lib/shared/reading-mode";
+import { isDemoModeEnabled } from "@/lib/shared/demo-mode";
 
 /**
  * This page reads per-user data at request time — never statically prerender.
@@ -10,6 +11,10 @@ import { coerceReadingMode, DEFAULT_READING_MODE } from "@/lib/shared/reading-mo
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
+  if (isDemoModeEnabled()) {
+    return <SettingsOverview email="demo@feedmyowl.local" readingMode="checker" />;
+  }
+
   const { clerkId } = await requireAuth();
   const ensuredUser = await ensureUserRecord(clerkId);
 

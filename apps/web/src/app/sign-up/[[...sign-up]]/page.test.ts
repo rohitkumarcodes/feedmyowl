@@ -40,11 +40,11 @@ describe("sign-up page", () => {
     expect(dynamic).toBe("force-dynamic");
   });
 
-  it("redirects signed-in users to /feeds", async () => {
+  it("redirects signed-in users to onboarding", async () => {
     mocks.getAuthUserId.mockResolvedValue("user_123");
 
     await expect(SignUpPage()).rejects.toBe(redirectError);
-    expect(mocks.redirect).toHaveBeenCalledWith("/feeds");
+    expect(mocks.redirect).toHaveBeenCalledWith("/onboarding");
   });
 
   it("renders sign-up UI for signed-out users", async () => {

@@ -14,6 +14,8 @@
  */
 
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
+import { isDemoModeEnabled } from "@/lib/shared/demo-mode";
 import { getTrustedOrigins } from "@/lib/server/trusted-origins";
 
 /**
@@ -26,7 +28,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/webhooks(.*)",
 ]);
 
-export default clerkMiddleware(
+const clerkAuthMiddleware = clerkMiddleware(
   async (auth, request) => {
     // If the route is not public, require authentication.
     // Unauthenticated users will be redirected to the sign-in page.
@@ -38,6 +40,14 @@ export default clerkMiddleware(
     authorizedParties: getTrustedOrigins(),
   },
 );
+
+export default function middleware(request: NextRequest, event: NextFetchEvent) {
+  if (isDemoModeEnabled()) {
+    return NextResponse.next();
+  }
+
+  return clerkAuthMiddleware(request, event);
+}
 
 /**
  * Next.js middleware matcher configuration.

@@ -1036,6 +1036,7 @@ export function FolderTree({
             className={`${primitiveStyles.dialog} ${styles.deleteDialog}`}
             role="dialog"
             aria-modal="true"
+            aria-label="Delete folder"
             onClick={(event) => event.stopPropagation()}
           >
             <h3>Delete folder</h3>
@@ -1119,6 +1120,7 @@ export function FolderTree({
                         ? styles.deleteDialogOptionCardSelected
                         : ""
                     }`}
+                    aria-pressed={selectedDeleteOption === "unsubscribe"}
                     onClick={() => setSelectedDeleteOption("unsubscribe")}
                   >
                     <div className={styles.deleteDialogOptionIcon}>
@@ -1139,6 +1141,7 @@ export function FolderTree({
                         ? styles.deleteDialogOptionCardSelected
                         : ""
                     }`}
+                    aria-pressed={selectedDeleteOption === "keep"}
                     onClick={() => setSelectedDeleteOption("keep")}
                   >
                     <div className={styles.deleteDialogOptionIcon}>
