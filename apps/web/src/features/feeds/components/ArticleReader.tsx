@@ -53,14 +53,14 @@ function formatRelativeTime(date: Date): string | null {
   return null;
 }
 
-function formatPublicationDate(iso: string | null): string {
+function formatPublicationDate(iso: string | null): string | null {
   if (!iso) {
-    return "Unknown publication date";
+    return null;
   }
 
   const parsed = new Date(iso);
   if (Number.isNaN(parsed.valueOf())) {
-    return "Unknown publication date";
+    return null;
   }
 
   const dateStr = new Intl.DateTimeFormat("en-US", {
@@ -270,10 +270,18 @@ export function ArticleReader({
             {article.title}
           </h1>
         )}
-        <p className={styles.meta}>
-          {article.author || "Unknown author"} ·{" "}
-          {formatPublicationDate(article.publishedAt || article.createdAt)}
-        </p>
+        {(() => {
+          const author = article.author || null;
+          const date = formatPublicationDate(article.publishedAt || article.createdAt);
+          if (!author && !date) {
+            return null;
+          }
+          return (
+            <p className={styles.meta}>
+              {author && date ? `${author} · ${date}` : (author || date)}
+            </p>
+          );
+        })()}
         {youtubeVideoId ? (
           isYouTubeEmbedLoaded ? (
             <iframe
