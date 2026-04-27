@@ -17,7 +17,9 @@
       "Bash(find:*)",
       "Bash(ls:*)",
       "Bash(sort:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(pkill -f \"pnpm dev\")"
     ]
   }
 }

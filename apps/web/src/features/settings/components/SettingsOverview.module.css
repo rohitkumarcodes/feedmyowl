@@ -710,9 +710,10 @@ button.linkButton:hover:enabled {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 760px) {
   .headerTopRow {
     align-items: flex-start;
+    padding-right: 44px;
   }
 
   .headerTopRow .compactButton {

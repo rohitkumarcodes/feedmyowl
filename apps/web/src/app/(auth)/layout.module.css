@@ -1,7 +1,5 @@
 .shell {
   background: transparent;
-  display: grid;
-  grid-template-rows: auto 1fr;
   min-height: 100vh;
   position: relative;
 }
@@ -11,10 +9,9 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-left: auto;
-  margin-right: max(12px, calc(env(safe-area-inset-right) + 8px));
-  position: sticky;
-  top: 0;
+  position: fixed;
+  right: max(12px, calc(env(safe-area-inset-right) + 8px));
+  top: max(8px, calc(env(safe-area-inset-top) + 8px));
   width: fit-content;
   z-index: 40;
 }
