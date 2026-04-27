@@ -153,28 +153,24 @@ export function Layout({
 
       {(sidebarCollapsed || listCollapsed) && (
         <div className={styles.expandBar}>
-          {sidebarCollapsed && (
-            <button
-              type="button"
-              className={`${primitiveStyles.iconButton} ${styles.expandBarButton}`}
-              onClick={onToggleSidebar}
-              aria-label="Expand sidebar"
-              title="Expand sidebar (f)"
-            >
-              <PaneToggleIcon direction="right" />
-            </button>
-          )}
-          {listCollapsed && (
-            <button
-              type="button"
-              className={`${primitiveStyles.iconButton} ${styles.expandBarButton}`}
-              onClick={onToggleList}
-              aria-label="Expand article list"
-              title="Expand article list (f)"
-            >
-              <PaneToggleIcon direction="right" />
-            </button>
-          )}
+          <button
+            type="button"
+            className={`${primitiveStyles.iconButton} ${styles.expandBarButton} ${!sidebarCollapsed ? styles.expandBarButtonHidden : ""}`}
+            onClick={onToggleSidebar}
+            aria-label="Expand sidebar"
+            title="Expand sidebar (f)"
+          >
+            <PaneToggleIcon direction="right" />
+          </button>
+          <button
+            type="button"
+            className={`${primitiveStyles.iconButton} ${styles.expandBarButton} ${!listCollapsed ? styles.expandBarButtonHidden : ""}`}
+            onClick={onToggleList}
+            aria-label="Expand article list"
+            title="Expand article list (f)"
+          >
+            <PaneToggleIcon direction="right" />
+          </button>
         </div>
       )}
     </div>

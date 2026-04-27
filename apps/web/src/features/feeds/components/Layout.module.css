@@ -85,8 +85,9 @@
 
 .expandBar {
   bottom: 8px;
-  display: flex;
+  display: grid;
   gap: 4px;
+  grid-template-columns: 34px 34px;
   left: 8px;
   position: absolute;
   z-index: 20;
@@ -97,6 +98,11 @@
   border-color: var(--border);
   min-height: 34px;
   min-width: 34px;
+}
+
+.expandBarButtonHidden {
+  pointer-events: none;
+  visibility: hidden;
 }
 
 .expandBarButton svg {
