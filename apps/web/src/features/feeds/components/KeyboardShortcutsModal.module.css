@@ -27,9 +27,11 @@
 
 .header {
   align-items: center;
+  border-bottom: 1px solid var(--border);
   display: flex;
   gap: 10px;
   justify-content: space-between;
+  padding-bottom: 8px;
 }
 
 .title {
@@ -40,8 +42,8 @@
 
 .closeButton {
   align-items: center;
-  background: transparent;
-  border: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text-primary);
   cursor: pointer;
@@ -63,4 +65,5 @@
 
 .closeButton:hover {
   background: var(--hover-surface);
+  border-color: var(--border-strong);
 }

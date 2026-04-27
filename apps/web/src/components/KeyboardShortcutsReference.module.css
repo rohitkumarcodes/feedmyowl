@@ -1,6 +1,10 @@
 .reference {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 0;
   display: grid;
   gap: 16px;
+  padding: 10px;
 }
 
 .paneGuide {
@@ -17,12 +21,15 @@
 }
 
 .paneDiagram {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
   color: var(--text-primary);
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   line-height: 1.35;
   margin: 0;
   overflow-x: auto;
+  padding: 8px;
   white-space: pre;
 }
 
