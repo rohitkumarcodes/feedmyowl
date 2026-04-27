@@ -21,6 +21,11 @@ import {
   type PaneCyclePhase,
 } from "@/features/feeds/state/pane-focus-cycle";
 import {
+  cycleActivePanel,
+  resolveActivePanelAfterLayoutChange,
+  type ActivePanel,
+} from "@/features/feeds/state/active-panel";
+import {
   buildArticleSearchResults,
   type ArticleSearchHighlights,
 } from "@/features/feeds/state/article-search";
@@ -47,10 +52,7 @@ import {
   selectScopeLabel,
   selectVisibleArticles,
 } from "@/features/feeds/state/feeds-workspace.selectors";
-import {
-  useKeyboardShortcuts,
-  type LastInteractedPane,
-} from "@/hooks/useKeyboardShortcuts";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { useFeedsWorkspaceActions } from "@/features/feeds/hooks/useFeedsWorkspaceActions";
 import { useFeedsWorkspaceMobile } from "@/features/feeds/hooks/useFeedsWorkspaceMobile";
@@ -128,12 +130,12 @@ export function FeedsWorkspace({
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
   const [openArticleId, setOpenArticleId] = useState<string | null>(null);
   /**
-   * Pane the user most recently interacted with. Drives Up/Down arrow
-   * routing so selection stays "sticky" to whichever pane the user last
-   * touched, even after focus moves to the reader on article-open.
+   * Canonical "which pane is keyboard input for" state. Always points to a
+   * visible pane. Updated by clicks, keyboard navigation that lands in a
+   * pane, ArrowLeft/Right cycling, and pane collapse/expand (which auto-
+   * advances the active pane when the current one becomes hidden).
    */
-  const [lastInteractedPane, setLastInteractedPane] =
-    useState<LastInteractedPane>("none");
+  const [activePanel, setActivePanel] = useState<ActivePanel>("sidebar");
   const [liveMessage, setLiveMessage] = useState("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [listCollapsed, setListCollapsed] = useState(false);
@@ -444,6 +446,25 @@ export function FeedsWorkspace({
     }, 0);
   }, []);
 
+  /**
+   * Moves DOM focus to the root of the named pane. Each pane root carries a
+   * data-attribute (data-sidebar-root / data-article-list-root /
+   * data-article-reader-root) and tabIndex={-1}, so they can be focused
+   * programmatically without being part of the regular tab order.
+   */
+  const focusPanelRoot = useCallback((panel: ActivePanel) => {
+    const selector =
+      panel === "sidebar"
+        ? "[data-sidebar-root]"
+        : panel === "list"
+          ? "[data-article-list-root]"
+          : "[data-article-reader-root]";
+    window.setTimeout(() => {
+      const root = document.querySelector<HTMLElement>(selector);
+      root?.focus();
+    }, 0);
+  }, []);
+
   const isListContextTarget = useCallback((target: EventTarget | null): boolean => {
     const listRoot = document.querySelector<HTMLElement>("[data-article-list-root]");
     if (!listRoot) {
@@ -473,7 +494,7 @@ export function FeedsWorkspace({
         "[data-article-reader-root]",
       );
       if (readerRoot && readerRoot.contains(target)) {
-        setLastInteractedPane("reader");
+        setActivePanel("reader");
       }
     };
 
@@ -498,7 +519,7 @@ export function FeedsWorkspace({
       }
       const listRoot = document.querySelector<HTMLElement>("[data-article-list-root]");
       if (listRoot && listRoot.contains(target)) {
-        setLastInteractedPane("list");
+        setActivePanel("list");
       }
     };
 
@@ -522,7 +543,7 @@ export function FeedsWorkspace({
       }
       const sidebarRoot = document.querySelector<HTMLElement>("[data-sidebar-root]");
       if (sidebarRoot && sidebarRoot.contains(target)) {
-        setLastInteractedPane("sidebar");
+        setActivePanel("sidebar");
       }
     };
 
@@ -650,6 +671,36 @@ export function FeedsWorkspace({
     });
   }, []);
 
+  /**
+   * Whenever a pane is collapsed or expanded, ensure activePanel still points
+   * at a visible pane. Without this guard, collapsing the active pane would
+   * leave keyboard input pointed at hidden state — exactly the "F twice
+   * leaves arrows dead" bug.
+   */
+  useEffect(() => {
+    setActivePanel((current) =>
+      resolveActivePanelAfterLayoutChange(current, {
+        sidebarCollapsed,
+        listCollapsed,
+      }),
+    );
+  }, [sidebarCollapsed, listCollapsed]);
+
+  const handleCyclePanel = useCallback(
+    (direction: 1 | -1) => {
+      const next = cycleActivePanel(activePanel, direction, {
+        sidebarCollapsed: sidebarCollapsedRef.current,
+        listCollapsed: listCollapsedRef.current,
+      });
+      if (next === activePanel) {
+        return;
+      }
+      setActivePanel(next);
+      focusPanelRoot(next);
+    },
+    [activePanel, focusPanelRoot],
+  );
+
   useEffect(() => {
     if (!isMobile) {
       return;
@@ -666,7 +717,7 @@ export function FeedsWorkspace({
       // ArrowUp/Down keep navigating articles rather than scrolling the
       // reader. The reader takes over only after the user explicitly
       // clicks/scrolls inside it (see handleReaderInteract below).
-      setLastInteractedPane("list");
+      setActivePanel("list");
       focusReaderTitle();
       clearStatusMessages();
       await markArticleAsRead(articleId);
@@ -778,7 +829,7 @@ export function FeedsWorkspace({
 
   const moveSelectionByArrow = useCallback(
     (step: 1 | -1) => {
-      setLastInteractedPane("list");
+      setActivePanel("list");
 
       if (visibleArticles.length === 0) {
         setSelectedArticleId(null);
@@ -789,15 +840,19 @@ export function FeedsWorkspace({
         (article) => article.id === selectedArticleId,
       );
 
-      if (index < 0) {
-        setSelectedArticleId(visibleArticles[0].id);
-        return;
-      }
+      const targetId =
+        index < 0
+          ? visibleArticles[0].id
+          : visibleArticles[
+              Math.max(0, Math.min(visibleArticles.length - 1, index + step))
+            ].id;
 
-      const nextIndex = Math.max(0, Math.min(visibleArticles.length - 1, index + step));
-      setSelectedArticleId(visibleArticles[nextIndex].id);
+      // Auto-open the new selection so the reader follows arrow-key
+      // navigation. Mirrors the j/k vim behaviour and the standard preview-
+      // pane convention used by Gmail / Reeder / Feedbin.
+      void openSelectedArticle(targetId);
     },
-    [selectedArticleId, visibleArticles],
+    [openSelectedArticle, selectedArticleId, visibleArticles],
   );
 
   /**
@@ -841,7 +896,7 @@ export function FeedsWorkspace({
 
   const moveSidebarSelectionByArrow = useCallback(
     (step: 1 | -1) => {
-      setLastInteractedPane("sidebar");
+      setActivePanel("sidebar");
       const visibleScopes = readVisibleSidebarScopes();
       const next = resolveSidebarArrowNavigation({
         step,
@@ -904,7 +959,10 @@ export function FeedsWorkspace({
       const openArticle = selectOpenArticle(allArticles, openArticleId);
 
       setSelectedScope(nextScope);
-      setLastInteractedPane("sidebar");
+      // Land in the list pane after picking a scope so arrow keys start
+      // navigating articles immediately. focusArticleList() below moves DOM
+      // focus too.
+      setActivePanel("list");
 
       if (wasSearchActive) {
         setSearchQuery("");
@@ -956,7 +1014,7 @@ export function FeedsWorkspace({
     isShortcutsModalOpen,
     isListContextTarget,
     isReaderContextTarget,
-    lastInteractedPane,
+    activePanel,
     onNextArticleVim: () => navigateAndOpenByVim(1),
     onPreviousArticleVim: () => navigateAndOpenByVim(-1),
     onNextArticleArrow: () => moveSelectionByArrow(1),
@@ -967,6 +1025,7 @@ export function FeedsWorkspace({
     onReaderScrollLineUp: () => scrollReaderByKeyboardLine(-1),
     onReaderScrollPageDown: () => scrollReaderByKeyboardPage(1),
     onReaderScrollPageUp: () => scrollReaderByKeyboardPage(-1),
+    onCyclePanel: handleCyclePanel,
     onOpenArticle: () => {
       if (selectedArticleId) {
         void openSelectedArticle(selectedArticleId);
@@ -1190,6 +1249,7 @@ export function FeedsWorkspace({
         listCollapsed={listCollapsed}
         onCollapseList={handleCollapseList}
         onToggleList={handleToggleList}
+        activePanel={activePanel}
         isMobile={isMobile}
         mobileView={mobileView}
         mobileListTitle={isSearchActive ? "Search results" : selectedScopeLabel}

@@ -3,21 +3,20 @@
  */
 
 import { useEffect } from "react";
+import type { ActivePanel } from "@/features/feeds/state/active-panel";
 import { resolveShortcutAction } from "@/lib/shared/shortcut-dispatch";
-
-/**
- * Which pane the user most recently interacted with. Drives Up/Down arrow
- * routing so the selection stays "sticky" to that pane even after the
- * browser moves DOM focus elsewhere (e.g. focusReaderTitle after a click).
- */
-export type LastInteractedPane = "sidebar" | "list" | "reader" | "none";
 
 interface UseKeyboardShortcutsOptions {
   enabled: boolean;
   isShortcutsModalOpen: boolean;
   isListContextTarget: (target: EventTarget | null) => boolean;
   isReaderContextTarget: (target: EventTarget | null) => boolean;
-  lastInteractedPane: LastInteractedPane;
+  /**
+   * Canonical "which pane is keyboard input for" state. Always points to a
+   * visible pane — the FeedsWorkspace owner is responsible for advancing it
+   * when the layout changes.
+   */
+  activePanel: ActivePanel;
   onNextArticleVim: () => void;
   onPreviousArticleVim: () => void;
   onNextArticleArrow: () => void;
@@ -28,6 +27,7 @@ interface UseKeyboardShortcutsOptions {
   onReaderScrollLineUp: () => boolean;
   onReaderScrollPageDown: () => boolean;
   onReaderScrollPageUp: () => boolean;
+  onCyclePanel: (direction: 1 | -1) => void;
   onOpenArticle: () => void;
   onToggleSaved: () => void;
   onOpenOriginal: () => void;
@@ -96,7 +96,7 @@ export function useKeyboardShortcuts({
   isShortcutsModalOpen,
   isListContextTarget,
   isReaderContextTarget,
-  lastInteractedPane,
+  activePanel,
   onNextArticleVim,
   onPreviousArticleVim,
   onNextArticleArrow,
@@ -107,6 +107,7 @@ export function useKeyboardShortcuts({
   onReaderScrollLineUp,
   onReaderScrollPageDown,
   onReaderScrollPageUp,
+  onCyclePanel,
   onOpenArticle,
   onToggleSaved,
   onOpenOriginal,
@@ -122,16 +123,14 @@ export function useKeyboardShortcuts({
     }
 
     function handleKeyDown(event: KeyboardEvent) {
-      // Combine focus-target signals with the "last interacted pane" signal
-      // so arrow keys keep moving the selection in whichever pane the user
-      // last touched, even after openSelectedArticle / focusReaderTitle move
-      // DOM focus to the reader. The dispatcher's priority order
-      // (sidebar > list > reader for arrows) resolves overlaps.
-      const isListContext =
-        isListContextTarget(event.target) || lastInteractedPane === "list";
+      // Routing priority: the canonical activePanel decides which pane owns
+      // arrow keys, falling back to DOM-target checks for clicks inside list
+      // or reader nodes (clicks in those panes update activePanel anyway, so
+      // these are just safety nets for in-flight key events).
+      const isListContext = activePanel === "list" || isListContextTarget(event.target);
       const isReaderContext =
-        isReaderContextTarget(event.target) || lastInteractedPane === "reader";
-      const isSidebarContext = lastInteractedPane === "sidebar";
+        activePanel === "reader" || isReaderContextTarget(event.target);
+      const isSidebarContext = activePanel === "sidebar";
 
       const action = resolveShortcutAction(
         {
@@ -231,6 +230,16 @@ export function useKeyboardShortcuts({
         return;
       }
 
+      if (action === "panel.next") {
+        onCyclePanel(1);
+        return;
+      }
+
+      if (action === "panel.previous") {
+        onCyclePanel(-1);
+        return;
+      }
+
       if (action === "article.open") {
         onOpenArticle();
         return;
@@ -281,7 +290,7 @@ export function useKeyboardShortcuts({
     isListContextTarget,
     isReaderContextTarget,
     isShortcutsModalOpen,
-    lastInteractedPane,
+    activePanel,
     onNextArticleVim,
     onPreviousArticleVim,
     onNextArticleArrow,
@@ -292,6 +301,7 @@ export function useKeyboardShortcuts({
     onReaderScrollLineUp,
     onReaderScrollPageDown,
     onReaderScrollPageUp,
+    onCyclePanel,
     onCloseShortcuts,
     onCycleFocusPanes,
     onFocusSearch,

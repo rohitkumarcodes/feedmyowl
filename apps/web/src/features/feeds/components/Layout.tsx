@@ -7,6 +7,7 @@ import primitiveStyles from "./LeftPanePrimitives.module.css";
 import styles from "./Layout.module.css";
 import { PaneToggleIcon } from "./PaneToggleIcon";
 import { useSwipeBack } from "@/features/feeds/hooks/useSwipeBack";
+import type { ActivePanel } from "@/features/feeds/state/active-panel";
 
 interface LayoutProps {
   sidebar: ReactNode;
@@ -17,6 +18,11 @@ interface LayoutProps {
   listCollapsed: boolean;
   onCollapseList: () => void;
   onToggleList: () => void;
+  /**
+   * Which pane keyboard input currently targets. Surfaced as a data attribute
+   * so CSS can paint a subtle indicator on the active pane.
+   */
+  activePanel: ActivePanel;
   isMobile: boolean;
   mobileView: "feeds" | "articles" | "reader";
   mobileListTitle: string;
@@ -36,6 +42,7 @@ export function Layout({
   listCollapsed,
   onCollapseList,
   onToggleList,
+  activePanel,
   isMobile,
   mobileView,
   mobileListTitle,
@@ -124,7 +131,7 @@ export function Layout({
 
   return (
     <div className={`${styles.root} ${primitiveStyles.tokenScope}`}>
-      <div className={panesClassName}>
+      <div className={panesClassName} data-active-panel={activePanel}>
         <aside className={sidebarPaneClassName} aria-label="Feed list" role="navigation">
           {sidebar}
         </aside>

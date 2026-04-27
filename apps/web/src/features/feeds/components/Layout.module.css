@@ -75,6 +75,17 @@
   grid-template-columns: 0 0 minmax(0, 1fr);
 }
 
+/*
+ * Active-pane indicator: a soft 2px inset accent on the pane currently
+ * receiving keyboard input. Subtle by design — the project values a calm
+ * reading surface, so this is a hint, not a highlight.
+ */
+.panes[data-active-panel="sidebar"] .sidebarPane,
+.panes[data-active-panel="list"] .listPane,
+.panes[data-active-panel="reader"] .readerPane {
+  box-shadow: inset 2px 0 0 var(--border-strong, var(--border));
+}
+
 .listCollapseToggle {
   align-items: center;
   display: flex;

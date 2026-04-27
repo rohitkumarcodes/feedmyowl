@@ -146,6 +146,44 @@ describe("shortcut-dispatch", () => {
     ).toBeNull();
   });
 
+  it("maps ArrowLeft/ArrowRight to panel cycling regardless of pane context", () => {
+    expect(resolveShortcutAction(eventSnapshot("ArrowRight"), baseContext)).toBe(
+      "panel.next",
+    );
+    expect(resolveShortcutAction(eventSnapshot("ArrowLeft"), baseContext)).toBe(
+      "panel.previous",
+    );
+
+    expect(
+      resolveShortcutAction(eventSnapshot("ArrowRight"), {
+        ...baseContext,
+        isListContext: true,
+      }),
+    ).toBe("panel.next");
+
+    expect(
+      resolveShortcutAction(eventSnapshot("ArrowLeft"), {
+        ...baseContext,
+        isReaderContext: true,
+      }),
+    ).toBe("panel.previous");
+  });
+
+  it("ignores ArrowLeft/ArrowRight while typing", () => {
+    expect(
+      resolveShortcutAction(eventSnapshot("ArrowLeft"), {
+        ...baseContext,
+        isTypingTarget: true,
+      }),
+    ).toBeNull();
+    expect(
+      resolveShortcutAction(eventSnapshot("ArrowRight"), {
+        ...baseContext,
+        isTypingTarget: true,
+      }),
+    ).toBeNull();
+  });
+
   it("maps workspace-wide actions when not typing", () => {
     expect(resolveShortcutAction(eventSnapshot("r"), baseContext)).toBe("feeds.refresh");
     expect(resolveShortcutAction(eventSnapshot("f"), baseContext)).toBe(

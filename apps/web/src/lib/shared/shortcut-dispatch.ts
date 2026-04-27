@@ -111,6 +111,14 @@ export function resolveShortcutAction(
     return snapshot.shiftKey ? "reader.scroll.pageUp" : "reader.scroll.pageDown";
   }
 
+  if (key === "ArrowRight") {
+    return "panel.next";
+  }
+
+  if (key === "ArrowLeft") {
+    return "panel.previous";
+  }
+
   if (key === "Enter" && context.isListContext) {
     return "article.open";
   }

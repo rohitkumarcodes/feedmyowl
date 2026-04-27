@@ -13,6 +13,8 @@ export type ShortcutActionId =
   | "reader.scroll.lineUp"
   | "reader.scroll.pageDown"
   | "reader.scroll.pageUp"
+  | "panel.next"
+  | "panel.previous"
   | "article.open"
   | "article.toggleSaved"
   | "article.openOriginal"
@@ -97,6 +99,18 @@ export const SHORTCUT_DEFINITIONS: readonly ShortcutDefinition[] = [
     group: "navigation",
     keys: ["ArrowUp"],
     description: "ArrowUp: Scroll up 3 lines (reader)",
+  },
+  {
+    id: "panel.next",
+    group: "navigation",
+    keys: ["ArrowRight"],
+    description: "ArrowRight: Move focus to the next visible pane",
+  },
+  {
+    id: "panel.previous",
+    group: "navigation",
+    keys: ["ArrowLeft"],
+    description: "ArrowLeft: Move focus to the previous visible pane",
   },
   {
     id: "article.open",

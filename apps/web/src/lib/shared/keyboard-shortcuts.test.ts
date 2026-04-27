@@ -31,6 +31,8 @@ describe("keyboard-shortcuts definitions", () => {
     expect(keys).toContain("k");
     expect(keys).toContain("ArrowDown");
     expect(keys).toContain("ArrowUp");
+    expect(keys).toContain("ArrowLeft");
+    expect(keys).toContain("ArrowRight");
     expect(keys).toContain("PageDown");
     expect(keys).toContain("PageUp");
     expect(keys).toContain("Space");
