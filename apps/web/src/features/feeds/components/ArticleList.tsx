@@ -143,8 +143,7 @@ export function ArticleList({
   const shouldShowPaginationStatus =
     !searchIsActive &&
     paginationInitialized &&
-    (paginationIsLoading ||
-      Boolean(paginationError) ||
+    (Boolean(paginationError) ||
       paginationHasMore ||
       articles.length > 0);
 
@@ -278,10 +277,6 @@ export function ArticleList({
                 Retry
               </button>
             </div>
-          ) : paginationIsLoading ? (
-            <p className={styles.paginationHint} role="status" aria-live="polite">
-              Loading more articles...
-            </p>
           ) : paginationHasMore ? (
             <div
               ref={loadMoreSentinelRef}
