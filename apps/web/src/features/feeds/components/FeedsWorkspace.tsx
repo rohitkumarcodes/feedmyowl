@@ -279,6 +279,18 @@ export function FeedsWorkspace({
     );
   }, [paginationByScopeKey, selectedArticleScope]);
 
+  /**
+   * True while articles are being fetched for a newly selected scope.
+   * Prevents a flash of "No articles in this feed." before the first page
+   * of articles arrives from the API.
+   */
+  const isLoadingArticles = useMemo(() => {
+    if (isSearchActive) return false;
+    if (selectedScope.type === "none") return false;
+    if (visibleArticles.length > 0) return false;
+    return !selectedScopePagination.initialized || selectedScopePagination.isLoading;
+  }, [isSearchActive, selectedScope, visibleArticles, selectedScopePagination]);
+
   const {
     isAddFeedFormVisible,
     addFeedStage,
@@ -1112,6 +1124,7 @@ export function FeedsWorkspace({
             emptyStateMessage={emptyStateMessage}
             isInitialScopeEmpty={selectedScope.type === "none" && !isSearchActive}
             showFeedTitle={isSearchActive || selectedScope.type !== "feed"}
+            isLoading={isLoadingArticles}
             searchQuery={searchQuery}
             searchIsActive={isSearchActive}
             searchTotalMatchCount={searchResults.totalMatchCount}

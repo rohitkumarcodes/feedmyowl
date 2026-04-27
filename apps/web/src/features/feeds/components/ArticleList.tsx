@@ -4,6 +4,7 @@
 
 import { useEffect, useRef, type RefObject } from "react";
 import { ArticleRow } from "./ArticleRow";
+import { ArticleListSkeleton } from "./ArticleListSkeleton";
 import type { ArticleSearchHighlights } from "@/features/feeds/state/article-search";
 import type { ArticleViewModel } from "@/features/feeds/types/view-models";
 import type { ReadingMode } from "@/lib/shared/reading-mode";
@@ -18,6 +19,7 @@ interface ArticleListProps {
   statusMessage: string | null;
   emptyStateMessage: string;
   isInitialScopeEmpty: boolean;
+  isLoading: boolean;
   showFeedTitle: boolean;
   searchQuery: string;
   searchIsActive: boolean;
@@ -51,6 +53,7 @@ export function ArticleList({
   emptyStateMessage,
   isInitialScopeEmpty,
   showFeedTitle,
+  isLoading,
   searchQuery,
   searchIsActive,
   searchTotalMatchCount,
@@ -237,7 +240,9 @@ export function ArticleList({
         </p>
       ) : null}
 
-      {articles.length === 0 ? (
+      {articles.length === 0 && isLoading ? (
+        <ArticleListSkeleton />
+      ) : articles.length === 0 ? (
         <div
           className={`${styles.emptyWrap} ${isInitialScopeEmpty ? styles.emptyWrapInitial : ""}`}
         >
