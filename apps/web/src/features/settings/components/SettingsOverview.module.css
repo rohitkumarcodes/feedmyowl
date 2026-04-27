@@ -643,10 +643,10 @@ button.linkButton:hover:enabled {
 }
 
 .shortcutsPanelRow {
-  align-items: center;
+  align-items: start;
   display: grid;
   gap: 14px;
-  grid-template-columns: minmax(120px, auto) minmax(0, 1fr);
+  grid-template-columns: minmax(104px, 128px) minmax(0, 1fr);
 }
 
 .shortcutsPanelKeys {
@@ -666,6 +666,7 @@ button.linkButton:hover:enabled {
   min-width: 24px;
   padding: 5px 8px;
   text-align: center;
+  white-space: nowrap;
 }
 
 .shortcutsPanelDescription {

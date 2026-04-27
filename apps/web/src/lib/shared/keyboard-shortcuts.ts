@@ -26,8 +26,10 @@ export type ShortcutActionId =
 
 export type ShortcutGroupId = "navigation" | "reading_actions" | "app_actions";
 
+export type ShortcutDefinitionId = ShortcutActionId | "navigation.verticalArrows";
+
 export interface ShortcutDefinition {
-  id: ShortcutActionId;
+  id: ShortcutDefinitionId;
   group: ShortcutGroupId;
   keys: readonly string[];
   description: string;
@@ -51,6 +53,20 @@ const SHORTCUT_GROUP_LABELS: Record<ShortcutGroupId, string> = {
   app_actions: "App actions",
 };
 
+const SHORTCUT_KEY_LABELS: Record<string, string> = {
+  ArrowDown: "↓",
+  ArrowLeft: "←",
+  ArrowRight: "→",
+  ArrowUp: "↑",
+  Escape: "Esc",
+  Space: "Space",
+  "Shift+Space": "Shift + Space",
+};
+
+export function getShortcutKeyLabel(key: string): string {
+  return SHORTCUT_KEY_LABELS[key] ?? key;
+}
+
 export const SHORTCUT_DEFINITIONS: readonly ShortcutDefinition[] = [
   {
     id: "article.next.vim",
@@ -65,52 +81,22 @@ export const SHORTCUT_DEFINITIONS: readonly ShortcutDefinition[] = [
     description: "Open previous article (list/reader, continues across feed lists)",
   },
   {
-    id: "article.next.arrow",
+    id: "navigation.verticalArrows",
     group: "navigation",
-    keys: ["ArrowDown"],
-    description: "ArrowDown: Select next article (list)",
-  },
-  {
-    id: "article.previous.arrow",
-    group: "navigation",
-    keys: ["ArrowUp"],
-    description: "ArrowUp: Select previous article (list)",
-  },
-  {
-    id: "sidebar.next.arrow",
-    group: "navigation",
-    keys: ["ArrowDown"],
-    description: "ArrowDown: Select next item (sidebar)",
-  },
-  {
-    id: "sidebar.previous.arrow",
-    group: "navigation",
-    keys: ["ArrowUp"],
-    description: "ArrowUp: Select previous item (sidebar)",
-  },
-  {
-    id: "reader.scroll.lineDown",
-    group: "navigation",
-    keys: ["ArrowDown"],
-    description: "ArrowDown: Scroll down 3 lines (reader)",
-  },
-  {
-    id: "reader.scroll.lineUp",
-    group: "navigation",
-    keys: ["ArrowUp"],
-    description: "ArrowUp: Scroll up 3 lines (reader)",
+    keys: ["ArrowUp", "ArrowDown"],
+    description: "Move selection in sidebar/list; scroll reader",
   },
   {
     id: "panel.next",
     group: "navigation",
     keys: ["ArrowRight"],
-    description: "ArrowRight: Move focus to the next visible pane",
+    description: "Move focus to the next visible pane",
   },
   {
     id: "panel.previous",
     group: "navigation",
     keys: ["ArrowLeft"],
-    description: "ArrowLeft: Move focus to the previous visible pane",
+    description: "Move focus to the previous visible pane",
   },
   {
     id: "article.open",
@@ -121,14 +107,14 @@ export const SHORTCUT_DEFINITIONS: readonly ShortcutDefinition[] = [
   {
     id: "reader.scroll.pageDown",
     group: "reading_actions",
-    keys: ["Space", "PageDown"],
-    description: "Scroll down one reading page with overlap (reader)",
+    keys: ["Space"],
+    description: "Scroll down one reading page with overlap (also PageDown)",
   },
   {
     id: "reader.scroll.pageUp",
     group: "reading_actions",
-    keys: ["Shift+Space", "PageUp"],
-    description: "Scroll up one reading page with overlap (reader)",
+    keys: ["Shift+Space"],
+    description: "Scroll up one reading page with overlap (also PageUp)",
   },
   {
     id: "article.toggleSaved",

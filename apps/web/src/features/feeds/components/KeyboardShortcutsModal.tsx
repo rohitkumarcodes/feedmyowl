@@ -3,7 +3,10 @@
  */
 
 import { useEffect, useId, useRef } from "react";
-import { SHORTCUT_GROUPS } from "@/lib/shared/keyboard-shortcuts";
+import {
+  getShortcutKeyLabel,
+  SHORTCUT_GROUPS,
+} from "@/lib/shared/keyboard-shortcuts";
 import styles from "./KeyboardShortcutsModal.module.css";
 
 interface KeyboardShortcutsModalProps {
@@ -125,7 +128,7 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
                     <div className={styles.keys}>
                       {shortcut.keys.map((key) => (
                         <kbd key={`${shortcut.id}-${key}`} className={styles.key}>
-                          {key}
+                          {getShortcutKeyLabel(key)}
                         </kbd>
                       ))}
                     </div>

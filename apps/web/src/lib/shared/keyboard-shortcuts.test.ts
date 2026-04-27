@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { SHORTCUT_DEFINITIONS, SHORTCUT_GROUPS } from "./keyboard-shortcuts";
+import {
+  getShortcutKeyLabel,
+  SHORTCUT_DEFINITIONS,
+  SHORTCUT_GROUPS,
+} from "./keyboard-shortcuts";
 
 describe("keyboard-shortcuts definitions", () => {
   it("covers all definitions in grouped output", () => {
@@ -24,7 +28,7 @@ describe("keyboard-shortcuts definitions", () => {
     ]);
   });
 
-  it("defines all required public-facing shortcut actions", () => {
+  it("defines all required public-facing shortcut keys", () => {
     const keys = SHORTCUT_DEFINITIONS.flatMap((shortcut) => shortcut.keys);
 
     expect(keys).toContain("j");
@@ -33,8 +37,6 @@ describe("keyboard-shortcuts definitions", () => {
     expect(keys).toContain("ArrowUp");
     expect(keys).toContain("ArrowLeft");
     expect(keys).toContain("ArrowRight");
-    expect(keys).toContain("PageDown");
-    expect(keys).toContain("PageUp");
     expect(keys).toContain("Space");
     expect(keys).toContain("Shift+Space");
     expect(keys).toContain("Enter");
@@ -43,6 +45,16 @@ describe("keyboard-shortcuts definitions", () => {
     expect(keys).toContain("/");
     expect(keys).toContain("?");
     expect(keys).toContain("Escape");
+  });
+
+  it("uses compact display labels for long key names", () => {
+    expect(getShortcutKeyLabel("ArrowDown")).toBe("↓");
+    expect(getShortcutKeyLabel("ArrowUp")).toBe("↑");
+    expect(getShortcutKeyLabel("ArrowLeft")).toBe("←");
+    expect(getShortcutKeyLabel("ArrowRight")).toBe("→");
+    expect(getShortcutKeyLabel("Escape")).toBe("Esc");
+    expect(getShortcutKeyLabel("Space")).toBe("Space");
+    expect(getShortcutKeyLabel("Shift+Space")).toBe("Shift + Space");
   });
 
   it("describes vim navigation as opening articles", () => {
@@ -57,15 +69,29 @@ describe("keyboard-shortcuts definitions", () => {
     expect(previousVim?.description).toContain("Open previous article");
   });
 
-  it("documents dual Arrow key behavior for list and reader contexts", () => {
-    const listArrowDown = SHORTCUT_DEFINITIONS.find(
-      (shortcut) => shortcut.id === "article.next.arrow",
-    );
-    const readerArrowDown = SHORTCUT_DEFINITIONS.find(
-      (shortcut) => shortcut.id === "reader.scroll.lineDown",
+  it("documents vertical arrows once for context-specific navigation", () => {
+    const arrowShortcuts = SHORTCUT_DEFINITIONS.filter((shortcut) =>
+      shortcut.keys.some((key) => key === "ArrowUp" || key === "ArrowDown"),
     );
 
-    expect(listArrowDown?.description).toContain("list");
-    expect(readerArrowDown?.description).toContain("reader");
+    expect(arrowShortcuts).toHaveLength(1);
+    expect(arrowShortcuts[0]?.id).toBe("navigation.verticalArrows");
+    expect(arrowShortcuts[0]?.description).toBe(
+      "Move selection in sidebar/list; scroll reader",
+    );
+  });
+
+  it("keeps Space as the primary reader paging shortcut", () => {
+    const pageDown = SHORTCUT_DEFINITIONS.find(
+      (shortcut) => shortcut.id === "reader.scroll.pageDown",
+    );
+    const pageUp = SHORTCUT_DEFINITIONS.find(
+      (shortcut) => shortcut.id === "reader.scroll.pageUp",
+    );
+
+    expect(pageDown?.keys).toEqual(["Space"]);
+    expect(pageDown?.description).toContain("PageDown");
+    expect(pageUp?.keys).toEqual(["Shift+Space"]);
+    expect(pageUp?.description).toContain("PageUp");
   });
 });

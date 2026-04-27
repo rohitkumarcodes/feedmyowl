@@ -5,7 +5,10 @@ import { OwlOptionsShutter } from "@/features/settings/components/OwlOptionsShut
 import { KeyboardIcon } from "@/features/settings/components/icons";
 import { useMeasuredWidthPx } from "@/features/settings/components/useMeasuredWidthPx";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
-import { SHORTCUT_GROUPS } from "@/lib/shared/keyboard-shortcuts";
+import {
+  getShortcutKeyLabel,
+  SHORTCUT_GROUPS,
+} from "@/lib/shared/keyboard-shortcuts";
 import styles from "../SettingsOverview.module.css";
 
 interface KeyboardShortcutsSectionProps {
@@ -51,7 +54,7 @@ export function KeyboardShortcutsSection({
                           key={`probe-${shortcut.id}-${key}`}
                           className={styles.shortcutsPanelKey}
                         >
-                          {key}
+                          {getShortcutKeyLabel(key)}
                         </kbd>
                       ))}
                     </div>
@@ -107,7 +110,7 @@ export function KeyboardShortcutsSection({
                             key={`${shortcut.id}-${key}`}
                             className={styles.shortcutsPanelKey}
                           >
-                            {key}
+                            {getShortcutKeyLabel(key)}
                           </kbd>
                         ))}
                       </div>

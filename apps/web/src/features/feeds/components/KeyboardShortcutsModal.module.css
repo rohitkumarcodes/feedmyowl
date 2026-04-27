@@ -93,10 +93,10 @@
 }
 
 .row {
-  align-items: center;
+  align-items: start;
   display: grid;
   gap: 10px;
-  grid-template-columns: max-content minmax(0, 1fr);
+  grid-template-columns: minmax(104px, 128px) minmax(0, 1fr);
 }
 
 .keys {
@@ -116,14 +116,14 @@
   min-width: 24px;
   padding: 4px 6px;
   text-align: center;
+  white-space: nowrap;
 }
 
 .rowDescription {
   color: var(--text-secondary);
   font-size: var(--text-sm);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.4;
+  margin: 0;
 }
 
 @media (max-width: 560px) {
