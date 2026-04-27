@@ -6,14 +6,6 @@
   position: relative;
 }
 
-.desktopControlsRow {
-  align-items: center;
-  display: flex;
-  gap: 6px;
-  min-height: 40px;
-  padding: 4px 6px;
-}
-
 .panes {
   background: transparent;
   display: grid;
@@ -24,6 +16,7 @@
     minmax(0, 1fr);
   height: auto;
   min-height: 0;
+  transition: grid-template-columns 0.2s ease;
 }
 
 .sidebarPane,
@@ -90,10 +83,25 @@
   padding: 4px 8px;
 }
 
-.expandButton {
+.expandBar {
+  bottom: 8px;
+  display: flex;
+  gap: 4px;
+  left: 8px;
+  position: absolute;
+  z-index: 20;
+}
+
+.expandBarButton {
+  background: transparent;
+  border-color: var(--border);
   min-height: 34px;
   min-width: 34px;
-  padding: 6px 6px 6px 4px;
+}
+
+.expandBarButton svg {
+  display: block;
+  transition: transform 0.2s ease;
 }
 
 .paneToggleButton {
@@ -105,6 +113,7 @@
 
 .paneToggleButton svg {
   display: block;
+  transition: transform 0.2s ease;
 }
 
 .mobileViews {

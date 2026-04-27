@@ -444,6 +444,7 @@
 
 .paneToggleButton svg {
   display: block;
+  transition: transform 0.2s ease;
 }
 
 @media (max-width: 767px) {

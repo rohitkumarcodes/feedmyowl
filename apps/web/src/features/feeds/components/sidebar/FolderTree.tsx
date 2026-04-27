@@ -975,9 +975,9 @@ export function FolderTree({
           className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.paneToggleButton}`}
           onClick={onCollapse}
           aria-label="Collapse sidebar"
-          title="Collapse sidebar"
+          title="Collapse sidebar (f)"
         >
-          <PaneToggleIcon variant="sidebar" />
+          <PaneToggleIcon direction="left" />
         </button>
       </div>
 

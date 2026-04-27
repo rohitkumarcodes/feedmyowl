@@ -1,16 +1,14 @@
 interface PaneToggleIconProps {
-  variant: "sidebar" | "list";
+  direction: "left" | "right";
 }
 
-const paneFillXByVariant = {
-  sidebar: 3,
-  list: 9,
-} as const;
+const chevronPath = "M15 4l-8 8 8 8";
 
 /**
- * Geometric pane-map icon used for sidebar/list collapse and expand controls.
+ * Directional chevron arrow used for collapse/expand controls.
+ * Rotates 180deg between left and right states for a smooth toggle affordance.
  */
-export function PaneToggleIcon({ variant }: PaneToggleIconProps) {
+export function PaneToggleIcon({ direction }: PaneToggleIconProps) {
   return (
     <svg
       width="20"
@@ -19,41 +17,17 @@ export function PaneToggleIcon({ variant }: PaneToggleIconProps) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
+      style={{
+        transform: direction === "right" ? "rotate(180deg)" : "rotate(0deg)",
+        transition: "transform 0.2s ease",
+      }}
     >
-      <rect
-        x={paneFillXByVariant[variant]}
-        y="3"
-        width="6"
-        height="18"
-        fill="currentColor"
-        fillOpacity="0.22"
-      />
-      <rect
-        x="3"
-        y="3"
-        width="18"
-        height="18"
+      <path
+        d={chevronPath}
         stroke="currentColor"
         strokeWidth="2.25"
-        strokeLinejoin="miter"
-      />
-      <line
-        x1="9"
-        y1="3"
-        x2="9"
-        y2="21"
-        stroke="currentColor"
-        strokeWidth="2.25"
-        strokeLinecap="square"
-      />
-      <line
-        x1="15"
-        y1="3"
-        x2="15"
-        y2="21"
-        stroke="currentColor"
-        strokeWidth="2.25"
-        strokeLinecap="square"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );

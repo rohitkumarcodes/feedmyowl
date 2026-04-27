@@ -124,33 +124,6 @@ export function Layout({
 
   return (
     <div className={`${styles.root} ${primitiveStyles.tokenScope}`}>
-      {sidebarCollapsed || listCollapsed ? (
-        <div className={styles.desktopControlsRow}>
-          {sidebarCollapsed ? (
-            <button
-              type="button"
-              className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.paneToggleButton} ${styles.expandButton}`}
-              onClick={onToggleSidebar}
-              aria-label="Expand sidebar"
-              title="Expand sidebar"
-            >
-              <PaneToggleIcon variant="sidebar" />
-            </button>
-          ) : null}
-          {listCollapsed ? (
-            <button
-              type="button"
-              className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.paneToggleButton} ${styles.expandButton}`}
-              onClick={onToggleList}
-              aria-label="Expand article list"
-              title="Expand article list"
-            >
-              <PaneToggleIcon variant="list" />
-            </button>
-          ) : null}
-        </div>
-      ) : null}
-
       <div className={panesClassName}>
         <aside className={sidebarPaneClassName} aria-label="Feed list" role="navigation">
           {sidebar}
@@ -165,9 +138,9 @@ export function Layout({
                 className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.paneToggleButton}`}
                 onClick={onCollapseList}
                 aria-label="Collapse article list"
-                title="Collapse article list"
+                title="Collapse article list (f)"
               >
-                <PaneToggleIcon variant="list" />
+                <PaneToggleIcon direction="left" />
               </button>
             </div>
           ) : null}
@@ -177,6 +150,33 @@ export function Layout({
           {articleReader}
         </section>
       </div>
+
+      {(sidebarCollapsed || listCollapsed) && (
+        <div className={styles.expandBar}>
+          {sidebarCollapsed && (
+            <button
+              type="button"
+              className={`${primitiveStyles.iconButton} ${styles.expandBarButton}`}
+              onClick={onToggleSidebar}
+              aria-label="Expand sidebar"
+              title="Expand sidebar (f)"
+            >
+              <PaneToggleIcon direction="right" />
+            </button>
+          )}
+          {listCollapsed && (
+            <button
+              type="button"
+              className={`${primitiveStyles.iconButton} ${styles.expandBarButton}`}
+              onClick={onToggleList}
+              aria-label="Expand article list"
+              title="Expand article list (f)"
+            >
+              <PaneToggleIcon direction="right" />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
