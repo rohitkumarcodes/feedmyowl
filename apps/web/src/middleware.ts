@@ -20,11 +20,15 @@ import { getTrustedOrigins } from "@/lib/server/trusted-origins";
 
 /**
  * Routes that do NOT require authentication.
- * All other routes will require the user to be signed in.
+ * The exact /dev preview routes are public at middleware level so their own
+ * local-only page guards can return 404 outside next dev. All other routes
+ * require the user to be signed in.
  */
 const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
+  "/dev/feeds-preview",
+  "/dev/settings-preview",
   "/api/webhooks(.*)",
 ]);
 
