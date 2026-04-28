@@ -6,6 +6,7 @@ Operational guide for the reading-first app with folder organization and configu
 ## 2. Local development
 From repo root:
 - `pnpm dev:web`
+- `pnpm dev:web:preview`
 - `pnpm dev:blog`
 - `pnpm test:web`
 - `pnpm lint:web`
@@ -31,14 +32,23 @@ Use this checklist for every UI task.
 9. Run `pnpm smoke:web` for broad UI-flow changes. If Playwright browsers are not installed locally, run `pnpm --filter web exec playwright install chromium` first.
 10. Report four things in your handoff: what changed, what was checked, screenshots, and any remaining risks.
 
-## 2.2 Local demo mode for coding agents
-Use demo mode when checking UI without a real account or production-like data:
+## 2.2 Local fixture preview for coding agents
+Use fixture preview pages when checking protected UI without a real account or
+production-like data:
 
 ```bash
-FEEDMYOWL_DEMO_MODE=1 pnpm dev:web
+pnpm dev:web:preview
 ```
 
-Demo mode renders `/feeds`, `/settings`, and `/onboarding` with local fixture data. It is blocked on Vercel production.
+Then open `/dev/feeds-preview` or `/dev/settings-preview`. These local pages
+render the real protected UI with fake data and are blocked outside local
+`next dev`.
+
+The older `FEEDMYOWL_DEMO_MODE=1` path is kept for local Playwright smoke tests
+only. It must not be used for Vercel Preview review.
+
+See `docs/workflows.md` for the founder-friendly local and Vercel Preview
+review workflow.
 
 ## 3. User-facing surface
 - Add/rename/delete feed.
@@ -79,12 +89,9 @@ Demo mode renders `/feeds`, `/settings`, and `/onboarding` with local fixture da
 - `POST /api/feeds/import-preview`
 - `POST /api/feeds/import`
 - `GET /api/feeds/export`
-- `POST /api/billing/checkout`
-- `POST /api/billing/portal`
 - `PATCH /api/settings/logo`
 - `PATCH /api/settings/theme`
 - `POST /api/webhooks/clerk`
-- `POST /api/webhooks/stripe`
 
 ## 4.1 Agent workflow guardrails
 - `AGENT_TASK_GUIDE.md` contains copy-paste prompts for common tasks.

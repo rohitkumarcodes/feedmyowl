@@ -44,7 +44,6 @@ import {
  * We store our own copy of user data so that:
  *   1. We can link feeds and items to users with foreign keys
  *   2. We own our data even if we switch auth providers (Principle 4)
- *   3. We can store app-specific fields (subscription tier, Stripe IDs)
  */
 export const users = pgTable("users", {
   /** Unique identifier (UUID v4, auto-generated) */
@@ -58,17 +57,6 @@ export const users = pgTable("users", {
 
   /** Reading mode: "reader" (calm, no unread indicators) or "checker" (traditional RSS) */
   readingMode: varchar("reading_mode", { length: 20 }).default("reader").notNull(),
-
-  /** Subscription tier: "free" (default) or "paid" */
-  subscriptionTier: varchar("subscription_tier", { length: 50 })
-    .default("free")
-    .notNull(),
-
-  /** Stripe customer ID — set when user first interacts with Stripe */
-  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
-
-  /** Stripe subscription ID — set when user subscribes to paid tier */
-  stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
 
   /** When this row was created */
   createdAt: timestamp("created_at").defaultNow().notNull(),

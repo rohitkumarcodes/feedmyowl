@@ -117,10 +117,7 @@ Notes:
 - `GET /api/feeds/export` -> OPML export or JSON export
 - `PATCH /api/settings/logo` -> persist selected user ASCII owl logo
 - `PATCH /api/settings/theme` -> persist selected authenticated appearance mode (`system`, `light`, `dark`)
-- `POST /api/billing/checkout` -> create Stripe Checkout session (paid upgrade)
-- `POST /api/billing/portal` -> open Stripe customer portal
 - `POST /api/webhooks/clerk` -> sync Clerk users to DB
-- `POST /api/webhooks/stripe` -> sync Stripe subscription status to DB
 
 Behavior notes:
 - Mutating non-webhook routes enforce same-origin checks and can return

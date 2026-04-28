@@ -8,9 +8,6 @@ const userCompatColumns = {
   id: true,
   clerkId: true,
   email: true,
-  subscriptionTier: true,
-  stripeCustomerId: true,
-  stripeSubscriptionId: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -45,9 +42,6 @@ export async function ensureUserRecord(clerkId: string) {
         id: users.id,
         clerkId: users.clerkId,
         email: users.email,
-        subscriptionTier: users.subscriptionTier,
-        stripeCustomerId: users.stripeCustomerId,
-        stripeSubscriptionId: users.stripeSubscriptionId,
         createdAt: users.createdAt,
         updatedAt: users.updatedAt,
       });

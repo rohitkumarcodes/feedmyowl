@@ -113,6 +113,13 @@
       "when": 1772606995107,
       "tag": "0015_drop_theme_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1745860000000,
+      "tag": "0016_remove_payment_columns",
+      "breakpoints": true
     }
   ]
 }

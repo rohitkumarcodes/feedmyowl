@@ -70,7 +70,6 @@ Every external service is accessed exclusively through one file in `src/lib/serv
 | ------------------- | --------------------------------------------------------- |
 | `database.ts`       | Drizzle ORM + Neon (`db`, schema tables, query operators) |
 | `auth.ts`           | Clerk server SDK                                          |
-| `payments.ts`       | Stripe SDK                                                |
 | `email.ts`          | Resend SDK                                                |
 | `feed-parser.ts`    | rss-parser                                                |
 | `error-tracking.ts` | Sentry                                                    |
@@ -117,15 +116,15 @@ After any schema change: `pnpm db:generate` then `pnpm db:migrate`.
 - Rate limiting: Upstash Redis via `src/lib/server/rate-limit.ts`; routes fail-open if Redis is unavailable
 - Feed fetch hardening: SSRF blocking, redirect revalidation, timeout + retries (`src/lib/server/feed-fetcher.ts`)
 - Article content rendered through DOMPurify (`src/lib/shared/article-sanitize-config.ts`)
-- Webhook routes (`/api/webhooks/*`) are public and excluded from Clerk middleware; they verify their own signatures (Svix for Clerk, Stripe for Stripe)
+- Webhook routes (`/api/webhooks/*`) are public and excluded from Clerk middleware; they verify their own signatures (Svix for Clerk webhooks)
 
 ## Environment variables
 
-Copy `apps/web/.env.example` to `apps/web/.env.local`. Required groups: Neon DB, Clerk (auth + webhook secret), Stripe, Resend, Sentry, Upstash Redis, `CRON_SECRET`.
+Copy `apps/web/.env.example` to `apps/web/.env.local`. Required groups: Neon DB, Clerk (auth + webhook secret), Resend, Sentry, Upstash Redis, `CRON_SECRET`.
 
 `drizzle.config.ts` auto-loads `DATABASE_URL` from `.env.local` so `db:*` commands work without extra setup.
 
-Local UI/demo checks can set `FEEDMYOWL_DEMO_MODE=1` to render `/feeds`, `/settings`, and `/onboarding` with fixture data and no real Clerk/DB session. Do not enable it in production.
+Local protected UI checks should use `pnpm dev:web:preview`, then open `/dev/feeds-preview` or `/dev/settings-preview` for fixture data with no real Clerk/DB session. `FEEDMYOWL_DEMO_MODE=1` remains a local smoke-test compatibility path only. Do not enable either flag on Vercel.
 
 ## Blog (`apps/blog`)
 
@@ -137,4 +136,4 @@ Eleventy 3 with Nunjucks templates. Source in `apps/blog/src/`, output to `apps/
 - Tests live alongside source files (`*.test.ts` / `*.test.tsx`).
 - The `@/` alias resolves to `apps/web/src/`.
 - `server-only` is imported at the top of all server boundary files to prevent accidental client bundling.
-- Reading mode (`reader` vs `checker`) and subscription tier (`free` vs `paid`) drive feature gating; free tier is capped at 10 feeds.
+- Reading mode (`reader` vs `checker`) drives feature gating.

@@ -26,11 +26,6 @@ const restrictedImports = [
     ],
   },
   {
-    label: "Stripe SDK",
-    matches: ["stripe"],
-    allowedFiles: ["apps/web/src/lib/server/payments.ts"],
-  },
-  {
     label: "Resend SDK",
     matches: ["resend"],
     allowedFiles: ["apps/web/src/lib/server/email.ts"],
