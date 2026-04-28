@@ -87,8 +87,6 @@ interface SidebarProps {
   onRequestFolderDelete: (folderId: string, mode: FolderDeleteMode) => Promise<boolean>;
   onRequestUncategorizedDelete: () => Promise<boolean>;
   onRequestUncategorizedMove: (folderId: string) => Promise<boolean>;
-
-  onCollapse: () => void;
 }
 
 /**
@@ -149,7 +147,6 @@ export function Sidebar({
   onRequestFolderDelete,
   onRequestUncategorizedDelete,
   onRequestUncategorizedMove,
-  onCollapse,
 }: SidebarProps) {
   const [pendingAutoRenameFolderName, setPendingAutoRenameFolderName] = useState<
     string | null
@@ -251,7 +248,6 @@ export function Sidebar({
         onForceRenameHandled={(folderId) =>
           setForceRenameFolderId((previous) => (previous === folderId ? null : previous))
         }
-        onCollapse={onCollapse}
       />
     </div>
   );

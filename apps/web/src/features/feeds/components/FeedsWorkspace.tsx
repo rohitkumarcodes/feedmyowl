@@ -622,24 +622,12 @@ export function FeedsWorkspace({
     [prefersReducedMotion],
   );
 
-  const handleSidebarCollapse = useCallback(() => {
-    setSidebarCollapsed(true);
-    sidebarCollapsedRef.current = true;
-    setPaneCyclePhase(0);
-  }, []);
-
   const handleToggleSidebar = useCallback(() => {
     setSidebarCollapsed((previous) => {
       const next = !previous;
       sidebarCollapsedRef.current = next;
       return next;
     });
-    setPaneCyclePhase(0);
-  }, []);
-
-  const handleCollapseList = useCallback(() => {
-    setListCollapsed(true);
-    listCollapsedRef.current = true;
     setPaneCyclePhase(0);
   }, []);
 
@@ -1170,7 +1158,6 @@ export function FeedsWorkspace({
             onRequestUncategorizedMove={(folderId) => {
               return handleMoveUncategorizedFeeds(folderId);
             }}
-            onCollapse={handleSidebarCollapse}
           />
         }
         articleList={
@@ -1247,7 +1234,6 @@ export function FeedsWorkspace({
         sidebarCollapsed={sidebarCollapsed}
         onToggleSidebar={handleToggleSidebar}
         listCollapsed={listCollapsed}
-        onCollapseList={handleCollapseList}
         onToggleList={handleToggleList}
         activePanel={activePanel}
         isMobile={isMobile}

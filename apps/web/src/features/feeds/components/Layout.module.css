@@ -26,25 +26,29 @@
   min-width: 0;
 }
 
+/*
+ * Each collapsible pane is positioned relative so the top-right toggle anchor
+ * can sit on top of pane content without disturbing the existing layout.
+ */
 .sidebarPane {
   background: transparent;
   border-right: 1px solid var(--border);
   box-shadow: none;
   overflow: hidden;
+  position: relative;
 }
 
 .listPane {
   background: transparent;
   border-right: 1px solid var(--border);
   box-shadow: none;
-  display: grid;
-  grid-template-rows: 1fr auto;
   min-width: 0;
   overflow: hidden;
   position: relative;
 }
 
-.listPaneContent {
+.paneContent {
+  height: 100%;
   min-height: 0;
   overflow: hidden;
 }
@@ -55,24 +59,26 @@
   overflow: hidden;
 }
 
+/*
+ * Collapsed panes shrink to a 32px rail. The toggle anchor stays visible in
+ * the rail; the inner content is hidden so it doesn't bleed through the
+ * narrow column.
+ */
 .panesSidebarCollapsed {
-  grid-template-columns: 0 clamp(280px, 30vw, 420px) minmax(0, 1fr);
-}
-
-.sidebarPaneCollapsed {
-  border-right: 0;
+  grid-template-columns: 32px clamp(280px, 30vw, 420px) minmax(0, 1fr);
 }
 
 .panesListCollapsed {
-  grid-template-columns: var(--sidebar-pane-width) 0 minmax(0, 1fr);
-}
-
-.listPaneCollapsed {
-  border-right: 0;
+  grid-template-columns: var(--sidebar-pane-width) 32px minmax(0, 1fr);
 }
 
 .panesBothCollapsed {
-  grid-template-columns: 0 0 minmax(0, 1fr);
+  grid-template-columns: 32px 32px minmax(0, 1fr);
+}
+
+.sidebarPaneCollapsed .paneContent,
+.listPaneCollapsed .paneContent {
+  display: none;
 }
 
 /*
@@ -86,51 +92,40 @@
   box-shadow: inset 2px 0 0 var(--border-strong, var(--border));
 }
 
-.listCollapseToggle {
-  align-items: center;
-  display: flex;
-  justify-content: center;
-  min-height: 44px;
-  padding: 4px 8px;
-}
-
-.expandBar {
-  bottom: 8px;
-  display: grid;
-  gap: 4px;
-  grid-template-columns: 34px 34px;
-  left: 8px;
+/*
+ * Toggle anchor: pinned to the top-right of each collapsible pane. Sits
+ * above the pane content (z-index higher than the sticky search bar at z 2)
+ * so it remains tappable as users scroll.
+ */
+.paneToggleAnchor {
   position: absolute;
-  z-index: 20;
+  right: 4px;
+  top: 4px;
+  z-index: 4;
 }
 
-.expandBarButton {
-  background: transparent;
-  border-color: var(--border);
-  min-height: 34px;
-  min-width: 34px;
-}
-
-.expandBarButtonHidden {
-  pointer-events: none;
-  visibility: hidden;
-}
-
-.expandBarButton svg {
-  display: block;
-  transition: transform 0.2s ease;
+.sidebarPaneCollapsed .paneToggleAnchor,
+.listPaneCollapsed .paneToggleAnchor {
+  left: 4px;
+  right: auto;
 }
 
 .paneToggleButton {
-  background: transparent;
+  background: var(--bg-app);
   border-color: var(--border);
   border-radius: 0;
   box-shadow: none;
+  min-height: 28px;
+  min-width: 28px;
+  padding: 0 4px;
 }
 
 .paneToggleButton svg {
   display: block;
-  transition: transform 0.2s ease;
+}
+
+.paneToggleButtonActive {
+  border-color: var(--border-strong);
 }
 
 .mobileViews {
@@ -198,14 +193,14 @@
   }
 
   .panesSidebarCollapsed {
-    grid-template-columns: 0 clamp(260px, 34vw, 360px) minmax(0, 1fr);
+    grid-template-columns: 32px clamp(260px, 34vw, 360px) minmax(0, 1fr);
   }
 
   .panesListCollapsed {
-    grid-template-columns: var(--sidebar-pane-width-compact) 0 minmax(0, 1fr);
+    grid-template-columns: var(--sidebar-pane-width-compact) 32px minmax(0, 1fr);
   }
 
   .panesBothCollapsed {
-    grid-template-columns: 0 0 minmax(0, 1fr);
+    grid-template-columns: 32px 32px minmax(0, 1fr);
   }
 }

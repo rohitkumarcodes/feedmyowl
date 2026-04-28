@@ -21,7 +21,6 @@ import { BookmarkRibbonIcon } from "@/features/feeds/components/BookmarkRibbonIc
 import { StackedLayersIcon } from "@/features/feeds/components/StackedLayersIcon";
 import { EyeIcon } from "@/features/feeds/components/EyeIcon";
 import primitiveStyles from "../LeftPanePrimitives.module.css";
-import { PaneToggleIcon } from "../PaneToggleIcon";
 import { FeedItem } from "./FeedItem";
 import { readExpandedFolders, writeExpandedFolders } from "./expandedFoldersStorage";
 import { FolderIcon, FolderRowIcon, TrashIcon } from "./icons";
@@ -69,8 +68,6 @@ interface FolderTreeProps {
 
   forceRenameFolderId: string | null;
   onForceRenameHandled: (folderId: string) => void;
-
-  onCollapse: () => void;
 }
 
 interface FolderRowProps {
@@ -455,7 +452,6 @@ export function FolderTree({
   onCreateFolder,
   forceRenameFolderId,
   onForceRenameHandled,
-  onCollapse,
 }: FolderTreeProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
   const [expandedFolderIds, setExpandedFolderIds] =
@@ -967,18 +963,6 @@ export function FolderTree({
         {feeds.length === 0 && sortedFolders.length === 0 ? (
           <p className={styles.emptyLabel}>No feeds yet.</p>
         ) : null}
-      </div>
-
-      <div className={styles.sidebarCollapseToggle}>
-        <button
-          type="button"
-          className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.paneToggleButton}`}
-          onClick={onCollapse}
-          aria-label="Collapse sidebar"
-          title="Collapse sidebar (f)"
-        >
-          <PaneToggleIcon direction="left" />
-        </button>
       </div>
 
       {pendingDeleteFeedId

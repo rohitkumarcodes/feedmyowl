@@ -425,28 +425,6 @@
   justify-content: flex-end;
 }
 
-.sidebarCollapseToggle {
-  align-items: center;
-  display: flex;
-  justify-content: center;
-  min-height: 44px;
-  padding: 6px 8px;
-}
-
-.paneToggleButton {
-  background: transparent;
-  border-color: var(--border);
-  border-radius: 0;
-  box-shadow: none;
-  min-height: 34px;
-  min-width: 34px;
-}
-
-.paneToggleButton svg {
-  display: block;
-  transition: transform 0.2s ease;
-}
-
 @media (max-width: 767px) {
   .root {
     --sidebar-tree-count-col: 30px;

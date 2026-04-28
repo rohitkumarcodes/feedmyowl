@@ -16,7 +16,6 @@ interface LayoutProps {
   sidebarCollapsed: boolean;
   onToggleSidebar: () => void;
   listCollapsed: boolean;
-  onCollapseList: () => void;
   onToggleList: () => void;
   /**
    * Which pane keyboard input currently targets. Surfaced as a data attribute
@@ -30,6 +29,33 @@ interface LayoutProps {
   onMobileBackToArticles: () => void;
 }
 
+interface PaneToggleProps {
+  collapsed: boolean;
+  onToggle: () => void;
+  active: boolean;
+  paneNoun: string;
+}
+
+/**
+ * Toggle button anchored to the top-right corner of a collapsible pane.
+ * State-aware: announces and tooltips itself dynamically, exposes
+ * `aria-pressed` so screen readers report the collapsed/expanded state.
+ */
+function PaneToggle({ collapsed, onToggle, active, paneNoun }: PaneToggleProps) {
+  const label = collapsed ? `Show ${paneNoun}` : `Hide ${paneNoun}`;
+  return (
+    <button
+      type="button"
+      className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.paneToggleButton} ${active ? styles.paneToggleButtonActive : ""}`}
+      onClick={onToggle}
+      aria-pressed={collapsed}
+      aria-label={label}
+    >
+      <PaneToggleIcon collapsed={collapsed} />
+    </button>
+  );
+}
+
 /**
  * Renders the feed-reader layout with desktop panes and mobile view navigation.
  */
@@ -40,7 +66,6 @@ export function Layout({
   sidebarCollapsed,
   onToggleSidebar,
   listCollapsed,
-  onCollapseList,
   onToggleList,
   activePanel,
   isMobile,
@@ -133,53 +158,37 @@ export function Layout({
     <div className={`${styles.root} ${primitiveStyles.tokenScope}`}>
       <div className={panesClassName} data-active-panel={activePanel}>
         <aside className={sidebarPaneClassName} aria-label="Feed list" role="navigation">
-          {sidebar}
+          <div className={styles.paneToggleAnchor}>
+            <PaneToggle
+              collapsed={sidebarCollapsed}
+              onToggle={onToggleSidebar}
+              active={activePanel === "sidebar"}
+              paneNoun="sidebar"
+            />
+          </div>
+          <div className={styles.paneContent} aria-hidden={sidebarCollapsed}>
+            {sidebar}
+          </div>
         </aside>
 
         <section className={listPaneClassName} aria-label="Article list" role="region">
-          <div className={styles.listPaneContent}>{articleList}</div>
-          {!listCollapsed ? (
-            <div className={styles.listCollapseToggle}>
-              <button
-                type="button"
-                className={`${primitiveStyles.iconButton} ${primitiveStyles.iconButtonSurface} ${styles.paneToggleButton}`}
-                onClick={onCollapseList}
-                aria-label="Collapse article list"
-                title="Collapse article list (f)"
-              >
-                <PaneToggleIcon direction="left" />
-              </button>
-            </div>
-          ) : null}
+          <div className={styles.paneToggleAnchor}>
+            <PaneToggle
+              collapsed={listCollapsed}
+              onToggle={onToggleList}
+              active={activePanel === "list"}
+              paneNoun="article list"
+            />
+          </div>
+          <div className={styles.paneContent} aria-hidden={listCollapsed}>
+            {articleList}
+          </div>
         </section>
 
         <section className={styles.readerPane} aria-label="Article reader" role="main">
           {articleReader}
         </section>
       </div>
-
-      {(sidebarCollapsed || listCollapsed) && (
-        <div className={styles.expandBar}>
-          <button
-            type="button"
-            className={`${primitiveStyles.iconButton} ${styles.expandBarButton} ${!sidebarCollapsed ? styles.expandBarButtonHidden : ""}`}
-            onClick={onToggleSidebar}
-            aria-label="Expand sidebar"
-            title="Expand sidebar (f)"
-          >
-            <PaneToggleIcon direction="right" />
-          </button>
-          <button
-            type="button"
-            className={`${primitiveStyles.iconButton} ${styles.expandBarButton} ${!listCollapsed ? styles.expandBarButtonHidden : ""}`}
-            onClick={onToggleList}
-            aria-label="Expand article list"
-            title="Expand article list (f)"
-          >
-            <PaneToggleIcon direction="right" />
-          </button>
-        </div>
-      )}
     </div>
   );
 }

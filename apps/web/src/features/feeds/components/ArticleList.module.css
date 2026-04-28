@@ -12,7 +12,9 @@
   box-shadow: none;
   display: grid;
   gap: 6px;
-  padding: 6px 10px;
+  /* Right padding reserves a 36px corner for the pane-toggle button rendered
+     by Layout.tsx, which sits absolutely at top: 4 / right: 4. */
+  padding: 6px 40px 6px 10px;
   position: sticky;
   top: 0;
   z-index: 2;
