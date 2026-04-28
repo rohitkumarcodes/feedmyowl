@@ -7,8 +7,8 @@
   color: var(--text-primary);
   cursor: pointer;
   display: grid;
-  gap: 3px;
-  padding: 10px 12px 9px;
+  gap: 0;
+  padding: 3px 12px;
   text-align: left;
   transition:
     background-color var(--transition-control),
@@ -37,9 +37,9 @@
 }
 
 .title {
-  font-size: var(--text-base);
-  font-weight: var(--weight-semibold);
-  line-height: var(--leading-tight);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-medium);
+  line-height: 1.25;
 }
 
 .titleRead {
@@ -49,7 +49,7 @@
 
 .meta {
   color: var(--text-secondary);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   line-height: var(--leading-tight);
 }
 
