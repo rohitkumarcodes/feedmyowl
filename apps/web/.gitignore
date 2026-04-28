@@ -3,3 +3,7 @@
 /.clerk/
 .vercel
 .env*.local
+
+# playwright run artifacts
+test-results/
+playwright-report/
