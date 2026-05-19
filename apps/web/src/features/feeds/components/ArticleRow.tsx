@@ -9,7 +9,6 @@ import type {
   MatchRange,
 } from "@/features/feeds/state/article-search";
 import type { ArticleViewModel } from "@/features/feeds/types/view-models";
-import type { ReadingMode } from "@/lib/shared/reading-mode";
 import styles from "./ArticleRow.module.css";
 
 interface ArticleRowProps {
@@ -17,8 +16,6 @@ interface ArticleRowProps {
   isSelected: boolean;
   isOpen: boolean;
   showFeedTitle: boolean;
-  /** Current reading mode — controls whether read/unread styling is applied. */
-  readingMode: ReadingMode;
   highlights?: ArticleSearchHighlights;
   onSelect: () => void;
 }
@@ -96,16 +93,9 @@ export function ArticleRow({
   isSelected,
   isOpen,
   showFeedTitle,
-  readingMode,
   highlights,
   onSelect,
 }: ArticleRowProps) {
-  /**
-   * In reader mode all titles look the same — no visual read/unread distinction.
-   * In checker mode read articles are dimmed so unread articles stand out.
-   */
-  const showReadState = readingMode === "checker";
-  const isRead = showReadState && Boolean(article.readAt);
   const hiddenSourceLabel = formatHiddenSourceLabel(highlights?.hiddenSources);
 
   return (
@@ -116,7 +106,7 @@ export function ArticleRow({
       onClick={onSelect}
       aria-current={isOpen ? "true" : undefined}
     >
-      <p className={`${styles.title} ${isRead ? styles.titleRead : ""}`}>
+      <p className={styles.title}>
         {renderHighlightedText(article.title, highlights?.title)}
       </p>
       {showFeedTitle ? (

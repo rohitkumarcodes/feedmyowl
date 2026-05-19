@@ -17,37 +17,9 @@ const restrictedImports = [
     allowedFiles: ["apps/web/src/db/schema.ts", "apps/web/src/lib/server/database.ts"],
   },
   {
-    label: "Clerk auth packages",
-    matches: ["@clerk/nextjs", "@clerk/nextjs/"],
-    allowedFiles: [
-      "apps/web/src/lib/server/auth.ts",
-      "apps/web/src/lib/client/auth-client.ts",
-      "apps/web/src/middleware.ts",
-    ],
-  },
-  {
-    label: "Resend SDK",
-    matches: ["resend"],
-    allowedFiles: ["apps/web/src/lib/server/email.ts"],
-  },
-  {
     label: "RSS parser SDK",
     matches: ["rss-parser"],
     allowedFiles: ["apps/web/src/lib/server/feed-parser.ts"],
-  },
-  {
-    label: "Sentry SDK",
-    matches: ["@sentry/nextjs", "@sentry/nextjs/"],
-    allowedFiles: [
-      "apps/web/src/lib/server/error-tracking.ts",
-      "apps/web/src/instrumentation.ts",
-      "apps/web/src/app/global-error.tsx",
-    ],
-  },
-  {
-    label: "Svix webhook verifier",
-    matches: ["svix"],
-    allowedFiles: ["apps/web/src/lib/server/auth.ts"],
   },
 ];
 

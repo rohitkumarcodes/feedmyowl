@@ -1,9 +1,4 @@
-/**
- * Server-rendered feeds page that loads feeds and article items for
- * the authenticated user and passes them to the client workspace shell.
- */
-import { db, eq, users } from "@/lib/server/database";
-import { getAuthenticatedAppUser } from "@/lib/server/app-user";
+import { db } from "@/lib/server/database";
 import { FeedsWorkspace } from "@/features/feeds/components/FeedsWorkspace";
 import { createInitialPaginationByScopeKey } from "@/features/feeds/state/article-pagination-state";
 import type {
@@ -20,111 +15,30 @@ import {
   getFeedMembershipFolderIds,
   resolveFeedFolderIds,
 } from "@/lib/shared/folder-memberships";
-import {
-  isUserRetentionPurgeNeeded,
-  purgeOldFeedItemsForUser,
-} from "@/lib/server/retention";
-import { listArticlePageForUser } from "@/lib/server/article-service";
-import { coerceReadingMode, DEFAULT_READING_MODE } from "@/lib/shared/reading-mode";
-import { getDemoFeeds, getDemoFolders } from "@/lib/server/demo-data";
-import { isDemoModeEnabled } from "@/lib/shared/demo-mode";
+import { purgeOldFeedItems } from "@/lib/server/retention";
+import { listArticlePage } from "@/lib/server/article-service";
 
-/**
- * This page reads per-user data at request time — never statically prerender.
- */
 export const dynamic = "force-dynamic";
 
 function toIsoString(value: Date | null): string | null {
   return value ? value.toISOString() : null;
 }
 
-function createEmptyInitialPaginationByScopeKey() {
-  return createInitialPaginationByScopeKey({
-    scopeKey: scopeToKey({ type: "all" }),
-    nextCursor: null,
-    hasMore: false,
-  });
-}
-
-/**
- * Loads authenticated feed data and renders the interactive workspace.
- */
 export default async function FeedsPage() {
-  if (isDemoModeEnabled()) {
-    return (
-      <FeedsWorkspace
-        initialFeeds={getDemoFeeds()}
-        initialFolders={getDemoFolders()}
-        initialPaginationByScopeKey={createInitialPaginationByScopeKey({
-          scopeKey: scopeToKey({ type: "all" }),
-          nextCursor: null,
-          hasMore: false,
-        })}
-        initialReadingMode="checker"
-      />
-    );
-  }
-
-  const { appUser: ensuredUser } = await getAuthenticatedAppUser();
-
-  if (!ensuredUser) {
-    return (
-      <FeedsWorkspace
-        initialFeeds={[]}
-        initialFolders={[]}
-        initialPaginationByScopeKey={createEmptyInitialPaginationByScopeKey()}
-        initialReadingMode={DEFAULT_READING_MODE}
-      />
-    );
-  }
-
-  // Enforce 50-items-per-feed cap only when at least one feed is over the limit.
-  if (await isUserRetentionPurgeNeeded(ensuredUser.id)) {
-    await purgeOldFeedItemsForUser(ensuredUser.id);
-  }
-
-  const user = (await db.query.users.findFirst({
-    where: eq(users.id, ensuredUser.id),
-      columns: {
-        id: true,
-        clerkId: true,
-        email: true,
-        readingMode: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    with: {
-      folders: true,
-      feeds: {
-        with: {
-          folderMemberships: {
-            columns: {
-              folderId: true,
-            },
-          },
-        },
-      },
-    },
-  })) as Record<string, unknown> | null;
-
-  if (!user) {
-    return (
-      <FeedsWorkspace
-        initialFeeds={[]}
-        initialFolders={[]}
-        initialPaginationByScopeKey={createEmptyInitialPaginationByScopeKey()}
-        initialReadingMode={DEFAULT_READING_MODE}
-      />
-    );
-  }
-
-  const userReadingMode = coerceReadingMode(
-    (user as Record<string, unknown>).readingMode,
-  );
+  await purgeOldFeedItems();
 
   const allScope: ArticleScope = { type: "all" };
-  const initialArticlePage = await listArticlePageForUser({
-    userId: ensuredUser.id,
+
+  const folderRows = await db.query.folders.findMany();
+  const feedRows = await db.query.feeds.findMany({
+    with: {
+      folderMemberships: {
+        columns: { folderId: true },
+      },
+    },
+  });
+
+  const initialArticlePage = await listArticlePage({
     scope: allScope,
     cursor: null,
     limit: DEFAULT_ARTICLE_PAGE_LIMIT,
@@ -139,34 +53,6 @@ export default async function FeedsPage() {
     existing.push(item);
     initialItemsByFeedId.set(item.feedId, existing);
   }
-
-  const folderRows =
-    (user.folders as
-      | Array<{
-          id: string;
-          name: string;
-          createdAt: Date;
-          updatedAt: Date;
-        }>
-      | undefined) ?? [];
-
-  const feedRows =
-    (user.feeds as
-      | Array<{
-          id: string;
-          title: string | null;
-          customTitle: string | null;
-          description: string | null;
-          url: string;
-          lastFetchedAt: Date | null;
-          lastFetchStatus: string | null;
-          lastFetchErrorCode: string | null;
-          lastFetchErrorMessage: string | null;
-          lastFetchErrorAt: Date | null;
-          createdAt: Date;
-          folderMemberships?: Array<{ folderId: string }>;
-        }>
-      | undefined) ?? [];
 
   const folders: FolderViewModel[] = folderRows
     .map((folder) => ({
@@ -232,7 +118,6 @@ export default async function FeedsPage() {
       initialFeeds={feeds}
       initialFolders={folders}
       initialPaginationByScopeKey={initialPaginationByScopeKey}
-      initialReadingMode={userReadingMode}
     />
   );
 }

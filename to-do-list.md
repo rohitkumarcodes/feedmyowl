@@ -1,2 +1,0 @@
-- The delete folder menu shows a list of feeds first. It shouldn't show that. It should continue to the second page. Then, on the second page, when the user clicks one of the two options, there is no selected stated. And there is no differene between the delete button and the back button. And it take too long to delete the folder. And when there are 0 feeds in a folder, why does it still ask if the user wants to keep the feeds.
-- After sign-up, there is no onboarding. On onboarding it should import feeds option.

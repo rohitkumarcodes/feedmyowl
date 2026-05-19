@@ -7,7 +7,6 @@
  *   2. Provide type-safe query building in application code
  *
  * Tables:
- *   - users: One row per registered user (synced from Clerk via webhook)
  *   - folders: Optional feed groups in the sidebar
  *   - feeds: RSS/Atom feeds that users have subscribed to
  *   - feed_folder_memberships: Many-to-many feed-folder assignment links
@@ -15,11 +14,8 @@
  *
  * Key design decisions:
  *   - UUID primary keys: No enumeration risk, safe for distributed systems
- *   - Cascade deletes: Deleting a user removes folders, feeds, and memberships;
- *     deleting a folder removes memberships; deleting a feed removes memberships
- *     and items
- *   - We store our own users table (not just rely on Clerk) so we own our data
- *     and keep service boundaries modular (Principle 4)
+ *   - Cascade deletes: Deleting a folder removes memberships; deleting a
+ *     feed removes memberships and items
  *
  * Docs: https://orm.drizzle.team/docs/sql-schema-declaration
  */
@@ -35,37 +31,6 @@ import {
 } from "drizzle-orm/pg-core";
 
 // =============================================================================
-// USERS TABLE
-// =============================================================================
-/**
- * Stores user account data. A row is created here when Clerk sends a
- * "user.created" webhook (see /api/webhooks/clerk/route.ts).
- *
- * We store our own copy of user data so that:
- *   1. We can link feeds and items to users with foreign keys
- *   2. We own our data even if we switch auth providers (Principle 4)
- */
-export const users = pgTable("users", {
-  /** Unique identifier (UUID v4, auto-generated) */
-  id: uuid("id").defaultRandom().primaryKey(),
-
-  /** Clerk's user ID — used to look up our user from Clerk's auth context */
-  clerkId: varchar("clerk_id", { length: 255 }).unique().notNull(),
-
-  /** User's email address (synced from Clerk) */
-  email: varchar("email", { length: 255 }).notNull(),
-
-  /** Reading mode: "reader" (calm, no unread indicators) or "checker" (traditional RSS) */
-  readingMode: varchar("reading_mode", { length: 20 }).default("reader").notNull(),
-
-  /** When this row was created */
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-
-  /** When this row was last updated */
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-// =============================================================================
 // FOLDERS TABLE
 // =============================================================================
 /**
@@ -79,11 +44,6 @@ export const folders = pgTable(
     /** Unique identifier (UUID v4, auto-generated) */
     id: uuid("id").defaultRandom().primaryKey(),
 
-    /** Which user owns this folder */
-    userId: uuid("user_id")
-      .references(() => users.id, { onDelete: "cascade" })
-      .notNull(),
-
     /** Human-readable folder name shown in the sidebar */
     name: varchar("name", { length: 255 }).notNull(),
 
@@ -95,14 +55,11 @@ export const folders = pgTable(
   },
   (table) => ({
     /**
-     * Prevent duplicate folder names per user (case-insensitive).
+     * Prevent duplicate folder names (case-insensitive).
      * The application checks for duplicates first (fast path); this index
      * is the safety net for concurrent requests (TOCTOU).
      */
-    userNameUniqueIdx: uniqueIndex("folders_user_id_lower_name_unique").on(
-      table.userId,
-      sql`lower(${table.name})`,
-    ),
+    nameUniqueIdx: uniqueIndex("folders_lower_name_unique").on(sql`lower(${table.name})`),
   }),
 );
 
@@ -110,8 +67,7 @@ export const folders = pgTable(
 // FEEDS TABLE
 // =============================================================================
 /**
- * Stores RSS/Atom feed subscriptions. Each feed belongs to one user and can
- * can be assigned to folders via feed_folder_memberships.
+ * Stores RSS/Atom feed subscriptions.
  *
  * The title and description are populated after the first successful fetch.
  */
@@ -120,11 +76,6 @@ export const feeds = pgTable(
   {
     /** Unique identifier (UUID v4, auto-generated) */
     id: uuid("id").defaultRandom().primaryKey(),
-
-    /** Which user owns this feed — cascade delete removes feeds when user is deleted */
-    userId: uuid("user_id")
-      .references(() => users.id, { onDelete: "cascade" })
-      .notNull(),
 
     /** The RSS/Atom feed URL */
     url: text("url").notNull(),
@@ -138,7 +89,7 @@ export const feeds = pgTable(
     /** Feed description (populated from the feed's <description> after first fetch) */
     description: text("description"),
 
-    /** When this feed was last fetched/refreshed by the user */
+    /** When this feed was last fetched/refreshed */
     lastFetchedAt: timestamp("last_fetched_at"),
 
     /** Last fetch status used for calm inline status messaging in the UI */
@@ -167,10 +118,9 @@ export const feeds = pgTable(
   },
   (table) => ({
     /**
-     * A user should not be able to subscribe to the exact same URL twice.
-     * Duplicate URLs are skipped during imports and manual add-feed.
+     * A feed URL can only be subscribed to once.
      */
-    userUrlUniqueIdx: uniqueIndex("feeds_user_id_url_unique").on(table.userId, table.url),
+    urlUniqueIdx: uniqueIndex("feeds_url_unique").on(table.url),
   }),
 );
 
@@ -185,11 +135,6 @@ export const feedFolderMemberships = pgTable(
   {
     /** Unique identifier (UUID v4, auto-generated) */
     id: uuid("id").defaultRandom().primaryKey(),
-
-    /** Which user owns this membership */
-    userId: uuid("user_id")
-      .references(() => users.id, { onDelete: "cascade" })
-      .notNull(),
 
     /** Which feed is assigned */
     feedId: uuid("feed_id")
@@ -209,11 +154,12 @@ export const feedFolderMemberships = pgTable(
   },
   (table) => ({
     /**
-     * Prevent duplicate membership rows for the same user/feed/folder.
+     * Prevent duplicate membership rows for the same feed and folder.
      */
-    userFeedFolderUniqueIdx: uniqueIndex(
-      "feed_folder_memberships_user_feed_folder_unique",
-    ).on(table.userId, table.feedId, table.folderId),
+    feedFolderUniqueIdx: uniqueIndex("feed_folder_memberships_feed_folder_unique").on(
+      table.feedId,
+      table.folderId,
+    ),
   }),
 );
 
@@ -295,26 +241,18 @@ export const feedItems = pgTable(
 /**
  * These relation definitions enable Drizzle's relational query API,
  * which lets us do things like:
- *   db.query.users.findFirst({ with: { feeds: true } })
+ *   db.query.feeds.findFirst({ with: { items: true } })
  *
  * They don't affect the database schema — the actual foreign keys
  * are defined in the table definitions above.
  */
 
-export const usersRelations = relations(users, ({ many }) => ({
-  folders: many(folders),
-  feeds: many(feeds),
-  feedFolderMemberships: many(feedFolderMemberships),
-}));
-
-export const foldersRelations = relations(folders, ({ one, many }) => ({
-  user: one(users, { fields: [folders.userId], references: [users.id] }),
+export const foldersRelations = relations(folders, ({ many }) => ({
   feeds: many(feeds),
   memberships: many(feedFolderMemberships),
 }));
 
-export const feedsRelations = relations(feeds, ({ one, many }) => ({
-  user: one(users, { fields: [feeds.userId], references: [users.id] }),
+export const feedsRelations = relations(feeds, ({ many }) => ({
   items: many(feedItems),
   folderMemberships: many(feedFolderMemberships),
 }));
@@ -322,10 +260,6 @@ export const feedsRelations = relations(feeds, ({ one, many }) => ({
 export const feedFolderMembershipsRelations = relations(
   feedFolderMemberships,
   ({ one }) => ({
-    user: one(users, {
-      fields: [feedFolderMemberships.userId],
-      references: [users.id],
-    }),
     feed: one(feeds, {
       fields: [feedFolderMemberships.feedId],
       references: [feeds.id],

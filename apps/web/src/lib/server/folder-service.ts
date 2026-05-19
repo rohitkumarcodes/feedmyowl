@@ -1,23 +1,11 @@
 import "server-only";
 
-import {
-  and,
-  db,
-  eq,
-  feedFolderMemberships,
-  feeds,
-  folders,
-  inArray,
-} from "@/lib/server/database";
+import { db, eq, feeds, folders, inArray } from "@/lib/server/database";
 import { isReservedFolderName } from "@/lib/shared/folders";
 import { resolveFeedFolderIds } from "@/lib/shared/folder-memberships";
 
 export const FOLDER_NAME_MAX_LENGTH = 255;
 
-/**
- * Maximum folders a user can create.
- * TODO: differentiate free vs paid when Stripe integration is active.
- */
 export const FOLDER_LIMIT = 50;
 
 export interface FolderRecord {
@@ -28,11 +16,10 @@ export interface FolderRecord {
 }
 
 /**
- * List folders for one user.
+ * List all folders.
  */
-export async function getFoldersForUser(userId: string): Promise<FolderRecord[]> {
+export async function getAllFolders(): Promise<FolderRecord[]> {
   return await db.query.folders.findMany({
-    where: eq(folders.userId, userId),
     columns: {
       id: true,
       name: true,
@@ -42,7 +29,7 @@ export async function getFoldersForUser(userId: string): Promise<FolderRecord[]>
   });
 }
 
-export type CreateFolderForUserResult =
+export type CreateFolderResult =
   | { status: "invalid_name" }
   | { status: "reserved_name" }
   | { status: "duplicate_name" }
@@ -50,12 +37,9 @@ export type CreateFolderForUserResult =
   | { status: "ok"; folder: FolderRecord };
 
 /**
- * Create one folder for one user.
+ * Create one folder.
  */
-export async function createFolderForUser(
-  userId: string,
-  name: string,
-): Promise<CreateFolderForUserResult> {
+export async function createFolder(name: string): Promise<CreateFolderResult> {
   const trimmedName = name.trim();
   if (!trimmedName || trimmedName.length > FOLDER_NAME_MAX_LENGTH) {
     return { status: "invalid_name" };
@@ -68,7 +52,6 @@ export async function createFolderForUser(
   }
 
   const existingFolders = await db.query.folders.findMany({
-    where: eq(folders.userId, userId),
     columns: { id: true, name: true },
   });
 
@@ -90,7 +73,6 @@ export async function createFolderForUser(
     const [created] = await db
       .insert(folders)
       .values({
-        userId,
         name: trimmedName,
         createdAt: now,
         updatedAt: now,
@@ -124,7 +106,7 @@ function isUniqueViolation(error: unknown): boolean {
   );
 }
 
-export type RenameFolderForUserResult =
+export type RenameFolderResult =
   | { status: "invalid_name" }
   | { status: "reserved_name" }
   | { status: "duplicate_name" }
@@ -132,13 +114,12 @@ export type RenameFolderForUserResult =
   | { status: "ok"; folder: FolderRecord };
 
 /**
- * Rename one folder for one user.
+ * Rename one folder.
  */
-export async function renameFolderForUser(
-  userId: string,
+export async function renameFolder(
   folderId: string,
   name: string,
-): Promise<RenameFolderForUserResult> {
+): Promise<RenameFolderResult> {
   const trimmedName = name.trim();
   if (!trimmedName || trimmedName.length > FOLDER_NAME_MAX_LENGTH) {
     return { status: "invalid_name" };
@@ -149,7 +130,7 @@ export async function renameFolderForUser(
   }
 
   const existingFolder = await db.query.folders.findFirst({
-    where: and(eq(folders.id, folderId), eq(folders.userId, userId)),
+    where: eq(folders.id, folderId),
     columns: { id: true, name: true },
   });
 
@@ -157,13 +138,12 @@ export async function renameFolderForUser(
     return { status: "not_found" };
   }
 
-  const siblingFolders = await db.query.folders.findMany({
-    where: eq(folders.userId, userId),
+  const allFolders = await db.query.folders.findMany({
     columns: { id: true, name: true },
   });
 
   const normalizedName = trimmedName.toLocaleLowerCase();
-  const hasDuplicate = siblingFolders.some(
+  const hasDuplicate = allFolders.some(
     (folder) =>
       folder.id !== folderId && folder.name.trim().toLocaleLowerCase() === normalizedName,
   );
@@ -181,7 +161,7 @@ export async function renameFolderForUser(
         name: trimmedName,
         updatedAt: now,
       })
-      .where(and(eq(folders.id, folderId), eq(folders.userId, userId)))
+      .where(eq(folders.id, folderId))
       .returning({
         id: folders.id,
         name: folders.name,
@@ -205,7 +185,7 @@ export async function renameFolderForUser(
 
 export type DeleteFolderMode = "remove_only" | "remove_and_unsubscribe_exclusive";
 
-export type DeleteFolderForUserResult =
+export type DeleteFolderResult =
   | { status: "not_found" }
   | {
       status: "ok";
@@ -223,16 +203,13 @@ interface FolderMembershipSummary {
 }
 
 async function buildFolderMembershipSummary(
-  userId: string,
   folderId: string,
 ): Promise<FolderMembershipSummary> {
-  const userFeeds = await db.query.feeds.findMany({
-    where: eq(feeds.userId, userId),
+  const allFeeds = await db.query.feeds.findMany({
     columns: { id: true },
   });
 
   const memberships = await db.query.feedFolderMemberships.findMany({
-    where: eq(feedFolderMemberships.userId, userId),
     columns: { feedId: true, folderId: true },
   });
 
@@ -246,7 +223,7 @@ async function buildFolderMembershipSummary(
   const exclusiveFeedIds: string[] = [];
   const crossListedFeedIds: string[] = [];
 
-  for (const feed of userFeeds) {
+  for (const feed of allFeeds) {
     const assignedFolderIds = resolveFeedFolderIds(
       feedToMembershipFolderIds.get(feed.id) ?? [],
     );
@@ -271,15 +248,14 @@ async function buildFolderMembershipSummary(
 }
 
 /**
- * Delete one folder for one user using the requested mode.
+ * Delete one folder using the requested mode.
  */
-export async function deleteFolderForUser(
-  userId: string,
+export async function deleteFolder(
   folderId: string,
   mode: DeleteFolderMode,
-): Promise<DeleteFolderForUserResult> {
+): Promise<DeleteFolderResult> {
   const targetFolder = await db.query.folders.findFirst({
-    where: and(eq(folders.id, folderId), eq(folders.userId, userId)),
+    where: eq(folders.id, folderId),
     columns: { id: true },
   });
 
@@ -287,24 +263,18 @@ export async function deleteFolderForUser(
     return { status: "not_found" };
   }
 
-  const summary = await buildFolderMembershipSummary(userId, folderId);
+  const summary = await buildFolderMembershipSummary(folderId);
 
   // neon-http does not support db.transaction(); execute writes sequentially.
   if (mode === "remove_and_unsubscribe_exclusive") {
     if (summary.exclusiveFeedIds.length > 0) {
-      await db
-        .delete(feeds)
-        .where(
-          and(eq(feeds.userId, userId), inArray(feeds.id, summary.exclusiveFeedIds)),
-        );
+      await db.delete(feeds).where(inArray(feeds.id, summary.exclusiveFeedIds));
     }
 
     // Cross-listed feeds stay subscribed via remaining memberships.
   }
 
-  await db
-    .delete(folders)
-    .where(and(eq(folders.id, folderId), eq(folders.userId, userId)));
+  await db.delete(folders).where(eq(folders.id, folderId));
 
   return {
     status: "ok",

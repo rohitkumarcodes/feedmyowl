@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/server/auth";
-import { ensureUserRecord } from "@/lib/server/app-user";
 import { handleApiRouteError } from "@/lib/server/api-errors";
-import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
 import { captureMessage } from "@/lib/server/error-tracking";
 import { parseRequestJsonWithLimit } from "@/lib/server/http/request-json";
-import { applyRouteRateLimit } from "@/lib/server/rate-limit";
-import { getFoldersForUser } from "@/lib/server/folder-service";
+import { getAllFolders } from "@/lib/server/folder-service";
 import { normalizeFeedUrl } from "@/lib/shared/feed-url";
 import {
   normalizeAndMergeImportEntries,
@@ -70,33 +66,6 @@ function badRequest(error: string) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const csrfFailure = assertTrustedWriteOrigin(
-      request,
-      "api.feeds.import_preview.post",
-    );
-    if (csrfFailure) {
-      return csrfFailure;
-    }
-
-    const { clerkId } = await requireAuth();
-    const appUser = await ensureUserRecord(clerkId);
-
-    if (!appUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const rateLimit = await applyRouteRateLimit({
-      request,
-      routeKey: "api_feeds_import_preview_post",
-      userId: appUser.id,
-      userLimitPerMinute: 25,
-      ipLimitPerMinute: 100,
-    });
-
-    if (!rateLimit.allowed) {
-      return rateLimit.response;
-    }
-
     const payloadResult = await parseRequestJsonWithLimit(request, {
       maxBytes: FEED_IMPORT_MAX_REQUEST_BYTES,
     });
@@ -142,11 +111,11 @@ export async function POST(request: NextRequest) {
         if (!normalizedUrl) {
           return null;
         }
-        return findExistingFeedForUserByUserId(appUser.id, normalizedUrl);
+        return findExistingFeedByUrl(normalizedUrl);
       }),
     );
 
-    const userFolders = await getFoldersForUser(appUser.id);
+    const userFolders = await getAllFolders();
     const existingFolderSet = new Set(userFolders.map((f) => f.name.toLowerCase()));
 
     // Collect all folder names from the import
@@ -261,14 +230,14 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Look up an existing feed for one user by normalized URL.
+ * Look up an existing feed by normalized URL.
  * This is a wrapper that also returns folder IDs.
  */
-async function findExistingFeedForUserByUserId(userId: string, url: string) {
+async function findExistingFeedByUrl(url: string) {
   const { db } = await import("@/lib/server/database");
 
   const feed = await db.query.feeds.findFirst({
-    where: (feeds, { eq, and }) => and(eq(feeds.userId, userId), eq(feeds.url, url)),
+    where: (feeds, { eq }) => eq(feeds.url, url),
   });
 
   if (!feed) {
@@ -277,8 +246,7 @@ async function findExistingFeedForUserByUserId(userId: string, url: string) {
 
   // Get folder memberships
   const memberships = await db.query.feedFolderMemberships.findMany({
-    where: (memberships, { eq, and }) =>
-      and(eq(memberships.userId, userId), eq(memberships.feedId, feed.id)),
+    where: (memberships, { eq }) => eq(memberships.feedId, feed.id),
   });
 
   return {

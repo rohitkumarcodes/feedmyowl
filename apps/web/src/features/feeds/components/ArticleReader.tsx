@@ -278,7 +278,7 @@ export function ArticleReader({
           }
           return (
             <p className={styles.meta}>
-              {author && date ? `${author} · ${date}` : (author || date)}
+              {author && date ? `${author} · ${date}` : author || date}
             </p>
           );
         })()}

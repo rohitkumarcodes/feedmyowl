@@ -1,14 +1,14 @@
 import "server-only";
 
-import { db, eq, folders } from "@/lib/server/database";
+import { db } from "@/lib/server/database";
 import { discoverFeedCandidates } from "@/lib/server/feed-discovery";
 import { normalizeFeedError } from "@/lib/shared/feed-errors";
 import { normalizeFolderIds } from "@/lib/shared/folder-memberships";
 import {
-  addFeedFoldersForUser,
+  addFeedFolders,
   createFeedWithInitialItems,
-  findExistingFeedForUserByUrl,
-  renameFeedForUser,
+  findExistingFeedByUrl,
+  renameFeed,
 } from "@/lib/server/feed-service";
 import { parseFeedWithMetadata, type ParsedFeed } from "@/lib/server/feed-parser";
 import type {
@@ -21,7 +21,7 @@ import {
   FEED_IMPORT_BOUNDED_FETCH_TIMEOUT_MS,
   FEED_IMPORT_DEFAULT_DEADLINE_MS,
 } from "@/lib/shared/feed-import-types";
-import { createFolderForUser, FOLDER_NAME_MAX_LENGTH } from "@/lib/server/folder-service";
+import { createFolder, FOLDER_NAME_MAX_LENGTH } from "@/lib/server/folder-service";
 import { normalizeFeedUrl } from "@/lib/shared/feed-url";
 import { NO_FEED_FOUND_MESSAGE } from "@/lib/shared/feed-messages";
 import { resolveYouTubeChannelFeedUrl } from "@/lib/server/youtube-channel-feed";
@@ -49,9 +49,7 @@ interface ImportCandidate {
   parsedFeed: ParsedFeed;
   etag: string | null;
   lastModified: string | null;
-  existingFeed: NonNullable<
-    Awaited<ReturnType<typeof findExistingFeedForUserByUrl>>
-  > | null;
+  existingFeed: NonNullable<Awaited<ReturnType<typeof findExistingFeedByUrl>>> | null;
 }
 
 interface FolderResolveResult {
@@ -98,12 +96,11 @@ function toTimeoutExceededRow(url: string): FeedImportRowResult {
   };
 }
 
-async function createFolderResolver(userId: string): Promise<FolderResolver> {
+async function createFolderResolver(): Promise<FolderResolver> {
   const folderIdByKey = new Map<string, string>();
   const pendingFolderCreateByKey = new Map<string, Promise<string | null>>();
 
   const initialFolders = await db.query.folders.findMany({
-    where: eq(folders.userId, userId),
     columns: {
       id: true,
       name: true,
@@ -116,7 +113,6 @@ async function createFolderResolver(userId: string): Promise<FolderResolver> {
 
   async function findFolderIdByKey(folderLookupKey: string): Promise<string | null> {
     const currentFolders = await db.query.folders.findMany({
-      where: eq(folders.userId, userId),
       columns: {
         id: true,
         name: true,
@@ -156,7 +152,7 @@ async function createFolderResolver(userId: string): Promise<FolderResolver> {
     }
 
     const folderCreatePromise = (async (): Promise<string | null> => {
-      const createdFolder = await createFolderForUser(userId, normalizedName);
+      const createdFolder = await createFolder(normalizedName);
 
       if (createdFolder.status === "ok") {
         folderIdByKey.set(lookupKey, createdFolder.folder.id);
@@ -230,11 +226,8 @@ function mapFailureFromFeedError(
 }
 
 async function mergeDuplicateFeedFolders(params: {
-  userId: string;
   importUrl: string;
-  existingFeed: NonNullable<
-    Awaited<ReturnType<typeof findExistingFeedForUserByUrl>>
-  > | null;
+  existingFeed: NonNullable<Awaited<ReturnType<typeof findExistingFeedByUrl>>> | null;
   resolvedFolderIds: string[];
 }): Promise<FeedImportRowResult> {
   if (!params.existingFeed) {
@@ -256,8 +249,7 @@ async function mergeDuplicateFeedFolders(params: {
     };
   }
 
-  const folderAddResult = await addFeedFoldersForUser(
-    params.userId,
+  const folderAddResult = await addFeedFolders(
     params.existingFeed.id,
     params.resolvedFolderIds,
   );
@@ -292,7 +284,6 @@ async function mergeDuplicateFeedFolders(params: {
 }
 
 async function resolveImportCandidate(params: {
-  userId: string;
   normalizedInputUrl: string;
   skipMultiCandidate: boolean;
   /** Shared counter — when it reaches 0, discovery fallback is skipped. */
@@ -325,15 +316,9 @@ async function resolveImportCandidate(params: {
     (await resolveYouTubeChannelFeedUrl(params.normalizedInputUrl)) ??
     params.normalizedInputUrl;
 
-  let directExistingFeed = await findExistingFeedForUserByUrl(
-    params.userId,
-    preferredUrl,
-  );
+  let directExistingFeed = await findExistingFeedByUrl(preferredUrl);
   if (!directExistingFeed && preferredUrl !== params.normalizedInputUrl) {
-    directExistingFeed = await findExistingFeedForUserByUrl(
-      params.userId,
-      params.normalizedInputUrl,
-    );
+    directExistingFeed = await findExistingFeedByUrl(params.normalizedInputUrl);
   }
   let directFailureAfterFallback: {
     code: FeedImportRowResult["code"];
@@ -362,8 +347,7 @@ async function resolveImportCandidate(params: {
       preferredUrl,
       IMPORT_PARSER_FETCH_OPTIONS,
     );
-    const resolvedExistingFeed = await findExistingFeedForUserByUrl(
-      params.userId,
+    const resolvedExistingFeed = await findExistingFeedByUrl(
       parsedDirectFeed.resolvedUrl,
     );
 
@@ -432,10 +416,7 @@ async function resolveImportCandidate(params: {
         discoveredUrl,
         IMPORT_PARSER_FETCH_OPTIONS,
       );
-      const existingFeed = await findExistingFeedForUserByUrl(
-        params.userId,
-        parsedCandidateFeed.resolvedUrl,
-      );
+      const existingFeed = await findExistingFeedByUrl(parsedCandidateFeed.resolvedUrl);
 
       validatedCandidates.push({
         url: parsedCandidateFeed.resolvedUrl,
@@ -514,7 +495,6 @@ async function resolveImportCandidate(params: {
 }
 
 async function importOneFeedEntry(params: {
-  userId: string;
   entry: FeedImportEntry;
   skipMultiCandidate: boolean;
   folderResolver: FolderResolver;
@@ -536,7 +516,6 @@ async function importOneFeedEntry(params: {
   }
 
   const candidateResult = await resolveImportCandidate({
-    userId: params.userId,
     normalizedInputUrl,
     skipMultiCandidate: params.skipMultiCandidate,
     discoveryBudget: params.discoveryBudget,
@@ -575,7 +554,6 @@ async function importOneFeedEntry(params: {
 
   if (candidate.existingFeed) {
     const mergeResult = await mergeDuplicateFeedFolders({
-      userId: params.userId,
       importUrl: normalizedInputUrl,
       existingFeed: candidate.existingFeed,
       resolvedFolderIds,
@@ -592,7 +570,6 @@ async function importOneFeedEntry(params: {
     }
 
     const created = await createFeedWithInitialItems(
-      params.userId,
       candidate.url,
       candidate.parsedFeed,
       resolvedFolderIds,
@@ -604,7 +581,7 @@ async function importOneFeedEntry(params: {
 
     const customTitle = sanitizeCustomTitle(params.entry.customTitle);
     if (customTitle) {
-      await renameFeedForUser(params.userId, created.feed.id, customTitle);
+      await renameFeed(created.feed.id, customTitle);
     }
 
     return {
@@ -618,14 +595,10 @@ async function importOneFeedEntry(params: {
       warnings: folderWarnings,
     };
   } catch (error) {
-    const raceDuplicate = await findExistingFeedForUserByUrl(
-      params.userId,
-      candidate.url,
-    );
+    const raceDuplicate = await findExistingFeedByUrl(candidate.url);
 
     if (raceDuplicate) {
       const mergeResult = await mergeDuplicateFeedFolders({
-        userId: params.userId,
         importUrl: normalizedInputUrl,
         existingFeed: raceDuplicate,
         resolvedFolderIds,
@@ -646,8 +619,7 @@ async function importOneFeedEntry(params: {
   }
 }
 
-export async function importFeedEntriesForUser(params: {
-  userId: string;
+export async function importFeedEntries(params: {
   entries: FeedImportEntry[];
   skipMultiCandidate?: boolean;
   deadlineMs?: number;
@@ -662,7 +634,7 @@ export async function importFeedEntriesForUser(params: {
     params.deadlineMs ?? FEED_IMPORT_DEFAULT_DEADLINE_MS,
   );
   const deadlineAtMs = Date.now() + deadlineMs;
-  const folderResolver = await createFolderResolver(params.userId);
+  const folderResolver = await createFolderResolver();
 
   // Shared mutable budget — workers decrement it as they attempt discovery.
   const discoveryBudget = { remaining: IMPORT_MAX_DISCOVERY_ATTEMPTS };
@@ -692,7 +664,6 @@ export async function importFeedEntriesForUser(params: {
         }
 
         results[nextIndex] = await importOneFeedEntry({
-          userId: params.userId,
           entry,
           skipMultiCandidate,
           folderResolver,

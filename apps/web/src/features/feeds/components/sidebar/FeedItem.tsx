@@ -17,8 +17,6 @@ interface FeedItemProps {
   isUpdatingFolders: boolean;
   folderOptions: FolderViewModel[];
   selectedFolderIds: string[];
-  /** Unread article count for this feed — shown as a badge in checker mode. Null in reader mode. */
-  unreadCount: number | null;
   /** True when the last feed fetch failed — shows a warning dot in the sidebar row. */
   hasError?: boolean;
   /** Human-readable error message shown as tooltip on the warning dot. */
@@ -42,7 +40,6 @@ export function FeedItem({
   isUpdatingFolders,
   folderOptions,
   selectedFolderIds,
-  unreadCount,
   hasError,
   errorMessage,
   onSelect,
@@ -181,11 +178,7 @@ export function FeedItem({
     }
   };
 
-  const hasUnreadCountValue = unreadCount !== null;
-  const showInlineUnreadBadge = isMobile && hasUnreadCountValue;
-  const showActionsUnreadBadge = !isMobile && hasUnreadCountValue;
   const keepActionsVisible = isMenuOpen || isRenameOpen || isFoldersOpen;
-  const unreadDisplayCount = unreadCount ?? 0;
 
   return (
     <div className={`${styles.rowWrap} ${isActive ? styles.rowWrapActive : ""}`}>
@@ -213,11 +206,6 @@ export function FeedItem({
             aria-label="Feed error"
           />
         ) : null}
-        {showInlineUnreadBadge ? (
-          <span className={styles.unreadBadge} title={`${unreadDisplayCount} unread`}>
-            {unreadDisplayCount}
-          </span>
-        ) : null}
         {selectedFolderIds.length > 1 ? (
           <span
             className={styles.multiFolderBadge}
@@ -229,19 +217,9 @@ export function FeedItem({
       </button>
 
       <div
-        className={`${styles.actions} ${showActionsUnreadBadge ? styles.actionsHoverSwap : ""} ${
-          keepActionsVisible ? styles.actionsOpen : ""
-        }`}
+        className={`${styles.actions} ${keepActionsVisible ? styles.actionsOpen : ""}`}
         ref={actionsRef}
       >
-        {showActionsUnreadBadge ? (
-          <span
-            className={styles.actionsUnreadBadge}
-            title={`${unreadDisplayCount} unread`}
-          >
-            {unreadDisplayCount}
-          </span>
-        ) : null}
         <button
           type="button"
           className={`${primitiveStyles.iconButton} ${styles.actionsButton}`}

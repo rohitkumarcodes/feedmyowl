@@ -43,10 +43,10 @@ describe("architecture boundary check", () => {
     tempRoots = [];
   });
 
-  it("allows service SDK imports from the boundary file", () => {
+  it("allows database SDK imports from the boundary file", () => {
     const root = createFixtureProject({
-      "apps/web/src/lib/server/auth.ts":
-        'import { auth } from "@clerk/nextjs/server";\nexport { auth };\n',
+      "apps/web/src/lib/server/database.ts":
+        'import { drizzle } from "drizzle-orm/neon-http";\nexport { drizzle };\n',
     });
 
     const result = runBoundaryCheck(root);
@@ -55,17 +55,17 @@ describe("architecture boundary check", () => {
     expect(result.stdout).toContain("Architecture boundary check passed.");
   });
 
-  it("rejects service SDK imports outside the boundary file", () => {
+  it("rejects database SDK imports outside the boundary file", () => {
     const root = createFixtureProject({
-      "apps/web/src/features/auth/bad.ts":
-        'import { auth } from "@clerk/nextjs/server";\nexport { auth };\n',
+      "apps/web/src/features/feeds/bad.ts":
+        'import { eq } from "drizzle-orm";\nexport { eq };\n',
     });
 
     const result = runBoundaryCheck(root);
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("Architecture boundary check failed.");
-    expect(result.stderr).toContain("apps/web/src/features/auth/bad.ts");
-    expect(result.stderr).toContain("apps/web/src/lib/server/auth.ts");
+    expect(result.stderr).toContain("apps/web/src/features/feeds/bad.ts");
+    expect(result.stderr).toContain("apps/web/src/lib/server/database.ts");
   });
 });

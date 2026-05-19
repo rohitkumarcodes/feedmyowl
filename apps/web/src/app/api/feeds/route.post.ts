@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, db, eq, folders, inArray } from "@/lib/server/database";
+import { db, folders, inArray } from "@/lib/server/database";
 import { handleApiRouteError } from "@/lib/server/api-errors";
-import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
 import {
   discoverFeedCandidates,
   type FeedDiscoveryMethod,
@@ -15,15 +14,14 @@ import {
   type ParsedFeed,
 } from "@/lib/server/feed-parser";
 import { normalizeFeedUrl } from "@/lib/shared/feed-url";
-import { applyRouteRateLimit } from "@/lib/server/rate-limit";
 import { resolveYouTubeChannelFeedUrl } from "@/lib/server/youtube-channel-feed";
 import {
   createFeedWithInitialItems,
-  findExistingFeedForUserByUrl,
-  setFeedFoldersForUser,
+  findExistingFeedByUrl,
+  setFeedFolders,
 } from "@/lib/server/feed-service";
 import { normalizeFolderIds } from "@/lib/shared/folder-memberships";
-import { getFeedFolderIdsForUserFeed } from "@/lib/server/feed-folder-memberships";
+import { getFeedFolderIdsForFeed } from "@/lib/server/feed-folder-memberships";
 import { NO_FEED_FOUND_MESSAGE } from "@/lib/shared/feed-messages";
 import type {
   FeedsCreateDuplicateResponseBody,
@@ -31,7 +29,7 @@ import type {
   FeedsDiscoverResponseBody,
 } from "@/contracts/api/feeds";
 import type { ApiError } from "./route.shared";
-import { getAppUser, parseRouteJson } from "./route.shared";
+import { parseRouteJson } from "./route.shared";
 
 type DiscoveryCandidateMethod = "direct" | FeedDiscoveryMethod;
 
@@ -96,15 +94,11 @@ async function fetchFeedCandidateXml(url: string): Promise<CandidateXmlFetchResu
 }
 
 async function buildValidatedCandidateForUser(params: {
-  userId: string;
   candidateUrl: string;
   method: DiscoveryCandidateMethod;
   parsedFeed: ParsedFeed;
 }): Promise<ValidatedDiscoverCandidate> {
-  const existingFeed = await findExistingFeedForUserByUrl(
-    params.userId,
-    params.candidateUrl,
-  );
+  const existingFeed = await findExistingFeedByUrl(params.candidateUrl);
 
   return {
     url: params.candidateUrl,
@@ -117,7 +111,6 @@ async function buildValidatedCandidateForUser(params: {
 }
 
 async function validateCandidateXmlForUser(params: {
-  userId: string;
   candidateUrl: string;
   method: FeedDiscoveryMethod;
 }): Promise<ValidatedDiscoverCandidate | null> {
@@ -126,7 +119,6 @@ async function validateCandidateXmlForUser(params: {
     const parsedFeed = await parseFeedXml(candidateResponse.xml);
 
     return await buildValidatedCandidateForUser({
-      userId: params.userId,
       candidateUrl: candidateResponse.finalUrl,
       method: params.method,
       parsedFeed,
@@ -161,14 +153,10 @@ interface DuplicateFeedRecord {
 }
 
 async function buildDuplicateFeedCreateResponse(params: {
-  userId: string;
   feed: DuplicateFeedRecord;
   requestedFolderIds: string[];
 }): Promise<FeedsCreateDuplicateResponseBody> {
-  const currentFolderIds = await getFeedFolderIdsForUserFeed(
-    params.userId,
-    params.feed.id,
-  );
+  const currentFolderIds = await getFeedFolderIdsForFeed(params.feed.id);
   const mergedFolderIds = normalizeFolderIds([
     ...currentFolderIds,
     ...params.requestedFolderIds,
@@ -177,11 +165,7 @@ async function buildDuplicateFeedCreateResponse(params: {
 
   let nextFolderIds = currentFolderIds;
   if (mergedFolderCount > 0) {
-    const updateResult = await setFeedFoldersForUser(
-      params.userId,
-      params.feed.id,
-      mergedFolderIds,
-    );
+    const updateResult = await setFeedFolders(params.feed.id, mergedFolderIds);
 
     if (updateResult.status === "ok") {
       nextFolderIds = updateResult.folderIds;
@@ -218,29 +202,6 @@ async function buildDuplicateFeedCreateResponse(params: {
  */
 export async function postFeedsRoute(request: NextRequest) {
   try {
-    const csrfFailure = assertTrustedWriteOrigin(request, "api.feeds.post");
-    if (csrfFailure) {
-      return csrfFailure;
-    }
-
-    const appUser = await getAppUser();
-
-    if (!appUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const rateLimit = await applyRouteRateLimit({
-      request,
-      routeKey: "api_feeds_post",
-      userId: appUser.id,
-      userLimitPerMinute: 20,
-      ipLimitPerMinute: 60,
-    });
-
-    if (!rateLimit.allowed) {
-      return rateLimit.response;
-    }
-
     const payload = await parseRouteJson(request);
     if (!payload) {
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
@@ -278,7 +239,6 @@ export async function postFeedsRoute(request: NextRequest) {
       try {
         const parsedDirectFeed = await parseFeed(preferredUrl);
         const directCandidate = await buildValidatedCandidateForUser({
-          userId: appUser.id,
           candidateUrl: preferredUrl,
           method: "direct",
           parsedFeed: parsedDirectFeed,
@@ -307,7 +267,6 @@ export async function postFeedsRoute(request: NextRequest) {
 
           const method = discovery.methodHints[candidateUrl] ?? "heuristic_path";
           const validatedCandidate = await validateCandidateXmlForUser({
-            userId: appUser.id,
             candidateUrl,
             method,
           });
@@ -365,10 +324,7 @@ export async function postFeedsRoute(request: NextRequest) {
 
     if (requestedFolderIds.length > 0) {
       const existingFolders = await db.query.folders.findMany({
-        where: and(
-          eq(folders.userId, appUser.id),
-          inArray(folders.id, requestedFolderIds),
-        ),
+        where: inArray(folders.id, requestedFolderIds),
         columns: { id: true },
       });
       const existingFolderIds = new Set(existingFolders.map((folder) => folder.id));
@@ -387,15 +343,14 @@ export async function postFeedsRoute(request: NextRequest) {
       }
     }
 
-    let existingFeed = await findExistingFeedForUserByUrl(appUser.id, preferredUrl);
+    let existingFeed = await findExistingFeedByUrl(preferredUrl);
     if (!existingFeed && preferredUrl !== nextUrl) {
-      existingFeed = await findExistingFeedForUserByUrl(appUser.id, nextUrl);
+      existingFeed = await findExistingFeedByUrl(nextUrl);
     }
 
     if (existingFeed) {
       return NextResponse.json(
         await buildDuplicateFeedCreateResponse({
-          userId: appUser.id,
           feed: existingFeed,
           requestedFolderIds,
         }),
@@ -431,15 +386,11 @@ export async function postFeedsRoute(request: NextRequest) {
       const discovery = await discoverFeedCandidates(nextUrl);
 
       for (const candidateUrl of discovery.candidates) {
-        const duplicateFeed = await findExistingFeedForUserByUrl(
-          appUser.id,
-          candidateUrl,
-        );
+        const duplicateFeed = await findExistingFeedByUrl(candidateUrl);
 
         if (duplicateFeed) {
           return NextResponse.json(
             await buildDuplicateFeedCreateResponse({
-              userId: appUser.id,
               feed: duplicateFeed,
               requestedFolderIds,
             }),
@@ -454,15 +405,11 @@ export async function postFeedsRoute(request: NextRequest) {
           resolvedLastModified = candidateResponse.lastModified;
           discoveredFromSiteUrl = true;
 
-          const resolvedDuplicate = await findExistingFeedForUserByUrl(
-            appUser.id,
-            resolvedUrl,
-          );
+          const resolvedDuplicate = await findExistingFeedByUrl(resolvedUrl);
 
           if (resolvedDuplicate) {
             return NextResponse.json(
               await buildDuplicateFeedCreateResponse({
-                userId: appUser.id,
                 feed: resolvedDuplicate,
                 requestedFolderIds,
               }),
@@ -496,7 +443,6 @@ export async function postFeedsRoute(request: NextRequest) {
     let created: Awaited<ReturnType<typeof createFeedWithInitialItems>> | null = null;
     try {
       created = await createFeedWithInitialItems(
-        appUser.id,
         resolvedUrl,
         parsedFeed,
         requestedFolderIds,
@@ -506,15 +452,11 @@ export async function postFeedsRoute(request: NextRequest) {
         },
       );
     } catch {
-      const raceExistingFeed = await findExistingFeedForUserByUrl(
-        appUser.id,
-        resolvedUrl,
-      );
+      const raceExistingFeed = await findExistingFeedByUrl(resolvedUrl);
 
       if (raceExistingFeed) {
         return NextResponse.json(
           await buildDuplicateFeedCreateResponse({
-            userId: appUser.id,
             feed: raceExistingFeed,
             requestedFolderIds,
           }),
@@ -534,10 +476,7 @@ export async function postFeedsRoute(request: NextRequest) {
       );
     }
 
-    const createdFolderIds = await getFeedFolderIdsForUserFeed(
-      appUser.id,
-      created.feed.id,
-    );
+    const createdFolderIds = await getFeedFolderIdsForFeed(created.feed.id);
 
     const createdFeed = created.feed;
     const fallbackCreatedAt = new Date().toISOString();

@@ -1,33 +1,29 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  getAppUser: vi.fn(),
-  isUserRetentionPurgeNeeded: vi.fn(),
-  purgeOldFeedItemsForUser: vi.fn(),
-  dbQueryUsersFindFirst: vi.fn(),
-  eq: vi.fn(),
+  isRetentionPurgeNeeded: vi.fn(),
+  purgeOldFeedItems: vi.fn(),
+  dbQueryFeedsFindMany: vi.fn(),
+  dbQueryFoldersFindMany: vi.fn(),
   handleApiRouteError: vi.fn(),
 }));
 
-vi.mock("./route.shared", () => ({
-  getAppUser: mocks.getAppUser,
-}));
-
 vi.mock("@/lib/server/retention", () => ({
-  isUserRetentionPurgeNeeded: mocks.isUserRetentionPurgeNeeded,
-  purgeOldFeedItemsForUser: mocks.purgeOldFeedItemsForUser,
+  isRetentionPurgeNeeded: mocks.isRetentionPurgeNeeded,
+  purgeOldFeedItems: mocks.purgeOldFeedItems,
 }));
 
 vi.mock("@/lib/server/database", () => ({
   db: {
     query: {
-      users: {
-        findFirst: mocks.dbQueryUsersFindFirst,
+      feeds: {
+        findMany: mocks.dbQueryFeedsFindMany,
+      },
+      folders: {
+        findMany: mocks.dbQueryFoldersFindMany,
       },
     },
   },
-  eq: mocks.eq,
-  users: {},
 }));
 
 vi.mock("@/lib/server/api-errors", () => ({
@@ -36,16 +32,12 @@ vi.mock("@/lib/server/api-errors", () => ({
 
 import { getFeedsRoute } from "@/app/api/feeds/route.get";
 
-describe("GET /api/feeds retention guard", () => {
+describe("GET /api/feeds", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.getAppUser.mockResolvedValue({ id: "user_123", clerkId: "clerk_123" });
-    mocks.isUserRetentionPurgeNeeded.mockResolvedValue(false);
-    mocks.dbQueryUsersFindFirst.mockResolvedValue({
-      folders: [],
-      feeds: [],
-    });
-    mocks.eq.mockReturnValue(Symbol("eq"));
+    mocks.isRetentionPurgeNeeded.mockResolvedValue(false);
+    mocks.dbQueryFeedsFindMany.mockResolvedValue([]);
+    mocks.dbQueryFoldersFindMany.mockResolvedValue([]);
     mocks.handleApiRouteError.mockImplementation(
       () => new Response(JSON.stringify({ error: "Unexpected error" }), { status: 500 }),
     );
@@ -55,25 +47,11 @@ describe("GET /api/feeds retention guard", () => {
     vi.clearAllMocks();
   });
 
-  it("skips purge when no feed exceeds the retention cap", async () => {
+  it("returns empty feeds and folders", async () => {
     const response = await getFeedsRoute();
     const body = await response.json();
 
     expect(response.status).toBe(200);
     expect(body).toEqual({ feeds: [], folders: [] });
-    expect(mocks.isUserRetentionPurgeNeeded).toHaveBeenCalledWith("user_123");
-    expect(mocks.purgeOldFeedItemsForUser).not.toHaveBeenCalled();
-  });
-
-  it("runs purge when at least one feed exceeds the retention cap", async () => {
-    mocks.isUserRetentionPurgeNeeded.mockResolvedValue(true);
-    mocks.purgeOldFeedItemsForUser.mockResolvedValue(3);
-
-    const response = await getFeedsRoute();
-
-    expect(response.status).toBe(200);
-    expect(mocks.isUserRetentionPurgeNeeded).toHaveBeenCalledWith("user_123");
-    expect(mocks.purgeOldFeedItemsForUser).toHaveBeenCalledTimes(1);
-    expect(mocks.purgeOldFeedItemsForUser).toHaveBeenCalledWith("user_123");
   });
 });

@@ -5,14 +5,10 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/server/auth";
 import { handleApiRouteError } from "@/lib/server/api-errors";
-import { ensureUserRecord } from "@/lib/server/app-user";
-import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
 import { parseRequestJson } from "@/lib/server/http/request-json";
-import { applyRouteRateLimit } from "@/lib/server/rate-limit";
 import {
-  createFolderForUser,
+  createFolder,
   FOLDER_LIMIT,
   FOLDER_NAME_MAX_LENGTH,
 } from "@/lib/server/folder-service";
@@ -32,30 +28,6 @@ function toIsoString(value: Date | string | null | undefined): string | null {
  */
 export async function POST(request: NextRequest) {
   try {
-    const csrfFailure = assertTrustedWriteOrigin(request, "api.folders.post");
-    if (csrfFailure) {
-      return csrfFailure;
-    }
-
-    const { clerkId } = await requireAuth();
-    const user = await ensureUserRecord(clerkId);
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const rateLimit = await applyRouteRateLimit({
-      request,
-      routeKey: "api_folders_post",
-      userId: user.id,
-      userLimitPerMinute: 20,
-      ipLimitPerMinute: 60,
-    });
-
-    if (!rateLimit.allowed) {
-      return rateLimit.response;
-    }
-
     const payload = await parseRequestJson(request);
     const name = payload?.name;
 
@@ -63,7 +35,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
-    const result = await createFolderForUser(user.id, name);
+    const result = await createFolder(name);
 
     if (result.status === "invalid_name") {
       return NextResponse.json(

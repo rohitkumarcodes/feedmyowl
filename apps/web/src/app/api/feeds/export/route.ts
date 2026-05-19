@@ -7,21 +7,13 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/server/auth";
-import { db, eq, users } from "@/lib/server/database";
+import { db } from "@/lib/server/database";
 import { handleApiRouteError } from "@/lib/server/api-errors";
-import { ensureUserRecord } from "@/lib/server/app-user";
 import { captureMessage } from "@/lib/server/error-tracking";
 import {
   getFeedMembershipFolderIds,
   resolveFeedFolderIds,
 } from "@/lib/shared/folder-memberships";
-import { applyRouteRateLimit } from "@/lib/server/rate-limit";
-
-interface FolderRow {
-  id: string;
-  name: string;
-}
 
 interface FeedRow {
   id: string;
@@ -33,15 +25,6 @@ interface FeedRow {
   createdAt: Date;
   updatedAt: Date;
   folderMemberships?: Array<{ folderId: string }>;
-}
-
-interface ExportUserRecord {
-  id: string;
-  clerkId: string;
-  email: string;
-  createdAt: Date;
-  folders?: FolderRow[];
-  feeds?: FeedRow[];
 }
 
 /**
@@ -243,23 +226,26 @@ ${bodyLines}
 `;
 }
 
-async function queryExportUser(userId: string): Promise<ExportUserRecord | null> {
-  return (await db.query.users.findFirst({
-    where: eq(users.id, userId),
-    columns: {
-      id: true,
-      clerkId: true,
-      email: true,
-      createdAt: true,
-    },
-    with: {
-      folders: {
-        columns: {
-          id: true,
-          name: true,
-        },
-      },
-      feeds: {
+/**
+ * GET /api/feeds/export
+ * Returns OPML or JSON portable data.
+ */
+export async function GET(request: NextRequest) {
+  const startedAtMs = Date.now();
+
+  try {
+    const format = request.nextUrl.searchParams.get("format") || "opml";
+    const jsonVersion = request.nextUrl.searchParams.get("version") || "2";
+
+    if (format === "json" && jsonVersion !== "2") {
+      return NextResponse.json(
+        { error: "Unsupported JSON export version" },
+        { status: 400 },
+      );
+    }
+
+    const [feedRows, folderRows] = await Promise.all([
+      db.query.feeds.findMany({
         columns: {
           id: true,
           url: true,
@@ -277,56 +263,14 @@ async function queryExportUser(userId: string): Promise<ExportUserRecord | null>
             },
           },
         },
-      },
-    },
-  })) as ExportUserRecord | null;
-}
-
-/**
- * GET /api/feeds/export
- * Returns OPML or JSON portable data for the authenticated user.
- */
-export async function GET(request: NextRequest) {
-  const startedAtMs = Date.now();
-
-  try {
-    const { clerkId } = await requireAuth();
-    const ensuredUser = await ensureUserRecord(clerkId);
-
-    if (!ensuredUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const rateLimit = await applyRouteRateLimit({
-      request,
-      routeKey: "api_feeds_export_get",
-      userId: ensuredUser.id,
-      userLimitPerMinute: 20,
-      ipLimitPerMinute: 120,
-    });
-
-    if (!rateLimit.allowed) {
-      return rateLimit.response;
-    }
-
-    const format = request.nextUrl.searchParams.get("format") || "opml";
-    const jsonVersion = request.nextUrl.searchParams.get("version") || "2";
-
-    if (format === "json" && jsonVersion !== "2") {
-      return NextResponse.json(
-        { error: "Unsupported JSON export version" },
-        { status: 400 },
-      );
-    }
-
-    const user = await queryExportUser(ensuredUser.id);
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const folderRows = user.folders ?? [];
-    const feedRows = user.feeds ?? [];
+      }),
+      db.query.folders.findMany({
+        columns: {
+          id: true,
+          name: true,
+        },
+      }),
+    ]);
     const folderNameById = new Map(folderRows.map((folder) => [folder.id, folder.name]));
     const nowIso = new Date().toISOString();
     const filenameDate = nowIso.slice(0, 10);
@@ -334,7 +278,6 @@ export async function GET(request: NextRequest) {
     if (format === "opml") {
       const opml = buildFolderAwareOpml({
         nowIso,
-        ownerEmail: user.email,
         folders: folderRows.map((folder) => ({
           id: folder.id,
           name: folder.name,

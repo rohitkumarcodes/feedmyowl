@@ -4,12 +4,10 @@ import {
   and,
   db,
   eq,
-  feedFolderMemberships,
   feedItems,
   feeds,
   folders,
   inArray,
-  isNull,
   sql,
 } from "@/lib/server/database";
 import {
@@ -41,7 +39,7 @@ type ResolveScopeFeedIdsResult =
   | { status: "ok"; feedIds: string[] }
   | { status: "scope_not_found" };
 
-export type ListArticlePageForUserResult =
+export type ListArticlePageResult =
   | {
       status: "ok";
       items: ArticlePageItemRecord[];
@@ -78,16 +76,14 @@ function toDate(value: Date | string): Date {
   return parsed;
 }
 
-async function loadUserFeedAssignments(userId: string): Promise<FeedAssignment[]> {
-  const userFeeds = await db.query.feeds.findMany({
-    where: eq(feeds.userId, userId),
+async function loadFeedAssignments(): Promise<FeedAssignment[]> {
+  const allFeeds = await db.query.feeds.findMany({
     columns: {
       id: true,
     },
   });
 
   const memberships = await db.query.feedFolderMemberships.findMany({
-    where: eq(feedFolderMemberships.userId, userId),
     columns: {
       feedId: true,
       folderId: true,
@@ -101,7 +97,7 @@ async function loadUserFeedAssignments(userId: string): Promise<FeedAssignment[]
     membershipFolderIdsByFeedId.set(membership.feedId, existing);
   }
 
-  return userFeeds.map((feed) => ({
+  return allFeeds.map((feed) => ({
     id: feed.id,
     assignedFolderIds: resolveFeedFolderIds(
       membershipFolderIdsByFeedId.get(feed.id) ?? [],
@@ -109,14 +105,11 @@ async function loadUserFeedAssignments(userId: string): Promise<FeedAssignment[]
   }));
 }
 
-async function resolveScopeFeedIdsForUser(
-  userId: string,
+async function resolveScopeFeedIds(
   scope: ArticleScope,
 ): Promise<ResolveScopeFeedIdsResult> {
-  if (scope.type === "all" || scope.type === "unread" || scope.type === "saved") {
-    // "unread" uses all feeds — the readAt IS NULL filter is applied later in the query.
-    const userFeeds = await db.query.feeds.findMany({
-      where: eq(feeds.userId, userId),
+  if (scope.type === "all" || scope.type === "saved") {
+    const allFeeds = await db.query.feeds.findMany({
       columns: {
         id: true,
       },
@@ -124,31 +117,31 @@ async function resolveScopeFeedIdsForUser(
 
     return {
       status: "ok",
-      feedIds: userFeeds.map((feed) => feed.id),
+      feedIds: allFeeds.map((feed) => feed.id),
     };
   }
 
   if (scope.type === "feed") {
-    const userFeed = await db.query.feeds.findFirst({
-      where: and(eq(feeds.userId, userId), eq(feeds.id, scope.id)),
+    const feed = await db.query.feeds.findFirst({
+      where: eq(feeds.id, scope.id),
       columns: {
         id: true,
       },
     });
 
-    if (!userFeed) {
+    if (!feed) {
       return { status: "scope_not_found" };
     }
 
     return {
       status: "ok",
-      feedIds: [userFeed.id],
+      feedIds: [feed.id],
     };
   }
 
   if (scope.type === "folder") {
     const folder = await db.query.folders.findFirst({
-      where: and(eq(folders.userId, userId), eq(folders.id, scope.id)),
+      where: eq(folders.id, scope.id),
       columns: {
         id: true,
       },
@@ -158,31 +151,30 @@ async function resolveScopeFeedIdsForUser(
       return { status: "scope_not_found" };
     }
 
-    const userFeedAssignments = await loadUserFeedAssignments(userId);
+    const feedAssignments = await loadFeedAssignments();
     return {
       status: "ok",
-      feedIds: userFeedAssignments
+      feedIds: feedAssignments
         .filter((feedAssignment) => feedAssignment.assignedFolderIds.includes(scope.id))
         .map((feedAssignment) => feedAssignment.id),
     };
   }
 
-  const userFeedAssignments = await loadUserFeedAssignments(userId);
+  const feedAssignments = await loadFeedAssignments();
   return {
     status: "ok",
-    feedIds: userFeedAssignments
+    feedIds: feedAssignments
       .filter((feedAssignment) => feedAssignment.assignedFolderIds.length === 0)
       .map((feedAssignment) => feedAssignment.id),
   };
 }
 
-export async function listArticlePageForUser(params: {
-  userId: string;
+export async function listArticlePage(params: {
   scope: ArticleScope;
   cursor: EncodedArticleCursor | null;
   limit: number;
-}): Promise<ListArticlePageForUserResult> {
-  const resolved = await resolveScopeFeedIdsForUser(params.userId, params.scope);
+}): Promise<ListArticlePageResult> {
+  const resolved = await resolveScopeFeedIds(params.scope);
   if (resolved.status === "scope_not_found") {
     return { status: "scope_not_found" };
   }
@@ -205,14 +197,12 @@ export async function listArticlePageForUser(params: {
 
   const cursorTimestamp = params.cursor ? toDate(params.cursor.sortKeyIso) : null;
 
-  // Build the base filter: feed scope + optional unread-only restriction.
+  // Build the base filter: feed scope + optional saved restriction.
   const feedFilter = inArray(feedItems.feedId, resolved.feedIds);
   const baseScopeFilter =
-    params.scope.type === "unread"
-      ? and(feedFilter, isNull(feedItems.readAt))
-      : params.scope.type === "saved"
-        ? and(feedFilter, sql`${feedItems.savedAt} is not null`)
-        : feedFilter;
+    params.scope.type === "saved"
+      ? and(feedFilter, sql`${feedItems.savedAt} is not null`)
+      : feedFilter;
 
   const whereClause = params.cursor
     ? and(

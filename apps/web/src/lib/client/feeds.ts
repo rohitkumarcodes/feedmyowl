@@ -1,13 +1,11 @@
 import type { ApiErrorBody } from "@/contracts/api/common";
 import type {
-  AccountDeleteResponseBody,
   FeedIdDeleteResponseBody,
   FeedIdPatchResponseBody,
   FeedsCreateResponseBody,
   FeedsDiscoverResponseBody,
   FeedsGetResponseBody,
   ItemSetSavedResponseBody,
-  MarkAllReadResponseBody,
   MarkReadResponseBody,
   UncategorizedDeleteResponseBody,
   UncategorizedMoveResponseBody,
@@ -68,21 +66,6 @@ export async function setItemSaved(itemId: string, saved: boolean) {
   });
 }
 
-export async function markAllItemsRead(scopeType: string, scopeId?: string) {
-  return await callJson<(MarkAllReadResponseBody & Partial<ApiErrorBody>) | ApiErrorBody>(
-    "/api/feeds",
-    {
-      method: "PATCH",
-      headers: JSON_HEADERS,
-      body: JSON.stringify({
-        action: "items.markAllRead",
-        scopeType,
-        ...(scopeId ? { scopeId } : {}),
-      }),
-    },
-  );
-}
-
 export async function deleteUncategorizedFeeds(confirm: boolean) {
   return await callJson<
     (UncategorizedDeleteResponseBody & Partial<ApiErrorBody>) | ApiErrorBody
@@ -103,26 +86,6 @@ export async function moveUncategorizedFeedsToFolder(folderId: string) {
       action: "uncategorized.move_to_folder",
       folderId,
     }),
-  });
-}
-
-export async function deleteAccount(confirm = true) {
-  return await callJson<
-    (AccountDeleteResponseBody & Partial<ApiErrorBody>) | ApiErrorBody
-  >("/api/feeds", {
-    method: "PATCH",
-    headers: JSON_HEADERS,
-    body: JSON.stringify({ action: "account.delete", confirm }),
-  });
-}
-
-export async function resetAccount(confirm = true) {
-  return await callJson<
-    (AccountDeleteResponseBody & Partial<ApiErrorBody>) | ApiErrorBody
-  >("/api/feeds", {
-    method: "PATCH",
-    headers: JSON_HEADERS,
-    body: JSON.stringify({ action: "account.reset", confirm }),
   });
 }
 

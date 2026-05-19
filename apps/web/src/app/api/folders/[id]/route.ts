@@ -5,16 +5,12 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/server/auth";
 import { handleApiRouteError } from "@/lib/server/api-errors";
-import { ensureUserRecord } from "@/lib/server/app-user";
-import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
 import { parseRequestJson } from "@/lib/server/http/request-json";
-import { applyRouteRateLimit } from "@/lib/server/rate-limit";
 import {
-  deleteFolderForUser,
+  deleteFolder,
   FOLDER_NAME_MAX_LENGTH,
-  renameFolderForUser,
+  renameFolder,
   type DeleteFolderMode,
 } from "@/lib/server/folder-service";
 import type {
@@ -39,31 +35,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const csrfFailure = assertTrustedWriteOrigin(request, "api.folders.id.patch");
-    if (csrfFailure) {
-      return csrfFailure;
-    }
-
-    const { clerkId } = await requireAuth();
-    const user = await ensureUserRecord(clerkId);
     const { id } = await params;
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const rateLimit = await applyRouteRateLimit({
-      request,
-      routeKey: "api_folders_id_patch",
-      userId: user.id,
-      userLimitPerMinute: 20,
-      ipLimitPerMinute: 60,
-    });
-
-    if (!rateLimit.allowed) {
-      return rateLimit.response;
-    }
-
     const payload = await parseRequestJson(request);
     const name = payload?.name;
 
@@ -71,7 +43,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
-    const result = await renameFolderForUser(user.id, id, name);
+    const result = await renameFolder(id, name);
 
     if (result.status === "not_found") {
       return NextResponse.json({ error: "Folder not found" }, { status: 404 });
@@ -133,31 +105,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const csrfFailure = assertTrustedWriteOrigin(request, "api.folders.id.delete");
-    if (csrfFailure) {
-      return csrfFailure;
-    }
-
-    const { clerkId } = await requireAuth();
-    const user = await ensureUserRecord(clerkId);
     const { id } = await params;
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const rateLimit = await applyRouteRateLimit({
-      request,
-      routeKey: "api_folders_id_delete",
-      userId: user.id,
-      userLimitPerMinute: 20,
-      ipLimitPerMinute: 60,
-    });
-
-    if (!rateLimit.allowed) {
-      return rateLimit.response;
-    }
-
     const modeParam = request.nextUrl.searchParams.get("mode");
     const mode: DeleteFolderMode =
       modeParam === "remove_and_unsubscribe_exclusive"
@@ -178,7 +126,7 @@ export async function DELETE(
       );
     }
 
-    const result = await deleteFolderForUser(user.id, id, mode);
+    const result = await deleteFolder(id, mode);
 
     if (result.status === "not_found") {
       return NextResponse.json({ error: "Folder not found" }, { status: 404 });

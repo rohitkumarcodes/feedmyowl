@@ -68,12 +68,7 @@ export function resolveSidebarArrowNavigation(
  * Returns null for unrecognized values so callers can skip them safely.
  */
 export function parseSidebarRowKey(rowKey: string): SidebarScope | null {
-  if (
-    rowKey === "saved" ||
-    rowKey === "all" ||
-    rowKey === "unread" ||
-    rowKey === "uncategorized"
-  ) {
+  if (rowKey === "saved" || rowKey === "all" || rowKey === "uncategorized") {
     return { type: rowKey };
   }
 

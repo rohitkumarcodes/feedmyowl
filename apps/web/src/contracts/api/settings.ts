@@ -1,9 +1,1 @@
-export type ReadingModeDto = "reader" | "checker";
-
-export interface SettingsReadingModePatchRequestBody {
-  readingMode: ReadingModeDto;
-}
-
-export interface SettingsReadingModePatchResponseBody {
-  readingMode: ReadingModeDto;
-}
+// Reading mode types have been removed — reader mode is now permanent.

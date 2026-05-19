@@ -6,50 +6,14 @@
  * There is no background polling. Refresh happens only on explicit user action.
  */
 
-import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/server/auth";
+import { NextResponse } from "next/server";
 import { handleApiRouteError } from "@/lib/server/api-errors";
-import { ensureUserRecord } from "@/lib/server/app-user";
-import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
-import { refreshFeedsForUser } from "@/lib/server/feed-service";
-import { applyRouteRateLimit } from "@/lib/server/rate-limit";
+import { refreshAllFeeds } from "@/lib/server/feed-service";
 import type { RefreshResponseBody } from "@/contracts/api/refresh";
 
-/**
- * POST /api/refresh
- * Fetches all feeds for the authenticated user and stores new items.
- */
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
-    const csrfFailure = assertTrustedWriteOrigin(request, "api.refresh.post");
-    if (csrfFailure) {
-      return csrfFailure;
-    }
-
-    const { clerkId } = await requireAuth();
-    const ensuredUser = await ensureUserRecord(clerkId);
-
-    if (!ensuredUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const rateLimit = await applyRouteRateLimit({
-      request,
-      routeKey: "api_refresh_post",
-      userId: ensuredUser.id,
-      userLimitPerMinute: 6,
-      ipLimitPerMinute: 30,
-    });
-
-    if (!rateLimit.allowed) {
-      return rateLimit.response;
-    }
-
-    const refresh = await refreshFeedsForUser(ensuredUser.id);
-
-    if (refresh.status === "user_not_found") {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
+    const refresh = await refreshAllFeeds();
 
     if (refresh.results.length === 0) {
       return NextResponse.json({

@@ -12,17 +12,13 @@ import {
   isNull,
   not,
   sql,
-  users,
 } from "@/lib/server/database";
 import { computeFeedItemFingerprint } from "@/lib/server/feed-item-fingerprint";
 import { captureError } from "@/lib/server/error-tracking";
 import { normalizeFeedError } from "@/lib/shared/feed-errors";
 import { parseFeedWithCache, type ParsedFeed } from "@/lib/server/feed-parser";
 import { normalizeFolderIds } from "@/lib/shared/folder-memberships";
-import {
-  purgeOldFeedItemsForFeed,
-  purgeOldFeedItemsForUser,
-} from "@/lib/server/retention";
+import { purgeOldFeedItemsForFeed, purgeOldFeedItems } from "@/lib/server/retention";
 
 export interface RefreshResult {
   feedId: string;
@@ -84,11 +80,11 @@ async function insertParsedFeedItems(
 }
 
 /**
- * Look up an existing feed for one user by normalized URL.
+ * Look up an existing feed by normalized URL.
  */
-export async function findExistingFeedForUserByUrl(userId: string, url: string) {
+export async function findExistingFeedByUrl(url: string) {
   return await db.query.feeds.findFirst({
-    where: and(eq(feeds.userId, userId), eq(feeds.url, url)),
+    where: eq(feeds.url, url),
   });
 }
 
@@ -96,7 +92,6 @@ export async function findExistingFeedForUserByUrl(userId: string, url: string) 
  * Create a feed row and insert initial parsed items.
  */
 export async function createFeedWithInitialItems(
-  userId: string,
   url: string,
   parsedFeed: ParsedFeed,
   folderIds: string[] = [],
@@ -108,7 +103,6 @@ export async function createFeedWithInitialItems(
   const [newFeed] = await db
     .insert(feeds)
     .values({
-      userId,
       url,
       title: parsedFeed.title || null,
       description: parsedFeed.description || null,
@@ -125,12 +119,11 @@ export async function createFeedWithInitialItems(
 
   const insertedItems = await insertParsedFeedItems(newFeed.id, parsedFeed);
 
-  await purgeOldFeedItemsForFeed({ userId, feedId: newFeed.id });
+  await purgeOldFeedItemsForFeed({ feedId: newFeed.id });
 
   if (normalizedFolderIds.length > 0) {
     await db.insert(feedFolderMemberships).values(
       normalizedFolderIds.map((folderId) => ({
-        userId,
         feedId: newFeed.id,
         folderId,
         createdAt: now,
@@ -148,25 +141,18 @@ export type MarkItemReadResult =
   | { status: "marked"; itemId: string; readAt: string };
 
 /**
- * Mark one feed item as read for its owner.
+ * Mark one feed item as read.
  */
-export async function markFeedItemReadForUser(
-  userId: string,
-  itemId: string,
-): Promise<MarkItemReadResult> {
+export async function markFeedItemRead(itemId: string): Promise<MarkItemReadResult> {
   const item = await db.query.feedItems.findFirst({
     where: eq(feedItems.id, itemId),
-    with: {
-      feed: {
-        columns: {
-          id: true,
-          userId: true,
-        },
-      },
+    columns: {
+      id: true,
+      readAt: true,
     },
   });
 
-  if (!item || item.feed.userId !== userId) {
+  if (!item) {
     return { status: "not_found" };
   }
 
@@ -197,10 +183,9 @@ export type SetItemSavedResult =
   | { status: "updated"; itemId: string; savedAt: string | null };
 
 /**
- * Set saved/bookmarked state on one feed item for its owner.
+ * Set saved/bookmarked state on one feed item.
  */
-export async function setFeedItemSavedForUser(
-  userId: string,
+export async function setFeedItemSaved(
   itemId: string,
   saved: boolean,
 ): Promise<SetItemSavedResult> {
@@ -210,17 +195,9 @@ export async function setFeedItemSavedForUser(
       id: true,
       savedAt: true,
     },
-    with: {
-      feed: {
-        columns: {
-          id: true,
-          userId: true,
-        },
-      },
-    },
   });
 
-  if (!item || item.feed.userId !== userId) {
+  if (!item) {
     return { status: "not_found" };
   }
 
@@ -248,44 +225,23 @@ export async function setFeedItemSavedForUser(
   };
 }
 
-export type RefreshFeedsForUserResult =
-  | { status: "user_not_found"; retentionDeletedCount: number }
-  | {
-      status: "ok";
-      /** Rows pruned by count-cap retention during this refresh flow. */
-      retentionDeletedCount: number;
-      message?: string;
-      results: RefreshResult[];
-    };
+export type RefreshAllFeedsResult = {
+  status: "ok";
+  /** Rows pruned by count-cap retention during this refresh flow. */
+  retentionDeletedCount: number;
+  message?: string;
+  results: RefreshResult[];
+};
 
 /**
- * Refresh all feeds for one user and insert new items.
+ * Refresh all feeds and insert new items.
  */
-export async function refreshFeedsForUser(
-  userId: string,
-): Promise<RefreshFeedsForUserResult> {
-  let retentionDeletedCount = await purgeOldFeedItemsForUser(userId);
+export async function refreshAllFeeds(): Promise<RefreshAllFeedsResult> {
+  let retentionDeletedCount = await purgeOldFeedItems();
 
-  const user = await db.query.users.findFirst({
-    where: eq(users.id, userId),
-    columns: {
-      id: true,
-      clerkId: true,
-      email: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-    with: { feeds: true },
-  });
+  const allFeeds = await db.query.feeds.findMany();
 
-  if (!user) {
-    return {
-      status: "user_not_found",
-      retentionDeletedCount,
-    };
-  }
-
-  if (user.feeds.length === 0) {
+  if (allFeeds.length === 0) {
     return {
       status: "ok",
       message: "No feeds to refresh",
@@ -295,7 +251,7 @@ export async function refreshFeedsForUser(
   }
 
   const settledResults = await Promise.allSettled(
-    user.feeds.map(
+    allFeeds.map(
       async (feed): Promise<{ result: RefreshResult; prunedCount: number }> => {
         try {
           const parsedResult = await parseFeedWithCache(feed.url, {
@@ -355,7 +311,6 @@ export async function refreshFeedsForUser(
           let prunedCount = 0;
           if (insertedItemCount > 0) {
             prunedCount = await purgeOldFeedItemsForFeed({
-              userId,
               feedId: feed.id,
             });
           }
@@ -431,45 +386,35 @@ export async function refreshFeedsForUser(
 }
 
 /**
- * Delete one feed belonging to one user.
+ * Delete one feed.
  */
-export async function deleteFeedForUser(
-  userId: string,
-  feedId: string,
-): Promise<boolean> {
-  const deleted = await db
-    .delete(feeds)
-    .where(and(eq(feeds.id, feedId), eq(feeds.userId, userId)))
-    .returning();
+export async function deleteFeed(feedId: string): Promise<boolean> {
+  const deleted = await db.delete(feeds).where(eq(feeds.id, feedId)).returning();
 
   return deleted.length > 0;
 }
 
 /**
- * Delete all uncategorized feeds (feeds without folder memberships) for one user.
+ * Delete all uncategorized feeds (feeds without folder memberships).
  */
-export async function deleteUncategorizedFeedsForUser(userId: string): Promise<number> {
-  const userFeeds = await db.query.feeds.findMany({
-    where: eq(feeds.userId, userId),
+export async function deleteUncategorizedFeeds(): Promise<number> {
+  const allFeeds = await db.query.feeds.findMany({
     columns: { id: true },
   });
 
-  if (userFeeds.length === 0) {
+  if (allFeeds.length === 0) {
     return 0;
   }
 
-  const userFeedIds = userFeeds.map((feed) => feed.id);
+  const allFeedIds = allFeeds.map((feed) => feed.id);
 
   const memberships = await db.query.feedFolderMemberships.findMany({
-    where: and(
-      eq(feedFolderMemberships.userId, userId),
-      inArray(feedFolderMemberships.feedId, userFeedIds),
-    ),
+    where: inArray(feedFolderMemberships.feedId, allFeedIds),
     columns: { feedId: true },
   });
 
   const categorizedFeedIds = new Set(memberships.map((membership) => membership.feedId));
-  const uncategorizedFeedIds = userFeedIds.filter(
+  const uncategorizedFeedIds = allFeedIds.filter(
     (feedId) => !categorizedFeedIds.has(feedId),
   );
 
@@ -479,13 +424,13 @@ export async function deleteUncategorizedFeedsForUser(userId: string): Promise<n
 
   const deletedFeeds = await db
     .delete(feeds)
-    .where(and(eq(feeds.userId, userId), inArray(feeds.id, uncategorizedFeedIds)))
+    .where(inArray(feeds.id, uncategorizedFeedIds))
     .returning({ id: feeds.id });
 
   return deletedFeeds.length;
 }
 
-export type MoveUncategorizedFeedsToFolderForUserResult =
+export type MoveUncategorizedFeedsToFolderResult =
   | { status: "invalid_folder_id" }
   | {
       status: "ok";
@@ -495,17 +440,16 @@ export type MoveUncategorizedFeedsToFolderForUserResult =
     };
 
 /**
- * Assign all currently uncategorized feeds to one folder for one user.
+ * Assign all currently uncategorized feeds to one folder.
  *
  * Best effort: each feed assignment is attempted independently. Failures are
  * counted and surfaced to the caller while successful moves are preserved.
  */
-export async function moveUncategorizedFeedsToFolderForUser(
-  userId: string,
+export async function moveUncategorizedFeedsToFolder(
   folderId: string,
-): Promise<MoveUncategorizedFeedsToFolderForUserResult> {
+): Promise<MoveUncategorizedFeedsToFolderResult> {
   const targetFolder = await db.query.folders.findFirst({
-    where: and(eq(folders.userId, userId), eq(folders.id, folderId)),
+    where: eq(folders.id, folderId),
     columns: { id: true },
   });
 
@@ -513,12 +457,11 @@ export async function moveUncategorizedFeedsToFolderForUser(
     return { status: "invalid_folder_id" };
   }
 
-  const userFeeds = await db.query.feeds.findMany({
-    where: eq(feeds.userId, userId),
+  const allFeeds = await db.query.feeds.findMany({
     columns: { id: true },
   });
 
-  if (userFeeds.length === 0) {
+  if (allFeeds.length === 0) {
     return {
       status: "ok",
       totalUncategorizedCount: 0,
@@ -527,17 +470,14 @@ export async function moveUncategorizedFeedsToFolderForUser(
     };
   }
 
-  const userFeedIds = userFeeds.map((feed) => feed.id);
+  const allFeedIds = allFeeds.map((feed) => feed.id);
   const memberships = await db.query.feedFolderMemberships.findMany({
-    where: and(
-      eq(feedFolderMemberships.userId, userId),
-      inArray(feedFolderMemberships.feedId, userFeedIds),
-    ),
+    where: inArray(feedFolderMemberships.feedId, allFeedIds),
     columns: { feedId: true },
   });
 
   const categorizedFeedIds = new Set(memberships.map((membership) => membership.feedId));
-  const uncategorizedFeedIds = userFeedIds.filter(
+  const uncategorizedFeedIds = allFeedIds.filter(
     (feedId) => !categorizedFeedIds.has(feedId),
   );
 
@@ -554,7 +494,6 @@ export async function moveUncategorizedFeedsToFolderForUser(
   const settledMoves = await Promise.allSettled(
     uncategorizedFeedIds.map(async (feedId) => {
       await db.insert(feedFolderMemberships).values({
-        userId,
         feedId,
         folderId,
         createdAt: now,
@@ -578,10 +517,7 @@ export async function moveUncategorizedFeedsToFolderForUser(
   }
 
   if (movedFeedIds.length > 0) {
-    await db
-      .update(feeds)
-      .set({ updatedAt: now })
-      .where(and(eq(feeds.userId, userId), inArray(feeds.id, movedFeedIds)));
+    await db.update(feeds).set({ updatedAt: now }).where(inArray(feeds.id, movedFeedIds));
   }
 
   return {
@@ -593,13 +529,9 @@ export async function moveUncategorizedFeedsToFolderForUser(
 }
 
 /**
- * Update the user-defined display name for one feed belonging to one user.
+ * Update the display name for one feed.
  */
-export async function renameFeedForUser(
-  userId: string,
-  feedId: string,
-  customTitle: string | null,
-) {
+export async function renameFeed(feedId: string, customTitle: string | null) {
   const now = new Date();
   const [updatedFeed] = await db
     .update(feeds)
@@ -607,7 +539,7 @@ export async function renameFeedForUser(
       customTitle,
       updatedAt: now,
     })
-    .where(and(eq(feeds.id, feedId), eq(feeds.userId, userId)))
+    .where(eq(feeds.id, feedId))
     .returning({
       id: feeds.id,
       url: feeds.url,
@@ -619,12 +551,12 @@ export async function renameFeedForUser(
   return updatedFeed || null;
 }
 
-export type SetFeedFoldersForUserResult =
+export type SetFeedFoldersResult =
   | { status: "feed_not_found" }
   | { status: "invalid_folder_ids"; invalidFolderIds: string[] }
   | { status: "ok"; folderIds: string[] };
 
-export type AddFeedFoldersForUserResult =
+export type AddFeedFoldersResult =
   | { status: "feed_not_found" }
   | { status: "invalid_folder_ids"; invalidFolderIds: string[] }
   | { status: "ok"; addedFolderIds: string[]; folderIds: string[] };
@@ -632,15 +564,14 @@ export type AddFeedFoldersForUserResult =
 /**
  * Add folder memberships for one feed without removing existing assignments.
  */
-export async function addFeedFoldersForUser(
-  userId: string,
+export async function addFeedFolders(
   feedId: string,
   folderIds: string[],
-): Promise<AddFeedFoldersForUserResult> {
+): Promise<AddFeedFoldersResult> {
   const normalizedFolderIds = normalizeFolderIds(folderIds);
 
   const feed = await db.query.feeds.findFirst({
-    where: and(eq(feeds.id, feedId), eq(feeds.userId, userId)),
+    where: eq(feeds.id, feedId),
     columns: { id: true },
   });
 
@@ -650,10 +581,7 @@ export async function addFeedFoldersForUser(
 
   if (normalizedFolderIds.length === 0) {
     const currentMemberships = await db.query.feedFolderMemberships.findMany({
-      where: and(
-        eq(feedFolderMemberships.userId, userId),
-        eq(feedFolderMemberships.feedId, feedId),
-      ),
+      where: eq(feedFolderMemberships.feedId, feedId),
       columns: { folderId: true },
     });
 
@@ -667,7 +595,7 @@ export async function addFeedFoldersForUser(
   }
 
   const availableFolders = await db.query.folders.findMany({
-    where: and(eq(folders.userId, userId), inArray(folders.id, normalizedFolderIds)),
+    where: inArray(folders.id, normalizedFolderIds),
     columns: { id: true },
   });
 
@@ -685,7 +613,6 @@ export async function addFeedFoldersForUser(
     .insert(feedFolderMemberships)
     .values(
       normalizedFolderIds.map((folderId) => ({
-        userId,
         feedId,
         folderId,
         createdAt: now,
@@ -696,17 +623,11 @@ export async function addFeedFoldersForUser(
     .returning({ folderId: feedFolderMemberships.folderId });
 
   if (insertedMemberships.length > 0) {
-    await db
-      .update(feeds)
-      .set({ updatedAt: now })
-      .where(and(eq(feeds.id, feedId), eq(feeds.userId, userId)));
+    await db.update(feeds).set({ updatedAt: now }).where(eq(feeds.id, feedId));
   }
 
   const currentMemberships = await db.query.feedFolderMemberships.findMany({
-    where: and(
-      eq(feedFolderMemberships.userId, userId),
-      eq(feedFolderMemberships.feedId, feedId),
-    ),
+    where: eq(feedFolderMemberships.feedId, feedId),
     columns: { folderId: true },
   });
 
@@ -722,17 +643,16 @@ export async function addFeedFoldersForUser(
 }
 
 /**
- * Replace folder memberships for one feed belonging to one user.
+ * Replace folder memberships for one feed.
  */
-export async function setFeedFoldersForUser(
-  userId: string,
+export async function setFeedFolders(
   feedId: string,
   folderIds: string[],
-): Promise<SetFeedFoldersForUserResult> {
+): Promise<SetFeedFoldersResult> {
   const normalizedFolderIds = normalizeFolderIds(folderIds);
 
   const feed = await db.query.feeds.findFirst({
-    where: and(eq(feeds.id, feedId), eq(feeds.userId, userId)),
+    where: eq(feeds.id, feedId),
     columns: { id: true },
   });
 
@@ -742,7 +662,7 @@ export async function setFeedFoldersForUser(
 
   if (normalizedFolderIds.length > 0) {
     const availableFolders = await db.query.folders.findMany({
-      where: and(eq(folders.userId, userId), inArray(folders.id, normalizedFolderIds)),
+      where: inArray(folders.id, normalizedFolderIds),
       columns: { id: true },
     });
 
@@ -760,14 +680,13 @@ export async function setFeedFoldersForUser(
 
   // neon-http does not support db.transaction(), so we use an
   // insert-first-then-delete pattern to avoid a window where memberships are
-  // missing. The unique constraint on (userId, feedId, folderId) ensures
+  // missing. The unique constraint on (feedId, folderId) ensures
   // onConflictDoNothing is safe for already-existing memberships.
   if (normalizedFolderIds.length > 0) {
     await db
       .insert(feedFolderMemberships)
       .values(
         normalizedFolderIds.map((folderId) => ({
-          userId,
           feedId,
           folderId,
           createdAt: now,
@@ -783,27 +702,18 @@ export async function setFeedFoldersForUser(
       .delete(feedFolderMemberships)
       .where(
         and(
-          eq(feedFolderMemberships.userId, userId),
           eq(feedFolderMemberships.feedId, feedId),
           not(inArray(feedFolderMemberships.folderId, normalizedFolderIds)),
         ),
       );
   } else {
-    // User wants zero folders — remove all memberships for this feed.
+    // Remove all memberships for this feed.
     await db
       .delete(feedFolderMemberships)
-      .where(
-        and(
-          eq(feedFolderMemberships.userId, userId),
-          eq(feedFolderMemberships.feedId, feedId),
-        ),
-      );
+      .where(eq(feedFolderMemberships.feedId, feedId));
   }
 
-  await db
-    .update(feeds)
-    .set({ updatedAt: now })
-    .where(and(eq(feeds.id, feedId), eq(feeds.userId, userId)));
+  await db.update(feeds).set({ updatedAt: now }).where(eq(feeds.id, feedId));
 
   return { status: "ok", folderIds: normalizedFolderIds };
 }
@@ -821,25 +731,23 @@ export type MarkAllFeedItemsReadResult =
   | { status: "scope_not_found" };
 
 /**
- * Mark all unread feed items as read for one user, optionally scoped to a
+ * Mark all unread feed items as read, optionally scoped to a
  * specific feed, folder, or the uncategorized group.
  */
-export async function markAllFeedItemsReadForUser(
-  userId: string,
+export async function markAllFeedItemsRead(
   scope: MarkAllReadScope,
 ): Promise<MarkAllFeedItemsReadResult> {
   /* Resolve which feedIds are affected by this scope. */
   let targetFeedIds: string[];
 
   if (scope.type === "all" || scope.type === "unread" || scope.type === "saved") {
-    const userFeeds = await db.query.feeds.findMany({
-      where: eq(feeds.userId, userId),
+    const allFeeds = await db.query.feeds.findMany({
       columns: { id: true },
     });
-    targetFeedIds = userFeeds.map((feed) => feed.id);
+    targetFeedIds = allFeeds.map((feed) => feed.id);
   } else if (scope.type === "feed") {
     const feed = await db.query.feeds.findFirst({
-      where: and(eq(feeds.id, scope.id), eq(feeds.userId, userId)),
+      where: eq(feeds.id, scope.id),
       columns: { id: true },
     });
     if (!feed) {
@@ -848,41 +756,34 @@ export async function markAllFeedItemsReadForUser(
     targetFeedIds = [feed.id];
   } else if (scope.type === "folder") {
     const folder = await db.query.folders.findFirst({
-      where: and(eq(folders.id, scope.id), eq(folders.userId, userId)),
+      where: eq(folders.id, scope.id),
       columns: { id: true },
     });
     if (!folder) {
       return { status: "scope_not_found" };
     }
     const memberships = await db.query.feedFolderMemberships.findMany({
-      where: and(
-        eq(feedFolderMemberships.userId, userId),
-        eq(feedFolderMemberships.folderId, scope.id),
-      ),
+      where: eq(feedFolderMemberships.folderId, scope.id),
       columns: { feedId: true },
     });
     targetFeedIds = memberships.map((membership) => membership.feedId);
   } else {
     /* uncategorized — feeds with no folder memberships */
-    const userFeeds = await db.query.feeds.findMany({
-      where: eq(feeds.userId, userId),
+    const allFeeds = await db.query.feeds.findMany({
       columns: { id: true },
     });
-    const userFeedIds = userFeeds.map((feed) => feed.id);
-    if (userFeedIds.length === 0) {
+    const allFeedIds = allFeeds.map((feed) => feed.id);
+    if (allFeedIds.length === 0) {
       return { status: "ok", markedCount: 0 };
     }
     const memberships = await db.query.feedFolderMemberships.findMany({
-      where: and(
-        eq(feedFolderMemberships.userId, userId),
-        inArray(feedFolderMemberships.feedId, userFeedIds),
-      ),
+      where: inArray(feedFolderMemberships.feedId, allFeedIds),
       columns: { feedId: true },
     });
     const categorizedFeedIds = new Set(
       memberships.map((membership) => membership.feedId),
     );
-    targetFeedIds = userFeedIds.filter((feedId) => !categorizedFeedIds.has(feedId));
+    targetFeedIds = allFeedIds.filter((feedId) => !categorizedFeedIds.has(feedId));
   }
 
   if (targetFeedIds.length === 0) {

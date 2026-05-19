@@ -2,34 +2,27 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { DeleteAccountSection } from "@/features/settings/components/sections/DeleteAccountSection";
-import { ResetAccountSection } from "@/features/settings/components/sections/ResetAccountSection";
 import { ExportSection } from "@/features/settings/components/sections/ExportSection";
 import { ImportSection } from "@/features/settings/components/sections/ImportSection";
 import { BackupRestoreSection } from "@/features/settings/components/sections/BackupRestoreSection";
 import { KeyboardShortcutsSection } from "@/features/settings/components/sections/KeyboardShortcutsSection";
-import { ReadingModeSection } from "@/features/settings/components/sections/ReadingModeSection";
 import { BackIcon } from "@/features/settings/components/icons";
-import type { ReadingMode } from "@/lib/shared/reading-mode";
 import styles from "./SettingsOverview.module.css";
 
 interface SettingsOverviewProps {
-  email: string;
-  readingMode: ReadingMode;
+  email?: string;
 }
 
 /**
  * Renders minimal account settings for the reading MVP.
  */
-export function SettingsOverview({ email, readingMode }: SettingsOverviewProps) {
-  const readingModeControlsRef = useRef<HTMLDivElement | null>(null);
+export function SettingsOverview({ email }: SettingsOverviewProps) {
   const shortcutsControlsRef = useRef<HTMLDivElement | null>(null);
 
-  const [isReadingModePanelExpanded, setIsReadingModePanelExpanded] = useState(false);
   const [isShortcutsPanelExpanded, setIsShortcutsPanelExpanded] = useState(false);
 
   useEffect(() => {
-    if (!isReadingModePanelExpanded && !isShortcutsPanelExpanded) {
+    if (!isShortcutsPanelExpanded) {
       return;
     }
 
@@ -39,16 +32,13 @@ export function SettingsOverview({ email, readingMode }: SettingsOverviewProps) 
         return;
       }
 
-      const clickedInsideReadingMode =
-        readingModeControlsRef.current?.contains(target) ?? false;
       const clickedInsideShortcuts =
         shortcutsControlsRef.current?.contains(target) ?? false;
 
-      if (clickedInsideReadingMode || clickedInsideShortcuts) {
+      if (clickedInsideShortcuts) {
         return;
       }
 
-      setIsReadingModePanelExpanded(false);
       setIsShortcutsPanelExpanded(false);
     };
 
@@ -57,7 +47,7 @@ export function SettingsOverview({ email, readingMode }: SettingsOverviewProps) 
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [isReadingModePanelExpanded, isShortcutsPanelExpanded]);
+  }, [isShortcutsPanelExpanded]);
 
   return (
     <div className={styles.root}>
@@ -71,16 +61,10 @@ export function SettingsOverview({ email, readingMode }: SettingsOverviewProps) 
             </span>
           </Link>
         </div>
-        <p className={styles.muted}>Signed in as {email}</p>
+        {email ? <p className={styles.muted}>Signed in as {email}</p> : null}
       </header>
 
       <div className={styles.settingsOptions}>
-        <ReadingModeSection
-          readingMode={readingMode}
-          controlsRef={readingModeControlsRef}
-          isExpanded={isReadingModePanelExpanded}
-          setIsExpanded={setIsReadingModePanelExpanded}
-        />
         <ImportSection />
         <ExportSection />
         <BackupRestoreSection />
@@ -89,8 +73,6 @@ export function SettingsOverview({ email, readingMode }: SettingsOverviewProps) 
           isExpanded={isShortcutsPanelExpanded}
           setIsExpanded={setIsShortcutsPanelExpanded}
         />
-        <ResetAccountSection />
-        <DeleteAccountSection />
       </div>
     </div>
   );

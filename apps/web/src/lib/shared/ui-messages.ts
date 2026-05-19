@@ -16,7 +16,6 @@ export type UiActionContext =
   | "uncategorized.delete"
   | "uncategorized.move"
   | "settings.theme"
-  | "settings.reading_mode"
   | "settings.import"
   | "settings.export"
   | "account.delete";
@@ -129,15 +128,6 @@ function resolveCodeMessage(
       title: "Folder unavailable",
       text: "The selected folder is no longer available. Choose a folder and try again.",
       recommendedActionLabel: "Choose folder",
-    };
-  }
-
-  if (code === "csrf_validation_failed") {
-    return {
-      severity: "error",
-      title: "Session expired",
-      text: "Your session expired for this action. Refresh the page and try again.",
-      recommendedActionLabel: "Retry",
     };
   }
 

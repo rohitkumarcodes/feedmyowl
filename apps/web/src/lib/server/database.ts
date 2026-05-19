@@ -13,11 +13,7 @@ import "server-only";
  * What this file exports:
  *   - db: The Drizzle database instance (for queries)
  *   - eq, and, or, not, desc, asc, inArray, lt: Query comparison operators
- *   - users, folders, feeds, feedFolderMemberships, feedItems: Schema table references
- *
- * Usage in other files:
- *   import { db, eq, users } from "@/lib/server/database";
- *   const user = await db.query.users.findFirst({ where: eq(users.clerkId, id) });
+ *   - folders, feeds, feedFolderMemberships, feedItems: Schema table references
  */
 
 import { neon } from "@neondatabase/serverless";
@@ -35,7 +31,7 @@ export { eq, and, or, not, desc, asc, inArray, isNull, lt, sql } from "drizzle-o
  * Re-export schema table references through this module boundary.
  * API routes import these from "@/lib/server/database" — never from "@/db/schema" directly.
  */
-export { users, folders, feeds, feedFolderMemberships, feedItems } from "@/db/schema";
+export { folders, feeds, feedFolderMemberships, feedItems } from "@/db/schema";
 
 /**
  * Lazy-initialized Drizzle database instance.
@@ -49,18 +45,6 @@ export { users, folders, feeds, feedFolderMemberships, feedItems } from "@/db/sc
  * Uses HTTP-based queries via Neon's serverless driver (no persistent
  * connection), which is ideal for serverless environments like Vercel.
  *
- * Examples:
- *   // Simple query
- *   const users = await db.select().from(schema.users);
- *
- *   // Relational query (uses the relations defined in schema.ts)
- *   const userWithFeeds = await db.query.users.findFirst({
- *     where: eq(schema.users.clerkId, clerkId),
- *     with: { feeds: true },
- *   });
- *
- *   // Insert
- *   await db.insert(schema.users).values({ clerkId, email });
  */
 /** Full type of our Drizzle instance, including schema-aware .query property */
 type Database = NeonHttpDatabase<typeof schema>;

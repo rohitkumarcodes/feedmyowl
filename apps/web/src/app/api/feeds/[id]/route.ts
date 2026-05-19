@@ -5,21 +5,13 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/server/auth";
 import { handleApiRouteError } from "@/lib/server/api-errors";
-import { ensureUserRecord } from "@/lib/server/app-user";
-import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
 import { parseRequestJson } from "@/lib/server/http/request-json";
-import { applyRouteRateLimit } from "@/lib/server/rate-limit";
 import type {
   FeedIdDeleteResponseBody,
   FeedIdPatchResponseBody,
 } from "@/contracts/api/feeds";
-import {
-  deleteFeedForUser,
-  renameFeedForUser,
-  setFeedFoldersForUser,
-} from "@/lib/server/feed-service";
+import { deleteFeed, renameFeed, setFeedFolders } from "@/lib/server/feed-service";
 
 const FEED_CUSTOM_TITLE_MAX_LENGTH = 255;
 
@@ -40,31 +32,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const csrfFailure = assertTrustedWriteOrigin(request, "api.feeds.id.patch");
-    if (csrfFailure) {
-      return csrfFailure;
-    }
-
-    const { clerkId } = await requireAuth();
     const { id } = await params;
-    const user = await ensureUserRecord(clerkId);
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const rateLimit = await applyRouteRateLimit({
-      request,
-      routeKey: "api_feeds_id_patch",
-      userId: user.id,
-      userLimitPerMinute: 20,
-      ipLimitPerMinute: 60,
-    });
-
-    if (!rateLimit.allowed) {
-      return rateLimit.response;
-    }
-
     const payload = await parseRequestJson(request);
     if (payload?.action === "feed.setFolders") {
       const folderIds = payload.folderIds;
@@ -82,7 +50,7 @@ export async function PATCH(
         );
       }
 
-      const result = await setFeedFoldersForUser(user.id, id, folderIds);
+      const result = await setFeedFolders(id, folderIds);
 
       if (result.status === "feed_not_found") {
         return NextResponse.json({ error: "Feed not found" }, { status: 404 });
@@ -124,11 +92,7 @@ export async function PATCH(
       );
     }
 
-    const updatedFeed = await renameFeedForUser(
-      user.id,
-      id,
-      trimmedName.length > 0 ? trimmedName : null,
-    );
+    const updatedFeed = await renameFeed(id, trimmedName.length > 0 ? trimmedName : null);
 
     if (!updatedFeed) {
       return NextResponse.json({ error: "Feed not found" }, { status: 404 });
@@ -156,33 +120,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const csrfFailure = assertTrustedWriteOrigin(request, "api.feeds.id.delete");
-    if (csrfFailure) {
-      return csrfFailure;
-    }
-
-    const { clerkId } = await requireAuth();
     const { id } = await params;
-
-    const user = await ensureUserRecord(clerkId);
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const rateLimit = await applyRouteRateLimit({
-      request,
-      routeKey: "api_feeds_id_delete",
-      userId: user.id,
-      userLimitPerMinute: 20,
-      ipLimitPerMinute: 60,
-    });
-
-    if (!rateLimit.allowed) {
-      return rateLimit.response;
-    }
-
-    const deleted = await deleteFeedForUser(user.id, id);
+    const deleted = await deleteFeed(id);
 
     if (!deleted) {
       return NextResponse.json({ error: "Feed not found" }, { status: 404 });

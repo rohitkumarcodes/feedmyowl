@@ -65,16 +65,13 @@ import {
 } from "@/lib/shared/article-pagination";
 import { parseResponseJson } from "@/lib/client/http";
 import { OFFLINE_CACHED_ARTICLES_MESSAGE } from "@/lib/shared/network-messages";
-import type { ReadingMode } from "@/lib/shared/reading-mode";
 import { OPEN_SHORTCUTS_DIALOG_EVENT } from "@/lib/shared/shortcuts-dialog-events";
-import { computeUnreadCounts } from "@/features/feeds/state/unread-counts";
 import styles from "./FeedsWorkspace.module.css";
 
 interface FeedsWorkspaceProps {
   initialFeeds: FeedViewModel[];
   initialFolders: FolderViewModel[];
   initialPaginationByScopeKey: PaginationByScopeKey;
-  initialReadingMode: ReadingMode;
 }
 
 interface ApiErrorResponse {
@@ -84,10 +81,6 @@ interface ApiErrorResponse {
 function toArticleScope(scope: SidebarScope): ArticleScope | null {
   if (scope.type === "all") {
     return { type: "all" };
-  }
-
-  if (scope.type === "unread") {
-    return { type: "unread" };
   }
 
   if (scope.type === "saved") {
@@ -116,13 +109,11 @@ export function FeedsWorkspace({
   initialFeeds,
   initialFolders,
   initialPaginationByScopeKey,
-  initialReadingMode,
 }: FeedsWorkspaceProps) {
   const router = useRouter();
 
   const [feeds, setFeeds] = useState<FeedViewModel[]>(initialFeeds);
   const [folders, setFolders] = useState<FolderViewModel[]>(initialFolders);
-  const readingMode: ReadingMode = initialReadingMode;
   const [paginationByScopeKey, setPaginationByScopeKey] = useState<PaginationByScopeKey>(
     initialPaginationByScopeKey,
   );
@@ -202,12 +193,6 @@ export function FeedsWorkspace({
   });
 
   const allArticles = useMemo(() => selectAllArticles(feeds), [feeds]);
-
-  /** Unread counts per feed and folder — only computed in checker mode. */
-  const unreadCounts = useMemo(
-    () => (readingMode === "checker" ? computeUnreadCounts(feeds) : null),
-    [feeds, readingMode],
-  );
 
   const scopedArticles = useMemo(
     () => selectVisibleArticles(allArticles, selectedScope),
@@ -332,7 +317,6 @@ export function FeedsWorkspace({
     cancelAddFeedForm,
     clearStatusMessages,
     markArticleAsRead,
-    markAllArticlesAsRead,
     toggleArticleSaved,
     handleRefresh,
     handleAddFeed,
@@ -359,13 +343,6 @@ export function FeedsWorkspace({
   });
 
   useEffect(() => {
-    // If the user is in unread scope but switches to reader mode,
-    // the unread scope no longer makes sense — fall back to "all".
-    if (selectedScope.type === "unread" && readingMode !== "checker") {
-      setSelectedScope({ type: "all" });
-      return;
-    }
-
     if (selectedScope.type === "feed") {
       const stillExists = feeds.some((feed) => feed.id === selectedScope.feedId);
       if (!stillExists) {
@@ -388,7 +365,7 @@ export function FeedsWorkspace({
         setSelectedScope({ type: "all" });
       }
     }
-  }, [feeds, folders, readingMode, selectedScope]);
+  }, [feeds, folders, selectedScope]);
 
   useEffect(() => {
     if (!selectedArticleId) {
@@ -1080,10 +1057,7 @@ export function FeedsWorkspace({
             folders={folders}
             selectedScope={selectedScope}
             isMobile={isMobile}
-            readingMode={readingMode}
-            unreadCounts={unreadCounts}
             onSelectAll={() => handleSelectScope({ type: "all" })}
-            onSelectUnread={() => handleSelectScope({ type: "unread" })}
             onSelectSaved={() => handleSelectScope({ type: "saved" })}
             onSelectUncategorized={() => handleSelectScope({ type: "uncategorized" })}
             onSelectFolder={(folderId) => handleSelectScope({ type: "folder", folderId })}
@@ -1165,7 +1139,6 @@ export function FeedsWorkspace({
             articles={visibleArticles}
             selectedArticleId={selectedArticleId}
             openArticleId={openArticleId}
-            readingMode={readingMode}
             statusMessage={isSearchActive ? null : listStatusMessage}
             emptyStateMessage={emptyStateMessage}
             isInitialScopeEmpty={selectedScope.type === "none" && !isSearchActive}
@@ -1210,16 +1183,6 @@ export function FeedsWorkspace({
             onSelectArticle={(articleId) => {
               void openSelectedArticle(articleId);
             }}
-            onMarkAllRead={
-              readingMode === "checker" && selectedArticleScope
-                ? () => {
-                    void markAllArticlesAsRead(
-                      selectedArticleScope.type,
-                      "id" in selectedArticleScope ? selectedArticleScope.id : undefined,
-                    );
-                  }
-                : undefined
-            }
           />
         }
         articleReader={

@@ -12,14 +12,11 @@ import {
 import type { FolderDeleteMode } from "@/contracts/api/folders";
 import type { FeedViewModel, FolderViewModel } from "@/features/feeds/types/view-models";
 import type { SidebarScope } from "@/features/feeds/types/scopes";
-import type { ReadingMode } from "@/lib/shared/reading-mode";
-import type { UnreadCounts } from "@/features/feeds/state/unread-counts";
 import { getFeedLabel } from "@/features/feeds/state/feeds-workspace.selectors";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { isReservedFolderName } from "@/lib/shared/folders";
 import { BookmarkRibbonIcon } from "@/features/feeds/components/BookmarkRibbonIcon";
 import { StackedLayersIcon } from "@/features/feeds/components/StackedLayersIcon";
-import { EyeIcon } from "@/features/feeds/components/EyeIcon";
 import primitiveStyles from "../LeftPanePrimitives.module.css";
 import { FeedItem } from "./FeedItem";
 import { readExpandedFolders, writeExpandedFolders } from "./expandedFoldersStorage";
@@ -31,13 +28,7 @@ interface FolderTreeProps {
   folders: FolderViewModel[];
   selectedScope: SidebarScope;
   isMobile: boolean;
-  /** Current reading mode — controls whether unread badges/scope row are shown. */
-  readingMode: ReadingMode;
-  /** Unread counts per feed/folder — null in reader mode. */
-  unreadCounts: UnreadCounts | null;
   onSelectAll: () => void;
-  /** Select the "Unread" virtual scope (checker mode only). */
-  onSelectUnread: () => void;
   onSelectSaved: () => void;
   onSelectUncategorized: () => void;
   onSelectFolder: (folderId: string) => void;
@@ -75,8 +66,6 @@ interface FolderRowProps {
   siblingFolders: FolderViewModel[];
   isMobile: boolean;
   feedCount: number;
-  /** Unread article count for this folder — shown instead of feedCount in checker mode. */
-  unreadCount: number | null;
   isActive: boolean;
   isExpanded: boolean;
   isDeleting: boolean;
@@ -100,7 +89,6 @@ function FolderRow({
   siblingFolders,
   isMobile,
   feedCount,
-  unreadCount,
   isActive,
   isExpanded,
   isDeleting,
@@ -243,7 +231,7 @@ function FolderRow({
           {folder.name}
         </span>
         <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
-          {unreadCount !== null ? unreadCount : feedCount}
+          {feedCount}
         </span>
       </button>
 
@@ -426,10 +414,7 @@ export function FolderTree({
   folders,
   selectedScope,
   isMobile,
-  readingMode,
-  unreadCounts,
   onSelectAll,
-  onSelectUnread,
   onSelectSaved,
   onSelectUncategorized,
   onSelectFolder,
@@ -685,8 +670,6 @@ export function FolderTree({
     folderFeedList.map((feed) => {
       const label = getFeedLabel(feed);
       const isActive = selectedScope.type === "feed" && selectedScope.feedId === feed.id;
-      /** Per-feed unread count — only provided in checker mode. */
-      const feedUnreadCount = unreadCounts?.byFeedId.get(feed.id) ?? null;
 
       return (
         <FeedItem
@@ -700,7 +683,6 @@ export function FolderTree({
           isUpdatingFolders={updatingFeedFoldersId === feed.id}
           folderOptions={sortedFolders}
           selectedFolderIds={feed.folderIds}
-          unreadCount={feedUnreadCount}
           hasError={feed.lastFetchStatus === "error"}
           errorMessage={feed.lastFetchErrorMessage ?? undefined}
           onSelect={() => onSelectFeed(feed.id)}
@@ -746,70 +728,37 @@ export function FolderTree({
           <div className={styles.folderActionsSpacer} aria-hidden="true" />
         </div>
 
-        {readingMode === "checker" ? (
-          <div
-            className={`${styles.folderRowWrap} ${
-              selectedScope.type === "all" ? styles.folderRowWrapActive : ""
-            }`}
+        <div
+          className={`${styles.folderRowWrap} ${
+            selectedScope.type === "all" ? styles.folderRowWrapActive : ""
+          }`}
+        >
+          <button
+            type="button"
+            className={`${primitiveStyles.row} ${primitiveStyles.rowRegular} ${styles.folderRow} ${
+              styles.allFeedsRow
+            } ${selectedScope.type === "all" ? primitiveStyles.rowActive : ""}`}
+            onClick={onSelectAll}
+            aria-current={selectedScope.type === "all" ? "true" : undefined}
+            data-sidebar-row="all"
           >
-            <button
-              type="button"
-              className={`${primitiveStyles.row} ${primitiveStyles.rowRegular} ${styles.folderRow} ${
-                styles.allFeedsRow
-              } ${selectedScope.type === "all" ? primitiveStyles.rowActive : ""}`}
-              onClick={onSelectAll}
-              aria-current={selectedScope.type === "all" ? "true" : undefined}
-              data-sidebar-row="all"
-            >
-              <span className={styles.systemArrowSlot} aria-hidden="true" />
-              <span className={styles.folderRowIconSlot} aria-hidden="true">
-                <StackedLayersIcon
-                  className={`${styles.folderRowIcon} ${styles.scopeRowIcon}`}
-                />
-              </span>
-              <span className={`${styles.folderLabel} ${styles.systemItemLabel}`}>
-                All feeds
-              </span>
-              <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
-                {feeds.length}
-              </span>
-            </button>
-            <div className={styles.folderActionsSpacer} aria-hidden="true" />
-          </div>
-        ) : null}
+            <span className={styles.systemArrowSlot} aria-hidden="true" />
+            <span className={styles.folderRowIconSlot} aria-hidden="true">
+              <StackedLayersIcon
+                className={`${styles.folderRowIcon} ${styles.scopeRowIcon}`}
+              />
+            </span>
+            <span className={`${styles.folderLabel} ${styles.systemItemLabel}`}>
+              All feeds
+            </span>
+            <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
+              {feeds.length}
+            </span>
+          </button>
+          <div className={styles.folderActionsSpacer} aria-hidden="true" />
+        </div>
 
-        {/* "Unread" virtual scope row — only visible in checker mode. */}
-        {readingMode === "checker" ? (
-          <div
-            className={`${styles.folderRowWrap} ${
-              selectedScope.type === "unread" ? styles.folderRowWrapActive : ""
-            }`}
-          >
-            <button
-              type="button"
-              className={`${primitiveStyles.row} ${primitiveStyles.rowRegular} ${styles.folderRow} ${
-                styles.allFeedsRow
-              } ${selectedScope.type === "unread" ? primitiveStyles.rowActive : ""}`}
-              onClick={onSelectUnread}
-              aria-current={selectedScope.type === "unread" ? "true" : undefined}
-              data-sidebar-row="unread"
-            >
-              <span className={styles.systemArrowSlot} aria-hidden="true" />
-              <span className={styles.folderRowIconSlot} aria-hidden="true">
-                <EyeIcon className={`${styles.folderRowIcon} ${styles.scopeRowIcon}`} />
-              </span>
-              <span className={`${styles.folderLabel} ${styles.systemItemLabel}`}>
-                Unread
-              </span>
-              <span className={`${primitiveStyles.rowCount} ${styles.rowCountAligned}`}>
-                {unreadCounts?.total ?? 0}
-              </span>
-            </button>
-            <div className={styles.folderActionsSpacer} aria-hidden="true" />
-          </div>
-        ) : null}
-
-        {/* Divider between system scope rows (Saved/All/Unread) and the folder tree. */}
+        {/* Divider between system scope rows (Saved/All) and the folder tree. */}
         {folders.length > 0 || uncategorizedFeeds.length > 0 ? (
           <div
             className={styles.treeSectionDivider}
@@ -927,7 +876,6 @@ export function FolderTree({
                 siblingFolders={sortedFolders}
                 isMobile={isMobile}
                 feedCount={folderFeeds.length}
-                unreadCount={unreadCounts?.byFolderId.get(folder.id) ?? null}
                 isActive={isFolderActive}
                 isExpanded={isExpanded}
                 isDeleting={deletingFolderId === folder.id}

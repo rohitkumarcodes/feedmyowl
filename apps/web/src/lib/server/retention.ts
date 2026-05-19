@@ -5,7 +5,7 @@ import "server-only";
  *
  * FeedMyOwl keeps a bounded in-app article history.
  * This helper enforces a per-feed count limit and purges
- * older ranked items for a specific user.
+ * older ranked items across all feeds.
  */
 
 import { db, sql } from "@/lib/server/database";
@@ -44,15 +44,19 @@ function getResultRowCount(result: QueryResult): number {
 }
 
 /**
- * Return true when at least one user-owned feed currently exceeds the retention cap.
+ * Delete items outside the per-feed retention cap across all feeds.
+ *
+ * @returns Number of rows deleted
  */
-export async function isUserRetentionPurgeNeeded(userId: string): Promise<boolean> {
+/**
+ * Return true when at least one feed currently exceeds the retention cap.
+ */
+export async function isRetentionPurgeNeeded(): Promise<boolean> {
   const overLimitFeed = (await db.execute(sql`
     SELECT 1
     FROM feed_items fi
     INNER JOIN feeds f ON f.id = fi.feed_id
-    WHERE f.user_id = ${userId}
-      AND fi.saved_at IS NULL
+    WHERE fi.saved_at IS NULL
     GROUP BY fi.feed_id
     HAVING COUNT(*) > ${FEED_ITEMS_PER_FEED_LIMIT}
     LIMIT 1
@@ -62,12 +66,11 @@ export async function isUserRetentionPurgeNeeded(userId: string): Promise<boolea
 }
 
 /**
- * Delete items outside the per-feed retention cap across all feeds for one user.
- *
- * @param userId - Internal FeedMyOwl user UUID
- * @returns Number of rows deleted
+ * Delete items outside the per-feed retention cap for one feed.
  */
-export async function purgeOldFeedItemsForUser(userId: string): Promise<number> {
+export async function purgeOldFeedItemsForFeed(params: {
+  feedId: string;
+}): Promise<number> {
   const deleted = (await db.execute(sql`
     WITH ranked_items AS (
       SELECT
@@ -77,8 +80,7 @@ export async function purgeOldFeedItemsForUser(userId: string): Promise<number> 
           ORDER BY COALESCE(fi.published_at, fi.created_at) DESC, fi.id DESC
         ) AS item_rank
       FROM feed_items fi
-      INNER JOIN feeds f ON f.id = fi.feed_id
-      WHERE f.user_id = ${userId}
+      WHERE fi.feed_id = ${params.feedId}
         AND fi.saved_at IS NULL
     ),
     to_delete AS (
@@ -94,17 +96,7 @@ export async function purgeOldFeedItemsForUser(userId: string): Promise<number> 
   return getResultRowCount(deleted);
 }
 
-/**
- * Delete items outside the per-feed retention cap for one feed owned by one user.
- *
- * @param userId - Internal FeedMyOwl user UUID
- * @param feedId - Feed UUID that must belong to the user
- * @returns Number of rows deleted
- */
-export async function purgeOldFeedItemsForFeed(params: {
-  userId: string;
-  feedId: string;
-}): Promise<number> {
+export async function purgeOldFeedItems(): Promise<number> {
   const deleted = (await db.execute(sql`
     WITH ranked_items AS (
       SELECT
@@ -114,10 +106,7 @@ export async function purgeOldFeedItemsForFeed(params: {
           ORDER BY COALESCE(fi.published_at, fi.created_at) DESC, fi.id DESC
         ) AS item_rank
       FROM feed_items fi
-      INNER JOIN feeds f ON f.id = fi.feed_id
-      WHERE f.user_id = ${params.userId}
-        AND fi.feed_id = ${params.feedId}
-        AND fi.saved_at IS NULL
+      WHERE fi.saved_at IS NULL
     ),
     to_delete AS (
       SELECT id

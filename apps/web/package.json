@@ -10,29 +10,22 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "smoke": "playwright test",
-    "smoke:ui": "playwright test --ui",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.12",
     "@neondatabase/serverless": "^0.10",
-    "@sentry/nextjs": "^9",
     "dompurify": "^3.3.1",
     "drizzle-orm": "^0.38",
     "fuse.js": "^7.1.0",
     "next": "^15.2",
     "react": "^19",
     "react-dom": "^19",
-    "resend": "^4",
-    "rss-parser": "^3.13",
-    "svix": "^1.84.1"
+    "rss-parser": "^3.13"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
-    "@playwright/test": "^1.59.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",

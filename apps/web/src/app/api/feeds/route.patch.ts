@@ -1,17 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  db,
-  eq,
-  users,
-  feeds,
-  folders,
-  feedFolderMemberships,
-} from "@/lib/server/database";
-import { deleteAuthUser } from "@/lib/server/auth";
 import { handleApiRouteError } from "@/lib/server/api-errors";
-import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
 import type {
-  AccountDeleteResponseBody,
   ItemSetSavedResponseBody,
   MarkAllReadResponseBody,
   MarkReadResponseBody,
@@ -19,14 +8,14 @@ import type {
   UncategorizedMoveResponseBody,
 } from "@/contracts/api/feeds";
 import {
-  deleteUncategorizedFeedsForUser,
-  markAllFeedItemsReadForUser,
-  markFeedItemReadForUser,
-  moveUncategorizedFeedsToFolderForUser,
-  setFeedItemSavedForUser,
+  deleteUncategorizedFeeds,
+  markAllFeedItemsRead,
+  markFeedItemRead,
+  moveUncategorizedFeedsToFolder,
+  setFeedItemSaved,
   type MarkAllReadScope,
 } from "@/lib/server/feed-service";
-import { getAppUser, parseRouteJson } from "./route.shared";
+import { parseRouteJson } from "./route.shared";
 
 /**
  * PATCH /api/feeds
@@ -37,22 +26,9 @@ import { getAppUser, parseRouteJson } from "./route.shared";
  *   - items.markAllRead
  *   - uncategorized.delete
  *   - uncategorized.move_to_folder
- *   - account.delete
- *   - account.reset
  */
 export async function patchFeedsRoute(request: NextRequest) {
   try {
-    const csrfFailure = assertTrustedWriteOrigin(request, "api.feeds.patch");
-    if (csrfFailure) {
-      return csrfFailure;
-    }
-
-    const appUser = await getAppUser();
-
-    if (!appUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
     const payload = await parseRouteJson(request);
     if (!payload || typeof payload.action !== "string") {
       return NextResponse.json({ error: "Action is required" }, { status: 400 });
@@ -65,7 +41,7 @@ export async function patchFeedsRoute(request: NextRequest) {
         return NextResponse.json({ error: "Item ID is required" }, { status: 400 });
       }
 
-      const result = await markFeedItemReadForUser(appUser.id, itemId);
+      const result = await markFeedItemRead(itemId);
 
       if (result.status === "not_found") {
         return NextResponse.json({ error: "Article not found" }, { status: 404 });
@@ -97,7 +73,7 @@ export async function patchFeedsRoute(request: NextRequest) {
         return NextResponse.json({ error: "saved must be a boolean" }, { status: 400 });
       }
 
-      const result = await setFeedItemSavedForUser(appUser.id, itemId, saved);
+      const result = await setFeedItemSaved(itemId, saved);
 
       if (result.status === "not_found") {
         return NextResponse.json({ error: "Article not found" }, { status: 404 });
@@ -149,7 +125,7 @@ export async function patchFeedsRoute(request: NextRequest) {
         scope = { type: scopeType as "all" | "unread" | "saved" | "uncategorized" };
       }
 
-      const result = await markAllFeedItemsReadForUser(appUser.id, scope);
+      const result = await markAllFeedItemsRead(scope);
 
       if (result.status === "scope_not_found") {
         return NextResponse.json({ error: "Scope not found." }, { status: 404 });
@@ -170,7 +146,7 @@ export async function patchFeedsRoute(request: NextRequest) {
         );
       }
 
-      const deletedFeedCount = await deleteUncategorizedFeedsForUser(appUser.id);
+      const deletedFeedCount = await deleteUncategorizedFeeds();
       return NextResponse.json({
         success: true,
         deletedFeedCount,
@@ -190,7 +166,7 @@ export async function patchFeedsRoute(request: NextRequest) {
         );
       }
 
-      const result = await moveUncategorizedFeedsToFolderForUser(appUser.id, folderId);
+      const result = await moveUncategorizedFeedsToFolder(folderId);
 
       if (result.status === "invalid_folder_id") {
         return NextResponse.json(
@@ -208,54 +184,6 @@ export async function patchFeedsRoute(request: NextRequest) {
         movedFeedCount: result.movedFeedCount,
         failedFeedCount: result.failedFeedCount,
       } satisfies UncategorizedMoveResponseBody);
-    }
-
-    if (payload.action === "account.delete") {
-      const confirmed = payload.confirm === true;
-      if (!confirmed) {
-        return NextResponse.json(
-          { error: "Account deletion must be explicitly confirmed." },
-          { status: 400 },
-        );
-      }
-
-      try {
-        await deleteAuthUser(appUser.clerkId);
-      } catch {
-        return NextResponse.json(
-          { error: "Could not delete authentication account." },
-          { status: 500 },
-        );
-      }
-
-      await db.delete(users).where(eq(users.id, appUser.id));
-
-      return NextResponse.json({ success: true } satisfies AccountDeleteResponseBody);
-    }
-
-    if (payload.action === "account.reset") {
-      const confirmed = payload.confirm === true;
-      if (!confirmed) {
-        return NextResponse.json(
-          { error: "Account reset must be explicitly confirmed." },
-          { status: 400 },
-        );
-      }
-
-      const userId = appUser.id;
-
-      // Delete feed memberships first (before feeds are deleted)
-      await db
-        .delete(feedFolderMemberships)
-        .where(eq(feedFolderMemberships.userId, userId));
-
-      // Delete feeds - cascade deletes feed_items as well
-      await db.delete(feeds).where(eq(feeds.userId, userId));
-
-      // Delete folders - cascade deletes any remaining memberships
-      await db.delete(folders).where(eq(folders.userId, userId));
-
-      return NextResponse.json({ success: true } satisfies AccountDeleteResponseBody);
     }
 
     return NextResponse.json({ error: "Unsupported action" }, { status: 400 });

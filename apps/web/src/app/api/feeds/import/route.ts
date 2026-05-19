@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/server/auth";
-import { ensureUserRecord } from "@/lib/server/app-user";
 import { handleApiRouteError } from "@/lib/server/api-errors";
-import { assertTrustedWriteOrigin } from "@/lib/server/csrf";
 import { captureMessage } from "@/lib/server/error-tracking";
-import { importFeedEntriesForUser } from "@/lib/server/feed-import-service";
+import { importFeedEntries } from "@/lib/server/feed-import-service";
 import { parseRequestJsonWithLimit } from "@/lib/server/http/request-json";
-import { applyRouteRateLimit } from "@/lib/server/rate-limit";
 import type {
   FeedImportEntry,
   FeedImportRequest,
@@ -149,30 +145,6 @@ export async function POST(request: NextRequest) {
   const startedAtMs = Date.now();
 
   try {
-    const csrfFailure = assertTrustedWriteOrigin(request, "api.feeds.import.post");
-    if (csrfFailure) {
-      return csrfFailure;
-    }
-
-    const { clerkId } = await requireAuth();
-    const appUser = await ensureUserRecord(clerkId);
-
-    if (!appUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const rateLimit = await applyRouteRateLimit({
-      request,
-      routeKey: "api_feeds_import_post",
-      userId: appUser.id,
-      userLimitPerMinute: 25,
-      ipLimitPerMinute: 100,
-    });
-
-    if (!rateLimit.allowed) {
-      return rateLimit.response;
-    }
-
     const payloadResult = await parseRequestJsonWithLimit(request, {
       maxBytes: FEED_IMPORT_MAX_REQUEST_BYTES,
     });
@@ -219,8 +191,7 @@ export async function POST(request: NextRequest) {
       typeof optionsValue !== "object" ||
       (optionsValue as FeedImportRequest["options"] | null)?.skipMultiCandidate !== false;
 
-    const rows = await importFeedEntriesForUser({
-      userId: appUser.id,
+    const rows = await importFeedEntries({
       entries,
       skipMultiCandidate,
     });

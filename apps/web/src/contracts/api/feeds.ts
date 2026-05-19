@@ -24,7 +24,6 @@ export interface FeedItemDto {
 
 export interface FeedDto {
   id: string;
-  userId: string;
   url: string;
   title: string | null;
   customTitle: string | null;

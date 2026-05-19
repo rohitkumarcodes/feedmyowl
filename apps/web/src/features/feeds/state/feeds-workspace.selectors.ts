@@ -22,11 +22,6 @@ export function doesArticleMatchSidebarScope(
     return true;
   }
 
-  /* Checker-mode "Unread" virtual scope — show only articles not yet read. */
-  if (selectedScope.type === "unread") {
-    return article.readAt === null;
-  }
-
   if (selectedScope.type === "saved") {
     return article.savedAt != null;
   }
@@ -159,10 +154,6 @@ export function selectScopeLabel(
     return "All feeds";
   }
 
-  if (selectedScope.type === "unread") {
-    return "Unread";
-  }
-
   if (selectedScope.type === "saved") {
     return "Saved";
   }
@@ -200,7 +191,7 @@ export function selectListStatusMessage(
           )
         : selectedScope.type === "uncategorized"
           ? feeds.filter((candidate) => candidate.folderIds.length === 0)
-          : feeds; /* "all" and "unread" scopes both span every feed */
+          : feeds; /* "all" scopes span every feed */
 
   const erroredFeed = scopedFeeds.find(
     (feed) => feed.lastFetchStatus === "error" && feed.lastFetchErrorMessage,
@@ -229,10 +220,6 @@ export function selectEmptyStateMessage(
 
   if (selectedScope.type === "folder") {
     return "No articles in this folder.";
-  }
-
-  if (selectedScope.type === "unread") {
-    return "No unread articles.";
   }
 
   if (selectedScope.type === "saved") {

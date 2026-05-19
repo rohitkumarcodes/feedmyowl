@@ -6,7 +6,6 @@ import type { SidebarScope } from "@/features/feeds/types/scopes";
 import type { FeedActionNoticeOptions } from "@/features/feeds/hooks/useFeedActionStatus";
 import {
   deleteFeed as deleteFeedRequest,
-  markAllItemsRead as markAllItemsReadRequest,
   markItemRead as markItemReadRequest,
   refreshFeeds as refreshFeedsRequest,
   renameFeed as renameFeedRequest,
@@ -113,65 +112,6 @@ export function useFeedCrudActions({
       }
     },
     [allArticles, handleApiFailure, setFeeds],
-  );
-
-  /**
-   * Mark all unread articles in the given scope as read.
-   * Optimistically updates client state then persists on the server.
-   */
-  const markAllArticlesAsRead = useCallback(
-    async (scopeType: string, scopeId?: string) => {
-      /* Optimistic: set readAt on unread items locally in the specified scope. */
-      const optimisticReadAt = new Date().toISOString();
-      setFeeds((previousFeeds) =>
-        previousFeeds.map((feed) => {
-          const feedMatchesScope =
-            scopeType === "all" ||
-            scopeType === "unread" ||
-            scopeType === "saved" ||
-            (scopeType === "feed" && feed.id === scopeId) ||
-            (scopeType === "folder" && scopeId
-              ? feed.folderIds.includes(scopeId)
-              : false) ||
-            (scopeType === "uncategorized" && feed.folderIds.length === 0);
-
-          if (!feedMatchesScope) {
-            return feed;
-          }
-
-          return {
-            ...feed,
-            items: feed.items.map((item) => {
-              const shouldMarkSavedOnly = scopeType === "saved";
-              const isInScope = shouldMarkSavedOnly ? item.savedAt != null : true;
-
-              return item.readAt === null && isInScope
-                ? { ...item, readAt: optimisticReadAt }
-                : item;
-            }),
-          };
-        }),
-      );
-
-      const result = await markAllItemsReadRequest(scopeType, scopeId);
-      if (!result.ok) {
-        handleApiFailure(
-          result,
-          "article.mark_all_read",
-          "Couldn't mark all articles as read. Try again.",
-        );
-        return;
-      }
-
-      const markedCount =
-        result.body && "markedCount" in result.body ? result.body.markedCount : 0;
-      setInfoMessage(
-        markedCount > 0
-          ? `Marked ${markedCount} article${markedCount === 1 ? "" : "s"} as read.`
-          : "All articles are already read.",
-      );
-    },
-    [handleApiFailure, setFeeds, setInfoMessage],
   );
 
   const toggleArticleSaved = useCallback(
@@ -478,7 +418,6 @@ export function useFeedCrudActions({
     updatingFeedFoldersId,
     savingItemId,
     markArticleAsRead,
-    markAllArticlesAsRead,
     toggleArticleSaved,
     handleRefresh,
     handleDeleteFeed,

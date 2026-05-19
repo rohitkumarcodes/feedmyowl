@@ -30,14 +30,7 @@ export function PaneToggleIcon({ collapsed }: PaneToggleIconProps) {
         stroke="currentColor"
         strokeWidth="1.75"
       />
-      <line
-        x1="9"
-        y1="4.5"
-        x2="9"
-        y2="19.5"
-        stroke="currentColor"
-        strokeWidth="1.75"
-      />
+      <line x1="9" y1="4.5" x2="9" y2="19.5" stroke="currentColor" strokeWidth="1.75" />
       <path
         d={chevron}
         stroke="currentColor"

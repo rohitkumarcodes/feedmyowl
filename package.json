@@ -4,8 +4,6 @@
   "packageManager": "pnpm@10.28.2",
   "pnpm": {
     "onlyBuiltDependencies": [
-      "@clerk/shared",
-      "@sentry/cli",
       "esbuild",
       "sharp",
       "unrs-resolver"
@@ -13,13 +11,12 @@
   },
   "scripts": {
     "dev:web": "pnpm --filter web dev",
-    "dev:web:preview": "FEEDMYOWL_DEV_PREVIEW=1 pnpm --filter web dev",
+    "dev:web:preview": "pnpm --filter web dev",
     "dev:blog": "pnpm --filter blog dev",
     "build:web": "pnpm --filter web build",
     "build:blog": "pnpm --filter blog build",
     "lint:web": "pnpm --filter web lint",
     "check:architecture": "node scripts/check-architecture-boundaries.mjs",
-    "smoke:web": "pnpm --filter web smoke",
     "agent:check": "pnpm check:architecture && pnpm ui:check:web && pnpm format:check",
     "ui:check:web": "pnpm --filter web lint && pnpm --filter web typecheck && pnpm --filter web test",
     "test:web": "pnpm --filter web test",

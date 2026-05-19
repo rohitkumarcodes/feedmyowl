@@ -1,28 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "@/lib/server/auth";
 import { handleApiRouteError } from "@/lib/server/api-errors";
-import { ensureUserRecord } from "@/lib/server/app-user";
 import {
   decodeArticleCursor,
   parseArticlePageLimit,
   parseScopeFromSearchParams,
 } from "@/lib/shared/article-pagination";
 import type { ArticlePageResponseBody } from "@/contracts/api/articles";
-import { listArticlePageForUser } from "@/lib/server/article-service";
+import { listArticlePage } from "@/lib/server/article-service";
 
-/**
- * GET /api/articles
- * Cursor-based article pagination scoped by all/feed/folder/uncategorized.
- */
 export async function GET(request: NextRequest) {
   try {
-    const { clerkId } = await requireAuth();
-    const appUser = await ensureUserRecord(clerkId);
-
-    if (!appUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
     const scopeResult = parseScopeFromSearchParams(request.nextUrl.searchParams);
     if (!scopeResult.ok) {
       return NextResponse.json(
@@ -57,8 +44,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const page = await listArticlePageForUser({
-      userId: appUser.id,
+    const page = await listArticlePage({
       scope: scopeResult.value,
       cursor: decodedCursor?.ok ? decodedCursor.value : null,
       limit: limitResult.value,
